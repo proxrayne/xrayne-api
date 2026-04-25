@@ -20,7 +20,7 @@ try
         .WriteTo.Map(
             logEvent => logEvent.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             (date, writeTo) => writeTo.File(
-                path: $"logs/xrayne-api-{date}.log",
+                path: $"logs/api-{date}.log",
                 shared: true,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"),
             sinkMapCountLimit: 1));
@@ -49,6 +49,8 @@ try
         });
     }
 
+    // app.UseDefaultFiles();
+    // app.UseStaticFiles();
     app.MapControllers();
 
     app.Run();
