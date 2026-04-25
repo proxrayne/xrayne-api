@@ -1,6 +1,6 @@
-# Xrayna.Node
+# XRayne.Node
 
-Xrayna.Node - нода и панель управления для работы с `xray-core`. Проект должен
+XRayne.Node - нода и панель управления для работы с `xray-core`. Проект должен
 предоставлять CLI, REST API и веб-интерфейс для управления Xray, подключения ноды
 к удаленной VPN-сети и автономной работы в режиме отдельной панели по аналогии с
 3x-ui.
@@ -45,14 +45,16 @@ Xrayna.Node - нода и панель управления для работы 
 - `xray-core`
 - systemd для Linux-сервисов
 - Docker / Docker Compose на последующих этапах
-- SQLite или PostgreSQL для хранения состояния панели
+- PostgreSQL для хранения состояния панели
+- Entity Framework Core как ORM
+- Npgsql для подключения к PostgreSQL
 - OpenAPI / Swagger для документации API
 
 ## Основные режимы работы
 
 ### Режим удаленной ноды
 
-В этом режиме Xrayna.Node подключается к центральной панели или управляющему API
+В этом режиме XRayne.Node подключается к центральной панели или управляющему API
 и выполняет команды удаленно:
 
 - регистрация ноды в сети;
@@ -77,18 +79,44 @@ Xrayna.Node - нода и панель управления для работы 
 ## Планируемая архитектура
 
 ```text
-src/
-  Xrayna.Api/          REST API и веб-хост
-  Xrayna.Cli/          CLI для администрирования
-  Xrayna.Core/         доменная логика
-  Xrayna.Infrastructure/
-                       работа с файловой системой, systemd, xray-core,
-                       сертификатами, базой данных и внешними сервисами
-  Xrayna.Contracts/    DTO, API-модели и общие контракты
-web/
-  xrayna-ui/           React-интерфейс
-tests/
-  Xrayna.Tests/        unit- и integration-тесты
+XRayne.Api/             REST API и веб-хост
+XRayne.Cli/             CLI для администрирования
+XRayne.Core/            доменная логика
+XRayne.Infrastructure/  работа с файловой системой, systemd, xray-core,
+                        сертификатами, базой данных и внешними сервисами
+XRayne.Repositories/    слой репозиториев и подключение к PostgreSQL
+XRayne.Contracts/       DTO, API-модели и общие контракты
+XRayne.UI/              React-интерфейс
+XRayne.Test/            unit- и integration-тесты
+```
+
+## Работа с базой данных
+
+Слой `XRayne.Repositories` содержит базовый `DbContext` для Entity Framework
+Core и подключение к PostgreSQL.
+
+Строка подключения задается в секции `ConnectionStrings`:
+
+```json
+{
+  "ConnectionStrings": {
+    "PostgreSql": "Host=localhost;Port=5432;Database=xrayne;Username=xrayne;Password=xrayne"
+  }
+}
+```
+
+Базовые команды для миграций:
+
+```bash
+dotnet ef migrations add InitialCreate \
+  --project XRayne.Repositories \
+  --startup-project XRayne.Api \
+  --context XRayneDbContext
+
+dotnet ef database update \
+  --project XRayne.Repositories \
+  --startup-project XRayne.Api \
+  --context XRayneDbContext
 ```
 
 ## Основные модули
@@ -153,15 +181,15 @@ API должно предоставлять методы для:
 CLI должно позволять выполнять основные операции из терминала:
 
 ```bash
-xrayna status
-xrayna start
-xrayna stop
-xrayna restart
-xrayna config validate
-xrayna config apply
-xrayna cert generate
-xrayna keys reality
-xrayna node register
+xrayne status
+xrayne start
+xrayne stop
+xrayne restart
+xrayne config validate
+xrayne config apply
+xrayne cert generate
+xrayne keys reality
+xrayne node register
 ```
 
 ### Web UI
@@ -184,9 +212,9 @@ xrayna node register
 ### Этап 1. Базовая структура проекта
 
 - Создать .NET solution.
-- Добавить проекты `Xrayna.Api`, `Xrayna.Cli`, `Xrayna.Core`,
-  `Xrayna.Infrastructure`, `Xrayna.Contracts`.
-- Добавить React-приложение в `web/xrayna-ui`.
+- Добавить проекты `XRayne.Api`, `XRayne.Cli`, `XRayne.Core`,
+  `XRayne.Infrastructure`, `XRayne.Contracts`.
+- Добавить React-приложение в `XRayne.UI`.
 - Настроить форматирование, базовые скрипты запуска и README.
 - Подключить Swagger для API.
 
@@ -284,7 +312,7 @@ POST   /api/keys/uuid
 2. Инициализировать React-приложение.
 3. Описать доменные интерфейсы для управления Xray.
 4. Реализовать первый REST endpoint `GET /api/node/status`.
-5. Реализовать первую CLI-команду `xrayna status`.
+5. Реализовать первую CLI-команду `xrayne status`.
 6. Подготовить минимальный dashboard в UI.
 
 ## Статус
