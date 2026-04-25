@@ -12,9 +12,9 @@ using var host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
-        services.AddXRayneCore();
-        services.AddXRayneInfrastructure(context.Configuration);
-        services.AddXRayneRepositories(context.Configuration);
+        services.AddCoreDependencies();
+        services.AddInfrastructure(context.Configuration);
+        services.AddRepositories(context.Configuration);
     })
     .Build();
 

@@ -2,24 +2,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using XRayne.Repositories.Abstractions;
-using XRayne.Repositories.Configuration;
-using XRayne.Repositories.Persistence;
-using XRayne.Repositories.PostgreSql;
 
 namespace XRayne.Repositories;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddXRayneRepositories(
+    public static IServiceCollection AddRepositories(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<PostgreSqlOptions>(configuration.GetSection("PostgreSql"));
-
-        var connectionString = configuration.GetConnectionString("PostgreSql")
-            ?? configuration.GetSection("PostgreSql").Get<PostgreSqlOptions>()?.ConnectionString;
-
+        var connectionString = configuration.GetConnectionString("Default");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException("PostgreSQL connection string is not configured.");
@@ -27,12 +19,10 @@ public static class DependencyInjection
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 
-        services.AddDbContext<XRayneDbContext>(options =>
+        services.AddDbContext<AppDbContext>(options =>
         {
             options.UseNpgsql(connectionString);
         });
-
-        services.AddScoped<IPostgreSqlConnectionFactory, PostgreSqlConnectionFactory>();
 
         return services;
     }

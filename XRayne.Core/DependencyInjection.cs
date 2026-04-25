@@ -4,7 +4,7 @@ namespace XRayne.Core;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddXRayneCore(this IServiceCollection services)
+    public static IServiceCollection AddCoreDependencies(this IServiceCollection services)
     {
         return services;
     }
