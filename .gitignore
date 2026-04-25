@@ -6,7 +6,9 @@ obj/
 node_modules/
 dist/
 coverage/
+logs/
 *.user
 *.suo
 .DS_Store
 appsettings.Development.local.json
+shared

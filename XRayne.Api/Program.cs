@@ -1,19 +1,63 @@
+using System.Globalization;
+using Scalar.AspNetCore;
+using Serilog;
 using XRayne.Core;
 using XRayne.Infrastructure;
 using XRayne.Repositories;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddCoreDependencies();
+    builder.Host.UseSerilog((context, services, configuration) => configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .WriteTo.Map(
+            logEvent => logEvent.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            (date, writeTo) => writeTo.File(
+                path: $"logs/xrayne-api-{date}.log",
+                shared: true,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"),
+            sinkMapCountLimit: 1));
 
-builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddRepositories(builder.Configuration);
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddOpenApi();
 
-var app = builder.Build();
+    builder.Services.AddCoreDependencies(builder.Configuration);
 
-app.MapControllers();
+    builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddRepositories(builder.Configuration);
 
-app.Run();
+    var app = builder.Build();
+
+    app.UseSerilogRequestLogging();
+
+    if (app.Configuration.GetValue("Docs", false))
+    {
+        app.MapOpenApi();
+        app.MapScalarApiReference(options =>
+        {
+            options.Title = "XRayne API";
+            options.Theme = ScalarTheme.Default;
+            options.OperationTitleSource = OperationTitleSource.Summary;
+        });
+    }
+
+    app.MapControllers();
+
+    app.Run();
+}
+catch (Exception exception)
+{
+    Log.Fatal(exception, "XRayne API terminated unexpectedly.");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

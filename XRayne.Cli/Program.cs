@@ -12,7 +12,7 @@ using var host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
-        services.AddCoreDependencies();
+        services.AddCoreDependencies(context.Configuration);
         services.AddInfrastructure(context.Configuration);
         services.AddRepositories(context.Configuration);
     })
