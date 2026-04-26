@@ -2,9 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace XRayne.Api.Controllers;
 
-[ApiController]
 [Route("")]
-public sealed class HomeController : ControllerBase
+public sealed class HomeController : ApiControllerBase
 {
     [HttpGet]
     [EndpointSummary("Check API availability")]

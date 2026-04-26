@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using XRayne.Cli.Commands;
+using XRayne.Cli.Commands.Admin;
 using XRayne.Cli.Commands.Xray;
 using XRayne.Cli.Output;
 
@@ -12,9 +13,10 @@ public static class DependencyInjection
         services.AddSingleton<ICliConsole, CliConsole>();
 
         services.AddSingleton<RootCommandFactory>();
-        services.AddSingleton<XrayCommandFactory>();
-
-        services.AddScoped<XrayStartAction>();
+        services.AddSingleton<XrayCommand>();
+        services.AddSingleton<XrayStartCommand>();
+        services.AddSingleton<AdminCommand>();
+        services.AddSingleton<AdminCreateCommand>();
 
         return services;
     }

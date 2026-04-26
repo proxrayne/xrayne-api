@@ -1,0 +1,28 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+using XRayne.Core.Auth;
+
+namespace XRayne.Repositories.Entities;
+
+[Table("admin_accounts")]
+[Index(nameof(Username), IsUnique = true)]
+public sealed class AdminAccount
+{
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    [Required]
+    [MaxLength(128)]
+    public required string Username { get; set; }
+
+    [Required]
+    [MaxLength(512)]
+    public required string PasswordHash { get; set; }
+
+    public AdminPermission Permissions { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public DateTimeOffset? LastLoginAt { get; set; }
+}

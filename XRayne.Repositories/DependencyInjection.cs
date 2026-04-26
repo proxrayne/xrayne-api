@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using XRayne.Repositories.Admins;
 
 namespace XRayne.Repositories;
 
@@ -23,6 +24,8 @@ public static class DependencyInjection
         {
             options.UseNpgsql(connectionString);
         });
+
+        services.AddScoped<IAdminAccountRepository, AdminAccountRepository>();
 
         return services;
     }

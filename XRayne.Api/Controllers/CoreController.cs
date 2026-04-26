@@ -1,14 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using XRayne.Core.Auth;
 using XRayne.Infrastructure.Services;
 
 namespace XRayne.Api.Controllers;
 
-[ApiController]
 [Route("api/core")]
-public sealed class CoreController(ILogger<CoreController> logger, ICoreService coreService) : ControllerBase
+[Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
+public sealed class CoreController(ILogger<CoreController> logger, ICoreService coreService) : ApiControllerBase
 {
     [HttpPost("start")]
     [EndpointSummary("Start xray-core")]
+    [EndpointDescription("Starts the xray-core instance managed by this node. Requires the change_xray_settings permission or super_admin.")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> StartXray()
     {

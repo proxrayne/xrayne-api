@@ -1,8 +1,13 @@
 using System.Globalization;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Serilog;
+using XRayne.Api.Auth;
 using XRayne.Core;
 using XRayne.Infrastructure;
+using XRayne.Infrastructure.Auth;
 using XRayne.Repositories;
 
 Log.Logger = new LoggerConfiguration()
@@ -12,6 +17,7 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+    var IsDocsEnabled = builder.Configuration.GetValue("Docs", false);
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
@@ -26,11 +32,38 @@ try
             sinkMapCountLimit: 1));
 
     builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddOpenApi();
+    builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+    if (IsDocsEnabled)
+    {
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddOpenApi();
+    }
+
+    var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtOptions.Issuer,
+                ValidAudience = jwtOptions.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret))
+            };
+        });
+
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddAdminPermissionPolicies();
+    });
 
     builder.Services.AddCoreDependencies(builder.Configuration);
-
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddRepositories(builder.Configuration);
 
@@ -38,7 +71,7 @@ try
 
     app.UseSerilogRequestLogging();
 
-    if (app.Configuration.GetValue("Docs", false))
+    if (IsDocsEnabled)
     {
         app.MapOpenApi();
         app.MapScalarApiReference(options =>
@@ -49,8 +82,10 @@ try
         });
     }
 
-    // app.UseDefaultFiles();
-    // app.UseStaticFiles();
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.MapControllers();
 
     app.Run();

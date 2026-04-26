@@ -1,15 +1,19 @@
 using System.CommandLine;
+using XRayne.Cli.Commands.Admin;
 using XRayne.Cli.Commands.Xray;
 
 namespace XRayne.Cli.Commands;
 
-public sealed class RootCommandFactory(XrayCommandFactory xrayCommandFactory)
+public sealed class RootCommandFactory(
+    XrayCommand xrayCommand,
+    AdminCommand adminCommand)
 {
     public RootCommand Create()
     {
         return new RootCommand("XRayne CLI")
         {
-            xrayCommandFactory.Create()
+            xrayCommand,
+            adminCommand
         };
     }
 }

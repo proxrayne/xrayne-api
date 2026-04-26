@@ -1,0 +1,67 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using XRayne.Api.Requests;
+using XRayne.Api.Responses;
+using XRayne.Infrastructure.Auth;
+using XRayne.Repositories.Admins;
+
+namespace XRayne.Api.Controllers;
+
+[Route("api/auth")]
+public sealed class AuthController(
+    IAdminAccountRepository adminAccounts,
+    IPasswordHasher passwordHasher,
+    IJwtTokenService jwtTokenService,
+    IOptions<JwtOptions> jwtOptions,
+    IMapper mapper) : ApiControllerBase
+{
+    [HttpGet("me")]
+    [Authorize]
+    [EndpointSummary("Get current administrator account")]
+    [EndpointDescription("Returns the administrator account associated with the current JWT access token.")]
+    [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Me(CancellationToken ct)
+    {
+        if (!TryGetAdminId(out var adminId))
+        {
+            return Unauthorized("Invalid JWT access token.");
+        }
+
+        var account = await adminAccounts.GetByIdAsync(adminId, ct);
+        if (account is null)
+        {
+            return NotFound("Admin account not found.");
+        }
+
+        return Ok(mapper.Map<AdminDto>(account));
+    }
+
+    [HttpPost("login")]
+    [AllowAnonymous]
+    [EndpointSummary("Authenticate administrator")]
+    [EndpointDescription("Authenticates an administrator by username and password and returns a JWT access token.")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
+    {
+        var account = await adminAccounts.GetByUsernameAsync(request.Username, ct);
+        if (account is null || !passwordHasher.VerifyPassword(request.Password, account.PasswordHash))
+        {
+            return Unauthorized("Invalid username or password.");
+        }
+
+        var updatedAccount = await adminAccounts.SetLastLoginAsync(account.Id, DateTimeOffset.UtcNow, ct);
+
+        var accessToken = jwtTokenService.CreateAccessToken(account.Id, account.Username, account.Permissions);
+        var expireAt = DateTime.UtcNow.AddMinutes(jwtOptions.Value.AccessTokenLifetimeMinutes);
+
+        return Ok(new LoginResponse(
+            accessToken,
+            expireAt,
+            mapper.Map<AdminDto>(updatedAccount ?? account)));
+    }
+}
