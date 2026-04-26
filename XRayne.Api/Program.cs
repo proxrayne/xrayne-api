@@ -19,6 +19,8 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
     var IsDocsEnabled = builder.Configuration.GetValue("Docs", false);
+    var allowedSpaOrigins = builder.Configuration.GetSection("Cors:SpaOrigins").Get<string[]>()
+        ?? [];
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
@@ -34,6 +36,16 @@ try
 
     builder.Services.AddControllers();
     builder.Services.AddAutoMapper(typeof(Program).Assembly);
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("SpaClient", policy =>
+        {
+            policy
+                .WithOrigins(allowedSpaOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    });
 
     if (IsDocsEnabled)
     {
@@ -114,6 +126,7 @@ try
 
     app.UseDefaultFiles();
     app.UseStaticFiles();
+    app.UseCors("SpaClient");
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

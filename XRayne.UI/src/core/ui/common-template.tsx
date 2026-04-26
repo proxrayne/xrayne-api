@@ -8,7 +8,7 @@ function CommonTemplate({ children }: Props) {
   return (
     <>
       <header className="container">header</header>
-      <main className="container">{children}</main>
+      {children}
       <footer className="container">footer</footer>
     </>
   );

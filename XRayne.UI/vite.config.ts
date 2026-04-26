@@ -8,7 +8,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [mkcert(), reactRouter(), tailwindcss(), tsconfigPaths(), svgr()],
   server: {
-    proxy: {},
+    proxy: {
+      "/api": "http://localhost:5097",
+    },
     host: "127.0.0.1",
   },
 });

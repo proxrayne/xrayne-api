@@ -1,6 +1,13 @@
-import { index, route } from "@react-router/dev/routes";
+import { index, layout, route } from "@react-router/dev/routes";
 
 export default [
-  index("./features/home/routes/main/index.ts"),
-  route("sign-in", "./features/auth/routes/sign-in/index.ts"),
+  layout("features/auth/routes/authorized-layout.tsx", [
+    index("features/home/routes/main/index.ts"),
+  ]),
+
+  layout("features/auth/routes/unauthorized-layout.tsx", [
+    route("sign-in", "./features/auth/routes/sign-in/index.ts"),
+  ]),
+
+  route("*", "features/service/routes/not-found.tsx"),
 ];

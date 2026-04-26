@@ -9,7 +9,9 @@ coverage/
 logs/
 *.user
 *.suo
+*.local
 .DS_Store
 appsettings.Development.local.json
 shared
 .react-router
+build

@@ -20,7 +20,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@core/*": ["./src/core/*"]
+      "@core/*": ["./src/core/*"],
+      "@features/*": ["./src/features/*"]
     }
   },
   "include": [
