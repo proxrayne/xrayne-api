@@ -12,3 +12,4 @@ logs/
 .DS_Store
 appsettings.Development.local.json
 shared
+.react-router

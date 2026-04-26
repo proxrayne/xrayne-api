@@ -1,10 +1,14 @@
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { reactRouter } from "@react-router/dev/vite";
+import tailwindcss from "@tailwindcss/vite";
+import mkcert from "vite-plugin-mkcert";
+import svgr from "vite-plugin-svgr";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [mkcert(), reactRouter(), tailwindcss(), tsconfigPaths(), svgr()],
   server: {
-    port: 5173,
+    proxy: {},
     host: "127.0.0.1",
   },
 });
