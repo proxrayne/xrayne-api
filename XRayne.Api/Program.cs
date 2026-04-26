@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
 using XRayne.Api.Auth;
@@ -37,7 +38,34 @@ try
     if (IsDocsEnabled)
     {
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddOpenApi();
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer((document, _, _) =>
+            {
+                document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Description = "JWT Authorization header using the Bearer scheme."
+                };
+
+                document.SecurityRequirements.Add(new OpenApiSecurityRequirement
+                {
+                    [new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    }] = []
+                });
+
+                return Task.CompletedTask;
+            });
+        });
     }
 
     var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
