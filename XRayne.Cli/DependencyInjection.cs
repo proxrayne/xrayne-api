@@ -15,8 +15,6 @@ public static class DependencyInjection
         services.AddSingleton<XrayCommandFactory>();
 
         services.AddScoped<XrayStartAction>();
-        services.AddScoped<XrayStopAction>();
-        services.AddScoped<XrayRestartAction>();
 
         return services;
     }
