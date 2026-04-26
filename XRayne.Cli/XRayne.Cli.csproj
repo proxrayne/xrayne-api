@@ -1,15 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <AssemblyName>xrayne</AssemblyName>
+    <RuntimeIdentifiers>win-x64;osx-arm64</RuntimeIdentifiers>
+    <SelfContained Condition="'$(RuntimeIdentifier)' != ''">true</SelfContained>
+    <PublishSingleFile Condition="'$(RuntimeIdentifier)' != ''">true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract Condition="'$(RuntimeIdentifier)' != ''">true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile Condition="'$(RuntimeIdentifier)' != ''">true</EnableCompressionInSingleFile>
+    <PublishTrimmed Condition="'$(RuntimeIdentifier)' != ''">false</PublishTrimmed>
   </PropertyGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="../XRayne.Core/XRayne.Core.csproj" />
     <ProjectReference Include="../XRayne.Infrastructure/XRayne.Infrastructure.csproj" />
     <ProjectReference Include="../XRayne.Repositories/XRayne.Repositories.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Serilog.Extensions.Hosting" Version="9.*" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="9.*" />
@@ -19,6 +29,7 @@
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta5.25306.1" />
     <PackageReference Include="Xray.Sdk" Version="0.0.2-beta" />
   </ItemGroup>
+
   <ItemGroup>
     <Content Include="appsettings*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

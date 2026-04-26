@@ -7,10 +7,9 @@ public sealed class RootCommandFactory(XrayCommandFactory xrayCommandFactory)
 {
     public RootCommand Create()
     {
-        var rootCommand = new RootCommand("XRayne CLI");
-        
-        rootCommand.Add(xrayCommandFactory.Create());
-
-        return rootCommand;
+        return new RootCommand("XRayne CLI")
+        {
+            xrayCommandFactory.Create()
+        };
     }
 }

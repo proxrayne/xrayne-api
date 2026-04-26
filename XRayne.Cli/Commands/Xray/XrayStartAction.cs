@@ -33,25 +33,21 @@ public sealed class XrayStartAction(
     public static Command Create(IServiceProvider provider)
     {
 
-        var timeoutOption = new Option<int>(name: "--timeout")
-        {
-            Description = "Timeout for call operation",
-            DefaultValueFactory = _ => 30
-        };
+        // var timeoutOption = new Option<int>(name: "--timeout")
+        // {
+        //     Description = "Timeout for call operation",
+        //     DefaultValueFactory = _ => 30
+        // };
 
-        var command = new Command("start", "Start xray-core process")
-        {
-            timeoutOption
-        };
+        var command = new Command("start", "Start xray-core process");
+        // {
+        //     timeoutOption
+        // };
 
         command.SetAction(async (parsed, ct) =>
         {
             await using var scope = provider.CreateAsyncScope();
             var action = scope.ServiceProvider.GetRequiredService<XrayStartAction>();
-
-            var timeout = parsed.GetValue(timeoutOption);
-
-            Console.WriteLine(timeout);
 
             return await action.ExecuteAsync(ct);
         });
