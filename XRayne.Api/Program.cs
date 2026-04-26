@@ -69,6 +69,8 @@ try
 
     var app = builder.Build();
 
+    await app.Services.MigrateDatabaseAsync();
+
     app.UseSerilogRequestLogging();
 
     if (IsDocsEnabled)
@@ -89,6 +91,10 @@ try
     app.MapControllers();
 
     app.Run();
+}
+catch (HostAbortedException)
+{
+    // EF Core tools abort the host after resolving the application's services at design time.
 }
 catch (Exception exception)
 {

@@ -50,6 +50,8 @@ try
 
     using var app = host.Build();
 
+    await app.Services.MigrateDatabaseAsync();
+
     Log.Information("XRayne CLI started.");
 
     var rootCommand = app.Services.GetRequiredService<RootCommandFactory>().Create();
