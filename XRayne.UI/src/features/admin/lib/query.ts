@@ -23,3 +23,5 @@ export function useAdminAccount() {
 }
 
 useAdminAccount.getOrFetch = () => query.fetchQuery(adminAccountQuery);
+useAdminAccount.setData = (admin: AdminAccount) =>
+  query.setQueryData(adminAccountQuery.queryKey, admin);

@@ -6,6 +6,8 @@ using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
 using XRayne.Api.Auth;
+using XRayne.Api.Filters;
+using XRayne.Api.Responses;
 using XRayne.Core;
 using XRayne.Infrastructure;
 using XRayne.Infrastructure.Auth;
@@ -34,7 +36,10 @@ try
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"),
             sinkMapCountLimit: 1));
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<ApiExceptionFilter>();
+    });
     builder.Services.AddAutoMapper(typeof(Program).Assembly);
     builder.Services.AddCors(options =>
     {
@@ -112,7 +117,7 @@ try
     await app.Services.MigrateDatabaseAsync();
 
     app.UseSerilogRequestLogging();
-
+   
     if (IsDocsEnabled)
     {
         app.MapOpenApi();
@@ -124,12 +129,14 @@ try
         });
     }
 
-    app.UseDefaultFiles();
-    app.UseStaticFiles();
+
     app.UseCors("SpaClient");
+
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
 
     app.Run();
 }

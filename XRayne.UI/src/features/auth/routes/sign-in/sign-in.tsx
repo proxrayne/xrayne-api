@@ -1,124 +1,121 @@
-import { Button, Input } from "@heroui/react";
-import { type FormEvent, useState } from "react";
-import { useNavigate } from "react-router";
+import {
+  Button,
+  Card,
+  Checkbox,
+  ErrorMessage,
+  Form,
+  Input,
+  Label,
+  Spinner,
+  TextField,
+} from "@heroui/react";
+import { Controller, useForm } from "react-hook-form";
+import { useNavigate, useSearchParams } from "react-router";
 
-type LoginResponse = {
-  accessToken: string;
-  expireAt: string;
-};
+import { urls } from "@core/lib/urls";
+import { ResponseError } from "@core/lib/errors";
+
+import { useAdminAccount } from "@features/admin";
+import { login } from "@features/auth/lib/api";
 
 function SignIn() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        const message = await readErrorMessage(response);
-        throw new Error(message || "Unable to sign in.");
-      }
-
-      const result = (await response.json()) as LoginResponse;
-
-      localStorage.setItem("xrayne.accessToken", result.accessToken);
-      localStorage.setItem("xrayne.accessTokenExpiresAt", result.expireAt);
-
-      await navigate("/");
-    } catch (exception) {
-      setError(
-        exception instanceof Error ? exception.message : "Unable to sign in.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const [search] = useSearchParams();
+  const {
+    control,
+    handleSubmit,
+    register,
+    setError,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm({
+    defaultValues: { username: "", password: "", saveMe: true },
+  });
 
   return (
-    <main className="px-4 py-10">
-      <section className="mx-auto flex w-full max-w-sm flex-col justify-center">
-        <div className="mb-8">
-          <p className="mb-2 text-sm font-medium text-primary">XRayne</p>
-          <h1 className="text-3xl font-semibold">Sign in</h1>
-          <p className="mt-2 text-sm text-muted">
+    <main className="w-full px-4 py-10 flex-auto flex flex-col items-center justify-center">
+      <Card className="max-w-md w-full">
+        <Card.Header>
+          <Card.Title className="text-lg leading-8">Sign in</Card.Title>
+          <Card.Description>
             Use your administrator credentials to continue.
-          </p>
-        </div>
+          </Card.Description>
+        </Card.Header>
+        <Form
+          onSubmit={handleSubmit(async ({ password, username, saveMe }) => {
+            debugger;
+            try {
+              const { admin } = await login(username, password, { saveMe });
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Username</span>
-            <Input
-              autoComplete="username"
-              autoFocus
-              fullWidth
-              name="username"
-              placeholder="admin"
-              required
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
+              useAdminAccount.setData(admin);
+
+              navigate(search.get("return_url") ?? urls.root(), {
+                replace: true,
+              });
+            } catch (error) {
+              setError("root", {
+                message:
+                  error instanceof ResponseError
+                    ? error.message
+                    : "Unhandled error.",
+              });
+            }
+          })}
+        >
+          <Card.Content className="flex flex-col gap-4">
+            <TextField name="username" type="text">
+              <Label>Username</Label>
+              <Input
+                placeholder="admin"
+                variant="secondary"
+                {...register("username", { required: true })}
+              />
+            </TextField>
+            <TextField name="password" type="password">
+              <Label>Password</Label>
+              <Input
+                placeholder="••••••••"
+                variant="secondary"
+                {...register("password", { required: true })}
+              />
+            </TextField>
+
+            <Controller
+              control={control}
+              name="saveMe"
+              render={({ field: { value, ...field } }) => (
+                <Checkbox
+                  id="save-me"
+                  variant="secondary"
+                  isSelected={value}
+                  {...field}
+                >
+                  <Checkbox.Control {...register("saveMe")}>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <Label htmlFor="save-me">Remember me</Label>
+                  </Checkbox.Content>
+                </Checkbox>
+              )}
             />
-          </label>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Password</span>
-            <Input
-              autoComplete="current-password"
-              fullWidth
-              name="password"
-              placeholder="Enter password"
-              required
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
-
-          {error && (
-            <div className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </div>
-          )}
-
-          <Button fullWidth isDisabled={isSubmitting} type="submit">
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
-      </section>
+            {errors.root && <ErrorMessage>{errors.root.message}</ErrorMessage>}
+          </Card.Content>
+          <Card.Footer className="mt-6 flex flex-col gap-2">
+            <Button
+              className="w-full"
+              type="submit"
+              isPending={isSubmitting}
+              isDisabled={!isValid}
+            >
+              {isSubmitting && <Spinner className="size-4 text-white" />}
+              Sign in
+            </Button>
+          </Card.Footer>
+        </Form>
+      </Card>
     </main>
   );
-}
-
-async function readErrorMessage(response: Response) {
-  const contentType = response.headers.get("content-type");
-
-  if (contentType?.includes("application/json")) {
-    const body = await response.json();
-
-    if (typeof body === "string") {
-      return body;
-    }
-
-    if (body && typeof body === "object" && "message" in body) {
-      return String(body.message);
-    }
-  }
-
-  return await response.text();
 }
 
 export default SignIn;

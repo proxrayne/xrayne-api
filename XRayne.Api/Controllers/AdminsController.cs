@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using XRayne.Api.Exceptions;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
 using XRayne.Core.Auth;
@@ -28,7 +29,7 @@ public sealed class AdminsController(
     {
         if (await adminAccounts.ExistsAsync(request.Username, cancellationToken))
         {
-            return Conflict($"Admin account '{request.Username}' already exists.");
+            throw new ConflictException($"Admin account '{request.Username}' already exists.");
         }
 
         var account = new AdminAccount
@@ -59,7 +60,7 @@ public sealed class AdminsController(
             cancellationToken);
         if (account is null)
         {
-            return NotFound("Admin account not found.");
+            throw new NotFoundException("Admin account not found.");
         }
 
         return NoContent();
@@ -81,7 +82,7 @@ public sealed class AdminsController(
             cancellationToken);
         if (account is null)
         {
-            return NotFound("Admin account not found.");
+            throw new NotFoundException("Admin account not found.");
         }
 
         return Ok(mapper.Map<AdminDto>(account));
@@ -99,7 +100,7 @@ public sealed class AdminsController(
         var deleted = await adminAccounts.DeleteAsync(id, cancellationToken);
         if (!deleted)
         {
-            return NotFound("Admin account not found.");
+            throw new NotFoundException("Admin account not found.");
         }
 
         return NoContent();

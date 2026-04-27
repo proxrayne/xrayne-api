@@ -23,7 +23,7 @@ import "@core/styles/app.css";
 
 export function Layout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" suppressHydrationWarning translate="no">
+    <html lang="en" suppressHydrationWarning translate="no" className="h-full">
       <head>
         <meta charSet="utf-8" />
         <meta
@@ -41,7 +41,7 @@ export function Layout({ children }: PropsWithChildren) {
         <Meta />
         <Links />
       </head>
-      <body className="min-h-screen bg-background antialiased flex flex-col items-center">
+      <body className="bg-background text-foreground antialiased flex flex-col items-center">
         <ThemeProvider
           attribute={["class", "data-theme"]}
           defaultTheme="system"

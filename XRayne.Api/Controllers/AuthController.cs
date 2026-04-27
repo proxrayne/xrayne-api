@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using XRayne.Api.Exceptions;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
 using XRayne.Infrastructure.Auth;
@@ -28,13 +29,13 @@ public sealed class AuthController(
     {
         if (!TryGetAdminId(out var adminId))
         {
-            return Unauthorized("Invalid JWT access token.");
+            throw new UnauthorizedException("Invalid JWT access token.");
         }
 
         var account = await adminAccounts.GetByIdAsync(adminId, ct);
         if (account is null)
         {
-            return NotFound("Admin account not found.");
+            throw new NotFoundException("Admin account not found.");
         }
 
         return Ok(mapper.Map<AdminDto>(account));
@@ -45,13 +46,13 @@ public sealed class AuthController(
     [EndpointSummary("Authenticate administrator")]
     [EndpointDescription("Authenticates an administrator by username and password and returns a JWT access token.")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
         var account = await adminAccounts.GetByUsernameAsync(request.Username, ct);
         if (account is null || !passwordHasher.VerifyPassword(request.Password, account.PasswordHash))
         {
-            return Unauthorized("Invalid username or password.");
+            throw new Exception("Invalid username or password.");
         }
 
         var updatedAccount = await adminAccounts.SetLastLoginAsync(account.Id, DateTimeOffset.UtcNow, ct);

@@ -10,10 +10,12 @@ export class ResponseError extends Error {
     this.name = name;
   }
 
-  static axios(error: AxiosError<{ message: string; name: string }>) {
+  static axios(
+    error: AxiosError<{ detail: string; name: string; status: number }>,
+  ) {
     let message: string;
-    if (error.response?.data?.message) {
-      message = error.response.data.message;
+    if (error.response?.data?.detail) {
+      message = error.response.data.detail;
     } else if (error.message) {
       message = error.message;
     } else {
