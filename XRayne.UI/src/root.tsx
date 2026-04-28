@@ -16,8 +16,10 @@ import { Route } from "./+types/root";
 import { query } from "@core/lib/query";
 import { constructMetadata } from "@core/lib/meta";
 import CommonTemplate from "@core/ui/common-template";
+import PageProgress from "@core/ui/page-progress";
 
 import { ErrorScreen, parseRouteError } from "@features/service";
+import { adminAccountQuery } from "@features/admin";
 
 import "@core/styles/app.css";
 
@@ -64,7 +66,7 @@ export default () => {
   useEffect(() => {
     const handler = async () => {
       await query.invalidateQueries({
-        queryKey: ["admin-account"],
+        queryKey: adminAccountQuery.queryKey,
         refetchType: "none",
       });
       await revalidate();
@@ -80,7 +82,12 @@ export default () => {
     };
   }, []);
 
-  return <Outlet />;
+  return (
+    <>
+      <PageProgress />
+      <Outlet />
+    </>
+  );
 };
 
 export const links: Route.LinksFunction = () => [];

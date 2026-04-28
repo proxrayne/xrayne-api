@@ -53,12 +53,11 @@ export function setAuthorizationToken(
 ) {
   cookies.set(AUTH_TOKEN_KEY, token, {
     path: "/",
-    domain: import.meta.env.VITE_COOKIE_DOMAIN,
     ...(save && { expires: expire ?? addWeeks(new Date(), 1) }),
   });
 }
 
 export function clearAuthorizationToken() {
-  cookies.delete(AUTH_TOKEN_KEY, import.meta.env.VITE_COOKIE_DOMAIN);
+  cookies.delete(AUTH_TOKEN_KEY);
   document.dispatchEvent(new CustomEvent("unauthorize"));
 }

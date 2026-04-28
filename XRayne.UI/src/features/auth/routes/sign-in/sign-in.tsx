@@ -42,7 +42,6 @@ function SignIn() {
         </Card.Header>
         <Form
           onSubmit={handleSubmit(async ({ password, username, saveMe }) => {
-            debugger;
             try {
               const { admin } = await login(username, password, { saveMe });
 

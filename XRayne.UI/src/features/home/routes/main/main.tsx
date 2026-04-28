@@ -1,10 +1,12 @@
-import CommonTemplate from "@core/ui/common-template";
+import Page from "@core/ui/page";
+
+import { SidebarTrigger } from "@features/auth/ui/sidebar";
 
 function Main() {
   return (
-    <CommonTemplate>
-      <div className="mx-auto container">content</div>
-    </CommonTemplate>
+    <Page>
+      <Page.Header>Title</Page.Header>
+    </Page>
   );
 }
 

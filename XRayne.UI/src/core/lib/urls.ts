@@ -5,6 +5,26 @@ export const urls = new (class Urls {
     return new Path({ pathname: "/" });
   }
 
+  users() {
+    return new Path({ pathname: "/users" });
+  }
+
+  inbounds() {
+    return new Path({ pathname: "/inbounds" });
+  }
+
+  outbounds() {
+    return new Path({ pathname: "/outbounds" });
+  }
+
+  routing() {
+    return new Path({ pathname: "/routing" });
+  }
+
+  settings() {
+    return new Path({ pathname: "/settings" });
+  }
+
   signIn(returnUrl?: string) {
     const search = new URLSearchParams();
     if (returnUrl) {
