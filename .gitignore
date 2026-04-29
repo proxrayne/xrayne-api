@@ -14,4 +14,4 @@ logs/
 appsettings.Development.local.json
 shared
 .react-router
-build
+build/
