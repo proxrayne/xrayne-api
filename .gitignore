@@ -12,6 +12,10 @@ logs/
 *.local
 .DS_Store
 appsettings.Development.local.json
+.env
+.env.*
+!.env.example
+data/
 shared
 .react-router
 build/
