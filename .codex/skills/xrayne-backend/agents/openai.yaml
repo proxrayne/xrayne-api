@@ -1,0 +1,4 @@
+interface:
+  display_name: "XRayne Backend"
+  short_description: "API, CLI, EF, auth, and core service patterns"
+  default_prompt: "Use $xrayne-backend to implement or review backend changes in XRayne."
