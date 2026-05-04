@@ -1,4 +1,5 @@
 using System.CommandLine;
+using XRayne.Cli.Commands.Api;
 using XRayne.Cli.Commands.Admin;
 using XRayne.Cli.Commands.Xray;
 
@@ -7,6 +8,7 @@ namespace XRayne.Cli.Commands;
 public sealed class RootCommandFactory(
     XrayCommand xrayCommand,
     AdminCommand adminCommand,
+    ApiCommand apiCommand,
     VersionCommand versionCommand)
 {
     public RootCommand Create()
@@ -15,6 +17,7 @@ public sealed class RootCommandFactory(
         {
             xrayCommand,
             adminCommand,
+            apiCommand,
             versionCommand
         };
     }

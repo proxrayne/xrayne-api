@@ -109,11 +109,14 @@ Current command tree:
 ```text
 xrayne
   version
+  api install [--version latest|tag]
   admin create <username> --password|-p <password> [--permissions]
   xray start
 ```
 
 Database-dependent commands should call `MigrateDatabaseAsync()` inside their action before using repositories. This keeps commands such as `--help`, Docker/compose management, and xray-core lifecycle commands usable when the database container is not running yet.
+
+`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env` plus `docker-compose.yml`, and starts `docker compose up -d`. It must not require the database to be running before installation.
 
 ## Xray Core
 

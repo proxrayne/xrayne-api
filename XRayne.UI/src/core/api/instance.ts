@@ -5,12 +5,38 @@ import { ResponseError } from "@core/lib/errors";
 import { cookies } from "@core/lib/cookie";
 
 export const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_DOMAIN ?? ""}/api`,
+  baseURL: `${getApiDomain()}/api`,
   headers: {
     "Content-Type": "application/json; charset=utf-8",
     "X-Platform": "Web",
   },
 });
+
+function getApiDomain() {
+  if (import.meta.env.VITE_API_DOMAIN) {
+    return import.meta.env.VITE_API_DOMAIN;
+  }
+
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  const [firstSegment] = window.location.pathname
+    .split("/")
+    .filter(Boolean);
+  const knownRootSegments = new Set([
+    "sign-in",
+    "users",
+    "inbounds",
+    "outbounds",
+    "routing",
+    "settings",
+  ]);
+
+  return firstSegment && !knownRootSegments.has(firstSegment)
+    ? `/${firstSegment}`
+    : "";
+}
 
 api.interceptors.request.use((config) => {
   const authToken = getAuthorizationToken();

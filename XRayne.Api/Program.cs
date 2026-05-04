@@ -113,10 +113,16 @@ try
     builder.Services.AddRepositories(builder.Configuration);
 
     var app = builder.Build();
+    var pathBase = NormalizePathBase(app.Configuration["PathBase"]);
 
     await app.Services.MigrateDatabaseAsync();
 
     app.UseSerilogRequestLogging();
+
+    if (!string.IsNullOrWhiteSpace(pathBase))
+    {
+        app.UsePathBase(pathBase);
+    }
    
     if (IsDocsEnabled)
     {
@@ -165,4 +171,18 @@ catch (Exception exception)
 finally
 {
     Log.CloseAndFlush();
+}
+
+static string NormalizePathBase(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return string.Empty;
+    }
+
+    var pathBase = value.Trim().Trim('/');
+
+    return pathBase.Length == 0
+        ? string.Empty
+        : $"/{pathBase}";
 }

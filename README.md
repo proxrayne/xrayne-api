@@ -181,6 +181,8 @@ API должно предоставлять методы для:
 CLI должно позволять выполнять основные операции из терминала:
 
 ```bash
+xrayne version
+xrayne api install --version latest
 xrayne status
 xrayne start
 xrayne stop
