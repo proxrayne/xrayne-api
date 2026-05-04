@@ -22,10 +22,10 @@ XRayne.Node is a node and admin panel for managing `xray-core`. The intended sur
 
 ## Important Current State
 
-- API/UI Docker image build has been removed. Do not add it back casually.
-- `docker-compose.yml` may be absent; if restored, keep it for infrastructure dependencies only.
+- API/UI Docker image build is a release artifact: GitHub Actions builds the API image with UI files in `wwwroot`, saves it as `tar.gz`, and attaches it to releases.
+- `docker-compose.yml` may be absent; if restored for installation, it should run the prebuilt image instead of using `build:`.
 - `.env.example` contains PostgreSQL, JWT, CORS, docs, and Xray config keys, not API container settings.
-- `.dockerignore` still exists as a general ignore list, but there is no API Dockerfile.
+- `XRayne.Api/Dockerfile` builds UI first, copies `XRayne.UI/build/client` into `XRayne.Api/wwwroot`, publishes API, and produces the runtime image.
 
 ## Common Commands
 
@@ -59,7 +59,6 @@ npm run build
 
 ## CI And Packaging
 
-- CLI publish workflow restores and publishes `XRayne.Cli/XRayne.Cli.csproj` for each RID.
+- Release artifact workflow restores and publishes `XRayne.Cli/XRayne.Cli.csproj` for each RID.
+- The same workflow builds the API+UI Docker image, saves it as `xrayne-api-image-<version>.tar.gz`, uploads it as a build artifact, and attaches it to tagged releases.
 - Release upload happens only for tag refs.
-- Avoid adding API image workflows unless explicitly requested.
-

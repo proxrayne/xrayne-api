@@ -6,14 +6,16 @@ namespace XRayne.Cli.Commands;
 
 public sealed class RootCommandFactory(
     XrayCommand xrayCommand,
-    AdminCommand adminCommand)
+    AdminCommand adminCommand,
+    VersionCommand versionCommand)
 {
     public RootCommand Create()
     {
         return new RootCommand("XRayne CLI")
         {
             xrayCommand,
-            adminCommand
+            adminCommand,
+            versionCommand
         };
     }
 }

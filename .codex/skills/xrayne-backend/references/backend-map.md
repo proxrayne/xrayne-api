@@ -108,6 +108,7 @@ Current command tree:
 
 ```text
 xrayne
+  version
   admin create <username> --password|-p <password> [--permissions]
   xray start
 ```

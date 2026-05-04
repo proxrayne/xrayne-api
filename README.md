@@ -44,7 +44,7 @@ XRayne.Node - нода и панель управления для работы 
 
 - `xray-core`
 - systemd для Linux-сервисов
-- Docker / Docker Compose на последующих этапах
+- Docker image для релизной сборки API + UI и Docker Compose для запуска готовых артефактов
 - PostgreSQL для хранения состояния панели
 - Entity Framework Core как ORM
 - Npgsql для подключения к PostgreSQL
@@ -276,7 +276,7 @@ xrayne node register
 - Добавить integration-тесты API.
 - Добавить тесты генерации конфигураций.
 - Подготовить systemd unit.
-- Подготовить Dockerfile и docker-compose.
+- Подготовить Docker image API + UI и docker-compose для запуска готового образа.
 - Подготовить инструкции установки.
 
 ## Предварительный список API endpoints

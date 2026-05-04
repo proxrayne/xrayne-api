@@ -3,13 +3,16 @@
 FROM node:22-alpine AS ui-build
 WORKDIR /src/XRayne.UI
 
+ARG VITE_API_DOMAIN=
+ENV VITE_API_DOMAIN=${VITE_API_DOMAIN}
+
 COPY XRayne.UI/package.json XRayne.UI/package-lock.json ./
 RUN npm ci
 
 COPY XRayne.UI/ ./
 RUN npm run build
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS api-build
 WORKDIR /src
 
 COPY Directory.Build.props global.json nuget.config XRayne.sln ./
@@ -23,7 +26,8 @@ RUN dotnet restore XRayne.Api/XRayne.Api.csproj
 
 COPY . .
 COPY --from=ui-build /src/XRayne.UI/build/client /ui-build/client
-RUN rm -rf XRayne.Api/wwwroot/* && \
+RUN rm -rf XRayne.Api/wwwroot && \
+    mkdir -p XRayne.Api/wwwroot && \
     cp -R /ui-build/client/. XRayne.Api/wwwroot/ && \
     test -f XRayne.Api/wwwroot/index.html
 
@@ -43,7 +47,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
 
 RUN mkdir -p /app/logs /app/shared
 
-COPY --from=build /app/publish .
+COPY --from=api-build /app/publish .
 
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "XRayne.Api.dll"]

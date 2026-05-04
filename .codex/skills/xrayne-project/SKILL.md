@@ -16,9 +16,8 @@ Read `references/project-map.md` for the current structure, commands, CI, and no
 
 ## Project Rules
 
-- Keep API/UI Docker image builds out of the project. Do not recreate `XRayne.Api/Dockerfile`, API image workflows, or compose services that build/run the API/UI image unless the user explicitly reverses this decision.
-- Treat docker-compose, if present, as infrastructure-only, currently PostgreSQL-oriented.
+- Build API/UI Docker image artifacts in GitHub Actions when publishing releases. The image should contain the API plus the built UI in `wwwroot` and be attached to the release as `tar.gz`.
+- Treat docker-compose, if present, as installer/runtime orchestration that uses prebuilt release images rather than local `build:`.
 - Preserve user changes in the dirty worktree. This repo often has in-flight edits.
 - Prefer established folder boundaries: domain and permission constants in `XRayne.Core`, implementations in `XRayne.Infrastructure`, EF persistence in `XRayne.Repositories`, HTTP in `XRayne.Api`, CLI commands in `XRayne.Cli`, frontend in `XRayne.UI`.
 - Verify with focused commands for the touched area rather than broad expensive runs when the change is narrow.
-

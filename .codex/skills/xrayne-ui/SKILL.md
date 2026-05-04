@@ -19,7 +19,7 @@ Read `references/ui-map.md` before UI edits. Keep changes consistent with the ex
 - Use TanStack Query helpers near each feature's `lib/query.ts`.
 - Use HeroUI components already present in the project for forms, cards, buttons, sidebar, and feedback.
 - Keep UI text in English unless the existing screen is already localized.
-- Do not add Docker image build or API container assumptions for frontend delivery.
+- The release Docker image builds this UI and embeds `build/client` into the API `wwwroot`; keep production builds compatible with same-origin `/api` delivery.
 
 ## Validation
 
@@ -38,4 +38,3 @@ npm run dev
 ```
 
 The Vite dev server proxies `/api` to `http://localhost:5097`.
-

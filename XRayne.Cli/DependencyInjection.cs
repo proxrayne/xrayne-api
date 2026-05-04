@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddSingleton<ICliConsole, CliConsole>();
 
         services.AddSingleton<RootCommandFactory>();
+        services.AddSingleton<VersionCommand>();
         services.AddSingleton<XrayCommand>();
         services.AddSingleton<XrayStartCommand>();
         services.AddSingleton<AdminCommand>();

@@ -19,7 +19,7 @@ Read `references/backend-map.md` before backend edits. Use it to place code in t
 - Use EF Core async methods with cancellation tokens in repositories.
 - Add migrations through `add-migration.ps1` or equivalent `dotnet ef migrations add` command targeting `AppDbContext`.
 - For CLI commands, derive from `System.CommandLine.Command`, inject `IServiceProvider`, create an async scope in `SetAction`, and return integer exit codes.
-- Do not add API/UI Docker image build artifacts.
+- API/UI Docker image artifacts are produced by release GitHub Actions; backend code should keep the image build reproducible and avoid local-only assumptions.
 
 ## Validation
 
@@ -37,4 +37,3 @@ If touching EF:
 ```powershell
 dotnet ef database update --project XRayne.Repositories --startup-project XRayne.Api --context AppDbContext
 ```
-

@@ -5,7 +5,7 @@ import { ResponseError } from "@core/lib/errors";
 import { cookies } from "@core/lib/cookie";
 
 export const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_DOMAIN}/api`,
+  baseURL: `${import.meta.env.VITE_API_DOMAIN ?? ""}/api`,
   headers: {
     "Content-Type": "application/json; charset=utf-8",
     "X-Platform": "Web",

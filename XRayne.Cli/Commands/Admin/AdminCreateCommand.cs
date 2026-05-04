@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Core.Auth;
 using XRayne.Infrastructure.Auth;
+using XRayne.Repositories;
 using XRayne.Repositories.Admins;
 using XRayne.Repositories.Entities;
 
@@ -66,6 +67,8 @@ public sealed class AdminCreateCommand : Command
 
         try
         {
+            await serviceProvider.MigrateDatabaseAsync(cancellationToken);
+
             var exists = await adminAccounts.ExistsAsync(username, cancellationToken);
             if (exists)
             {
