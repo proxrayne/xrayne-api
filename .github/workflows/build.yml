@@ -85,8 +85,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           files: ${{ matrix.archive-path }}
           prerelease: ${{ startsWith(github.ref_name, 'v') && (contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta')) }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+          token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
 
   publish-api-image:
     name: Publish API image tar.gz
@@ -143,5 +142,4 @@ jobs:
           tag_name: ${{ github.ref_name }}
           files: artifacts/${{ steps.image.outputs.archive }}
           prerelease: ${{ startsWith(github.ref_name, 'v') && (contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta')) }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+          token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
