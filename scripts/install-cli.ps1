@@ -177,7 +177,7 @@ if ([string]::IsNullOrWhiteSpace($InstallDirectory)) {
         $InstallDirectory = Join-Path $env:LOCALAPPDATA "XRayne\bin"
     }
     else {
-        $InstallDirectory = "/usr/local/bin"
+        $InstallDirectory = "/opt/xrayne/cli"
     }
 }
 
@@ -216,22 +216,36 @@ try {
         $targetPath = Join-Path $InstallDirectory "xrayne.exe"
 
         if ((Test-Path $targetPath) -and -not $Force) {
-            Write-Host "Replacing existing CLI at '$targetPath'."
+            Write-Host "Replacing existing CLI in '$InstallDirectory'."
         }
 
-        Copy-Item -Path $executablePath -Destination $targetPath -Force
+        Copy-Item -Path (Join-Path $extractDirectory "*") -Destination $InstallDirectory -Recurse -Force
         Add-WindowsPath -Directory $InstallDirectory
     }
     else {
-        $targetPath = Join-Path $InstallDirectory $ExecutableName
-        Install-UnixExecutable -SourcePath $executablePath -TargetDirectory $InstallDirectory -TargetPath $targetPath
-        Add-UnixPath -Directory $InstallDirectory
+        $binDirectory = "/usr/local/bin"
+        $targetPath = Join-Path $binDirectory $ExecutableName
+        $wrapperPath = Join-Path $temporaryDirectory "xrayne-wrapper"
+        Set-Content -Path $wrapperPath -Value @"
+#!/usr/bin/env sh
+export XRAYNE_CLI_CONFIG_DIR="$InstallDirectory"
+cd "$InstallDirectory"
+exec "$InstallDirectory/$ExecutableName" "`$@"
+"@
+
+        Invoke-Native "sudo" @("mkdir", "-p", $InstallDirectory)
+        Invoke-Native "sudo" @("mkdir", "-p", $binDirectory)
+        Invoke-Native "sudo" @("cp", "-R", "$extractDirectory/.", $InstallDirectory)
+        Invoke-Native "sudo" @("chmod", "+x", "$InstallDirectory/$ExecutableName")
+        Install-UnixExecutable -SourcePath $wrapperPath -TargetDirectory $binDirectory -TargetPath $targetPath
+        Add-UnixPath -Directory $binDirectory
     }
 
     Write-Host ""
     Write-Host "XRayne CLI installed successfully."
     Write-Host "Version: $($release.tag_name)"
-    Write-Host "Path: $targetPath"
+    Write-Host "Application directory: $InstallDirectory"
+    Write-Host "Command path: $targetPath"
     Write-Host ""
     Write-Host "Try: xrayne version"
 }

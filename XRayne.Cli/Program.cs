@@ -19,8 +19,14 @@ try
 
     host.ConfigureAppConfiguration((context, configuration) =>
     {
-        configuration.SetBasePath(AppContext.BaseDirectory);
-        configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+        var configDirectory = Environment.GetEnvironmentVariable("XRAYNE_CLI_CONFIG_DIR");
+        if (string.IsNullOrWhiteSpace(configDirectory))
+        {
+            configDirectory = AppContext.BaseDirectory;
+        }
+
+        configuration.SetBasePath(configDirectory);
+        configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
         configuration.AddJsonFile(
             $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
             optional: true,

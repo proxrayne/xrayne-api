@@ -3,7 +3,8 @@ set -eu
 
 REPOSITORY="VanyaKrotov/xrayne"
 VERSION="latest"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="/opt/xrayne/cli"
+BIN_DIR="/usr/local/bin"
 EXECUTABLE="xrayne"
 
 while [ "$#" -gt 0 ]; do
@@ -14,6 +15,10 @@ while [ "$#" -gt 0 ]; do
       ;;
     --install-dir)
       INSTALL_DIR="${2:-}"
+      shift 2
+      ;;
+    --bin-dir)
+      BIN_DIR="${2:-}"
       shift 2
       ;;
     *)
@@ -30,6 +35,11 @@ fi
 
 if [ -z "$INSTALL_DIR" ]; then
   echo "--install-dir value cannot be empty." >&2
+  exit 1
+fi
+
+if [ -z "$BIN_DIR" ]; then
+  echo "--bin-dir value cannot be empty." >&2
   exit 1
 fi
 
@@ -80,19 +90,6 @@ download() {
   fi
 }
 
-fetch_text() {
-  url="$1"
-
-  if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$url"
-  elif command -v wget >/dev/null 2>&1; then
-    wget -q "$url" -O -
-  else
-    echo "curl or wget is required." >&2
-    exit 1
-  fi
-}
-
 ensure_stable_version() {
   case "$VERSION" in
     *-*)
@@ -136,6 +133,8 @@ add_to_path_if_needed() {
 
 TMP_DIR="$(mktemp -d)"
 ARCHIVE_PATH="$TMP_DIR/$ASSET"
+EXTRACT_DIR="$TMP_DIR/extract"
+WRAPPER_PATH="$TMP_DIR/xrayne-wrapper"
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -147,20 +146,32 @@ DOWNLOAD_URL="$(resolve_download_url)"
 echo "Downloading XRayne CLI from $DOWNLOAD_URL"
 download "$DOWNLOAD_URL" "$ARCHIVE_PATH"
 
-tar -xzf "$ARCHIVE_PATH" -C "$TMP_DIR"
+mkdir -p "$EXTRACT_DIR"
+tar -xzf "$ARCHIVE_PATH" -C "$EXTRACT_DIR"
 
-SOURCE_PATH="$(find "$TMP_DIR" -type f -name "$EXECUTABLE" | head -n 1)"
+SOURCE_PATH="$(find "$EXTRACT_DIR" -type f -name "$EXECUTABLE" | head -n 1)"
 if [ -z "$SOURCE_PATH" ]; then
   echo "Executable '$EXECUTABLE' was not found inside '$ASSET'." >&2
   exit 1
 fi
 
+cat > "$WRAPPER_PATH" <<EOF
+#!/usr/bin/env sh
+export XRAYNE_CLI_CONFIG_DIR="$INSTALL_DIR"
+cd "$INSTALL_DIR"
+exec "$INSTALL_DIR/$EXECUTABLE" "\$@"
+EOF
+
 run_root mkdir -p "$INSTALL_DIR"
-run_root install -m 755 "$SOURCE_PATH" "$INSTALL_DIR/$EXECUTABLE"
-add_to_path_if_needed "$INSTALL_DIR"
+run_root mkdir -p "$BIN_DIR"
+run_root cp -R "$EXTRACT_DIR/." "$INSTALL_DIR/"
+run_root chmod +x "$INSTALL_DIR/$EXECUTABLE"
+run_root install -m 755 "$WRAPPER_PATH" "$BIN_DIR/$EXECUTABLE"
+add_to_path_if_needed "$BIN_DIR"
 
 echo ""
 echo "XRayne CLI installed successfully."
-echo "Path: $INSTALL_DIR/$EXECUTABLE"
+echo "Application directory: $INSTALL_DIR"
+echo "Command path: $BIN_DIR/$EXECUTABLE"
 echo ""
 echo "Try: xrayne version"
