@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
 set -eu
 
-INSTALL_DIR="/opt/xrayne/cli"
+APP_DIR="/opt/xrayne"
+INSTALL_DIR="$APP_DIR/cli"
+RESERVE_DIR="/usr/shared/xrayne"
 BIN_DIR="/usr/local/bin"
 EXECUTABLE="xrayne"
 
@@ -61,18 +63,35 @@ remove_path_line() {
   mv "$tmp_file" "$profile"
 }
 
+if [ -d "$APP_DIR" ] && ( [ -f "$APP_DIR/docker-compose.yml" ] || [ -f "$APP_DIR/docker-compose.yaml" ] ); then
+  echo "Stopping and removing Docker containers..."
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    run_root docker compose -f "$APP_DIR/docker-compose.yml" down || echo "Warning: Failed to stop docker containers, proceeding anyway."
+  elif command -v docker-compose >/dev/null 2>&1; then
+    run_root docker-compose -f "$APP_DIR/docker-compose.yml" down || echo "Warning: Failed to stop docker containers, proceeding anyway."
+  else
+    echo "Warning: Docker Compose not found. Containers might still be running."
+  fi
+fi
+# -------------------------------
+
 COMMAND_PATH="$BIN_DIR/$EXECUTABLE"
 
 if [ -e "$COMMAND_PATH" ]; then
   run_root rm -f "$COMMAND_PATH"
 fi
 
-if [ -d "$INSTALL_DIR" ]; then
-  run_root rm -rf "$INSTALL_DIR"
+if [ -d "$APP_DIR" ]; then
+  run_root rm -rf "$APP_DIR"
+fi
+
+if [ -d "$RESERVE_DIR" ]; then
+  run_root rm -rf "$RESERVE_DIR"
 fi
 
 remove_path_line
 
 echo "XRayne CLI removed."
-echo "Removed application directory: $INSTALL_DIR"
+echo "Removed application directory: $APP_DIR"
+echo "Removed reserve directory: $RESERVE_DIR"
 echo "Removed command path: $COMMAND_PATH"
