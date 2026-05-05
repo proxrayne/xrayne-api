@@ -25,6 +25,11 @@ public sealed class GitHubReleaseService : IGitHubReleaseService
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
         var root = document.RootElement;
+        if (root.TryGetProperty("prerelease", out var prereleaseElement) && prereleaseElement.GetBoolean())
+        {
+            throw new InvalidOperationException("Pre-release versions are not supported. Use a stable release tag.");
+        }
+
         var tagName = root.GetProperty("tag_name").GetString()
             ?? throw new InvalidOperationException("GitHub release response does not contain tag_name.");
         var assets = root.GetProperty("assets")

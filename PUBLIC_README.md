@@ -31,19 +31,19 @@ The API image is downloaded and loaded by the CLI during `xrayne api install` an
 Install the latest CLI:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.sh | sh
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.sh)"
 ```
 
 Install a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.sh | sh -s -- --version v0.0.1-beta-3
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.sh)" install-cli --version v1.0.0
 ```
 
 Install to a custom directory:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.sh | sh -s -- --install-dir "$HOME/.local/bin"
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.sh)" install-cli --install-dir "$HOME/.local/bin"
 ```
 
 The shell installer supports:
@@ -53,27 +53,26 @@ The shell installer supports:
 --install-dir <path>
 ```
 
+`latest` resolves to the latest stable GitHub release. Pre-release versions are not supported by the installer.
+
 ### Windows PowerShell
 
 Download and run the PowerShell installer with `curl`:
 
 ```powershell
-curl.exe -fsSL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.ps1 -o install-cli.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install-cli.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$script = [scriptblock]::Create((curl.exe -sL 'https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.ps1')); & $script"
 ```
 
 Install a specific version:
 
 ```powershell
-curl.exe -fsSL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.ps1 -o install-cli.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install-cli.ps1 -Version v0.0.1-beta-3
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$script = [scriptblock]::Create((curl.exe -sL 'https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.ps1')); & $script -Version 'v1.0.0'"
 ```
 
 Install to a custom directory:
 
 ```powershell
-curl.exe -fsSL https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.ps1 -o install-cli.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install-cli.ps1 -InstallDirectory "$env:USERPROFILE\.xrayne\bin"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$script = [scriptblock]::Create((curl.exe -sL 'https://raw.githubusercontent.com/VanyaKrotov/xrayne/main/scripts/install-cli.ps1')); & $script -InstallDirectory \"$env:USERPROFILE\.xrayne\bin\""
 ```
 
 The PowerShell installer supports:
@@ -83,6 +82,8 @@ The PowerShell installer supports:
 -InstallDirectory <path>
 -Force
 ```
+
+`latest` resolves to the latest stable GitHub release. Pre-release versions are not supported by the installer.
 
 ## Manual CLI Installation
 
@@ -115,6 +116,8 @@ Expand-Archive -Path .\xrayne-cli-win-x64.zip -DestinationPath "$env:LOCALAPPDAT
 $env:Path = "$env:Path;$env:LOCALAPPDATA\XRayne\bin"
 xrayne version
 ```
+
+For manual installation of a specific stable version, replace `latest` in the URL with `download/<tag>`, for example `download/v1.0.0`.
 
 ## Install API And Web Panel
 

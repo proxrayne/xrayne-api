@@ -80,6 +80,37 @@ download() {
   fi
 }
 
+fetch_text() {
+  url="$1"
+
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$url"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q "$url" -O -
+  else
+    echo "curl or wget is required." >&2
+    exit 1
+  fi
+}
+
+ensure_stable_version() {
+  case "$VERSION" in
+    *-*)
+      echo "Pre-release versions are not supported by this installer. Use a stable release tag." >&2
+      exit 1
+      ;;
+  esac
+}
+
+resolve_download_url() {
+  if [ "$VERSION" = "latest" ]; then
+    printf '%s\n' "https://github.com/$REPOSITORY/releases/latest/download/$ASSET"
+  else
+    ensure_stable_version
+    printf '%s\n' "https://github.com/$REPOSITORY/releases/download/$VERSION/$ASSET"
+  fi
+}
+
 add_to_path_if_needed() {
   directory="$1"
 
@@ -111,11 +142,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [ "$VERSION" = "latest" ]; then
-  DOWNLOAD_URL="https://github.com/$REPOSITORY/releases/latest/download/$ASSET"
-else
-  DOWNLOAD_URL="https://github.com/$REPOSITORY/releases/download/$VERSION/$ASSET"
-fi
+DOWNLOAD_URL="$(resolve_download_url)"
 
 echo "Downloading XRayne CLI from $DOWNLOAD_URL"
 download "$DOWNLOAD_URL" "$ARCHIVE_PATH"

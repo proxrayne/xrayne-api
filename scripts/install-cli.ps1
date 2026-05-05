@@ -62,13 +62,19 @@ function Get-Release {
         $url = "https://api.github.com/repos/$Repository/releases/tags/$([uri]::EscapeDataString($ReleaseVersion))"
     }
 
-    return Invoke-RestMethod `
+    $release = Invoke-RestMethod `
         -Uri $url `
         -Headers @{
             "User-Agent" = "xrayne-installer"
             "Accept" = "application/vnd.github+json"
             "X-GitHub-Api-Version" = "2022-11-28"
         }
+
+    if ($release.prerelease) {
+        throw "Pre-release versions are not supported by this installer. Use a stable release tag."
+    }
+
+    return $release
 }
 
 function Test-Command {
