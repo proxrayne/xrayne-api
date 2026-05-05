@@ -1,13 +1,11 @@
 using System.CommandLine;
-using System.Diagnostics;
 using System.IO.Compression;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
+using XRayne.Cli.Services;
 
 namespace XRayne.Cli.Commands.Api;
 
@@ -15,7 +13,6 @@ public sealed class ApiInstallCommand : Command
 {
     private const string LatestVersion = "latest";
     private const string ImageName = "xrayne-api";
-    private const string Repository = "VanyaKrotov/xrayne";
     private const string InstallDirectory = "/opt/xrayne";
     private const string DefaultDataFolder = "/usr/shared/xrayne";
     private const int DefaultApiPort = 5000;
@@ -51,11 +48,16 @@ public sealed class ApiInstallCommand : Command
     {
         var console = serviceProvider.GetRequiredService<ICliConsole>();
         var logger = serviceProvider.GetRequiredService<ILogger<ApiInstallCommand>>();
+        var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
+        var shellService = serviceProvider.GetRequiredService<IShellService>();
 
         try
         {
             var options = ReadInstallOptions();
-            var release = await ResolveReleaseAsync(version, cancellationToken);
+            console.Success("Updating system packages and installing required modules.");
+            await EnsureSystemDependenciesAsync(shellService, InstallDirectory, options.DataFolder, cancellationToken);
+
+            var release = await gitHubReleaseService.ResolveReleaseAsync(version, cancellationToken);
             var imageTag = SanitizeDockerTag(release.TagName);
             var assetName = $"xrayne-api-image-{imageTag}.tar.gz";
             var asset = release.Assets.SingleOrDefault(item => string.Equals(item.Name, assetName, StringComparison.Ordinal));
@@ -66,16 +68,17 @@ public sealed class ApiInstallCommand : Command
 
             Directory.CreateDirectory(InstallDirectory);
             Directory.CreateDirectory(options.DataFolder);
+            Directory.CreateDirectory(Path.Combine(options.DataFolder, "postgres"));
 
             var imageArchivePath = Path.Combine(InstallDirectory, asset.Name);
-            console.Success($"Downloading {asset.Name} from {Repository} {release.TagName}.");
-            await DownloadFileAsync(asset.DownloadUrl, imageArchivePath, cancellationToken);
+            console.Success($"Downloading {asset.Name} from {gitHubReleaseService.Repository} {release.TagName}.");
+            await gitHubReleaseService.DownloadAssetAsync(asset.DownloadUrl, imageArchivePath, cancellationToken);
 
             var imageTarPath = Path.Combine(InstallDirectory, $"{ImageName}-{imageTag}.tar");
             await DecompressGzipAsync(imageArchivePath, imageTarPath, cancellationToken);
 
             console.Success("Loading Docker image.");
-            await RunProcessAsync("docker", $"load -i \"{imageTarPath}\"", InstallDirectory, cancellationToken);
+            await shellService.RunAsync("docker", $"load -i \"{imageTarPath}\"", InstallDirectory, cancellationToken);
 
             var envPath = Path.Combine(InstallDirectory, ".env");
             WriteEnvFile(envPath, imageTag, options);
@@ -85,7 +88,7 @@ public sealed class ApiInstallCommand : Command
 
             console.Success($"API installation files are ready in '{InstallDirectory}'.");
             console.Success("Starting Docker Compose.");
-            await RunProcessAsync("docker", "compose up -d", InstallDirectory, cancellationToken);
+            await shellService.RunAsync("docker", "compose up -d", InstallDirectory, cancellationToken);
 
             PrintInstallSummary(release.TagName, imageTag, options);
 
@@ -191,61 +194,6 @@ public sealed class ApiInstallCommand : Command
         return RandomNumberGenerator.GetString(chars, 16);
     }
 
-    private static async Task<GitHubRelease> ResolveReleaseAsync(
-        string version,
-        CancellationToken cancellationToken)
-    {
-        var url = string.Equals(version, LatestVersion, StringComparison.OrdinalIgnoreCase)
-            ? $"https://api.github.com/repos/{Repository}/releases/latest"
-            : $"https://api.github.com/repos/{Repository}/releases/tags/{Uri.EscapeDataString(version)}";
-
-        using var client = CreateGitHubClient();
-        using var response = await client.GetAsync(url, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-        var root = document.RootElement;
-        var tagName = root.GetProperty("tag_name").GetString()
-            ?? throw new InvalidOperationException("GitHub release response does not contain tag_name.");
-        var assets = root.GetProperty("assets")
-            .EnumerateArray()
-            .Select(item => new GitHubAsset(
-                item.GetProperty("name").GetString() ?? string.Empty,
-                item.GetProperty("url").GetString() ?? string.Empty))
-            .Where(item => !string.IsNullOrWhiteSpace(item.Name) && !string.IsNullOrWhiteSpace(item.DownloadUrl))
-            .ToArray();
-
-        return new GitHubRelease(tagName, assets);
-    }
-
-    private static HttpClient CreateGitHubClient()
-    {
-        var client = new HttpClient();
-        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("xrayne-cli", "1.0"));
-        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-        client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
-
-        return client;
-    }
-
-    private static async Task DownloadFileAsync(
-        string assetUrl,
-        string destinationPath,
-        CancellationToken cancellationToken)
-    {
-        using var client = CreateGitHubClient();
-        client.DefaultRequestHeaders.Accept.Clear();
-        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-
-        using var response = await client.GetAsync(assetUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
-        await using var output = File.Create(destinationPath);
-        await input.CopyToAsync(output, cancellationToken);
-    }
-
     private static async Task DecompressGzipAsync(
         string archivePath,
         string destinationPath,
@@ -255,6 +203,73 @@ public sealed class ApiInstallCommand : Command
         await using var gzip = new GZipStream(input, CompressionMode.Decompress);
         await using var output = File.Create(destinationPath);
         await gzip.CopyToAsync(output, cancellationToken);
+    }
+
+    private static async Task EnsureSystemDependenciesAsync(
+        IShellService shellService,
+        string installDirectory,
+        string dataFolder,
+        CancellationToken cancellationToken)
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            throw new PlatformNotSupportedException("API installation can install system modules only on Linux.");
+        }
+
+        var script = $$"""
+                       set -e
+
+                       run_root() {
+                         if [ "$(id -u)" -eq 0 ]; then
+                           "$@"
+                         else
+                           if ! command -v sudo >/dev/null 2>&1; then
+                             echo "sudo is required when running xrayne api install as a non-root user." >&2
+                             exit 1
+                           fi
+
+                           sudo "$@"
+                         fi
+                       }
+
+                       if command -v apt-get >/dev/null 2>&1; then
+                         run_root apt-get update
+                         run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gzip docker.io docker-compose-plugin
+                       elif command -v dnf >/dev/null 2>&1; then
+                         run_root dnf makecache -y
+                         run_root dnf install -y ca-certificates curl gzip docker docker-compose-plugin
+                       elif command -v yum >/dev/null 2>&1; then
+                         run_root yum makecache -y
+                         run_root yum install -y ca-certificates curl gzip docker docker-compose-plugin
+                       elif command -v apk >/dev/null 2>&1; then
+                         run_root apk update
+                         run_root apk add --no-cache ca-certificates curl gzip docker docker-cli-compose
+                       else
+                         echo "Unsupported Linux package manager. Install Docker and Docker Compose plugin manually." >&2
+                         exit 1
+                       fi
+
+                       run_root mkdir -p {{QuoteShell(installDirectory)}} {{QuoteShell(dataFolder)}} {{QuoteShell(Path.Combine(dataFolder, "postgres"))}}
+                       if [ "$(id -u)" -ne 0 ]; then
+                         run_root chown "$(id -u):$(id -g)" {{QuoteShell(installDirectory)}} {{QuoteShell(dataFolder)}} {{QuoteShell(Path.Combine(dataFolder, "postgres"))}}
+                       fi
+
+                       if command -v systemctl >/dev/null 2>&1; then
+                         run_root systemctl enable --now docker
+                       elif command -v service >/dev/null 2>&1; then
+                         run_root service docker start
+                       fi
+
+                       docker --version
+                       docker compose version
+                       """;
+
+        await shellService.RunAsync("sh", ["-c", script], "/", cancellationToken);
+    }
+
+    private static string QuoteShell(string value)
+    {
+        return $"'{value.Replace("'", "'\"'\"'")}'";
     }
 
     private static void WriteEnvFile(string envPath, string imageTag, InstallOptions options)
@@ -312,7 +327,7 @@ public sealed class ApiInstallCommand : Command
                    ports:
                      - "${POSTGRES_PORT:-5432}:5432"
                    volumes:
-                     - ./data/postgres:/var/lib/postgresql/data
+                     - "${XRAYNE_DATA_FOLDER:-/usr/shared/xrayne}/postgres:/var/lib/postgresql/data"
                    healthcheck:
                      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
                      interval: 10s
@@ -354,45 +369,13 @@ public sealed class ApiInstallCommand : Command
         Console.WriteLine("Data");
         Console.WriteLine($"  Host data folder: {options.DataFolder}");
         Console.WriteLine("  Container data folder: /app/shared");
+        Console.WriteLine($"  PostgreSQL data folder: {Path.Combine(options.DataFolder, "postgres")}");
         Console.WriteLine();
         Console.WriteLine("Next useful commands");
         Console.WriteLine($"  cd {InstallDirectory}");
         Console.WriteLine("  docker compose ps");
         Console.WriteLine("  docker compose logs -f api");
         Console.WriteLine("  docker compose logs -f postgres");
-    }
-
-    private static async Task RunProcessAsync(
-        string fileName,
-        string arguments,
-        string workingDirectory,
-        CancellationToken cancellationToken)
-    {
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo(fileName, arguments)
-            {
-                WorkingDirectory = workingDirectory,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                UseShellExecute = false
-            }
-        };
-
-        process.Start();
-
-        var stdout = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var stderr = process.StandardError.ReadToEndAsync(cancellationToken);
-
-        await process.WaitForExitAsync(cancellationToken);
-
-        if (process.ExitCode == 0)
-        {
-            return;
-        }
-
-        var output = string.Join(Environment.NewLine, await stdout, await stderr).Trim();
-        throw new InvalidOperationException($"{fileName} {arguments} failed with exit code {process.ExitCode}.{Environment.NewLine}{output}");
     }
 
     private static string SanitizeDockerTag(string value)
@@ -412,8 +395,4 @@ public sealed class ApiInstallCommand : Command
         bool IsGeneratedPassword,
         string DataFolder,
         string ApiPrefix);
-
-    private sealed record GitHubRelease(string TagName, IReadOnlyCollection<GitHubAsset> Assets);
-
-    private sealed record GitHubAsset(string Name, string DownloadUrl);
 }
