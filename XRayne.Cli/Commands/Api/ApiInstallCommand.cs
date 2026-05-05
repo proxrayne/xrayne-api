@@ -54,8 +54,6 @@ public sealed class ApiInstallCommand : Command
         try
         {
             var options = ReadInstallOptions();
-            console.Success("Updating system packages and installing required modules.");
-            await EnsureSystemDependenciesAsync(shellService, InstallDirectory, options.DataFolder, cancellationToken);
 
             var release = await gitHubReleaseService.ResolveReleaseAsync(version, cancellationToken);
             var imageTag = SanitizeDockerTag(release.TagName);
@@ -203,73 +201,6 @@ public sealed class ApiInstallCommand : Command
         await using var gzip = new GZipStream(input, CompressionMode.Decompress);
         await using var output = File.Create(destinationPath);
         await gzip.CopyToAsync(output, cancellationToken);
-    }
-
-    private static async Task EnsureSystemDependenciesAsync(
-        IShellService shellService,
-        string installDirectory,
-        string dataFolder,
-        CancellationToken cancellationToken)
-    {
-        if (!OperatingSystem.IsLinux())
-        {
-            throw new PlatformNotSupportedException("API installation can install system modules only on Linux.");
-        }
-
-        var script = $$"""
-                       set -e
-
-                       run_root() {
-                         if [ "$(id -u)" -eq 0 ]; then
-                           "$@"
-                         else
-                           if ! command -v sudo >/dev/null 2>&1; then
-                             echo "sudo is required when running xrayne api install as a non-root user." >&2
-                             exit 1
-                           fi
-
-                           sudo "$@"
-                         fi
-                       }
-
-                       if command -v apt-get >/dev/null 2>&1; then
-                         run_root apt-get update
-                         run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gzip docker.io docker-compose-plugin
-                       elif command -v dnf >/dev/null 2>&1; then
-                         run_root dnf makecache -y
-                         run_root dnf install -y ca-certificates curl gzip docker docker-compose-plugin
-                       elif command -v yum >/dev/null 2>&1; then
-                         run_root yum makecache -y
-                         run_root yum install -y ca-certificates curl gzip docker docker-compose-plugin
-                       elif command -v apk >/dev/null 2>&1; then
-                         run_root apk update
-                         run_root apk add --no-cache ca-certificates curl gzip docker docker-cli-compose
-                       else
-                         echo "Unsupported Linux package manager. Install Docker and Docker Compose plugin manually." >&2
-                         exit 1
-                       fi
-
-                       run_root mkdir -p {{QuoteShell(installDirectory)}} {{QuoteShell(dataFolder)}} {{QuoteShell(Path.Combine(dataFolder, "postgres"))}}
-                       if [ "$(id -u)" -ne 0 ]; then
-                         run_root chown "$(id -u):$(id -g)" {{QuoteShell(installDirectory)}} {{QuoteShell(dataFolder)}} {{QuoteShell(Path.Combine(dataFolder, "postgres"))}}
-                       fi
-
-                       if command -v systemctl >/dev/null 2>&1; then
-                         run_root systemctl enable --now docker
-                       elif command -v service >/dev/null 2>&1; then
-                         run_root service docker start
-                       fi
-
-                       docker --version
-                       docker compose version
-                       """;
-
-        await shellService.RunAsync("sh", ["-c", script], "/", cancellationToken);
-    }
-
-    private static string QuoteShell(string value)
-    {
-        return $"'{value.Replace("'", "'\"'\"'")}'";
     }
 
     private static void WriteEnvFile(string envPath, string imageTag, InstallOptions options)

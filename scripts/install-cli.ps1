@@ -170,6 +170,104 @@ function Install-UnixExecutable {
     Invoke-Native "sudo" @("install", "-m", "755", $SourcePath, $TargetPath)
 }
 
+function Install-UnixSystemDependencies {
+    $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "xrayne-install-deps-$([guid]::NewGuid()).sh"
+    $script = @'
+set -eu
+
+download() {
+  url="$1"
+  destination="$2"
+
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$url" -o "$destination"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q "$url" -O "$destination"
+  else
+    echo "curl or wget is required." >&2
+    exit 1
+  fi
+}
+
+install_compose_plugin_binary() {
+  compose_arch="$(uname -m)"
+  case "$compose_arch" in
+    x86_64|amd64)
+      compose_arch="x86_64"
+      ;;
+    aarch64|arm64)
+      compose_arch="aarch64"
+      ;;
+    *)
+      echo "Unsupported Docker Compose architecture: $compose_arch" >&2
+      exit 1
+      ;;
+  esac
+
+  plugin_dir="/usr/local/lib/docker/cli-plugins"
+  plugin_path="$plugin_dir/docker-compose"
+  plugin_url="https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$compose_arch"
+
+  echo "Installing Docker Compose plugin from $plugin_url"
+  mkdir -p "$plugin_dir"
+  tmp_compose="$(mktemp)"
+  download "$plugin_url" "$tmp_compose"
+  install -m 755 "$tmp_compose" "$plugin_path"
+  rm -f "$tmp_compose"
+}
+
+if command -v apt-get >/dev/null 2>&1; then
+  apt-get update
+  env DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gzip docker.io
+  env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-plugin || \
+    env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-v2 || true
+elif command -v dnf >/dev/null 2>&1; then
+  dnf makecache -y
+  dnf install -y ca-certificates curl gzip docker
+  dnf install -y docker-compose-plugin || true
+elif command -v yum >/dev/null 2>&1; then
+  yum makecache -y
+  yum install -y ca-certificates curl gzip docker
+  yum install -y docker-compose-plugin || true
+elif command -v apk >/dev/null 2>&1; then
+  apk update
+  apk add --no-cache ca-certificates curl gzip docker
+  apk add --no-cache docker-cli-compose || true
+else
+  echo "Unsupported Linux package manager. Install Docker and Docker Compose plugin manually." >&2
+  exit 1
+fi
+
+if ! docker compose version >/dev/null 2>&1; then
+  install_compose_plugin_binary
+fi
+
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl enable --now docker
+elif command -v service >/dev/null 2>&1; then
+  service docker start
+fi
+
+docker --version
+docker compose version
+'@
+
+    Set-Content -Path $scriptPath -Value $script
+    try {
+        if ([System.Environment]::UserName -eq "root") {
+            Invoke-Native "sh" @($scriptPath)
+        }
+        else {
+            Invoke-Native "sudo" @("sh", $scriptPath)
+        }
+    }
+    finally {
+        if (Test-Path $scriptPath) {
+            Remove-Item -Path $scriptPath -Force
+        }
+    }
+}
+
 $assetInfo = Get-PlatformAsset
 
 if ([string]::IsNullOrWhiteSpace($InstallDirectory)) {
@@ -179,6 +277,11 @@ if ([string]::IsNullOrWhiteSpace($InstallDirectory)) {
     else {
         $InstallDirectory = "/opt/xrayne/cli"
     }
+}
+
+if (-not $assetInfo.IsWindows) {
+    Write-Host "Updating system packages and installing required modules..."
+    Install-UnixSystemDependencies
 }
 
 $release = Get-Release -ReleaseVersion $Version
@@ -235,9 +338,13 @@ exec "$InstallDirectory/$ExecutableName" "`$@"
 
         Invoke-Native "sudo" @("mkdir", "-p", $InstallDirectory)
         Invoke-Native "sudo" @("mkdir", "-p", $binDirectory)
+        Invoke-Native "sudo" @("mkdir", "-p", "/opt/xrayne", "/usr/shared/xrayne")
         Invoke-Native "sudo" @("cp", "-R", "$extractDirectory/.", $InstallDirectory)
         Invoke-Native "sudo" @("chmod", "+x", "$InstallDirectory/$ExecutableName")
         Install-UnixExecutable -SourcePath $wrapperPath -TargetDirectory $binDirectory -TargetPath $targetPath
+        if ($env:SUDO_UID -and $env:SUDO_GID) {
+            Invoke-Native "sudo" @("chown", "$env:SUDO_UID`:$env:SUDO_GID", "/opt/xrayne", "/usr/shared/xrayne")
+        }
         Add-UnixPath -Directory $binDirectory
     }
 

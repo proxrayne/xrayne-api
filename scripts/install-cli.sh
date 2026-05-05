@@ -76,6 +76,80 @@ run_root() {
   fi
 }
 
+install_compose_plugin_binary() {
+  compose_arch="$(uname -m)"
+  case "$compose_arch" in
+    x86_64|amd64)
+      compose_arch="x86_64"
+      ;;
+    aarch64|arm64)
+      compose_arch="aarch64"
+      ;;
+    *)
+      echo "Unsupported Docker Compose architecture: $compose_arch" >&2
+      exit 1
+      ;;
+  esac
+
+  plugin_dir="/usr/local/lib/docker/cli-plugins"
+  plugin_path="$plugin_dir/docker-compose"
+  plugin_url="https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$compose_arch"
+
+  echo "Installing Docker Compose plugin from $plugin_url"
+  run_root mkdir -p "$plugin_dir"
+  tmp_compose="$(mktemp)"
+  download "$plugin_url" "$tmp_compose"
+  run_root install -m 755 "$tmp_compose" "$plugin_path"
+  rm -f "$tmp_compose"
+}
+
+install_system_dependencies() {
+  case "$(uname -s)" in
+    Linux)
+      ;;
+    *)
+      return
+      ;;
+  esac
+
+  echo "Updating system packages and installing required modules..."
+
+  if command -v apt-get >/dev/null 2>&1; then
+    run_root apt-get update
+    run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gzip docker.io
+    run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-plugin || \
+      run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-v2 || true
+  elif command -v dnf >/dev/null 2>&1; then
+    run_root dnf makecache -y
+    run_root dnf install -y ca-certificates curl gzip docker
+    run_root dnf install -y docker-compose-plugin || true
+  elif command -v yum >/dev/null 2>&1; then
+    run_root yum makecache -y
+    run_root yum install -y ca-certificates curl gzip docker
+    run_root yum install -y docker-compose-plugin || true
+  elif command -v apk >/dev/null 2>&1; then
+    run_root apk update
+    run_root apk add --no-cache ca-certificates curl gzip docker
+    run_root apk add --no-cache docker-cli-compose || true
+  else
+    echo "Unsupported Linux package manager. Install Docker and Docker Compose plugin manually." >&2
+    exit 1
+  fi
+
+  if ! docker compose version >/dev/null 2>&1; then
+    install_compose_plugin_binary
+  fi
+
+  if command -v systemctl >/dev/null 2>&1; then
+    run_root systemctl enable --now docker
+  elif command -v service >/dev/null 2>&1; then
+    run_root service docker start
+  fi
+
+  docker --version
+  docker compose version
+}
+
 download() {
   url="$1"
   destination="$2"
@@ -143,6 +217,8 @@ trap cleanup EXIT
 
 DOWNLOAD_URL="$(resolve_download_url)"
 
+install_system_dependencies
+
 echo "Downloading XRayne CLI from $DOWNLOAD_URL"
 download "$DOWNLOAD_URL" "$ARCHIVE_PATH"
 
@@ -164,9 +240,13 @@ EOF
 
 run_root mkdir -p "$INSTALL_DIR"
 run_root mkdir -p "$BIN_DIR"
+run_root mkdir -p "/opt/xrayne" "/usr/shared/xrayne"
 run_root cp -R "$EXTRACT_DIR/." "$INSTALL_DIR/"
 run_root chmod +x "$INSTALL_DIR/$EXECUTABLE"
 run_root install -m 755 "$WRAPPER_PATH" "$BIN_DIR/$EXECUTABLE"
+if [ -n "${SUDO_UID:-}" ] && [ -n "${SUDO_GID:-}" ]; then
+  run_root chown "$SUDO_UID:$SUDO_GID" "/opt/xrayne" "/usr/shared/xrayne"
+fi
 add_to_path_if_needed "$BIN_DIR"
 
 echo ""

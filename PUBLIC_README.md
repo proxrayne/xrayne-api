@@ -26,6 +26,8 @@ The API image is downloaded and loaded by the CLI during `xrayne api install` an
 
 ## Install CLI With Scripts
 
+The CLI installer also installs the required Linux system modules for API management: package updates, `curl`, `gzip`, Docker, and Docker Compose v2.
+
 ### Linux or macOS
 
 Install the latest CLI:
@@ -179,6 +181,8 @@ xrayne api install
 ```
 
 The installer downloads the API Docker image from the public release, writes `/opt/xrayne/.env`, creates `/opt/xrayne/docker-compose.yml`, and starts Docker Compose.
+
+Install the CLI through the script first. The CLI installer prepares Docker and Docker Compose; `xrayne api install` only configures and starts the API runtime.
 
 During installation you will be prompted for:
 
