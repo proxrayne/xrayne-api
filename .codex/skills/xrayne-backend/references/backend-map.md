@@ -93,6 +93,7 @@ Repository pattern:
 
 - Builds a generic host.
 - Uses appsettings from `AppContext.BaseDirectory`.
+- Reads `/opt/xrayne/.env` through `XRayneEnvironmentConfigurationProvider` when the runtime API is installed. This file is the shared runtime source for DB credentials, data folder, API prefix, and image tag. The CLI derives `ConnectionStrings:Default` with `POSTGRES_HOST_CLI` because it runs on the host, while the API compose file derives its connection string with `POSTGRES_HOST_API` because it runs inside Docker.
 - Adds environment variables with prefix `XRAYNE_`.
 - Registers core, infrastructure, repositories, and CLI actions.
 - Does not migrate database on startup, so non-database commands can run before PostgreSQL is available.

@@ -53,7 +53,8 @@ npm run build
 ## Configuration
 
 - API reads normal ASP.NET Core configuration. `XRayne.Api/appsettings*.json` includes `ConnectionStrings:Default`, `Jwt`, `Docs`, `Cors:SpaOrigins`, and `Xray`.
-- CLI sets base path to `AppContext.BaseDirectory`, reads `appsettings.json`, environment-specific appsettings, and environment variables with the `XRAYNE_` prefix.
+- CLI sets base path to `AppContext.BaseDirectory`, reads `appsettings.json`, environment-specific appsettings, `/opt/xrayne/.env` when present, and environment variables with the `XRAYNE_` prefix.
+- `/opt/xrayne/.env` is the shared installed-runtime source of truth. Store PostgreSQL credentials, host/port values, data folder, API prefix, and API image tag there; derive separate CLI/API connection strings from those values because host networking differs between the host CLI and the API container.
 - `Xray:Directory` defaults in appsettings to `../shared/`; `Xray:FileName` is platform-specific and currently Windows-oriented in local appsettings.
 - Database connection key is `ConnectionStrings:Default`.
 

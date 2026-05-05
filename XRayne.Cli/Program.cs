@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using XRayne.Cli.Commands;
+using XRayne.Cli.Services;
 using XRayne.Core;
 using XRayne.Infrastructure;
 using XRayne.Repositories;
@@ -31,6 +32,7 @@ try
             $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
             optional: true,
             reloadOnChange: true);
+        configuration.Add(new XRayneEnvironmentConfigurationSource());
         configuration.AddEnvironmentVariables("XRAYNE_");
     });
 

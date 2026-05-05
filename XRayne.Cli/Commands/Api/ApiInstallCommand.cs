@@ -212,8 +212,11 @@ public sealed class ApiInstallCommand : Command
             ["XRAYNE_API_PREFIX"] = options.ApiPrefix,
             ["XRAYNE_DATA_FOLDER"] = options.DataFolder,
             ["POSTGRES_DB"] = PostgresDatabase,
+            ["POSTGRES_HOST_API"] = "postgres",
+            ["POSTGRES_HOST_CLI"] = "localhost",
             ["POSTGRES_USER"] = PostgresUser,
             ["POSTGRES_PASSWORD"] = options.PostgresPassword,
+            ["POSTGRES_CONTAINER_PORT"] = "5432",
             ["POSTGRES_PORT"] = "5432"
         };
 
@@ -235,7 +238,7 @@ public sealed class ApiInstallCommand : Command
                    environment:
                      ASPNETCORE_URLS: "http://+:8080"
                      PathBase: "${XRAYNE_API_PREFIX}"
-                     ConnectionStrings__Default: "Host=postgres;Port=5432;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}"
+                     ConnectionStrings__Default: "Host=${POSTGRES_HOST_API:-postgres};Port=${POSTGRES_CONTAINER_PORT:-5432};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}"
                    ports:
                      - "${XRAYNE_API_PORT:-5000}:8080"
                    volumes:
@@ -270,8 +273,8 @@ public sealed class ApiInstallCommand : Command
 
     private static void PrintInstallSummary(string releaseTag, string imageTag, InstallOptions options)
     {
-        var panelUrl = $"http://localhost:{options.ApiPort}{options.ApiPrefix}/";
-        var apiUrl = $"http://localhost:{options.ApiPort}{options.ApiPrefix}/api";
+        var panelUrl = $"http://0.0.0.0:{options.ApiPort}{options.ApiPrefix}/";
+        var apiUrl = $"http://0.0.0.0:{options.ApiPort}{options.ApiPrefix}/api";
 
         Console.WriteLine();
         Console.WriteLine("XRayne API installation completed.");
@@ -290,12 +293,14 @@ public sealed class ApiInstallCommand : Command
         Console.WriteLine("PostgreSQL");
         Console.WriteLine("  Host from API container: postgres");
         Console.WriteLine("  Port from API container: 5432");
+        Console.WriteLine("  Host from CLI: localhost");
         Console.WriteLine("  Host port: 5432");
         Console.WriteLine($"  Database: {PostgresDatabase}");
         Console.WriteLine($"  Username: {PostgresUser}");
         Console.WriteLine($"  Password: {options.PostgresPassword}");
         Console.WriteLine($"  Password generated: {(options.IsGeneratedPassword ? "yes" : "no")}");
-        Console.WriteLine($"  Connection string: Host=localhost;Port=5432;Username={PostgresUser};Password={options.PostgresPassword};Database={PostgresDatabase}");
+        Console.WriteLine($"  CLI connection string: Host=localhost;Port=5432;Username={PostgresUser};Password={options.PostgresPassword};Database={PostgresDatabase}");
+        Console.WriteLine($"  API connection string: Host=postgres;Port=5432;Username={PostgresUser};Password={options.PostgresPassword};Database={PostgresDatabase}");
         Console.WriteLine();
         Console.WriteLine("Data");
         Console.WriteLine($"  Host data folder: {options.DataFolder}");
