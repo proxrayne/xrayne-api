@@ -87,27 +87,11 @@ string? GetEnvConnectionString(IConfiguration configuration)
         return null;
     }
 
-    var host = configuration["POSTGRES_HOST"];
-    if (string.IsNullOrWhiteSpace(host))
-    {
-        host = configuration["POSTGRES_HOST_API"];
-    }
-
-    if (string.IsNullOrWhiteSpace(host))
-    {
-        host = "localhost";
-    }
-
     var port = configuration["POSTGRES_PORT"];
-    if (string.IsNullOrWhiteSpace(port))
-    {
-        port = configuration["POSTGRES_CONTAINER_PORT"];
-    }
-
     if (string.IsNullOrWhiteSpace(port))
     {
         port = "5432";
     }
 
-    return $"Host={host};Port={port};Username={user};Password={password};Database={database}";
+    return $"Host=localhost;Port={port};Username={user};Password={password};Database={database}";
 }
