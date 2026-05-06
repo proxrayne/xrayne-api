@@ -1,7 +1,4 @@
 using System.CommandLine;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
 using XRayne.Cli.Values;
+using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands;
@@ -35,13 +33,14 @@ public sealed class InfoCommand : Command
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
         var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
+        var networkAddressService = serviceProvider.GetRequiredService<INetworkAddressService>();
 
         try
         {
             var apiStatus = await GetApiStatusAsync(apiInstallationService, cancellationToken);
             var apiPort = GetConfigurationValue(configuration, "API_PORT", CliDefaults.DefaultApiPort.ToString());
             var pathBase = NormalizePathBase(configuration["PathBase"]);
-            var serverIp = GetServerIpAddress();
+            var serverIp = networkAddressService.GetLocalServerIpAddress();
             var cliVersion = GetVersion();
             var apiVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
             var updateStatus = await GetUpdateStatusAsync(
@@ -205,24 +204,6 @@ public sealed class InfoCommand : Command
         return File.Exists(path) || Directory.Exists(path)
             ? path
             : $"{path} (missing)";
-    }
-
-    private static string GetServerIpAddress()
-    {
-        var address = NetworkInterface.GetAllNetworkInterfaces()
-            .Where(item => item.OperationalStatus == OperationalStatus.Up)
-            .Where(item => item.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-            .SelectMany(item => item.GetIPProperties().UnicastAddresses)
-            .Select(item => item.Address)
-            .FirstOrDefault(IsUsableIPv4Address);
-
-        return address?.ToString() ?? IPAddress.Loopback.ToString();
-    }
-
-    private static bool IsUsableIPv4Address(IPAddress address)
-    {
-        return address.AddressFamily == AddressFamily.InterNetwork
-            && !IPAddress.IsLoopback(address);
     }
 
     private sealed record UpdateStatus(

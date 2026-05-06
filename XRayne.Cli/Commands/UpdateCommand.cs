@@ -269,7 +269,8 @@ public sealed class UpdateCommand : Command
             File.Copy(sourcePath, temporaryTargetPath, overwrite: true);
             File.Move(temporaryTargetPath, targetPath, overwrite: true);
 
-            if (string.Equals(Path.GetFileName(targetPath), executableName, StringComparison.Ordinal))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                && string.Equals(Path.GetFileName(targetPath), executableName, StringComparison.Ordinal))
             {
                 File.SetUnixFileMode(
                     targetPath,

@@ -204,6 +204,10 @@ xrayne api status
 xrayne api start
 xrayne api stop
 xrayne api restart
+xrayne cert install --domain example.com --email admin@example.com
+xrayne cert install --ip-address 203.0.113.10 --email admin@example.com
+xrayne cert status
+xrayne cert renew
 xrayne update [--version latest|tag] [--component all|api|cli] [--force]
 xrayne info
 ```
@@ -213,6 +217,30 @@ xrayne info
 `xrayne update` checks the selected release and updates both CLI and API by default. Use `--component api` or `--component cli` to update only one side. Passing an older release tag through `--version` intentionally downgrades that component.
 
 `xrayne info` prints project/runtime information and checks whether CLI or API updates are available.
+
+## HTTPS Certificates
+
+`xrayne cert install` issues a Let's Encrypt certificate through `acme.sh` and installs it for the ASP.NET Core API container. The command stores `acme.sh` under `<project-path>/certificates/acme-sh`, stores installed certificate files under `<project-path>/certificates/letsencrypt`, writes Kestrel HTTPS settings to `<project-path>/config.json`, switches the existing external `API_PORT` mapping from container HTTP port `8080` to container HTTPS port `8443`, enables automatic renewal through `acme.sh`, and recreates the API container.
+
+For a domain certificate, point the domain at the server first, then run:
+
+```bash
+xrayne cert install --domain example.com --email admin@example.com
+```
+
+For an IP address certificate, pass a public IPv4 address:
+
+```bash
+xrayne cert install --ip-address 203.0.113.10 --email admin@example.com
+```
+
+If neither `--domain` nor `--ip-address` is passed, the CLI resolves the server public IPv4 address and issues an IP certificate for it. IP address certificates use the Let's Encrypt `shortlived` profile, so they are valid for about six days and must be renewed frequently. The command uses standalone HTTP-01 validation, so port `80` must be reachable from the Internet while the certificate is being issued or renewed. Private, loopback, and reserved IP addresses are rejected.
+
+```bash
+xrayne cert renew
+```
+
+Use `xrayne cert status` to inspect the configured certificate paths, identifier, ACME client, certificate profile, and auto-renew state.
 
 ## CLI Version
 
@@ -237,6 +265,7 @@ Commit: 98dbe14942c18c71b22a19d5d7c0098624249352
 | `/usr/local/bin/xrayne` | Default Linux/macOS command wrapper added to PATH. |
 | `/opt/xrayne` | Default project folder. |
 | `/opt/xrayne/config.json` | Default mutable API/CLI configuration file. |
+| `/opt/xrayne/certificates` | Default HTTPS certificate storage folder. |
 | `/opt/xrayne/logs` | Default logs folder. |
 | `/opt/xrayne/postgres` | Default PostgreSQL data folder. |
 | `/opt/xrayne/xray` | Default Xray files folder. |

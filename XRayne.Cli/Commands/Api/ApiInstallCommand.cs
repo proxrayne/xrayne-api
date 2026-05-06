@@ -46,6 +46,7 @@ public sealed class ApiInstallCommand : Command
         var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
         var shellService = serviceProvider.GetRequiredService<IShellService>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
+        var dockerComposeFileService = serviceProvider.GetRequiredService<IDockerComposeFileService>();
 
         try
         {
@@ -78,7 +79,7 @@ public sealed class ApiInstallCommand : Command
             await WriteEnvFileAsync(imageTag, options, cancellationToken);
             await WriteConfigFileAsync(options, cancellationToken);
 
-            await File.WriteAllTextAsync(options.Paths.DockerCompose, CreateDockerCompose(imageTag), Encoding.UTF8, cancellationToken);
+            await dockerComposeFileService.WriteApiComposeAsync(options.Paths, imageTag, cancellationToken);
 
             console.Success($"API installation files are ready in '{options.Paths.Root}'.");
             console.Success("Starting Docker Compose.");
@@ -222,52 +223,6 @@ public sealed class ApiInstallCommand : Command
         await config.SaveAsync(cancellationToken);
     }
 
-    private static string CreateDockerCompose(string imageTag)
-    {
-        return $$"""
-               services:
-                 api:
-                   image: ${API_IMAGE:-{{CliDefaults.ImageName}}:{{imageTag}}}
-                   container_name: xrayne-api
-                   env_file:
-                     - .env
-                   environment:
-                     ASPNETCORE_URLS: "http://+:8080"
-                     PROJECT_PATH: "/app/shared"
-                     ConnectionStrings__Default: "Host=${POSTGRES_HOST_API:-postgres};Port=${POSTGRES_CONTAINER_PORT:-5432};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}"
-                   ports:
-                     - "${API_PORT:-5000}:8080"
-                   volumes:
-                     - ${PROJECT_PATH:-/opt/xrayne}:/app/shared
-                     - ${PROJECT_PATH:-/opt/xrayne}/logs:/app/logs
-                     - ${PROJECT_PATH:-/opt/xrayne}/xray:/app/xray
-                   depends_on:
-                     postgres:
-                       condition: service_healthy
-                   restart: unless-stopped
-
-                 postgres:
-                   image: postgres:16-alpine
-                   container_name: xrayne-postgres
-                   env_file:
-                     - .env
-                   environment:
-                     POSTGRES_DB: ${POSTGRES_DB}
-                     POSTGRES_USER: ${POSTGRES_USER}
-                     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-                   ports:
-                     - "${POSTGRES_PORT:-5432}:5432"
-                   volumes:
-                     - "${PROJECT_PATH:-/opt/xrayne}/postgres:/var/lib/postgresql/data"
-                   healthcheck:
-                     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-                     interval: 10s
-                     timeout: 5s
-                     retries: 5
-                   restart: unless-stopped
-               """;
-    }
-
     private static void PrintInstallSummary(
         ICliConsole console,
         string releaseTag,
@@ -301,6 +256,7 @@ public sealed class ApiInstallCommand : Command
         console.Value("Logs", options.Paths.LogsDirectory);
         console.Value("Xray", options.Paths.XrayDirectory);
         console.Value("PostgreSQL data", options.Paths.PostgresDirectory);
+        console.Value("Certificates", options.Paths.CertificatesDirectory);
         console.Value("Container project", "/app/shared");
 
         console.Section("Next useful commands");

@@ -5,7 +5,7 @@
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
 - `XRayne.Core`: domain permissions and xray-core selection.
-- `XRayne.Infrastructure`: JWT token creation, password hashing, `ICoreService` implementation.
+- `XRayne.Infrastructure`: JWT token creation, password hashing, `ICoreService` implementation, shared network/IP helpers through `INetworkAddressService`.
 - `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories.
 - `XRayne.Contracts`: shared contracts placeholder.
 - `XRayne.Test`: tests.
@@ -119,6 +119,9 @@ xrayne
   api stop
   api start
   api restart
+  cert install [--domain domain | --ip-address ipv4] --email email [--staging] [--force]
+  cert status
+  cert renew [--force]
   admin create <username> --password|-p <password> [--permissions]
   xray start
 ```
@@ -126,6 +129,14 @@ xrayne
 Database-dependent commands should call `MigrateDatabaseAsync()` inside their action before using repositories. This keeps commands such as `--help`, Docker/compose management, and xray-core lifecycle commands usable when the database container is not running yet.
 
 `api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation.
+
+CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implementations under `XRayne.Cli/Services`.
+
+Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
+
+Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
+
+`cert install` uses project-local `acme.sh` under `<project>/certificates/acme-sh`, installs API certificate files under `<project>/certificates/letsencrypt`, writes Kestrel HTTPS certificate paths to runtime `config.json`, switches the API compose mapping to container HTTPS port `8443`, enables `acme.sh` cron renewal, and recreates the API container. Domain certificates use normal Let's Encrypt issuance. IP address certificates use public IPv4 only and require the Let's Encrypt `shortlived` certificate profile.
 
 ## Xray Core
 

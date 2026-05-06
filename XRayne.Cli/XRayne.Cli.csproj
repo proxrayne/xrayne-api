@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>xrayne</AssemblyName>
-    <Version>0.0.12</Version>
+    <Version>0.0.13</Version>
     <RuntimeIdentifiers>win-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
     <SelfContained Condition="'$(RuntimeIdentifier)' != ''">true</SelfContained>
     <PublishSingleFile Condition="'$(RuntimeIdentifier)' != ''">true</PublishSingleFile>
@@ -29,6 +29,7 @@
     <PackageReference Include="Serilog.Sinks.Map" Version="2.0.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta5.25306.1" />
     <PackageReference Include="Dotenv.Extensions.Microsoft.Configuration" Version="3.1.0" />
+    <PackageReference Include="YamlDotNet" Version="16.*" />
     <PackageReference Include="Xray.Sdk" Version="0.0.2-beta" />
   </ItemGroup>
 

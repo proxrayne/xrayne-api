@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using XRayne.Cli.Commands;
 using XRayne.Cli.Commands.Api;
 using XRayne.Cli.Commands.Admin;
+using XRayne.Cli.Commands.Cert;
 using XRayne.Cli.Commands.Xray;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
@@ -16,6 +17,8 @@ public static class DependencyInjection
         services.AddScoped<IShellService, ShellService>();
         services.AddScoped<IGitHubReleaseService, GitHubReleaseService>();
         services.AddScoped<IApiInstallationService, ApiInstallationService>();
+        services.AddScoped<IAcmeCertificateService, AcmeCertificateService>();
+        services.AddScoped<IDockerComposeFileService, DockerComposeFileService>();
 
         services.AddSingleton<RootCommandFactory>();
         services.AddSingleton<VersionCommand>();
@@ -28,6 +31,10 @@ public static class DependencyInjection
         services.AddSingleton<ApiStopCommand>();
         services.AddSingleton<ApiStartCommand>();
         services.AddSingleton<ApiRestartCommand>();
+        services.AddSingleton<CertCommand>();
+        services.AddSingleton<CertInstallCommand>();
+        services.AddSingleton<CertRenewCommand>();
+        services.AddSingleton<CertStatusCommand>();
         services.AddSingleton<XrayCommand>();
         services.AddSingleton<XrayStartCommand>();
         services.AddSingleton<AdminCommand>();

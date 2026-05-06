@@ -72,6 +72,8 @@ public sealed class ProjectPaths
     public string LogsDirectory { get; }
     public string PostgresDirectory { get; }
     public string DownloadsDirectory { get; }
+    public string CertificatesDirectory { get; }
+    public string LetsEncryptDirectory { get; }
     public string JsonConfig { get; }
     public string EnvConfig { get; }
     public string DockerCompose { get; }
@@ -84,6 +86,8 @@ public sealed class ProjectPaths
         LogsDirectory = Path.Combine(rootPath, "logs");
         PostgresDirectory = Path.Combine(rootPath, "postgres");
         DownloadsDirectory = Path.Combine(rootPath, "downloads");
+        CertificatesDirectory = Path.Combine(rootPath, "certificates");
+        LetsEncryptDirectory = Path.Combine(CertificatesDirectory, "letsencrypt");
 
         JsonConfig = Path.Combine(rootPath, "config.json");
         EnvConfig = Path.Combine(rootPath, ".env");
