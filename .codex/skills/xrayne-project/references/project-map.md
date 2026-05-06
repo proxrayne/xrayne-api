@@ -53,11 +53,11 @@ npm run build
 ## Configuration
 
 - API reads normal ASP.NET Core configuration from packaged `appsettings*.json`, then runtime `PathProvider.ConfigPath` (`config.json` in the shared project directory) and `PathProvider.EnvironmentPath`.
-- CLI sets base path to `AppContext.BaseDirectory`, reads packaged `config.json`, environment-specific `config.*.json`, runtime `PathProvider.ConfigPath`, `PathProvider.EnvironmentPath`, and environment variables through the shared configuration pipeline.
+- CLI sets base path to `AppContext.BaseDirectory`, reads packaged `appsettings.json`, environment-specific `appsettings.{Environment}.json`, runtime `PathProvider.ConfigPath`, `PathProvider.EnvironmentPath`, and environment variables through the shared configuration pipeline.
 - `PathProvider` in `XRayne.Infrastructure.Values` centralizes runtime paths: project directory, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, and `xray`.
 - When CLI is installed under a `cli` folder, `PathProvider.DefaultProjectDirectory` is the parent directory of `AppContext.BaseDirectory`; for example `/opt/xrayne/cli` resolves to `/opt/xrayne`. `PROJECT_PATH` can still override this for runtime reads.
 - `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is the write service for mutable `config.json` values. Reading is done through standard `IConfiguration`; `.env` stays static after install and is read through the normal configuration pipeline.
-- `.env` is static after install and reserved for Docker Compose/bootstrap variables such as `PROJECT_PATH`, `API_IMAGE`, `API_PORT`, and PostgreSQL values. More complex application configuration belongs in runtime `config.json`; Docker Compose commands should receive `.env` values through `ProcessStartInfo.Environment` from the CLI rather than relying on duplicated config files.
+- `.env` is static after install and reserved for Docker Compose/bootstrap variables such as `PROJECT_PATH`, `API_IMAGE`, `API_PORT`, and PostgreSQL values. More complex application configuration belongs in runtime `config.json`. Docker Compose runs from the project directory and reads the `.env` file beside `docker-compose.yml`; services should use `env_file: .env` when they need the same values inside containers.
 - `Xray:Directory` should come from the runtime project layout as the `xray` folder; keep platform-specific `Xray:FileName` in packaged config unless runtime editing is intentional.
 - Database connection key is `ConnectionStrings:Default`.
 

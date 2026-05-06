@@ -114,7 +114,7 @@ try
 
     builder.Services.AddCoreDependencies(builder.Configuration);
     builder.Services.AddInfrastructure(builder.Configuration);
-    builder.Services.AddRepositories(builder.Configuration);
+    builder.Services.AddRepositories(builder.Configuration.GetConnectionString("Default"));
 
     var app = builder.Build();
     var pathBase = NormalizePathBase(app.Configuration["PathBase"]);

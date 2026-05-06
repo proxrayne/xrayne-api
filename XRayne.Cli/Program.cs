@@ -21,9 +21,9 @@ try
     host.ConfigureAppConfiguration((context, configuration) =>
     {
         configuration.SetBasePath(AppContext.BaseDirectory);
-        configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
+        configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
         configuration.AddJsonFile(
-            $"config.{context.HostingEnvironment.EnvironmentName}.json",
+            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
             optional: true,
             reloadOnChange: true);
         configuration.AddJsonFile(PathProvider.Paths.JsonConfig, optional: true, reloadOnChange: true);
@@ -48,7 +48,8 @@ try
     {
         services.AddCoreDependencies(context.Configuration);
         services.AddInfrastructure(context.Configuration);
-        services.AddRepositories(context.Configuration);
+        services.AddRepositories(GetEnvConnectionString(context.Configuration) ?? context.Configuration.GetConnectionString("Default"));
+
         services.AddCliActions();
     });
 
@@ -71,4 +72,42 @@ catch (Exception exception)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// TODO: move to utilities
+string? GetEnvConnectionString(IConfiguration configuration)
+{
+    var user = configuration["POSTGRES_USER"];
+    var password = configuration["POSTGRES_PASSWORD"];
+    var database = configuration["POSTGRES_DB"];
+    if (string.IsNullOrWhiteSpace(user)
+        || string.IsNullOrWhiteSpace(password)
+        || string.IsNullOrWhiteSpace(database))
+    {
+        return null;
+    }
+
+    var host = configuration["POSTGRES_HOST"];
+    if (string.IsNullOrWhiteSpace(host))
+    {
+        host = configuration["POSTGRES_HOST_API"];
+    }
+
+    if (string.IsNullOrWhiteSpace(host))
+    {
+        host = "localhost";
+    }
+
+    var port = configuration["POSTGRES_PORT"];
+    if (string.IsNullOrWhiteSpace(port))
+    {
+        port = configuration["POSTGRES_CONTAINER_PORT"];
+    }
+
+    if (string.IsNullOrWhiteSpace(port))
+    {
+        port = "5432";
+    }
+
+    return $"Host={host};Port={port};Username={user};Password={password};Database={database}";
 }

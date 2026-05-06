@@ -79,7 +79,7 @@ String policy names live in `AdminPermissionNames`:
 - `CreatedAt`
 - `LastLoginAt`
 
-`AddRepositories` prefers `ConnectionStrings:Default`; if it is absent, it derives a PostgreSQL connection string from flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values. It creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
+`AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`; CLI resolves flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values first, then falls back to `ConnectionStrings:Default`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
 Repository pattern:
 
@@ -92,8 +92,8 @@ Repository pattern:
 `XRayne.Cli/Program.cs`:
 
 - Builds a generic host.
-- Uses packaged `config.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.ConfigPath`.
-- Reads `PathProvider.EnvironmentPath` with `Dotenv.Extensions.Microsoft.Configuration` when the runtime API is installed. Reading is done through standard `IConfiguration`; `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is only for writing mutable values to `config.json`. `.env` is static read-only compose/bootstrap configuration. Docker Compose receives flat `.env` values through the shell process environment and derives API connection settings with `POSTGRES_HOST_API`.
+- Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.ConfigPath`.
+- Reads `PathProvider.EnvironmentPath` with `Dotenv.Extensions.Microsoft.Configuration` when the runtime API is installed. Reading is done through standard `IConfiguration`; `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is only for writing mutable values to `config.json`. `.env` is static read-only compose/bootstrap configuration. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
 - Derives the default project path from the installed CLI location when `AppContext.BaseDirectory` is a `cli` directory, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
 - Adds environment variables without a custom prefix.
 - Registers core, infrastructure, repositories, and CLI actions.
