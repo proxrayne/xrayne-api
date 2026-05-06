@@ -42,7 +42,7 @@ public static class PathProvider
             return null;
         }
 
-        return cliDirectory.Parent;
+        return cliDirectory;
     }
 
     private static string GetProjectSystemDirectory()

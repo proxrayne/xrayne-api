@@ -44,13 +44,13 @@ public sealed class InfoCommand : Command
 
             console.Header("XRayne CLI information");
             console.Value("CLI version", GetVersion());
-            console.Value("CLI directory", AppContext.BaseDirectory);
-            console.Value("Project directory", PathProvider.Paths.Root);
+            console.Value("CLI directory", PathProvider.GetCliDirectory()?.FullName ?? AppContext.BaseDirectory);
+            console.Value("Project directory", PathProvider.GetProjectDirectory());
 
             console.Section("API");
             console.Value("Status", apiStatus);
             console.Value("Server IP", serverIp);
-            console.Value("Panel URL",  $"http://{serverIp}:{apiPort}{pathBase}/");
+            console.Value("Panel URL", $"http://{serverIp}:{apiPort}{pathBase}/");
             console.Value("API URL", $"http://{serverIp}:{apiPort}{pathBase}/api");
             console.Value("Docker image", GetConfigurationValue(configuration, CliDefaults.ApiImageVariable, "(unknown)"));
 
