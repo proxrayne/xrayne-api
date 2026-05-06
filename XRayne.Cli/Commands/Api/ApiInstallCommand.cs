@@ -233,12 +233,11 @@ public sealed class ApiInstallCommand : Command
                      - .env
                    environment:
                      ASPNETCORE_URLS: "http://+:8080"
+                     PROJECT_PATH: "/app/shared"
                      ConnectionStrings__Default: "Host=${POSTGRES_HOST_API:-postgres};Port=${POSTGRES_CONTAINER_PORT:-5432};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}"
                    ports:
                      - "${API_PORT:-5000}:8080"
                    volumes:
-                     - ${PROJECT_PATH:-/opt/xrayne}/config.json:/app/config.json:ro
-                     - ${PROJECT_PATH:-/opt/xrayne}/.env:/app/.env:ro
                      - ${PROJECT_PATH:-/opt/xrayne}:/app/shared
                      - ${PROJECT_PATH:-/opt/xrayne}/logs:/app/logs
                      - ${PROJECT_PATH:-/opt/xrayne}/xray:/app/xray

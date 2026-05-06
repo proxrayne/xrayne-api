@@ -52,7 +52,7 @@ npm run build
 
 ## Configuration
 
-- API reads normal ASP.NET Core configuration plus `config.json`, runtime `PathProvider.ConfigPath`, and `PathProvider.EnvironmentPath`.
+- API reads normal ASP.NET Core configuration from packaged `appsettings*.json`, then runtime `PathProvider.ConfigPath` (`config.json` in the shared project directory) and `PathProvider.EnvironmentPath`.
 - CLI sets base path to `AppContext.BaseDirectory`, reads packaged `config.json`, environment-specific `config.*.json`, runtime `PathProvider.ConfigPath`, `PathProvider.EnvironmentPath`, and environment variables through the shared configuration pipeline.
 - `PathProvider` in `XRayne.Infrastructure.Values` centralizes runtime paths: project directory, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, and `xray`.
 - When CLI is installed under a `cli` folder, `PathProvider.DefaultProjectDirectory` is the parent directory of `AppContext.BaseDirectory`; for example `/opt/xrayne/cli` resolves to `/opt/xrayne`. `PROJECT_PATH` can still override this for runtime reads.

@@ -21,7 +21,6 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
     builder.Configuration.AddJsonFile(PathProvider.Paths.JsonConfig, optional: true, reloadOnChange: true);
     builder.Configuration.AddEnvFile(PathProvider.Paths.EnvConfig, optional: true);
 
