@@ -31,7 +31,6 @@ public sealed class AcmeCertificateService : IAcmeCertificateService
             .Append("ec-256")
             .Append("--accountemail")
             .Append(request.Email)
-            .Append("--agree-terms")
             .ToList();
 
         AddModeSpecificArguments(arguments, request);
