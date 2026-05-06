@@ -172,7 +172,7 @@ public sealed class ApiInstallCommand : Command
 
     private static string GeneratePassword()
     {
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%^&*";
 
         return RandomNumberGenerator.GetString(chars, 16);
     }
