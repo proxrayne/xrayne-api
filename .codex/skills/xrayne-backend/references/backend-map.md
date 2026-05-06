@@ -111,10 +111,10 @@ Current command tree:
 ```text
 xrayne
   version
+  update [--version latest|tag] [--component all|api|cli] [--force]
   info
   api install [--version latest|tag]
   api version
-  api update
   api status
   api stop
   api start

@@ -19,11 +19,11 @@ public static class DependencyInjection
 
         services.AddSingleton<RootCommandFactory>();
         services.AddSingleton<VersionCommand>();
+        services.AddSingleton<UpdateCommand>();
         services.AddSingleton<InfoCommand>();
         services.AddSingleton<ApiCommand>();
         services.AddSingleton<ApiInstallCommand>();
         services.AddSingleton<ApiVersionCommand>();
-        services.AddSingleton<ApiUpdateCommand>();
         services.AddSingleton<ApiStatusCommand>();
         services.AddSingleton<ApiStopCommand>();
         services.AddSingleton<ApiStartCommand>();

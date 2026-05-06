@@ -34,6 +34,7 @@ public sealed class InfoCommand : Command
         var logger = serviceProvider.GetRequiredService<ILogger<InfoCommand>>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
+        var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
 
         try
         {
@@ -41,9 +42,16 @@ public sealed class InfoCommand : Command
             var apiPort = GetConfigurationValue(configuration, "API_PORT", CliDefaults.DefaultApiPort.ToString());
             var pathBase = NormalizePathBase(configuration["PathBase"]);
             var serverIp = GetServerIpAddress();
+            var cliVersion = GetVersion();
+            var apiVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
+            var updateStatus = await GetUpdateStatusAsync(
+                gitHubReleaseService,
+                cliVersion,
+                apiVersion,
+                cancellationToken);
 
             console.Header("XRayne CLI information");
-            console.Value("CLI version", GetVersion());
+            console.Value("CLI version", cliVersion);
             console.Value("CLI directory", PathProvider.GetCliDirectory()?.FullName ?? AppContext.BaseDirectory);
             console.Value("Project directory", PathProvider.GetProjectDirectory());
 
@@ -53,6 +61,11 @@ public sealed class InfoCommand : Command
             console.Value("Panel URL", $"http://{serverIp}:{apiPort}{pathBase}/");
             console.Value("API URL", $"http://{serverIp}:{apiPort}{pathBase}/api");
             console.Value("Docker image", GetConfigurationValue(configuration, CliDefaults.ApiImageVariable, "(unknown)"));
+
+            console.Section("Updates");
+            console.Value("Latest release", updateStatus.LatestRelease);
+            console.Value("CLI update", updateStatus.CliUpdate);
+            console.Value("API update", updateStatus.ApiUpdate);
 
             console.Section("Project files");
             console.Value("Environment file", FormatPathState(PathProvider.Paths.EnvConfig));
@@ -64,12 +77,46 @@ public sealed class InfoCommand : Command
 
             return 0;
         }
-        catch (Exception exception)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             logger.LogError(exception, "CLI information lookup failed.");
             console.Error(exception.Message);
 
             return 1;
+        }
+    }
+
+    private static async Task<UpdateStatus> GetUpdateStatusAsync(
+        IGitHubReleaseService gitHubReleaseService,
+        string cliVersion,
+        string? apiVersion,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var release = await gitHubReleaseService.ResolveReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
+            var latestApiVersion = SanitizeDockerTag(release.TagName);
+
+            var cliUpdate = string.Equals(cliVersion, release.TagName, StringComparison.Ordinal)
+                ? "not available"
+                : $"available ({cliVersion} -> {release.TagName})";
+
+            var apiUpdate = string.IsNullOrWhiteSpace(apiVersion)
+                ? $"not installed (latest: {latestApiVersion})"
+                : string.Equals(apiVersion, latestApiVersion, StringComparison.Ordinal)
+                    ? "not available"
+                    : $"available ({apiVersion} -> {latestApiVersion})";
+
+            return new UpdateStatus(release.TagName, cliUpdate, apiUpdate);
+        }
+        catch (Exception exception)
+        {
+            var message = exception.GetBaseException().Message;
+
+            return new UpdateStatus(
+                $"unavailable ({message})",
+                "unknown",
+                string.IsNullOrWhiteSpace(apiVersion) ? "not installed" : "unknown");
         }
     }
 
@@ -126,6 +173,33 @@ public sealed class InfoCommand : Command
             : $"/{pathBase.TrimEnd('/')}";
     }
 
+    private static string? ExtractImageTag(string image)
+    {
+        const string imagePrefix = CliDefaults.ImageName + ":";
+
+        if (image.StartsWith(imagePrefix, StringComparison.Ordinal))
+        {
+            return image[imagePrefix.Length..];
+        }
+
+        var tagSeparatorIndex = image.LastIndexOf(':');
+
+        return tagSeparatorIndex >= 0 && tagSeparatorIndex < image.Length - 1
+            ? image[(tagSeparatorIndex + 1)..]
+            : null;
+    }
+
+    private static string SanitizeDockerTag(string value)
+    {
+        var chars = value.Select(character =>
+            char.IsAsciiLetterOrDigit(character) || character is '_' or '.' or '-'
+                ? character
+                : '-').ToArray();
+        var tag = new string(chars).Trim('-');
+
+        return string.IsNullOrWhiteSpace(tag) ? "latest" : tag;
+    }
+
     private static string FormatPathState(string path)
     {
         return File.Exists(path) || Directory.Exists(path)
@@ -150,4 +224,9 @@ public sealed class InfoCommand : Command
         return address.AddressFamily == AddressFamily.InterNetwork
             && !IPAddress.IsLoopback(address);
     }
+
+    private sealed record UpdateStatus(
+        string LatestRelease,
+        string CliUpdate,
+        string ApiUpdate);
 }

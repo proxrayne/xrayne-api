@@ -22,7 +22,7 @@ Each release can contain these files:
 | `xrayne-cli-win-x64.zip` | XRayne CLI for Windows x64. |
 | `xrayne-api-image-<version>.tar.gz` | Docker image archive for the API with the built web UI. |
 
-The API image is downloaded and loaded by the CLI during `xrayne api install` and `xrayne api update`.
+The API image is downloaded and loaded by the CLI during `xrayne api install` and `xrayne update`.
 
 ## Install CLI With Scripts
 
@@ -204,12 +204,15 @@ xrayne api status
 xrayne api start
 xrayne api stop
 xrayne api restart
-xrayne api update
+xrayne update [--version latest|tag] [--component all|api|cli] [--force]
+xrayne info
 ```
 
 `xrayne api version` prints the installed API version, the latest available version, and whether an update is available.
 
-`xrayne api update` downloads the latest API image from the release, loads it into Docker, and restarts Docker Compose.
+`xrayne update` checks the selected release and updates both CLI and API by default. Use `--component api` or `--component cli` to update only one side. Passing an older release tag through `--version` intentionally downgrades that component.
+
+`xrayne info` prints project/runtime information and checks whether CLI or API updates are available.
 
 ## CLI Version
 

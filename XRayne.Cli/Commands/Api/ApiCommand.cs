@@ -7,7 +7,6 @@ public sealed class ApiCommand : Command
     public ApiCommand(
         ApiInstallCommand installCommand,
         ApiVersionCommand versionCommand,
-        ApiUpdateCommand updateCommand,
         ApiStatusCommand statusCommand,
         ApiStopCommand stopCommand,
         ApiStartCommand startCommand,
@@ -16,7 +15,6 @@ public sealed class ApiCommand : Command
     {
         Add(installCommand);
         Add(versionCommand);
-        Add(updateCommand);
         Add(statusCommand);
         Add(stopCommand);
         Add(startCommand);

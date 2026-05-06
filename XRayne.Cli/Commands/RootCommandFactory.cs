@@ -10,6 +10,7 @@ public sealed class RootCommandFactory(
     AdminCommand adminCommand,
     ApiCommand apiCommand,
     VersionCommand versionCommand,
+    UpdateCommand updateCommand,
     InfoCommand infoCommand)
 {
     public RootCommand Create()
@@ -20,6 +21,7 @@ public sealed class RootCommandFactory(
             adminCommand,
             apiCommand,
             versionCommand,
+            updateCommand,
             infoCommand
         };
     }
