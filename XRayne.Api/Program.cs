@@ -10,6 +10,7 @@ using XRayne.Api.Filters;
 using XRayne.Core;
 using XRayne.Infrastructure;
 using XRayne.Infrastructure.Auth;
+using XRayne.Infrastructure.Values;
 using XRayne.Repositories;
 
 Log.Logger = new LoggerConfiguration()
@@ -19,6 +20,11 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
+    builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddJsonFile(PathProvider.Paths.JsonConfig, optional: true, reloadOnChange: true);
+    builder.Configuration.AddEnvFile(PathProvider.Paths.EnvConfig, optional: true);
+
     var IsDocsEnabled = builder.Configuration.GetValue("Docs", false);
     var allowedSpaOrigins = builder.Configuration.GetSection("Cors:SpaOrigins").Get<string[]>()
         ?? [];
@@ -122,7 +128,7 @@ try
     {
         app.UsePathBase(pathBase);
     }
-   
+
     if (IsDocsEnabled)
     {
         app.MapOpenApi();

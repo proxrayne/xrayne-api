@@ -5,9 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using XRayne.Cli.Commands;
-using XRayne.Cli.Services;
 using XRayne.Core;
 using XRayne.Infrastructure;
+using XRayne.Infrastructure.Values;
 using XRayne.Repositories;
 
 Log.Logger = new LoggerConfiguration()
@@ -20,20 +20,16 @@ try
 
     host.ConfigureAppConfiguration((context, configuration) =>
     {
-        var configDirectory = Environment.GetEnvironmentVariable("XRAYNE_CLI_CONFIG_DIR");
-        if (string.IsNullOrWhiteSpace(configDirectory))
-        {
-            configDirectory = AppContext.BaseDirectory;
-        }
-
-        configuration.SetBasePath(configDirectory);
-        configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+        configuration.SetBasePath(AppContext.BaseDirectory);
+        configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
         configuration.AddJsonFile(
-            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
+            $"config.{context.HostingEnvironment.EnvironmentName}.json",
             optional: true,
             reloadOnChange: true);
-        configuration.Add(new XRayneEnvironmentConfigurationSource());
-        configuration.AddEnvironmentVariables("XRAYNE_");
+        configuration.AddJsonFile(PathProvider.Paths.JsonConfig, optional: true, reloadOnChange: true);
+        configuration.AddEnvFile(PathProvider.Paths.EnvConfig, optional: true);
+
+        configuration.AddEnvironmentVariables();
     });
 
     host.UseSerilog((context, services, configuration) => configuration

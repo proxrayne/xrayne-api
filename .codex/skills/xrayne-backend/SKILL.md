@@ -1,6 +1,6 @@
 ---
 name: xrayne-backend
-description: Backend development guidance for XRayne.Node. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, appsettings, or backend tests in XRayne.Api, XRayne.Cli, XRayne.Core, XRayne.Infrastructure, XRayne.Repositories, XRayne.Contracts, or XRayne.Test.
+description: Backend development guidance for XRayne.Node. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, config files, or backend tests in XRayne.Api, XRayne.Cli, XRayne.Core, XRayne.Infrastructure, XRayne.Repositories, XRayne.Contracts, or XRayne.Test.
 ---
 
 # XRayne Backend
@@ -19,6 +19,7 @@ Read `references/backend-map.md` before backend edits. Use it to place code in t
 - Use EF Core async methods with cancellation tokens in repositories.
 - Add migrations through `add-migration.ps1` or equivalent `dotnet ef migrations add` command targeting `AppDbContext`.
 - For CLI commands, derive from `System.CommandLine.Command`, inject `IServiceProvider`, create an async scope in `SetAction`, and return integer exit codes.
+- Read configuration through standard `IConfiguration`; use `IJsonConfigService`/`JsonConfigService` only when mutating runtime `config.json`.
 - API/UI Docker image artifacts are produced by release GitHub Actions; backend code should keep the image build reproducible and avoid local-only assumptions.
 
 ## Validation

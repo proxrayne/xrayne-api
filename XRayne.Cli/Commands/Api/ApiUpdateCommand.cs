@@ -1,22 +1,17 @@
 using System.CommandLine;
 using System.IO.Compression;
-using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
+using XRayne.Cli.Values;
+using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands.Api;
 
 public sealed class ApiUpdateCommand : Command
 {
-    private const string LatestVersion = "latest";
-    private const string ImageName = "xrayne-api";
-    private const string InstallDirectory = "/opt/xrayne";
-    private const string EnvPath = "/opt/xrayne/.env";
-    private const string ComposePath = "/opt/xrayne/docker-compose.yml";
-    private const string ApiImageVariable = "XRAYNE_API_IMAGE";
-
     public ApiUpdateCommand(IServiceProvider serviceProvider)
         : base("update", "Update installed XRayne API to the latest release")
     {
@@ -37,14 +32,15 @@ public sealed class ApiUpdateCommand : Command
         var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
         var shellService = serviceProvider.GetRequiredService<IShellService>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
         try
         {
             EnsureInstalled();
 
-            var installedVersion = ReadInstalledVersion()
-                ?? throw new InvalidOperationException($"'{ApiImageVariable}' was not found in '{EnvPath}'. Run 'xrayne api install' first.");
-            var release = await gitHubReleaseService.ResolveReleaseAsync(LatestVersion, cancellationToken);
+            var installedVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty)
+                ?? throw new InvalidOperationException($"'{CliDefaults.ApiImageVariable}' was not found in '{PathProvider.Paths.EnvConfig}'. Run 'xrayne api install' first.");
+            var release = await gitHubReleaseService.ResolveReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
             var latestVersion = SanitizeDockerTag(release.TagName);
 
             Console.WriteLine($"Installed API Version: {installedVersion}");
@@ -66,26 +62,36 @@ public sealed class ApiUpdateCommand : Command
                 throw new InvalidOperationException($"Release asset '{assetName}' was not found in release '{release.TagName}'.");
             }
 
-            var imageArchivePath = Path.Combine(InstallDirectory, asset.Name);
+            var imageArchivePath = Path.Combine(PathProvider.Paths.DownloadsDirectory, asset.Name);
             console.Success($"Downloading {asset.Name} from {gitHubReleaseService.Repository} {release.TagName}.");
             await gitHubReleaseService.DownloadAssetAsync(asset.DownloadUrl, imageArchivePath, cancellationToken);
 
-            var imageTarPath = Path.Combine(InstallDirectory, $"{ImageName}-{latestVersion}.tar");
+            var imageTarPath = Path.Combine(PathProvider.Paths.Root, $"{CliDefaults.ImageName}-{latestVersion}.tar");
             await DecompressGzipAsync(imageArchivePath, imageTarPath, cancellationToken);
 
             console.Success("Loading Docker image.");
-            await shellService.RunAsync("docker", $"load -i \"{imageTarPath}\"", InstallDirectory, cancellationToken);
-
-            UpdateEnvImage(latestVersion);
+            await shellService.RunAsync("docker", $"load -i \"{imageTarPath}\"", PathProvider.Paths.Root, cancellationToken);
 
             console.Success("Restarting Docker Compose.");
-            await apiInstallationService.RunDockerComposeAsync("up -d", cancellationToken);
+            apiInstallationService.EnsureInstalled();
+            var environment = new Dictionary<string, string>(
+                configuration.AsEnumerable()
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Value))
+                    .Where(item => !item.Key.Contains(':', StringComparison.Ordinal))
+                    .ToDictionary(item => item.Key, item => item.Value!, StringComparer.OrdinalIgnoreCase),
+                StringComparer.OrdinalIgnoreCase)
+            {
+                [CliDefaults.ApiImageVariable] = $"{CliDefaults.ImageName}:{latestVersion}"
+            };
+            await shellService.RunAsync("docker", "compose up -d", PathProvider.Paths.Root, environment, cancellationToken);
 
-            Console.WriteLine();
-            Console.WriteLine("XRayne API update completed.");
-            Console.WriteLine($"Previous API Version: {installedVersion}");
-            Console.WriteLine($"Current API Version: {latestVersion}");
-            Console.WriteLine($"Docker image: {ImageName}:{latestVersion}");
+            console.Header("XRayne API update completed");
+            console.Value("Previous API version", installedVersion);
+            console.Value("Current API version", latestVersion);
+            console.Value("Docker image", $"{CliDefaults.ImageName}:{latestVersion}");
+            console.Value("Project path", PathProvider.Paths.Root);
+            console.Value("Compose file", PathProvider.Paths.DockerCompose);
+            console.Warning($"Static .env was not changed. Update '{CliDefaults.ApiImageVariable}' in '{PathProvider.Paths.EnvConfig}' manually to make this version permanent across future compose restarts.");
 
             return 0;
         }
@@ -100,41 +106,20 @@ public sealed class ApiUpdateCommand : Command
 
     private static void EnsureInstalled()
     {
-        if (!File.Exists(EnvPath))
+        if (!File.Exists(PathProvider.Paths.EnvConfig))
         {
-            throw new InvalidOperationException($"Environment file '{EnvPath}' was not found. Run 'xrayne api install' first.");
+            throw new InvalidOperationException($"Environment file '{PathProvider.Paths.EnvConfig}' was not found. Run 'xrayne api install' first.");
         }
 
-        if (!File.Exists(ComposePath))
+        if (!File.Exists(PathProvider.Paths.DockerCompose))
         {
-            throw new InvalidOperationException($"Compose file '{ComposePath}' was not found. Run 'xrayne api install' first.");
+            throw new InvalidOperationException($"Compose file '{PathProvider.Paths.DockerCompose}' was not found. Run 'xrayne api install' first.");
         }
-    }
-
-    private static string? ReadInstalledVersion()
-    {
-        foreach (var line in File.ReadLines(EnvPath))
-        {
-            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
-            {
-                continue;
-            }
-
-            var parts = line.Split('=', 2);
-            if (parts.Length != 2 || !string.Equals(parts[0].Trim(), ApiImageVariable, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return ExtractImageTag(parts[1].Trim().Trim('"', '\''));
-        }
-
-        return null;
     }
 
     private static string? ExtractImageTag(string image)
     {
-        const string imagePrefix = ImageName + ":";
+        const string imagePrefix = CliDefaults.ImageName + ":";
 
         if (image.StartsWith(imagePrefix, StringComparison.Ordinal))
         {
@@ -146,37 +131,6 @@ public sealed class ApiUpdateCommand : Command
         return tagSeparatorIndex >= 0 && tagSeparatorIndex < image.Length - 1
             ? image[(tagSeparatorIndex + 1)..]
             : null;
-    }
-
-    private static void UpdateEnvImage(string imageTag)
-    {
-        var lines = File.ReadAllLines(EnvPath);
-        var imageLine = $"{ApiImageVariable}={ImageName}:{imageTag}";
-        var updated = false;
-
-        for (var index = 0; index < lines.Length; index++)
-        {
-            var line = lines[index];
-            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
-            {
-                continue;
-            }
-
-            var parts = line.Split('=', 2);
-            if (parts.Length == 2 && string.Equals(parts[0].Trim(), ApiImageVariable, StringComparison.OrdinalIgnoreCase))
-            {
-                lines[index] = imageLine;
-                updated = true;
-                break;
-            }
-        }
-
-        if (!updated)
-        {
-            lines = [.. lines, imageLine];
-        }
-
-        File.WriteAllLines(EnvPath, lines, Encoding.UTF8);
     }
 
     private static async Task DecompressGzipAsync(

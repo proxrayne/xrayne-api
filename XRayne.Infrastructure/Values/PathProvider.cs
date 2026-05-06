@@ -1,0 +1,64 @@
+namespace XRayne.Infrastructure.Values;
+
+using System.Runtime.InteropServices;
+
+public static class PathProvider
+{
+    public static string DefaultProjectDirectory { get; }
+
+    public static ProjectPaths Paths { get; }
+
+    static PathProvider()
+    {
+        DefaultProjectDirectory = GetProjectSystemDirectory();
+
+        var projectPath = Environment.GetEnvironmentVariable("PROJECT_PATH") ?? DefaultProjectDirectory;
+
+        Paths = new ProjectPaths(projectPath);
+    }
+
+    private static string GetProjectSystemDirectory()
+    {
+        const string projectName = "xrayne";
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+
+            return Path.Combine(programFiles, projectName);
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return Path.Combine("/opt", projectName);
+        }
+
+        return Path.Combine(Path.GetTempPath(), projectName);
+    }
+}
+
+public sealed class ProjectPaths
+{
+    public string Root { get; set; }
+    public string XrayDirectory { get; }
+    public string LogsDirectory { get; }
+    public string PostgresDirectory { get; }
+    public string DownloadsDirectory { get; }
+    public string JsonConfig { get; }
+    public string EnvConfig { get; }
+    public string DockerCompose { get; }
+
+    public ProjectPaths(string rootPath)
+    {
+        Root = rootPath;
+
+        XrayDirectory = Path.Combine(rootPath, "xray");
+        LogsDirectory = Path.Combine(rootPath, "logs");
+        PostgresDirectory = Path.Combine(rootPath, "postgres");
+        DownloadsDirectory = Path.Combine(rootPath, "downloads");
+
+        JsonConfig = Path.Combine(rootPath, "config.json");
+        EnvConfig = Path.Combine(rootPath, ".env");
+        DockerCompose = Path.Combine(rootPath, "docker-compose.yml");
+    }
+}

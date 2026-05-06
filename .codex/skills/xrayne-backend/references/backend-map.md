@@ -79,7 +79,7 @@ String policy names live in `AdminPermissionNames`:
 - `CreatedAt`
 - `LastLoginAt`
 
-`AddRepositories` requires `ConnectionStrings:Default`, creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
+`AddRepositories` prefers `ConnectionStrings:Default`; if it is absent, it derives a PostgreSQL connection string from flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values. It creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
 Repository pattern:
 
@@ -92,9 +92,9 @@ Repository pattern:
 `XRayne.Cli/Program.cs`:
 
 - Builds a generic host.
-- Uses appsettings from `AppContext.BaseDirectory`.
-- Reads `/opt/xrayne/.env` through `XRayneEnvironmentConfigurationProvider` when the runtime API is installed. This file is the shared runtime source for DB credentials, data folder, API prefix, and image tag. The CLI derives `ConnectionStrings:Default` with `POSTGRES_HOST_CLI` because it runs on the host, while the API compose file derives its connection string with `POSTGRES_HOST_API` because it runs inside Docker.
-- Adds environment variables with prefix `XRAYNE_`.
+- Uses packaged `config.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.ConfigPath`.
+- Reads `PathProvider.EnvironmentPath` with `Dotenv.Extensions.Microsoft.Configuration` when the runtime API is installed. Reading is done through standard `IConfiguration`; `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is only for writing mutable values to `config.json`. `.env` is static read-only compose/bootstrap configuration. Docker Compose receives flat `.env` values through the shell process environment and derives API connection settings with `POSTGRES_HOST_API`.
+- Adds environment variables without a custom prefix.
 - Registers core, infrastructure, repositories, and CLI actions.
 - Does not migrate database on startup, so non-database commands can run before PostgreSQL is available.
 - Resolves `RootCommandFactory`, creates `CommandLineConfiguration`, and invokes args.
@@ -111,13 +111,19 @@ Current command tree:
 xrayne
   version
   api install [--version latest|tag]
+  api version
+  api update
+  api status
+  api stop
+  api start
+  api restart
   admin create <username> --password|-p <password> [--permissions]
   xray start
 ```
 
 Database-dependent commands should call `MigrateDatabaseAsync()` inside their action before using repositories. This keeps commands such as `--help`, Docker/compose management, and xray-core lifecycle commands usable when the database container is not running yet.
 
-`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env` plus `docker-compose.yml`, and starts `docker compose up -d`. It must not require the database to be running before installation.
+`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation.
 
 ## Xray Core
 

@@ -52,10 +52,12 @@ npm run build
 
 ## Configuration
 
-- API reads normal ASP.NET Core configuration. `XRayne.Api/appsettings*.json` includes `ConnectionStrings:Default`, `Jwt`, `Docs`, `Cors:SpaOrigins`, and `Xray`.
-- CLI sets base path to `AppContext.BaseDirectory`, reads `appsettings.json`, environment-specific appsettings, `/opt/xrayne/.env` when present, and environment variables with the `XRAYNE_` prefix.
-- `/opt/xrayne/.env` is the shared installed-runtime source of truth. Store PostgreSQL credentials, host/port values, data folder, API prefix, and API image tag there; derive separate CLI/API connection strings from those values because host networking differs between the host CLI and the API container.
-- `Xray:Directory` defaults in appsettings to `../shared/`; `Xray:FileName` is platform-specific and currently Windows-oriented in local appsettings.
+- API reads normal ASP.NET Core configuration plus `config.json`, runtime `PathProvider.ConfigPath`, and `PathProvider.EnvironmentPath`.
+- CLI sets base path to `AppContext.BaseDirectory`, reads packaged `config.json`, environment-specific `config.*.json`, runtime `PathProvider.ConfigPath`, `PathProvider.EnvironmentPath`, and environment variables through the shared configuration pipeline.
+- `PathProvider` in `XRayne.Infrastructure.Values` centralizes runtime paths: project directory, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, and `xray`.
+- `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is the write service for mutable `config.json` values. Reading is done through standard `IConfiguration`; `.env` stays static after install and is read through the normal configuration pipeline.
+- `.env` is static after install and reserved for Docker Compose/bootstrap variables such as `PROJECT_PATH`, `API_IMAGE`, `API_PORT`, and PostgreSQL values. More complex application configuration belongs in runtime `config.json`; Docker Compose commands should receive `.env` values through `ProcessStartInfo.Environment` from the CLI rather than relying on duplicated config files.
+- `Xray:Directory` should come from the runtime project layout as the `xray` folder; keep platform-specific `Xray:FileName` in packaged config unless runtime editing is intentional.
 - Database connection key is `ConnectionStrings:Default`.
 
 ## CI And Packaging

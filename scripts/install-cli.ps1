@@ -8,6 +8,12 @@ $ErrorActionPreference = "Stop"
 
 $Repository = "VanyaKrotov/xrayne"
 $ExecutableName = "xrayne"
+$ProjectDirectory = if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) {
+    Join-Path $env:ProgramFiles "xrayne"
+}
+else {
+    "/opt/xrayne"
+}
 
 function Get-PlatformAsset {
     $os = [System.Runtime.InteropServices.RuntimeInformation]::OSDescription
@@ -216,23 +222,85 @@ install_compose_plugin_binary() {
   rm -f "$tmp_compose"
 }
 
+missing_common=""
+if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+  missing_common="$missing_common curl"
+fi
+
+if ! command -v gzip >/dev/null 2>&1; then
+  missing_common="$missing_common gzip"
+fi
+
+if [ ! -f "/etc/ssl/certs/ca-certificates.crt" ] && [ ! -f "/etc/ssl/cert.pem" ]; then
+  missing_common="$missing_common ca-certificates"
+fi
+
+docker_missing=0
+if ! command -v docker >/dev/null 2>&1; then
+  docker_missing=1
+fi
+
+compose_missing=0
+if ! docker compose version >/dev/null 2>&1; then
+  compose_missing=1
+fi
+
+if [ -z "$missing_common" ] && [ "$docker_missing" -eq 0 ] && [ "$compose_missing" -eq 0 ]; then
+  echo "Required system modules are already installed."
+else
+  echo "Installing missing system modules..."
+fi
+
 if command -v apt-get >/dev/null 2>&1; then
-  apt-get update
-  env DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gzip docker.io
-  env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-plugin || \
-    env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-v2 || true
+  packages="$missing_common"
+  if [ "$docker_missing" -eq 1 ]; then
+    packages="$packages docker.io"
+  fi
+  if [ -n "$packages" ]; then
+    apt-get update
+    env DEBIAN_FRONTEND=noninteractive apt-get install -y $packages
+  fi
+  if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+    apt-get update
+    env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-plugin || \
+      env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-v2 || true
+  fi
 elif command -v dnf >/dev/null 2>&1; then
-  dnf makecache -y
-  dnf install -y ca-certificates curl gzip docker
-  dnf install -y docker-compose-plugin || true
+  packages="$missing_common"
+  if [ "$docker_missing" -eq 1 ]; then
+    packages="$packages docker"
+  fi
+  if [ -n "$packages" ]; then
+    dnf makecache -y
+    dnf install -y $packages
+  fi
+  if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+    dnf install -y docker-compose-plugin || true
+  fi
 elif command -v yum >/dev/null 2>&1; then
-  yum makecache -y
-  yum install -y ca-certificates curl gzip docker
-  yum install -y docker-compose-plugin || true
+  packages="$missing_common"
+  if [ "$docker_missing" -eq 1 ]; then
+    packages="$packages docker"
+  fi
+  if [ -n "$packages" ]; then
+    yum makecache -y
+    yum install -y $packages
+  fi
+  if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+    yum install -y docker-compose-plugin || true
+  fi
 elif command -v apk >/dev/null 2>&1; then
-  apk update
-  apk add --no-cache ca-certificates curl gzip docker
-  apk add --no-cache docker-cli-compose || true
+  packages="$missing_common"
+  if [ "$docker_missing" -eq 1 ]; then
+    packages="$packages docker"
+  fi
+  if [ -n "$packages" ]; then
+    apk update
+    apk add --no-cache $packages
+  fi
+  if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+    apk add --no-cache docker-cli-compose || true
+  fi
 else
   echo "Unsupported Linux package manager. Install Docker and Docker Compose plugin manually." >&2
   exit 1
@@ -271,16 +339,11 @@ docker compose version
 $assetInfo = Get-PlatformAsset
 
 if ([string]::IsNullOrWhiteSpace($InstallDirectory)) {
-    if ($assetInfo.IsWindows) {
-        $InstallDirectory = Join-Path $env:LOCALAPPDATA "XRayne\bin"
-    }
-    else {
-        $InstallDirectory = "/opt/xrayne/cli"
-    }
+    $InstallDirectory = Join-Path $ProjectDirectory "cli"
 }
 
 if (-not $assetInfo.IsWindows) {
-    Write-Host "Updating system packages and installing required modules..."
+    Write-Host "Checking system modules..."
     Install-UnixSystemDependencies
 }
 
@@ -331,19 +394,17 @@ try {
         $wrapperPath = Join-Path $temporaryDirectory "xrayne-wrapper"
         Set-Content -Path $wrapperPath -Value @"
 #!/usr/bin/env sh
-export XRAYNE_CLI_CONFIG_DIR="$InstallDirectory"
 cd "$InstallDirectory"
 exec "$InstallDirectory/$ExecutableName" "`$@"
 "@
 
-        Invoke-Native "sudo" @("mkdir", "-p", $InstallDirectory)
+        Invoke-Native "sudo" @("mkdir", "-p", $ProjectDirectory, $InstallDirectory)
         Invoke-Native "sudo" @("mkdir", "-p", $binDirectory)
-        Invoke-Native "sudo" @("mkdir", "-p", "/opt/xrayne", "/usr/shared/xrayne")
         Invoke-Native "sudo" @("cp", "-R", "$extractDirectory/.", $InstallDirectory)
         Invoke-Native "sudo" @("chmod", "+x", "$InstallDirectory/$ExecutableName")
         Install-UnixExecutable -SourcePath $wrapperPath -TargetDirectory $binDirectory -TargetPath $targetPath
         if ($env:SUDO_UID -and $env:SUDO_GID) {
-            Invoke-Native "sudo" @("chown", "$env:SUDO_UID`:$env:SUDO_GID", "/opt/xrayne", "/usr/shared/xrayne")
+            Invoke-Native "sudo" @("chown", "$env:SUDO_UID`:$env:SUDO_GID", $ProjectDirectory)
         }
         Add-UnixPath -Directory $binDirectory
     }

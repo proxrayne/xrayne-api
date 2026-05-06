@@ -12,7 +12,8 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default");
+        var connectionString = configuration.GetConnectionString("Default")
+            ?? CreatePostgresConnectionString(configuration);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException("PostgreSQL connection string is not configured.");
@@ -28,5 +29,42 @@ public static class DependencyInjection
         services.AddScoped<IAdminAccountRepository, AdminAccountRepository>();
 
         return services;
+    }
+
+    private static string? CreatePostgresConnectionString(IConfiguration configuration)
+    {
+        var user = configuration["POSTGRES_USER"];
+        var password = configuration["POSTGRES_PASSWORD"];
+        var database = configuration["POSTGRES_DB"];
+        if (string.IsNullOrWhiteSpace(user)
+            || string.IsNullOrWhiteSpace(password)
+            || string.IsNullOrWhiteSpace(database))
+        {
+            return null;
+        }
+
+        var host = configuration["POSTGRES_HOST"];
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            host = configuration["POSTGRES_HOST_API"];
+        }
+
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            host = "localhost";
+        }
+
+        var port = configuration["POSTGRES_PORT"];
+        if (string.IsNullOrWhiteSpace(port))
+        {
+            port = configuration["POSTGRES_CONTAINER_PORT"];
+        }
+
+        if (string.IsNullOrWhiteSpace(port))
+        {
+            port = "5432";
+        }
+
+        return $"Host={host};Port={port};Username={user};Password={password};Database={database}";
     }
 }

@@ -6,26 +6,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
+using XRayne.Cli.Values;
+using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands.Api;
 
 public sealed class ApiInstallCommand : Command
 {
-    private const string LatestVersion = "latest";
-    private const string ImageName = "xrayne-api";
-    private const string InstallDirectory = "/opt/xrayne";
-    private const string DefaultDataFolder = "/usr/shared/xrayne";
-    private const int DefaultApiPort = 5000;
-    private const string PostgresUser = "postgres";
-    private const string PostgresDatabase = "xrayne";
-
     public ApiInstallCommand(IServiceProvider serviceProvider)
         : base("install", "Download and install XRayne API Docker image")
     {
         var versionOption = new Option<string>("--version")
         {
             Description = "GitHub release tag to install, or 'latest'.",
-            DefaultValueFactory = _ => LatestVersion
+            DefaultValueFactory = _ => CliDefaults.LatestVersion
         };
 
         Add(versionOption);
@@ -36,7 +31,7 @@ public sealed class ApiInstallCommand : Command
 
             return await ExecuteAsync(
                 scope.ServiceProvider,
-                parseResult.GetValue(versionOption) ?? LatestVersion,
+                parseResult.GetValue(versionOption) ?? CliDefaults.LatestVersion,
                 cancellationToken);
         });
     }
@@ -50,6 +45,7 @@ public sealed class ApiInstallCommand : Command
         var logger = serviceProvider.GetRequiredService<ILogger<ApiInstallCommand>>();
         var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
         var shellService = serviceProvider.GetRequiredService<IShellService>();
+        var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
 
         try
         {
@@ -64,31 +60,33 @@ public sealed class ApiInstallCommand : Command
                 throw new InvalidOperationException($"Release asset '{assetName}' was not found in release '{release.TagName}'.");
             }
 
-            Directory.CreateDirectory(InstallDirectory);
-            Directory.CreateDirectory(options.DataFolder);
-            Directory.CreateDirectory(Path.Combine(options.DataFolder, "postgres"));
+            Directory.CreateDirectory(options.Paths.Root);
+            Directory.CreateDirectory(options.Paths.LogsDirectory);
+            Directory.CreateDirectory(options.Paths.PostgresDirectory);
+            Directory.CreateDirectory(options.Paths.XrayDirectory);
+            Directory.CreateDirectory(options.Paths.DownloadsDirectory);
 
-            var imageArchivePath = Path.Combine(InstallDirectory, asset.Name);
+            var imageArchivePath = Path.Combine(options.Paths.DownloadsDirectory, asset.Name);
             console.Success($"Downloading {asset.Name} from {gitHubReleaseService.Repository} {release.TagName}.");
             await gitHubReleaseService.DownloadAssetAsync(asset.DownloadUrl, imageArchivePath, cancellationToken);
 
-            var imageTarPath = Path.Combine(InstallDirectory, $"{ImageName}-{imageTag}.tar");
+            var imageTarPath = Path.Combine(options.Paths.Root, $"{CliDefaults.ImageName}-{imageTag}.tar");
             await DecompressGzipAsync(imageArchivePath, imageTarPath, cancellationToken);
 
             console.Success("Loading Docker image.");
-            await shellService.RunAsync("docker", $"load -i \"{imageTarPath}\"", InstallDirectory, cancellationToken);
+            await shellService.RunAsync("docker", $"load -i \"{imageTarPath}\"", options.Paths.Root, cancellationToken);
 
-            var envPath = Path.Combine(InstallDirectory, ".env");
-            WriteEnvFile(envPath, imageTag, options);
+            await WriteEnvFileAsync(imageTag, options, cancellationToken);
+            await WriteConfigFileAsync(options, cancellationToken);
 
-            var composePath = Path.Combine(InstallDirectory, "docker-compose.yml");
-            await File.WriteAllTextAsync(composePath, CreateDockerCompose(imageTag), Encoding.UTF8, cancellationToken);
+            await File.WriteAllTextAsync(options.Paths.DockerCompose, CreateDockerCompose(imageTag), Encoding.UTF8, cancellationToken);
 
-            console.Success($"API installation files are ready in '{InstallDirectory}'.");
+            console.Success($"API installation files are ready in '{options.Paths.Root}'.");
             console.Success("Starting Docker Compose.");
-            await shellService.RunAsync("docker", "compose up -d", InstallDirectory, cancellationToken);
 
-            PrintInstallSummary(release.TagName, imageTag, options);
+            await apiInstallationService.RunDockerComposeAsync("up -d", cancellationToken);
+
+            PrintInstallSummary(console, release.TagName, imageTag, options);
 
             return 0;
         }
@@ -104,31 +102,30 @@ public sealed class ApiInstallCommand : Command
     private static InstallOptions ReadInstallOptions()
     {
         var apiPort = ReadInt(
-            $"API port [{DefaultApiPort}]: ",
-            DefaultApiPort,
+            $"API port [{CliDefaults.DefaultApiPort}]: ",
+            CliDefaults.DefaultApiPort,
             value => value is >= 1 and <= 65535,
             "Port must be between 1 and 65535.");
 
-        Console.Write($"PostgreSQL user is '{PostgresUser}'. Enter PostgreSQL password or leave empty to generate one: ");
+        Console.Write($"PostgreSQL user is '{CliDefaults.PostgresUser}'. Enter PostgreSQL password or leave empty to generate one: ");
         var postgresPassword = Console.ReadLine();
-        var isGeneratedPassword = string.IsNullOrWhiteSpace(postgresPassword);
-        if (isGeneratedPassword)
+        if (string.IsNullOrWhiteSpace(postgresPassword))
         {
             postgresPassword = GeneratePassword();
         }
 
-        Console.Write($"Data folder [{DefaultDataFolder}/]: ");
-        var dataFolder = NormalizeDirectory(Console.ReadLine(), DefaultDataFolder);
+        Console.Write($"Project path [{PathProvider.DefaultProjectDirectory}/]: ");
+        var projectPath = NormalizeDirectory(Console.ReadLine(), PathProvider.DefaultProjectDirectory);
 
         Console.Write("API prefix, for example 'hidden-panel' (empty for no prefix): ");
         var apiPrefix = NormalizePrefix(Console.ReadLine());
 
-        return new InstallOptions(
-            apiPort,
-            postgresPassword!,
-            isGeneratedPassword,
-            dataFolder,
-            apiPrefix);
+        return new InstallOptions(projectPath)
+        {
+            ApiPort = apiPort,
+            ApiPrefix = apiPrefix,
+            PostgresPassword = postgresPassword
+        };
     }
 
     private static int ReadInt(
@@ -200,30 +197,42 @@ public sealed class ApiInstallCommand : Command
         await using var input = File.OpenRead(archivePath);
         await using var gzip = new GZipStream(input, CompressionMode.Decompress);
         await using var output = File.Create(destinationPath);
+        
         await gzip.CopyToAsync(output, cancellationToken);
     }
 
-    private static void WriteEnvFile(string envPath, string imageTag, InstallOptions options)
+    private static async Task WriteEnvFileAsync(
+        string imageTag,
+        InstallOptions options,
+        CancellationToken cancellationToken)
     {
         var values = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["XRAYNE_API_IMAGE"] = $"{ImageName}:{imageTag}",
-            ["XRAYNE_API_PORT"] = options.ApiPort.ToString(),
-            ["XRAYNE_API_PREFIX"] = options.ApiPrefix,
-            ["XRAYNE_DATA_FOLDER"] = options.DataFolder,
-            ["POSTGRES_DB"] = PostgresDatabase,
+            ["API_PORT"] = options.ApiPort.ToString(),
+            ["PROJECT_PATH"] = options.Paths.Root,
+            ["API_IMAGE"] = $"{CliDefaults.ImageName}:{imageTag}",
+            ["POSTGRES_DB"] = CliDefaults.PostgresDatabase,
             ["POSTGRES_HOST_API"] = "postgres",
-            ["POSTGRES_HOST_CLI"] = "localhost",
-            ["POSTGRES_USER"] = PostgresUser,
+            ["POSTGRES_USER"] = CliDefaults.PostgresUser,
             ["POSTGRES_PASSWORD"] = options.PostgresPassword,
             ["POSTGRES_CONTAINER_PORT"] = "5432",
             ["POSTGRES_PORT"] = "5432"
         };
 
-        File.WriteAllLines(
-            envPath,
-            values.Select(item => $"{item.Key}={item.Value}"),
-            Encoding.UTF8);
+        var lines = values.Select(item => $"{item.Key}={EscapeEnvironmentValue(item.Value)}");
+
+        await File.WriteAllLinesAsync(options.Paths.EnvConfig, lines, Encoding.UTF8, cancellationToken);
+    }
+
+    private static async Task WriteConfigFileAsync(
+        InstallOptions options,
+        CancellationToken cancellationToken)
+    {
+        var config = new JsonConfigService(options.Paths.JsonConfig);
+
+        config.Set("PathBase", options.ApiPrefix);
+
+        await config.SaveAsync(cancellationToken);
     }
 
     private static string CreateDockerCompose(string imageTag)
@@ -231,19 +240,21 @@ public sealed class ApiInstallCommand : Command
         return $$"""
                services:
                  api:
-                   image: ${XRAYNE_API_IMAGE:-{{ImageName}}:{{imageTag}}}
+                   image: ${API_IMAGE:-{{CliDefaults.ImageName}}:{{imageTag}}}
                    container_name: xrayne-api
-                   env_file:
-                     - /opt/xrayne/.env
                    environment:
                      ASPNETCORE_URLS: "http://+:8080"
-                     PathBase: "${XRAYNE_API_PREFIX}"
+                     XRAYNE_CONFIG_FILE: "/app/config.json"
+                     XRAYNE_ENV_FILE: "/app/.env"
                      ConnectionStrings__Default: "Host=${POSTGRES_HOST_API:-postgres};Port=${POSTGRES_CONTAINER_PORT:-5432};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}"
                    ports:
-                     - "${XRAYNE_API_PORT:-5000}:8080"
+                     - "${API_PORT:-5000}:8080"
                    volumes:
-                     - ${XRAYNE_DATA_FOLDER:-/usr/shared/xrayne}:/app/shared
-                     - ./data/api/logs:/app/logs
+                     - ${PROJECT_PATH:-/opt/xrayne}/config.json:/app/config.json:ro
+                     - ${PROJECT_PATH:-/opt/xrayne}/.env:/app/.env:ro
+                     - ${PROJECT_PATH:-/opt/xrayne}:/app/shared
+                     - ${PROJECT_PATH:-/opt/xrayne}/logs/api:/app/logs
+                     - ${PROJECT_PATH:-/opt/xrayne}/xray:/app/xray
                    depends_on:
                      postgres:
                        condition: service_healthy
@@ -252,8 +263,6 @@ public sealed class ApiInstallCommand : Command
                  postgres:
                    image: postgres:16-alpine
                    container_name: xrayne-postgres
-                   env_file:
-                     - /opt/xrayne/.env
                    environment:
                      POSTGRES_DB: ${POSTGRES_DB}
                      POSTGRES_USER: ${POSTGRES_USER}
@@ -261,7 +270,7 @@ public sealed class ApiInstallCommand : Command
                    ports:
                      - "${POSTGRES_PORT:-5432}:5432"
                    volumes:
-                     - "${XRAYNE_DATA_FOLDER:-/usr/shared/xrayne}/postgres:/var/lib/postgresql/data"
+                     - "${PROJECT_PATH:-/opt/xrayne}/postgres:/var/lib/postgresql/data"
                    healthcheck:
                      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
                      interval: 10s
@@ -271,47 +280,46 @@ public sealed class ApiInstallCommand : Command
                """;
     }
 
-    private static void PrintInstallSummary(string releaseTag, string imageTag, InstallOptions options)
+    private static void PrintInstallSummary(
+        ICliConsole console,
+        string releaseTag,
+        string imageTag,
+        InstallOptions options)
     {
         var panelUrl = $"http://0.0.0.0:{options.ApiPort}{options.ApiPrefix}/";
         var apiUrl = $"http://0.0.0.0:{options.ApiPort}{options.ApiPrefix}/api";
 
-        Console.WriteLine();
-        Console.WriteLine("XRayne API installation completed.");
-        Console.WriteLine("==================================");
-        Console.WriteLine($"Release: {releaseTag}");
-        Console.WriteLine($"Docker image: {ImageName}:{imageTag}");
-        Console.WriteLine($"Installation directory: {InstallDirectory}");
-        Console.WriteLine($"Environment file: {Path.Combine(InstallDirectory, ".env")}");
-        Console.WriteLine($"Compose file: {Path.Combine(InstallDirectory, "docker-compose.yml")}");
-        Console.WriteLine();
-        Console.WriteLine("Panel");
-        Console.WriteLine($"  URL: {panelUrl}");
-        Console.WriteLine($"  API URL: {apiUrl}");
-        Console.WriteLine($"  Prefix: {(string.IsNullOrWhiteSpace(options.ApiPrefix) ? "(none)" : options.ApiPrefix)}");
-        Console.WriteLine();
-        Console.WriteLine("PostgreSQL");
-        Console.WriteLine("  Host from API container: postgres");
-        Console.WriteLine("  Port from API container: 5432");
-        Console.WriteLine("  Host from CLI: localhost");
-        Console.WriteLine("  Host port: 5432");
-        Console.WriteLine($"  Database: {PostgresDatabase}");
-        Console.WriteLine($"  Username: {PostgresUser}");
-        Console.WriteLine($"  Password: {options.PostgresPassword}");
-        Console.WriteLine($"  Password generated: {(options.IsGeneratedPassword ? "yes" : "no")}");
-        Console.WriteLine($"  CLI connection string: Host=localhost;Port=5432;Username={PostgresUser};Password={options.PostgresPassword};Database={PostgresDatabase}");
-        Console.WriteLine($"  API connection string: Host=postgres;Port=5432;Username={PostgresUser};Password={options.PostgresPassword};Database={PostgresDatabase}");
-        Console.WriteLine();
-        Console.WriteLine("Data");
-        Console.WriteLine($"  Host data folder: {options.DataFolder}");
-        Console.WriteLine("  Container data folder: /app/shared");
-        Console.WriteLine($"  PostgreSQL data folder: {Path.Combine(options.DataFolder, "postgres")}");
-        Console.WriteLine();
-        Console.WriteLine("Next useful commands");
-        Console.WriteLine($"  cd {InstallDirectory}");
-        Console.WriteLine("  docker compose ps");
-        Console.WriteLine("  docker compose logs -f api");
-        Console.WriteLine("  docker compose logs -f postgres");
+        console.Header("XRayne API installation completed");
+        console.Value("Release", releaseTag);
+        console.Value("Docker image", $"{CliDefaults.ImageName}:{imageTag}");
+        console.Value("Project path", options.Paths.Root);
+        console.Value("Environment file", options.Paths.EnvConfig);
+        console.Value("Config file", options.Paths.JsonConfig);
+        console.Value("Compose file", options.Paths.DockerCompose);
+
+        console.Section("Panel");
+        console.Value("URL", panelUrl);
+        console.Value("API URL", apiUrl);
+        console.Value("Prefix", string.IsNullOrWhiteSpace(options.ApiPrefix) ? "(none)" : options.ApiPrefix);
+
+        console.Section("PostgreSQL");
+        console.Value("API host", "postgres:5432");
+        console.Value("CLI host", "localhost:5432");
+        console.Value("Database", CliDefaults.PostgresDatabase);
+        console.Value("Username", CliDefaults.PostgresUser);
+        console.Value("Password", options.PostgresPassword);
+
+        console.Section("Project folders");
+        console.Value("Logs", options.Paths.LogsDirectory);
+        console.Value("Xray", options.Paths.XrayDirectory);
+        console.Value("PostgreSQL data", options.Paths.PostgresDirectory);
+        console.Value("Container project", "/app/shared");
+
+        console.Section("Next useful commands");
+        console.Command($"cd {options.Paths.Root}");
+        console.Command("docker compose ps");
+        console.Command("docker compose logs -f api");
+        console.Command("docker compose logs -f postgres");
     }
 
     private static string SanitizeDockerTag(string value)
@@ -325,10 +333,26 @@ public sealed class ApiInstallCommand : Command
         return string.IsNullOrWhiteSpace(tag) ? "latest" : tag;
     }
 
-    private sealed record InstallOptions(
-        int ApiPort,
-        string PostgresPassword,
-        bool IsGeneratedPassword,
-        string DataFolder,
-        string ApiPrefix);
+    private static string EscapeEnvironmentValue(string value)
+    {
+        if (value.Length == 0 || !value.Any(character => char.IsWhiteSpace(character) || character is '#' or '=' or '"' or '\''))
+        {
+            return value;
+        }
+
+        return $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+    }
+
+    private sealed class InstallOptions
+    {
+        public int ApiPort { get; set; }
+        public string PostgresPassword { get; set; } = string.Empty;
+        public string ApiPrefix { get; set; } = string.Empty;
+        public ProjectPaths Paths { get; }
+
+        public InstallOptions(string projectPath)
+        {
+            Paths = new ProjectPaths(projectPath);
+        }
+    }
 }

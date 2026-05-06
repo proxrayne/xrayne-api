@@ -10,6 +10,16 @@ public sealed class ShellService : IShellService
         string workingDirectory,
         CancellationToken cancellationToken)
     {
+        return RunAsync(fileName, arguments, workingDirectory, null, cancellationToken);
+    }
+
+    public Task<string> RunAsync(
+        string fileName,
+        string arguments,
+        string workingDirectory,
+        IReadOnlyDictionary<string, string>? environment,
+        CancellationToken cancellationToken)
+    {
         var startInfo = new ProcessStartInfo(fileName, arguments)
         {
             WorkingDirectory = workingDirectory,
@@ -18,6 +28,8 @@ public sealed class ShellService : IShellService
             UseShellExecute = false
         };
 
+        AddEnvironment(startInfo, environment);
+
         return RunAsync(startInfo, $"{fileName} {arguments}", cancellationToken);
     }
 
@@ -25,6 +37,16 @@ public sealed class ShellService : IShellService
         string fileName,
         IReadOnlyCollection<string> arguments,
         string workingDirectory,
+        CancellationToken cancellationToken)
+    {
+        return RunAsync(fileName, arguments, workingDirectory, null, cancellationToken);
+    }
+
+    public Task<string> RunAsync(
+        string fileName,
+        IReadOnlyCollection<string> arguments,
+        string workingDirectory,
+        IReadOnlyDictionary<string, string>? environment,
         CancellationToken cancellationToken)
     {
         var startInfo = new ProcessStartInfo(fileName)
@@ -40,7 +62,24 @@ public sealed class ShellService : IShellService
             startInfo.ArgumentList.Add(argument);
         }
 
+        AddEnvironment(startInfo, environment);
+
         return RunAsync(startInfo, $"{fileName} {string.Join(' ', arguments)}", cancellationToken);
+    }
+
+    private static void AddEnvironment(
+        ProcessStartInfo startInfo,
+        IReadOnlyDictionary<string, string>? environment)
+    {
+        if (environment is null)
+        {
+            return;
+        }
+
+        foreach (var (key, value) in environment)
+        {
+            startInfo.Environment[key] = value;
+        }
     }
 
     private static async Task<string> RunAsync(

@@ -1,18 +1,15 @@
 using System.CommandLine;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
+using XRayne.Cli.Values;
 
 namespace XRayne.Cli.Commands.Api;
 
 public sealed class ApiVersionCommand : Command
 {
-    private const string LatestVersion = "latest";
-    private const string ImageName = "xrayne-api";
-    private const string EnvPath = "/opt/xrayne/.env";
-    private const string ApiImageVariable = "XRAYNE_API_IMAGE";
-
     public ApiVersionCommand(IServiceProvider serviceProvider)
         : base("version", "Print installed XRayne API version and update status")
     {
@@ -31,11 +28,12 @@ public sealed class ApiVersionCommand : Command
         var console = serviceProvider.GetRequiredService<ICliConsole>();
         var logger = serviceProvider.GetRequiredService<ILogger<ApiVersionCommand>>();
         var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
         try
         {
-            var installedVersion = ReadInstalledVersion();
-            var release = await gitHubReleaseService.ResolveReleaseAsync(LatestVersion, cancellationToken);
+            var installedVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
+            var release = await gitHubReleaseService.ResolveReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
             var latestVersion = SanitizeDockerTag(release.TagName);
 
             if (string.IsNullOrWhiteSpace(installedVersion))
@@ -62,35 +60,9 @@ public sealed class ApiVersionCommand : Command
         }
     }
 
-    private static string? ReadInstalledVersion()
-    {
-        if (!File.Exists(EnvPath))
-        {
-            return null;
-        }
-
-        foreach (var line in File.ReadLines(EnvPath))
-        {
-            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
-            {
-                continue;
-            }
-
-            var parts = line.Split('=', 2);
-            if (parts.Length != 2 || !string.Equals(parts[0].Trim(), ApiImageVariable, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return ExtractImageTag(parts[1].Trim().Trim('"', '\''));
-        }
-
-        return null;
-    }
-
     private static string? ExtractImageTag(string image)
     {
-        const string imagePrefix = ImageName + ":";
+        const string imagePrefix = CliDefaults.ImageName + ":";
 
         if (image.StartsWith(imagePrefix, StringComparison.Ordinal))
         {

@@ -3,7 +3,8 @@ set -eu
 
 REPOSITORY="VanyaKrotov/xrayne"
 VERSION="latest"
-INSTALL_DIR="/opt/xrayne/cli"
+PROJECT_DIR="/opt/xrayne"
+INSTALL_DIR="$PROJECT_DIR/cli"
 BIN_DIR="/usr/local/bin"
 EXECUTABLE="xrayne"
 
@@ -112,25 +113,85 @@ install_system_dependencies() {
       ;;
   esac
 
-  echo "Updating system packages and installing required modules..."
+  missing_common=""
+  if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+    missing_common="$missing_common curl"
+  fi
+
+  if ! command -v gzip >/dev/null 2>&1; then
+    missing_common="$missing_common gzip"
+  fi
+
+  if [ ! -f "/etc/ssl/certs/ca-certificates.crt" ] && [ ! -f "/etc/ssl/cert.pem" ]; then
+    missing_common="$missing_common ca-certificates"
+  fi
+
+  docker_missing=0
+  if ! command -v docker >/dev/null 2>&1; then
+    docker_missing=1
+  fi
+
+  compose_missing=0
+  if ! docker compose version >/dev/null 2>&1; then
+    compose_missing=1
+  fi
+
+  if [ -z "$missing_common" ] && [ "$docker_missing" -eq 0 ] && [ "$compose_missing" -eq 0 ]; then
+    echo "Required system modules are already installed."
+  else
+    echo "Installing missing system modules..."
+  fi
 
   if command -v apt-get >/dev/null 2>&1; then
-    run_root apt-get update
-    run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gzip docker.io
-    run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-plugin || \
-      run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-v2 || true
+    packages="$missing_common"
+    if [ "$docker_missing" -eq 1 ]; then
+      packages="$packages docker.io"
+    fi
+    if [ -n "$packages" ]; then
+      run_root apt-get update
+      run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y $packages
+    fi
+    if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+      run_root apt-get update
+      run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-plugin || \
+        run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y docker-compose-v2 || true
+    fi
   elif command -v dnf >/dev/null 2>&1; then
-    run_root dnf makecache -y
-    run_root dnf install -y ca-certificates curl gzip docker
-    run_root dnf install -y docker-compose-plugin || true
+    packages="$missing_common"
+    if [ "$docker_missing" -eq 1 ]; then
+      packages="$packages docker"
+    fi
+    if [ -n "$packages" ]; then
+      run_root dnf makecache -y
+      run_root dnf install -y $packages
+    fi
+    if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+      run_root dnf install -y docker-compose-plugin || true
+    fi
   elif command -v yum >/dev/null 2>&1; then
-    run_root yum makecache -y
-    run_root yum install -y ca-certificates curl gzip docker
-    run_root yum install -y docker-compose-plugin || true
+    packages="$missing_common"
+    if [ "$docker_missing" -eq 1 ]; then
+      packages="$packages docker"
+    fi
+    if [ -n "$packages" ]; then
+      run_root yum makecache -y
+      run_root yum install -y $packages
+    fi
+    if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+      run_root yum install -y docker-compose-plugin || true
+    fi
   elif command -v apk >/dev/null 2>&1; then
-    run_root apk update
-    run_root apk add --no-cache ca-certificates curl gzip docker
-    run_root apk add --no-cache docker-cli-compose || true
+    packages="$missing_common"
+    if [ "$docker_missing" -eq 1 ]; then
+      packages="$packages docker"
+    fi
+    if [ -n "$packages" ]; then
+      run_root apk update
+      run_root apk add --no-cache $packages
+    fi
+    if [ "$compose_missing" -eq 1 ] && ! docker compose version >/dev/null 2>&1; then
+      run_root apk add --no-cache docker-cli-compose || true
+    fi
   else
     echo "Unsupported Linux package manager. Install Docker and Docker Compose plugin manually." >&2
     exit 1
@@ -233,19 +294,17 @@ fi
 
 cat > "$WRAPPER_PATH" <<EOF
 #!/usr/bin/env sh
-export XRAYNE_CLI_CONFIG_DIR="$INSTALL_DIR"
 cd "$INSTALL_DIR"
 exec "$INSTALL_DIR/$EXECUTABLE" "\$@"
 EOF
 
-run_root mkdir -p "$INSTALL_DIR"
+run_root mkdir -p "$PROJECT_DIR" "$INSTALL_DIR"
 run_root mkdir -p "$BIN_DIR"
-run_root mkdir -p "/opt/xrayne" "/usr/shared/xrayne"
 run_root cp -R "$EXTRACT_DIR/." "$INSTALL_DIR/"
 run_root chmod +x "$INSTALL_DIR/$EXECUTABLE"
 run_root install -m 755 "$WRAPPER_PATH" "$BIN_DIR/$EXECUTABLE"
 if [ -n "${SUDO_UID:-}" ] && [ -n "${SUDO_GID:-}" ]; then
-  run_root chown "$SUDO_UID:$SUDO_GID" "/opt/xrayne" "/usr/shared/xrayne"
+  run_root chown "$SUDO_UID:$SUDO_GID" "$PROJECT_DIR"
 fi
 add_to_path_if_needed "$BIN_DIR"
 
