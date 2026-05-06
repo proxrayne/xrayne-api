@@ -168,6 +168,49 @@ function Stop-ProjectCompose {
     }
 }
 
+function Remove-XRayneDockerContainers {
+    if (-not (Test-Command "docker")) {
+        Write-Host "Warning: Docker not found. XRayne containers might still be running."
+        return
+    }
+
+    $containerIds = @()
+
+    try {
+        $byName = & docker ps -aq --filter "name=xrayne" 2>$null
+        if ($LASTEXITCODE -eq 0 -and $byName) {
+            $containerIds += $byName
+        }
+    }
+    catch {
+    }
+
+    try {
+        $byProject = & docker ps -aq --filter "label=com.docker.compose.project=xrayne" 2>$null
+        if ($LASTEXITCODE -eq 0 -and $byProject) {
+            $containerIds += $byProject
+        }
+    }
+    catch {
+    }
+
+    $containerIds = $containerIds |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        Select-Object -Unique
+
+    if ($containerIds.Count -eq 0) {
+        return
+    }
+
+    Write-Host "Removing XRayne Docker containers..."
+    try {
+        Invoke-Root "docker" (@("rm", "-f") + $containerIds)
+    }
+    catch {
+        Write-Host "Warning: Failed to remove some XRayne containers, proceeding anyway. $($_.Exception.Message)"
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($ProjectDirectory)) {
     if (Test-XRayneProjectDirectory -Directory $defaultProjectDirectory) {
         $ProjectDirectory = $defaultProjectDirectory
@@ -205,6 +248,7 @@ if ($confirmation -ne "yes") {
 }
 
 Stop-ProjectCompose -Directory $ProjectDirectory
+Remove-XRayneDockerContainers
 
 if ($isWindows) {
     Remove-WindowsPath -Directory $InstallDirectory

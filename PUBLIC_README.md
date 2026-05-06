@@ -186,10 +186,9 @@ During installation you will be prompted for:
 
 - API port, default `5000`.
 - PostgreSQL password for user `postgres`; an empty value generates a password.
-- Project path, default `/opt/xrayne`.
 - Optional API prefix for hiding the panel behind a custom path.
 
-The project folder contains `config.json`, `.env`, `logs`, `postgres`, `xray`, and other runtime folders at the same level. PostgreSQL data is stored in:
+The project path is derived from the installed CLI directory. For the default `/opt/xrayne/cli` CLI installation, the project path is `/opt/xrayne`. The project folder contains `config.json`, `.env`, `logs`, `postgres`, `xray`, and other runtime folders at the same level. PostgreSQL data is stored in:
 
 ```text
 <project-path>/postgres

@@ -104,6 +104,27 @@ assert_safe_project_dir() {
   fi
 }
 
+remove_xrayne_docker_containers() {
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Warning: Docker not found. XRayne containers might still be running."
+    return
+  fi
+
+  container_ids="$(
+    {
+      docker ps -aq --filter "name=xrayne" 2>/dev/null || true
+      docker ps -aq --filter "label=com.docker.compose.project=xrayne" 2>/dev/null || true
+    } | sort -u
+  )"
+  if [ -z "$container_ids" ]; then
+    return
+  fi
+
+  echo "Removing XRayne Docker containers..."
+  # shellcheck disable=SC2086
+  run_root docker rm -f $container_ids || echo "Warning: Failed to remove some XRayne containers, proceeding anyway."
+}
+
 if [ "$PROJECT_DIR_PROVIDED" -eq 0 ] && ! is_project_dir "$PROJECT_DIR"; then
   printf "Standard project directory '%s' was not found. Enter XRayne project directory: " "$APP_DIR"
   read -r PROJECT_DIR
@@ -137,6 +158,8 @@ if [ -d "$PROJECT_DIR" ] && ( [ -f "$PROJECT_DIR/docker-compose.yml" ] || [ -f "
     echo "Warning: Docker Compose not found. Containers might still be running."
   fi
 fi
+
+remove_xrayne_docker_containers
 
 COMMAND_PATH="$BIN_DIR/$EXECUTABLE"
 

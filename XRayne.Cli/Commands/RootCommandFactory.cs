@@ -9,7 +9,8 @@ public sealed class RootCommandFactory(
     XrayCommand xrayCommand,
     AdminCommand adminCommand,
     ApiCommand apiCommand,
-    VersionCommand versionCommand)
+    VersionCommand versionCommand,
+    InfoCommand infoCommand)
 {
     public RootCommand Create()
     {
@@ -18,7 +19,8 @@ public sealed class RootCommandFactory(
             xrayCommand,
             adminCommand,
             apiCommand,
-            versionCommand
+            versionCommand,
+            infoCommand
         };
     }
 }

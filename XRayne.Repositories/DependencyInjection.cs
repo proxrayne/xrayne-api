@@ -12,8 +12,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? CreatePostgresConnectionString(configuration);
+        var connectionString = GetEnvConnectionString(configuration) ?? configuration.GetConnectionString("Default");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException("PostgreSQL connection string is not configured.");
@@ -31,7 +30,7 @@ public static class DependencyInjection
         return services;
     }
 
-    private static string? CreatePostgresConnectionString(IConfiguration configuration)
+    private static string? GetEnvConnectionString(IConfiguration configuration)
     {
         var user = configuration["POSTGRES_USER"];
         var password = configuration["POSTGRES_PASSWORD"];

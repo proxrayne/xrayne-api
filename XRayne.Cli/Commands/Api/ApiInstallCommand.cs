@@ -60,7 +60,6 @@ public sealed class ApiInstallCommand : Command
                 throw new InvalidOperationException($"Release asset '{assetName}' was not found in release '{release.TagName}'.");
             }
 
-            Directory.CreateDirectory(options.Paths.Root);
             Directory.CreateDirectory(options.Paths.LogsDirectory);
             Directory.CreateDirectory(options.Paths.PostgresDirectory);
             Directory.CreateDirectory(options.Paths.XrayDirectory);
@@ -114,13 +113,10 @@ public sealed class ApiInstallCommand : Command
             postgresPassword = GeneratePassword();
         }
 
-        Console.Write($"Project path [{PathProvider.DefaultProjectDirectory}/]: ");
-        var projectPath = NormalizeDirectory(Console.ReadLine(), PathProvider.DefaultProjectDirectory);
-
         Console.Write("API prefix, for example 'hidden-panel' (empty for no prefix): ");
         var apiPrefix = NormalizePrefix(Console.ReadLine());
 
-        return new InstallOptions(projectPath)
+        return new InstallOptions(PathProvider.GetProjectDirectory())
         {
             ApiPort = apiPort,
             ApiPrefix = apiPrefix,
@@ -197,7 +193,7 @@ public sealed class ApiInstallCommand : Command
         await using var input = File.OpenRead(archivePath);
         await using var gzip = new GZipStream(input, CompressionMode.Decompress);
         await using var output = File.Create(destinationPath);
-        
+
         await gzip.CopyToAsync(output, cancellationToken);
     }
 

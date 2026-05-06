@@ -94,6 +94,7 @@ Repository pattern:
 - Builds a generic host.
 - Uses packaged `config.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.ConfigPath`.
 - Reads `PathProvider.EnvironmentPath` with `Dotenv.Extensions.Microsoft.Configuration` when the runtime API is installed. Reading is done through standard `IConfiguration`; `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is only for writing mutable values to `config.json`. `.env` is static read-only compose/bootstrap configuration. Docker Compose receives flat `.env` values through the shell process environment and derives API connection settings with `POSTGRES_HOST_API`.
+- Derives the default project path from the installed CLI location when `AppContext.BaseDirectory` is a `cli` directory, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
 - Adds environment variables without a custom prefix.
 - Registers core, infrastructure, repositories, and CLI actions.
 - Does not migrate database on startup, so non-database commands can run before PostgreSQL is available.
@@ -110,6 +111,7 @@ Current command tree:
 ```text
 xrayne
   version
+  info
   api install [--version latest|tag]
   api version
   api update

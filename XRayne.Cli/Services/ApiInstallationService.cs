@@ -1,11 +1,10 @@
 using Microsoft.Extensions.Configuration;
+using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Services;
 
 public sealed class ApiInstallationService : IApiInstallationService
 {
-    private const string EnvPath = "/opt/xrayne/.env";
-    private const string ComposePath = "/opt/xrayne/docker-compose.yml";
     private readonly IShellService _shellService;
     private readonly IConfiguration _configuration;
 
@@ -17,18 +16,18 @@ public sealed class ApiInstallationService : IApiInstallationService
         _configuration = configuration;
     }
 
-    public string InstallDirectory => "/opt/xrayne";
+    public string InstallDirectory => PathProvider.Paths.Root;
 
     public void EnsureInstalled()
     {
-        if (!File.Exists(EnvPath))
+        if (!File.Exists(PathProvider.Paths.EnvConfig))
         {
-            throw new InvalidOperationException($"Environment file '{EnvPath}' was not found. Run 'xrayne api install' first.");
+            throw new InvalidOperationException($"Environment file '{PathProvider.Paths.EnvConfig}' was not found. Run 'xrayne api install' first.");
         }
 
-        if (!File.Exists(ComposePath))
+        if (!File.Exists(PathProvider.Paths.DockerCompose))
         {
-            throw new InvalidOperationException($"Compose file '{ComposePath}' was not found. Run 'xrayne api install' first.");
+            throw new InvalidOperationException($"Compose file '{PathProvider.Paths.DockerCompose}' was not found. Run 'xrayne api install' first.");
         }
     }
 
@@ -50,7 +49,7 @@ public sealed class ApiInstallationService : IApiInstallationService
         environment.TryAdd("POSTGRES_CONTAINER_PORT", "5432");
         environment.TryAdd("POSTGRES_PORT", "5432");
         environment.TryAdd("API_PORT", "5000");
-        environment.TryAdd("PROJECT_PATH", "/opt/xrayne");
+        environment.TryAdd("PROJECT_PATH", PathProvider.Paths.Root);
 
         return await _shellService.RunAsync("docker", $"compose {arguments}", InstallDirectory, environment, cancellationToken);
     }
