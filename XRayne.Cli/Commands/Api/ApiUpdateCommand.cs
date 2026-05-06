@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.IO.Compression;
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -72,18 +73,10 @@ public sealed class ApiUpdateCommand : Command
             console.Success("Loading Docker image.");
             await shellService.RunAsync("docker", $"load -i \"{imageTarPath}\"", PathProvider.Paths.Root, cancellationToken);
 
+            await UpdateEnvImageAsync(latestVersion, cancellationToken);
+
             console.Success("Restarting Docker Compose.");
-            apiInstallationService.EnsureInstalled();
-            var environment = new Dictionary<string, string>(
-                configuration.AsEnumerable()
-                    .Where(item => !string.IsNullOrWhiteSpace(item.Value))
-                    .Where(item => !item.Key.Contains(':', StringComparison.Ordinal))
-                    .ToDictionary(item => item.Key, item => item.Value!, StringComparer.OrdinalIgnoreCase),
-                StringComparer.OrdinalIgnoreCase)
-            {
-                [CliDefaults.ApiImageVariable] = $"{CliDefaults.ImageName}:{latestVersion}"
-            };
-            await shellService.RunAsync("docker", "compose up -d", PathProvider.Paths.Root, environment, cancellationToken);
+            await apiInstallationService.RunDockerComposeAsync("up -d", cancellationToken);
 
             console.Header("XRayne API update completed");
             console.Value("Previous API version", installedVersion);
@@ -91,7 +84,7 @@ public sealed class ApiUpdateCommand : Command
             console.Value("Docker image", $"{CliDefaults.ImageName}:{latestVersion}");
             console.Value("Project path", PathProvider.Paths.Root);
             console.Value("Compose file", PathProvider.Paths.DockerCompose);
-            console.Warning($"Static .env was not changed. Update '{CliDefaults.ApiImageVariable}' in '{PathProvider.Paths.EnvConfig}' manually to make this version permanent across future compose restarts.");
+            console.Value("Environment file", PathProvider.Paths.EnvConfig);
 
             return 0;
         }
@@ -131,6 +124,40 @@ public sealed class ApiUpdateCommand : Command
         return tagSeparatorIndex >= 0 && tagSeparatorIndex < image.Length - 1
             ? image[(tagSeparatorIndex + 1)..]
             : null;
+    }
+
+    private static async Task UpdateEnvImageAsync(
+        string imageTag,
+        CancellationToken cancellationToken)
+    {
+        var envPath = PathProvider.Paths.EnvConfig;
+        var imageLine = $"{CliDefaults.ApiImageVariable}={CliDefaults.ImageName}:{imageTag}";
+        var lines = await File.ReadAllLinesAsync(envPath, cancellationToken);
+        var updated = false;
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var line = lines[index];
+            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
+            {
+                continue;
+            }
+
+            var parts = line.Split('=', 2);
+            if (parts.Length == 2 && string.Equals(parts[0].Trim(), CliDefaults.ApiImageVariable, StringComparison.OrdinalIgnoreCase))
+            {
+                lines[index] = imageLine;
+                updated = true;
+                break;
+            }
+        }
+
+        if (!updated)
+        {
+            lines = [.. lines, imageLine];
+        }
+
+        await File.WriteAllLinesAsync(envPath, lines, Encoding.UTF8, cancellationToken);
     }
 
     private static async Task DecompressGzipAsync(

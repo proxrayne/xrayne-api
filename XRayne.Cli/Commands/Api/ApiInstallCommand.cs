@@ -148,15 +148,6 @@ public sealed class ApiInstallCommand : Command
         }
     }
 
-    private static string NormalizeDirectory(string? value, string defaultValue)
-    {
-        var directory = string.IsNullOrWhiteSpace(value)
-            ? defaultValue
-            : value.Trim();
-
-        return directory.TrimEnd('/', '\\');
-    }
-
     private static string NormalizePrefix(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -238,10 +229,10 @@ public sealed class ApiInstallCommand : Command
                  api:
                    image: ${API_IMAGE:-{{CliDefaults.ImageName}}:{{imageTag}}}
                    container_name: xrayne-api
+                   env_file:
+                     - .env
                    environment:
                      ASPNETCORE_URLS: "http://+:8080"
-                     XRAYNE_CONFIG_FILE: "/app/config.json"
-                     XRAYNE_ENV_FILE: "/app/.env"
                      ConnectionStrings__Default: "Host=${POSTGRES_HOST_API:-postgres};Port=${POSTGRES_CONTAINER_PORT:-5432};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}"
                    ports:
                      - "${API_PORT:-5000}:8080"
@@ -249,7 +240,7 @@ public sealed class ApiInstallCommand : Command
                      - ${PROJECT_PATH:-/opt/xrayne}/config.json:/app/config.json:ro
                      - ${PROJECT_PATH:-/opt/xrayne}/.env:/app/.env:ro
                      - ${PROJECT_PATH:-/opt/xrayne}:/app/shared
-                     - ${PROJECT_PATH:-/opt/xrayne}/logs/api:/app/logs
+                     - ${PROJECT_PATH:-/opt/xrayne}/logs:/app/logs
                      - ${PROJECT_PATH:-/opt/xrayne}/xray:/app/xray
                    depends_on:
                      postgres:
@@ -259,6 +250,8 @@ public sealed class ApiInstallCommand : Command
                  postgres:
                    image: postgres:16-alpine
                    container_name: xrayne-postgres
+                   env_file:
+                     - .env
                    environment:
                      POSTGRES_DB: ${POSTGRES_DB}
                      POSTGRES_USER: ${POSTGRES_USER}

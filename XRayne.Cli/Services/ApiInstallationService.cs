@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Services;
@@ -6,14 +5,10 @@ namespace XRayne.Cli.Services;
 public sealed class ApiInstallationService : IApiInstallationService
 {
     private readonly IShellService _shellService;
-    private readonly IConfiguration _configuration;
 
-    public ApiInstallationService(
-        IShellService shellService,
-        IConfiguration configuration)
+    public ApiInstallationService(IShellService shellService)
     {
         _shellService = shellService;
-        _configuration = configuration;
     }
 
     public string InstallDirectory => PathProvider.Paths.Root;
@@ -37,21 +32,7 @@ public sealed class ApiInstallationService : IApiInstallationService
     {
         EnsureInstalled();
 
-        var environment = _configuration
-            .AsEnumerable()
-            .Where(item => !string.IsNullOrWhiteSpace(item.Value))
-            .Where(item => !item.Key.Contains(':', StringComparison.Ordinal))
-            .ToDictionary(
-                item => item.Key,
-                item => item.Value!,
-                StringComparer.OrdinalIgnoreCase);
-        environment.TryAdd("POSTGRES_HOST_API", "postgres");
-        environment.TryAdd("POSTGRES_CONTAINER_PORT", "5432");
-        environment.TryAdd("POSTGRES_PORT", "5432");
-        environment.TryAdd("API_PORT", "5000");
-        environment.TryAdd("PROJECT_PATH", PathProvider.Paths.Root);
-
-        return await _shellService.RunAsync("docker", $"compose {arguments}", InstallDirectory, environment, cancellationToken);
+        return await _shellService.RunAsync("docker", $"compose {arguments}", InstallDirectory, cancellationToken);
     }
 
     public async Task<bool> IsApiRunningAsync(CancellationToken cancellationToken)

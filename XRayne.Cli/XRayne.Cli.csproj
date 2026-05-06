@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>xrayne</AssemblyName>
-    <Version>0.0.8</Version>
+    <Version>0.0.9</Version>
     <RuntimeIdentifiers>win-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
     <SelfContained Condition="'$(RuntimeIdentifier)' != ''">true</SelfContained>
     <PublishSingleFile Condition="'$(RuntimeIdentifier)' != ''">true</PublishSingleFile>
