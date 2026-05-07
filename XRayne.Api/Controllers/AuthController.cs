@@ -5,7 +5,9 @@ using Microsoft.Extensions.Options;
 using XRayne.Api.Exceptions;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
-using XRayne.Infrastructure.Auth;
+using XRayne.Contracts.Configurations;
+using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Repositories.Admins;
 
 namespace XRayne.Api.Controllers;
@@ -13,7 +15,6 @@ namespace XRayne.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(
     IAdminAccountRepository adminAccounts,
-    IPasswordHasher passwordHasher,
     IJwtTokenService jwtTokenService,
     IOptions<JwtOptions> jwtOptions,
     IMapper mapper) : ApiControllerBase
@@ -50,7 +51,7 @@ public sealed class AuthController(
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
         var account = await adminAccounts.GetByUsernameAsync(request.Username, ct);
-        if (account is null || !passwordHasher.VerifyPassword(request.Password, account.PasswordHash))
+        if (account is null || !IdentityPasswordHasher.VerifyPassword(request.Password, account.PasswordHash))
         {
             throw new Exception("Invalid username or password.");
         }

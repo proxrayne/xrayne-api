@@ -7,9 +7,9 @@ using Scalar.AspNetCore;
 using Serilog;
 using XRayne.Api.Auth;
 using XRayne.Api.Filters;
+using XRayne.Contracts.Configurations;
 using XRayne.Core;
 using XRayne.Infrastructure;
-using XRayne.Infrastructure.Auth;
 using XRayne.Infrastructure.Values;
 using XRayne.Repositories;
 

@@ -1,4 +1,4 @@
-namespace XRayne.Infrastructure.Auth;
+namespace XRayne.Contracts.Configurations;
 
 public sealed class JwtOptions
 {

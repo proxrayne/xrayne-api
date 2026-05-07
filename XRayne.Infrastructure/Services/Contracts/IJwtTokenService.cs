@@ -1,6 +1,6 @@
 using XRayne.Contracts.Enums;
 
-namespace XRayne.Infrastructure.Auth;
+namespace XRayne.Infrastructure.Services;
 
 public interface IJwtTokenService
 {

@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Auth;
 using XRayne.Infrastructure.Utilities;
 using XRayne.Repositories;
 using XRayne.Repositories.Admins;
@@ -31,7 +30,6 @@ public sealed class AdminCreateCommand : Command
         CancellationToken cancellationToken)
     {
         var adminAccounts = serviceProvider.GetRequiredService<IAdminAccountRepository>();
-        var passwordHasher = serviceProvider.GetRequiredService<IPasswordHasher>();
         var console = serviceProvider.GetRequiredService<ICliConsole>();
         var logger = serviceProvider.GetRequiredService<ILogger<AdminCreateCommand>>();
 
@@ -53,7 +51,7 @@ public sealed class AdminCreateCommand : Command
             var account = new AdminAccount
             {
                 Username = input.Username,
-                PasswordHash = passwordHasher.HashPassword(input.Password),
+                PasswordHash = IdentityPasswordHasher.HashPassword(input.Password),
                 Permissions = permissions
             };
 

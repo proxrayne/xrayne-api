@@ -1,20 +1,20 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace XRayne.Infrastructure.Auth;
+namespace XRayne.Infrastructure.Utilities;
 
-public sealed class IdentityPasswordHasher : IPasswordHasher
+public static class IdentityPasswordHasher
 {
     private static readonly object User = new();
-    private readonly PasswordHasher<object> passwordHasher = new();
+    private static readonly PasswordHasher<object> passwordHasher = new();
 
-    public string HashPassword(string password)
+    public static string HashPassword(string password)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(password);
 
         return passwordHasher.HashPassword(User, password);
     }
 
-    public bool VerifyPassword(string password, string passwordHash)
+    public static bool VerifyPassword(string password, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(passwordHash))
         {

@@ -3,10 +3,11 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Enums;
 using XRayne.Contracts.Values;
 
-namespace XRayne.Infrastructure.Auth;
+namespace XRayne.Infrastructure.Services;
 
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {

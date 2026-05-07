@@ -5,7 +5,7 @@ using XRayne.Api.Exceptions;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
 using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Auth;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Repositories.Admins;
 using XRayne.Repositories.Entities;
 
@@ -15,7 +15,6 @@ namespace XRayne.Api.Controllers;
 [Route("api/admins")]
 public sealed class AdminsController(
     IAdminAccountRepository adminAccounts,
-    IPasswordHasher passwordHasher,
     IMapper mapper) : ApiControllerBase
 {
     [HttpPost("create")]
@@ -35,7 +34,7 @@ public sealed class AdminsController(
         var account = new AdminAccount
         {
             Username = request.Username,
-            PasswordHash = passwordHasher.HashPassword(request.Password),
+            PasswordHash = IdentityPasswordHasher.HashPassword(request.Password),
             Permissions = AdminPermissionNames.ParseMany(request.Permissions)
         };
 
@@ -56,7 +55,7 @@ public sealed class AdminsController(
     {
         var account = await adminAccounts.ChangePasswordAsync(
             id,
-            passwordHasher.HashPassword(request.Password),
+            IdentityPasswordHasher.HashPassword(request.Password),
             cancellationToken);
         if (account is null)
         {
