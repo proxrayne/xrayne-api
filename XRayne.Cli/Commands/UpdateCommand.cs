@@ -10,8 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Models;
 using XRayne.Cli.Output;
+using XRayne.Cli.Services;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
+using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands;
@@ -67,21 +69,31 @@ public sealed class UpdateCommand : Command
         var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
         var shellService = serviceProvider.GetRequiredService<IShellService>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
+        var runtimeMigrationService = serviceProvider.GetRequiredService<IRuntimeMigrationService>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
         try
         {
             var release = await gitHubReleaseService.ResolveReleaseAsync(version, cancellationToken);
             var targetVersion = SanitizeDockerTag(release.TagName);
+            var targetSchemaVersion = RuntimeSchemaCatalog.ResolveForRelease(release.TagName);
 
             console.Header("XRayne update");
             console.Value("Repository", gitHubReleaseService.Repository);
             console.Value("Target release", release.TagName);
+            console.Value("Target runtime schema", targetSchemaVersion.ToString());
             console.Value("Component", component.Value);
+
+            var migrationResult = await runtimeMigrationService.MigrateToAsync(
+                targetSchemaVersion,
+                cancellationToken);
+            PrintMigrationResult(console, migrationResult);
+
+            var apiRestarted = false;
 
             if (component.UpdateApi)
             {
-                await UpdateApiAsync(
+                apiRestarted = await UpdateApiAsync(
                     console,
                     gitHubReleaseService,
                     shellService,
@@ -91,6 +103,12 @@ public sealed class UpdateCommand : Command
                     targetVersion,
                     force,
                     cancellationToken);
+            }
+
+            if (migrationResult.Changed && !apiRestarted)
+            {
+                console.Success("Restarting Docker Compose after runtime migration.");
+                await apiInstallationService.RunDockerComposeAsync("up -d --force-recreate", cancellationToken);
             }
 
             if (component.UpdateCli)
@@ -120,7 +138,7 @@ public sealed class UpdateCommand : Command
         }
     }
 
-    private static async Task UpdateApiAsync(
+    private static async Task<bool> UpdateApiAsync(
         ICliConsole console,
         IGitHubReleaseService gitHubReleaseService,
         IShellService shellService,
@@ -143,7 +161,7 @@ public sealed class UpdateCommand : Command
         if (!force && string.Equals(installedVersion, targetVersion, StringComparison.Ordinal))
         {
             console.Success("API is already on the selected release.");
-            return;
+            return false;
         }
 
         var assetName = $"xrayne-api-image-{targetVersion}.tar.gz";
@@ -173,6 +191,41 @@ public sealed class UpdateCommand : Command
         console.Value("Previous API version", installedVersion);
         console.Value("Current API version", targetVersion);
         console.Value("Docker image", $"{CliDefaults.ImageName}:{targetVersion}");
+
+        return true;
+    }
+
+    private static void PrintMigrationResult(
+        ICliConsole console,
+        RuntimeMigrationResult result)
+    {
+        console.Section("Runtime migrations");
+        console.Value("Current schema", result.CurrentSchemaVersion.ToString());
+        console.Value("Target schema", result.TargetSchemaVersion.ToString());
+
+        if (!result.Changed)
+        {
+            if (result.CurrentSchemaVersion == result.TargetSchemaVersion)
+            {
+                console.Success("Runtime schema is already compatible.");
+            }
+            else
+            {
+                console.Success("Runtime files are not installed; migration skipped.");
+            }
+
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.BackupDirectory))
+        {
+            console.Value("Backup", result.BackupDirectory);
+        }
+
+        foreach (var migration in result.AppliedMigrations)
+        {
+            console.Value("Applied", migration);
+        }
     }
 
     private static async Task UpdateCliAsync(
@@ -375,34 +428,10 @@ public sealed class UpdateCommand : Command
         string imageTag,
         CancellationToken cancellationToken)
     {
-        var envPath = PathProvider.Paths.EnvConfig;
-        var imageLine = $"{CliDefaults.ApiImageVariable}={CliDefaults.ImageName}:{imageTag}";
-        var lines = await File.ReadAllLinesAsync(envPath, cancellationToken);
-        var updated = false;
+        var env = await EnvConfigService.FromPath(PathProvider.Paths.EnvConfig, cancellationToken);
+        env.Set(CliDefaults.ApiImageVariable, $"{CliDefaults.ImageName}:{imageTag}");
 
-        for (var index = 0; index < lines.Length; index++)
-        {
-            var line = lines[index];
-            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
-            {
-                continue;
-            }
-
-            var parts = line.Split('=', 2);
-            if (parts.Length == 2 && string.Equals(parts[0].Trim(), CliDefaults.ApiImageVariable, StringComparison.OrdinalIgnoreCase))
-            {
-                lines[index] = imageLine;
-                updated = true;
-                break;
-            }
-        }
-
-        if (!updated)
-        {
-            lines = [.. lines, imageLine];
-        }
-
-        await File.WriteAllLinesAsync(envPath, lines, Encoding.UTF8, cancellationToken);
+        await env.SaveAsync(cancellationToken);
     }
 
     private static async Task DecompressGzipAsync(

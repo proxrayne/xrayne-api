@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
+using XRayne.Cli.Services;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Infrastructure.Services;
@@ -71,6 +72,7 @@ public sealed class InfoCommand : Command
             console.Value("Environment file", FormatPathState(PathProvider.Paths.EnvConfig));
             console.Value("Config file", FormatPathState(PathProvider.Paths.JsonConfig));
             console.Value("Compose file", FormatPathState(PathProvider.Paths.DockerCompose));
+            console.Value("Runtime schema", GetRuntimeSchemaStatus(configuration));
             console.Value("Logs directory", FormatPathState(PathProvider.Paths.LogsDirectory));
             console.Value("Xray directory", FormatPathState(PathProvider.Paths.XrayDirectory));
             console.Value("PostgreSQL data", FormatPathState(PathProvider.Paths.PostgresDirectory));
@@ -224,6 +226,15 @@ public sealed class InfoCommand : Command
         return File.Exists(path) || Directory.Exists(path)
             ? path
             : $"{path} (missing)";
+    }
+
+    private static string GetRuntimeSchemaStatus(IConfiguration configuration)
+    {
+        var current = configuration.GetValue("Runtime:SchemaVersion", 0);
+
+        return current == RuntimeSchemaCatalog.LatestSchemaVersion
+            ? current.ToString()
+            : $"{current} (latest: {RuntimeSchemaCatalog.LatestSchemaVersion})";
     }
 
     private sealed record UpdateStatus(

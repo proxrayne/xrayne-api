@@ -218,6 +218,8 @@ xrayne info
 
 `xrayne update` checks the selected release and updates both CLI and API by default. Use `--component api` or `--component cli` to update only one side. Passing an older release tag through `--version` intentionally downgrades that component.
 
+During update, the CLI migrates runtime files (`.env`, `config.json`, and `docker-compose.yml`) to the schema required by the target release. Migrations support both upgrade and downgrade paths, create backups under `<project-path>/backups/runtime-migrations`, and run before the CLI binary is replaced so downgrade migrations are still handled by the newer CLI.
+
 `xrayne info` prints project/runtime information and checks whether CLI or API updates are available.
 
 ## HTTPS Certificates

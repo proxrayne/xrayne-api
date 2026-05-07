@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IApiInstallationService, ApiInstallationService>();
         services.AddScoped<IAcmeCertificateService, AcmeCertificateService>();
         services.AddScoped<IDockerComposeFileService, DockerComposeFileService>();
+        services.AddScoped<IRuntimeMigrationService, RuntimeMigrationService>();
 
         services.AddSingleton<RootCommandFactory>();
         services.AddSingleton<VersionCommand>();

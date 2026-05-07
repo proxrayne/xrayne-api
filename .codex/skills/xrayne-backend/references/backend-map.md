@@ -130,6 +130,10 @@ Database-dependent commands should call `MigrateDatabaseAsync()` inside their ac
 
 `api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation. The API compose service uses `network_mode: host` for host-level xray-core networking, so `API_PORT` is the real host port Kestrel listens on; do not add API `ports:` mappings.
 
+Use `EnvConfigService` for reading, writing, setting, or removing `.env` values. Do not hand-edit `.env` with command-local line parsing.
+
+`update` resolves the target runtime schema from the selected release through `RuntimeSchemaCatalog`, runs `IRuntimeMigrationService.MigrateToAsync(...)` before replacing the CLI, and supports both `UpAsync` and `DownAsync` migrations so explicit downgrades can roll runtime files back. Runtime migration backups go under `<project>/backups/runtime-migrations`.
+
 CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implementations under `XRayne.Cli/Services`.
 
 Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.

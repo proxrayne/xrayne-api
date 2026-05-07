@@ -194,6 +194,7 @@ public sealed class ApiInstallCommand : Command
         InstallOptions options,
         CancellationToken cancellationToken)
     {
+        var env = new EnvConfigService(options.Paths.EnvConfig);
         var values = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["API_PORT"] = options.ApiPort.ToString(),
@@ -207,9 +208,12 @@ public sealed class ApiInstallCommand : Command
             ["POSTGRES_PORT"] = "5432"
         };
 
-        var lines = values.Select(item => $"{item.Key}={EscapeEnvironmentValue(item.Value)}");
+        foreach (var (key, value) in values)
+        {
+            env.Set(key, value);
+        }
 
-        await File.WriteAllLinesAsync(options.Paths.EnvConfig, lines, Encoding.UTF8, cancellationToken);
+        await env.SaveAsync(cancellationToken);
     }
 
     private static async Task WriteConfigFileAsync(
@@ -247,7 +251,7 @@ public sealed class ApiInstallCommand : Command
         console.Value("Prefix", string.IsNullOrWhiteSpace(options.ApiPrefix) ? "(none)" : options.ApiPrefix);
 
         console.Section("PostgreSQL");
-        console.Value("API host", "postgres:5432");
+        console.Value("API host", "localhost:5432");
         console.Value("CLI host", "localhost:5432");
         console.Value("Database", CliDefaults.PostgresDatabase);
         console.Value("Username", CliDefaults.PostgresUser);
@@ -276,16 +280,6 @@ public sealed class ApiInstallCommand : Command
         var tag = new string(chars).Trim('-');
 
         return string.IsNullOrWhiteSpace(tag) ? "latest" : tag;
-    }
-
-    private static string EscapeEnvironmentValue(string value)
-    {
-        if (value.Length == 0 || !value.Any(character => char.IsWhiteSpace(character) || character is '#' or '=' or '"' or '\''))
-        {
-            return value;
-        }
-
-        return $"\"{value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
     }
 
     private sealed class InstallOptions
