@@ -4,12 +4,11 @@
 
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
-- `XRayne.Core`: domain permissions and xray-core selection.
-- `XRayne.Infrastructure`: JWT token creation, password hashing, `ICoreService` implementation, shared network/IP helpers through `NetworkAddress`.
-- `XRayne.Infrastructure/GitHub`: reusable GitHub repository client and GitHub release/asset DTOs.
-- Shared random password generation lives in `XRayne.Infrastructure/Security/PasswordGenerator.cs`.
-- `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories.
-- `XRayne.Contracts`: shared contracts placeholder.
+- `XRayne.Core`: xray-core selection and core runtime abstractions.
+- `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService`, `ICoreService` implementation, static config/network utilities.
+- Shared random password generation lives in `XRayne.Infrastructure/Utilities/PasswordGenerator.cs`.
+- `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories, and external repository clients under `External`.
+- `XRayne.Contracts`: shared contracts, configuration DTOs, permission enums, and permission names.
 - `XRayne.Test`: tests.
 
 ## API Startup Pattern
@@ -21,7 +20,7 @@
 - Reads `Cors:SpaOrigins` and registers `SpaClient`.
 - Adds controllers with `ApiExceptionFilter`.
 - Adds AutoMapper from API assembly.
-- Configures JWT Bearer with `JwtOptions`.
+- Configures JWT Bearer with `JwtOptions` from `XRayne.Contracts.Configurations`.
 - Adds authorization policies via `AddAdminPermissionPolicies`.
 - Calls `AddCoreDependencies`, `AddInfrastructure`, and `AddRepositories`.
 - Calls `MigrateDatabaseAsync()` on startup.
@@ -53,9 +52,9 @@ Prefer existing exception classes:
 
 ## Permissions
 
-`AdminPermission` is a `[Flags]` enum using `long`.
+`AdminPermission` is a `[Flags]` enum using `long` and lives in `XRayne.Contracts.Enums`.
 
-String policy names live in `AdminPermissionNames`:
+String policy names live in `XRayne.Contracts.Values.AdminPermissionNames`:
 
 - `create_users`
 - `edit_users`
@@ -82,6 +81,8 @@ String policy names live in `AdminPermissionNames`:
 - `LastLoginAt`
 
 `AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`; CLI resolves flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values first, then falls back to `ConnectionStrings:Default`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
+
+External clients that represent remote repositories or APIs live under `XRayne.Repositories/External`. `GitHubRepository` is the release/asset client used by CLI update and install flows.
 
 Repository pattern:
 
@@ -142,7 +143,7 @@ CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implemen
 
 Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
 
-GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Infrastructure/GitHub`. CLI commands should inject the configured repository instance instead of keeping GitHub HTTP logic under `XRayne.Cli/Services`.
+GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; do not reintroduce `GitHubReleaseService` under `XRayne.Cli/Services`.
 
 Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
 

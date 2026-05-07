@@ -11,15 +11,16 @@ Read `references/backend-map.md` before backend edits. Use it to place code in t
 
 ## Implementation Rules
 
-- Keep domain constants and simple domain types in `XRayne.Core`.
+- Keep shared DTOs, configuration contracts, permissions, and API-facing constants in `XRayne.Contracts`.
+- Keep xray-core setup and core runtime abstractions in `XRayne.Core`.
 - Register services through the nearest `DependencyInjection.cs` extension.
 - Put HTTP behavior in controllers under `XRayne.Api/Controllers`; keep controllers thin and delegate work to repositories/services.
 - Throw `ApiException` subclasses for intended API errors so `ApiExceptionFilter` can format them.
-- Use `AdminPermissionNames` strings for authorization policies and permission parsing.
+- Use `AdminPermissionNames` from `XRayne.Contracts.Values` for authorization policies and permission parsing.
 - Use EF Core async methods with cancellation tokens in repositories.
 - Add migrations through `add-migration.ps1` or equivalent `dotnet ef migrations add` command targeting `AppDbContext`.
 - For CLI commands, derive from `System.CommandLine.Command`, inject `IServiceProvider`, create an async scope in `SetAction`, and return integer exit codes.
-- Read configuration through standard `IConfiguration`; use `JsonConfig` only when mutating runtime `config.json`.
+- Read configuration through standard `IConfiguration`; use `JsonConfig` only when mutating runtime `config.json`, and `EnvConfig` only when mutating `.env`.
 - API/UI Docker image artifacts are produced by release GitHub Actions; backend code should keep the image build reproducible and avoid local-only assumptions.
 
 ## Validation

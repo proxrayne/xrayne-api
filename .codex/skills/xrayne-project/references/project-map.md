@@ -11,11 +11,11 @@ XRayne.Node is a node and admin panel for managing `xray-core`. The intended sur
 - `global.json`: SDK `9.0.100` with `latestFeature` roll-forward.
 - `XRayne.Api`: ASP.NET Core web API and static web host.
 - `XRayne.Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
-- `XRayne.Core`: domain-level types and xray-core setup.
-- `XRayne.Infrastructure`: auth services and xray service implementations.
-- `XRayne.Repositories`: EF Core, PostgreSQL, migrations, repositories.
-- `XRayne.Contracts`: shared contracts marker project.
-- `XRayne.Test`: test project, currently minimal.
+- `XRayne.Core`: xray-core setup and core runtime abstractions.
+- `XRayne.Infrastructure`: JWT/core service implementations plus static utilities such as `JsonConfig`, `EnvConfig`, `NetworkAddress`, and password hashing/generation.
+- `XRayne.Repositories`: EF Core, PostgreSQL, migrations, repositories, and external clients under `External` such as `GitHubRepository`.
+- `XRayne.Contracts`: shared contracts, configuration DTOs, permission enums, and permission names.
+- `XRayne.Test`: backend test project.
 - `XRayne.UI`: React Router app.
 - `.github/workflows/build-cli.yml`: publishes single-file CLI artifacts for `win-x64`, `osx-arm64`, and `linux-x64` on tags or manual dispatch.
 - `.codex/skills`: project-local Codex skills.
@@ -56,7 +56,7 @@ npm run build
 - CLI sets base path to `AppContext.BaseDirectory`, reads packaged `appsettings.json`, environment-specific `appsettings.{Environment}.json`, runtime `PathProvider.ConfigPath`, `PathProvider.EnvironmentPath`, and environment variables through the shared configuration pipeline.
 - `PathProvider` in `XRayne.Infrastructure.Values` centralizes runtime paths: project directory, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, and `xray`.
 - When CLI is installed under a `cli` folder, `PathProvider.DefaultProjectDirectory` is the parent directory of `AppContext.BaseDirectory`; for example `/opt/xrayne/cli` resolves to `/opt/xrayne`. `PROJECT_PATH` can still override this for runtime reads.
-- `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is the write service for mutable `config.json` values. Reading is done through standard `IConfiguration`; `.env` stays static after install and is read through the normal configuration pipeline.
+- `JsonConfig` and `EnvConfig` in `XRayne.Infrastructure.Utilities` are static helpers for safe runtime file mutations. Reading is done through standard `IConfiguration`.
 - `.env` is static after install and reserved for Docker Compose/bootstrap variables such as `PROJECT_PATH`, `API_IMAGE`, `API_PORT`, and PostgreSQL values. More complex application configuration belongs in runtime `config.json`. Docker Compose runs from the project directory and reads the `.env` file beside `docker-compose.yml`; services should use `env_file: .env` when they need the same values inside containers.
 - `Xray:Directory` should come from the runtime project layout as the `xray` folder; keep platform-specific `Xray:FileName` in packaged config unless runtime editing is intentional.
 - Database connection key is `ConnectionStrings:Default`.

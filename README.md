@@ -81,19 +81,18 @@ XRayne.Node - нода и панель управления для работы 
 ```text
 XRayne.Api/             REST API и веб-хост
 XRayne.Cli/             CLI для администрирования
-XRayne.Core/            доменная логика
-XRayne.Infrastructure/  работа с файловой системой, systemd, xray-core,
-                        сертификатами, базой данных и внешними сервисами
-XRayne.Repositories/    слой репозиториев и подключение к PostgreSQL
-XRayne.Contracts/       DTO, API-модели и общие контракты
+XRayne.Core/            xray-core abstractions and runtime setup
+XRayne.Infrastructure/  service implementations and runtime utilities
+XRayne.Repositories/    EF Core, PostgreSQL repositories, migrations, external clients
+XRayne.Contracts/       DTO, configuration contracts, enums, shared values
 XRayne.UI/              React-интерфейс
 XRayne.Test/            unit- и integration-тесты
 ```
 
 ## Работа с базой данных
 
-Слой `XRayne.Repositories` содержит базовый `DbContext` для Entity Framework
-Core и подключение к PostgreSQL.
+Layer `XRayne.Repositories` contains `AppDbContext`, EF Core repositories,
+migrations, PostgreSQL setup, and external clients such as `GitHubRepository`.
 
 Строка подключения задается в секции `ConnectionStrings`:
 
@@ -111,12 +110,12 @@ Core и подключение к PostgreSQL.
 dotnet ef migrations add InitialCreate \
   --project XRayne.Repositories \
   --startup-project XRayne.Api \
-  --context XRayneDbContext
+  --context AppDbContext
 
 dotnet ef database update \
   --project XRayne.Repositories \
   --startup-project XRayne.Api \
-  --context XRayneDbContext
+  --context AppDbContext
 ```
 
 ## Основные модули

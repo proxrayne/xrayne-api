@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.GitHub;
+using XRayne.Repositories.External;
 
 namespace XRayne.Cli.Commands.Api;
 
