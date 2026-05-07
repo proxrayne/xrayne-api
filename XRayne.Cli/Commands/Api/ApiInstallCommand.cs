@@ -1,12 +1,12 @@
 using System.CommandLine;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Values;
 
@@ -107,11 +107,11 @@ public sealed class ApiInstallCommand : Command
             value => value is >= 1 and <= 65535,
             "Port must be between 1 and 65535.");
 
-        Console.Write($"PostgreSQL user is '{CliDefaults.PostgresUser}'. Enter PostgreSQL password or leave empty to generate one: ");
+        Console.Write("Enter PostgreSQL password or leave empty to generate one: ");
         var postgresPassword = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(postgresPassword))
         {
-            postgresPassword = GeneratePassword();
+            postgresPassword = PasswordGenerator.Generate(length: 16);
         }
 
         Console.Write("API prefix, for example 'hidden-panel' (empty for no prefix): ");
@@ -168,13 +168,6 @@ public sealed class ApiInstallCommand : Command
         }
 
         return $"/{prefix}";
-    }
-
-    private static string GeneratePassword()
-    {
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%^&*";
-
-        return RandomNumberGenerator.GetString(chars, 16);
     }
 
     private static async Task DecompressGzipAsync(

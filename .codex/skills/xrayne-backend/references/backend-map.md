@@ -6,6 +6,7 @@
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
 - `XRayne.Core`: domain permissions and xray-core selection.
 - `XRayne.Infrastructure`: JWT token creation, password hashing, `ICoreService` implementation, shared network/IP helpers through `INetworkAddressService`.
+- Shared random password generation lives in `XRayne.Infrastructure/Security/PasswordGenerator.cs`.
 - `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories.
 - `XRayne.Contracts`: shared contracts placeholder.
 - `XRayne.Test`: tests.
@@ -122,11 +123,13 @@ xrayne
   cert install [--domain domain | --ip-address ipv4] --email email [--staging] [--force]
   cert status
   cert renew [--force]
-  admin create <username> --password|-p <password> [--permissions]
+  admin create
   xray start
 ```
 
 Database-dependent commands should call `MigrateDatabaseAsync()` inside their action before using repositories. This keeps commands such as `--help`, Docker/compose management, and xray-core lifecycle commands usable when the database container is not running yet.
+
+`admin create` prompts interactively for username, password confirmation, and permissions instead of accepting credentials through command-line arguments. Leaving password empty generates one and the command prints the created account details.
 
 `api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation. The API compose service uses `network_mode: host` for host-level xray-core networking, so `API_PORT` is the real host port Kestrel listens on; do not add API `ports:` mappings.
 
