@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using XRayne.Api.Exceptions;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
-using XRayne.Core.Auth;
+using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Auth;
 using XRayne.Repositories.Admins;
 using XRayne.Repositories.Entities;

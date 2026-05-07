@@ -1,6 +1,6 @@
 using AutoMapper;
 using XRayne.Api.Responses;
-using XRayne.Core.Auth;
+using XRayne.Contracts.Values;
 using XRayne.Repositories.Entities;
 
 namespace XRayne.Api.Mapping;

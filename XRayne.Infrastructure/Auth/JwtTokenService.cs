@@ -3,7 +3,8 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using XRayne.Core.Auth;
+using XRayne.Contracts.Enums;
+using XRayne.Contracts.Values;
 
 namespace XRayne.Infrastructure.Auth;
 

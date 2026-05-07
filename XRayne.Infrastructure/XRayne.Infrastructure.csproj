@@ -4,6 +4,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../XRayne.Core/XRayne.Core.csproj" />
+    <ProjectReference Include="../XRayne.Contracts/XRayne.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Dotenv.Extensions.Microsoft.Configuration" Version="3.1.0" />

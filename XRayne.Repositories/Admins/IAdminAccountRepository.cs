@@ -1,4 +1,4 @@
-using XRayne.Core.Auth;
+using XRayne.Contracts.Enums;
 using XRayne.Repositories.Entities;
 
 namespace XRayne.Repositories.Admins;

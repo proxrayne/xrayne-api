@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
-using XRayne.Core.Auth;
+using XRayne.Contracts.Values;
 
 namespace XRayne.Api.Auth;
 

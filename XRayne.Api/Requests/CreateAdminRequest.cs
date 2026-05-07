@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using XRayne.Core.Auth;
+using XRayne.Contracts.Values;
 
 namespace XRayne.Api.Requests;
 

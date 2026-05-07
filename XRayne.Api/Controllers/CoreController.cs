@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using XRayne.Core.Auth;
+using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Services;
 
 namespace XRayne.Api.Controllers;

@@ -1,4 +1,4 @@
-using XRayne.Core.Auth;
+using XRayne.Contracts.Enums;
 
 namespace XRayne.Infrastructure.Auth;
 

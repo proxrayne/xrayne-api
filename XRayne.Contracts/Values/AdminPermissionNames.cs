@@ -1,4 +1,6 @@
-namespace XRayne.Core.Auth;
+using XRayne.Contracts.Enums;
+
+namespace XRayne.Contracts.Values;
 
 public static class AdminPermissionNames
 {

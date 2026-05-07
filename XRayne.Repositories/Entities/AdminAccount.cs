@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using XRayne.Core.Auth;
+using XRayne.Contracts.Enums;
 
 namespace XRayne.Repositories.Entities;
 
