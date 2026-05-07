@@ -6,6 +6,7 @@ using XRayne.Cli.Commands.Cert;
 using XRayne.Cli.Commands.Xray;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
+using XRayne.Cli.Services.Contracts;
 
 namespace XRayne.Infrastructure;
 

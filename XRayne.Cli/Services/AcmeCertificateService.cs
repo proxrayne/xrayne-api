@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using XRayne.Cli.Helpers;
+using XRayne.Cli.Services.Contracts;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Services;

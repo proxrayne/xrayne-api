@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
-using XRayne.Cli.Services;
+using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Values;
@@ -41,6 +41,7 @@ public sealed class InfoCommand : Command
             var apiPort = GetConfigurationValue(configuration, "API_PORT", CliDefaults.DefaultApiPort.ToString());
             var pathBase = NormalizePathBase(configuration["PathBase"]);
             var serverIp = networkAddressService.GetLocalServerIpAddress();
+            var apiEndpoint = GetApiEndpoint(configuration, serverIp, apiPort);
             var cliVersion = GetVersion();
             var apiVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
             var updateStatus = await GetUpdateStatusAsync(
@@ -57,8 +58,8 @@ public sealed class InfoCommand : Command
             console.Section("API");
             console.Value("Status", apiStatus);
             console.Value("Server IP", serverIp);
-            console.Value("Panel URL", $"http://{serverIp}:{apiPort}{pathBase}/");
-            console.Value("API URL", $"http://{serverIp}:{apiPort}{pathBase}/api");
+            console.Value("Panel URL", $"{apiEndpoint}{pathBase}/");
+            console.Value("API URL", $"{apiEndpoint}{pathBase}/api");
             console.Value("Docker image", GetConfigurationValue(configuration, CliDefaults.ApiImageVariable, "(unknown)"));
 
             console.Section("Updates");
@@ -170,6 +171,25 @@ public sealed class InfoCommand : Command
         return pathBase.StartsWith("/", StringComparison.Ordinal)
             ? pathBase.TrimEnd('/')
             : $"/{pathBase.TrimEnd('/')}";
+    }
+
+    private static string GetApiEndpoint(
+        IConfiguration configuration,
+        string serverIp,
+        string apiPort)
+    {
+        var certificateMode = configuration["Certificate:Mode"];
+        var certificateIdentifier = configuration["Certificate:Identifier"];
+        var httpsUrl = configuration["Kestrel:Endpoints:Https:Url"];
+        var isHttps = !string.IsNullOrWhiteSpace(httpsUrl)
+            || !string.IsNullOrWhiteSpace(certificateMode);
+        var host = string.Equals(certificateMode, "domain", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(certificateIdentifier)
+                ? certificateIdentifier
+                : serverIp;
+        var scheme = isHttps ? "https" : "http";
+
+        return $"{scheme}://{host}:{apiPort}";
     }
 
     private static string? ExtractImageTag(string image)

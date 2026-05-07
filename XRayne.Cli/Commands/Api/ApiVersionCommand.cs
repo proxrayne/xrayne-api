@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
-using XRayne.Cli.Services;
+using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 
 namespace XRayne.Cli.Commands.Api;

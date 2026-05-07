@@ -31,6 +31,11 @@ public sealed class JsonConfigService : IJsonConfigService
         Set(_rootNode, key, value);
     }
 
+    public void Remove(string key)
+    {
+        Remove(_rootNode, key);
+    }
+
     public async Task SaveAsync(CancellationToken ct = default)
     {
         CheckAndCreateDirectory(_path);
@@ -85,6 +90,25 @@ public sealed class JsonConfigService : IJsonConfigService
         }
 
         current[segments[^1]] = JsonSerializer.SerializeToNode(value, _options);
+    }
+
+    private static void Remove(JsonNode node, string key)
+    {
+        var segments = key.Split(':');
+        var current = node.AsObject();
+
+        for (int i = 0; i < segments.Length - 1; i++)
+        {
+            var segment = segments[i];
+            if (!current.TryGetPropertyValue(segment, out var child) || child is not JsonObject childObject)
+            {
+                return;
+            }
+
+            current = childObject;
+        }
+
+        current.Remove(segments[^1]);
     }
 
     private static void CheckAndCreateDirectory(string path)

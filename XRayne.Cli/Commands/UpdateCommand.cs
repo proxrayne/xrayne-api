@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Models;
 using XRayne.Cli.Output;
-using XRayne.Cli.Services;
+using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Infrastructure.Values;
 

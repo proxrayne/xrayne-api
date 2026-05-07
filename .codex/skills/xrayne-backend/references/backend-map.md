@@ -128,7 +128,7 @@ xrayne
 
 Database-dependent commands should call `MigrateDatabaseAsync()` inside their action before using repositories. This keeps commands such as `--help`, Docker/compose management, and xray-core lifecycle commands usable when the database container is not running yet.
 
-`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation.
+`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation. The API compose service uses `network_mode: host` for host-level xray-core networking, so `API_PORT` is the real host port Kestrel listens on; do not add API `ports:` mappings.
 
 CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implementations under `XRayne.Cli/Services`.
 
@@ -136,7 +136,7 @@ Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config help
 
 Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
 
-`cert install` uses project-local `acme.sh` under `<project>/certificates/acme-sh`, installs API certificate files under `<project>/certificates/letsencrypt`, writes Kestrel HTTPS certificate paths to runtime `config.json`, switches the API compose mapping to container HTTPS port `8443`, enables `acme.sh` cron renewal, and recreates the API container. Domain certificates use normal Let's Encrypt issuance. IP address certificates use public IPv4 only and require the Let's Encrypt `shortlived` certificate profile.
+`cert install` uses project-local `acme.sh` under `<project>/certificates/acme-sh`, installs API certificate files under `<project>/certificates/letsencrypt`, writes Kestrel HTTPS certificate paths to runtime `config.json`, keeps the API on configured `API_PORT`, enables `acme.sh` cron renewal, and recreates the API container. Domain certificates use normal Let's Encrypt issuance. IP address certificates use public IPv4 only and require the Let's Encrypt `shortlived` certificate profile.
 
 ## Xray Core
 

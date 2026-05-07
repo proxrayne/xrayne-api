@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
-using XRayne.Cli.Services;
+using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Values;
@@ -200,7 +200,7 @@ public sealed class ApiInstallCommand : Command
             ["PROJECT_PATH"] = options.Paths.Root,
             ["API_IMAGE"] = $"{CliDefaults.ImageName}:{imageTag}",
             ["POSTGRES_DB"] = CliDefaults.PostgresDatabase,
-            ["POSTGRES_HOST_API"] = "postgres",
+            ["POSTGRES_HOST_API"] = "localhost",
             ["POSTGRES_USER"] = CliDefaults.PostgresUser,
             ["POSTGRES_PASSWORD"] = options.PostgresPassword,
             ["POSTGRES_CONTAINER_PORT"] = "5432",
@@ -219,6 +219,7 @@ public sealed class ApiInstallCommand : Command
         var config = new JsonConfigService(options.Paths.JsonConfig);
 
         config.Set("PathBase", options.ApiPrefix);
+        config.Set("Kestrel:Endpoints:Http:Url", $"http://+:{options.ApiPort}");
 
         await config.SaveAsync(cancellationToken);
     }

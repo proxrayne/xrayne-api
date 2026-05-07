@@ -53,7 +53,7 @@ public sealed class CertStatusCommand : Command
             console.Value("Certificate name", certName);
             console.Value("Certificate", FormatPathState(fullChainPath));
             console.Value("Private key", FormatPathState(privateKeyPath));
-            console.Value("HTTPS endpoint", "https://+:8443");
+            console.Value("HTTPS endpoint", configuration["Kestrel:Endpoints:Https:Url"] ?? "(not configured)");
 
             return 0;
         }

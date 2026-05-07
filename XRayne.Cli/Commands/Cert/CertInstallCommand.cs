@@ -1,9 +1,11 @@
 using System.CommandLine;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Helpers;
 using XRayne.Cli.Output;
-using XRayne.Cli.Services;
+using XRayne.Cli.Services.Contracts;
+using XRayne.Cli.Values;
 using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Values;
 
@@ -67,9 +69,9 @@ public sealed class CertInstallCommand : Command
     {
         var console = serviceProvider.GetRequiredService<ICliConsole>();
         var logger = serviceProvider.GetRequiredService<ILogger<CertInstallCommand>>();
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
         var acmeCertificateService = serviceProvider.GetRequiredService<IAcmeCertificateService>();
-        var dockerComposeFileService = serviceProvider.GetRequiredService<IDockerComposeFileService>();
         var networkAddressService = serviceProvider.GetRequiredService<INetworkAddressService>();
 
         try
@@ -87,7 +89,7 @@ public sealed class CertInstallCommand : Command
             Directory.CreateDirectory(PathProvider.Paths.CertificatesDirectory);
             Directory.CreateDirectory(PathProvider.Paths.LetsEncryptDirectory);
 
-            await dockerComposeFileService.UseHttpsApiPortAsync(PathProvider.Paths.DockerCompose, cancellationToken);
+            var apiPort = GetApiPort(configuration);
 
             console.Header("XRayne certificate installation");
             console.Value("Mode", target.Mode);
@@ -95,7 +97,7 @@ public sealed class CertInstallCommand : Command
             console.Value("Certificate name", certName);
             console.Value("ACME client", "acme.sh");
             console.Value("Let's Encrypt storage", PathProvider.Paths.LetsEncryptDirectory);
-            console.Value("HTTPS port", "API_PORT");
+            console.Value("HTTPS port", apiPort);
 
             if (target.Mode == "ip")
             {
@@ -121,6 +123,7 @@ public sealed class CertInstallCommand : Command
                 target.Identifier,
                 email,
                 certName,
+                apiPort,
                 staging,
                 cancellationToken);
 
@@ -134,7 +137,7 @@ public sealed class CertInstallCommand : Command
             console.Value("Private key", issueResult.PrivateKeyPath);
             console.Value("Container certificate", CertificateCommandHelper.GetContainerFullChainPath(certName));
             console.Value("Auto renew", "enabled");
-            console.Value("HTTPS URL", $"https://{target.Identifier}/");
+            console.Value("HTTPS URL", $"https://{target.Identifier}:{apiPort}/");
 
             return 0;
         }
@@ -152,6 +155,7 @@ public sealed class CertInstallCommand : Command
         string identifier,
         string email,
         string certName,
+        string apiPort,
         bool staging,
         CancellationToken cancellationToken)
     {
@@ -159,8 +163,8 @@ public sealed class CertInstallCommand : Command
         var fullChainPath = CertificateCommandHelper.GetContainerFullChainPath(certName);
         var privateKeyPath = CertificateCommandHelper.GetContainerPrivateKeyPath(certName);
 
-        config.Set("Kestrel:Endpoints:Http:Url", "http://+:8080");
-        config.Set("Kestrel:Endpoints:Https:Url", "https://+:8443");
+        config.Remove("Kestrel:Endpoints:Http");
+        config.Set("Kestrel:Endpoints:Https:Url", $"https://+:{apiPort}");
         config.Set("Kestrel:Endpoints:Https:Certificate:Path", fullChainPath);
         config.Set("Kestrel:Endpoints:Https:Certificate:KeyPath", privateKeyPath);
         config.Set("Certificate:Mode", mode);
@@ -179,6 +183,22 @@ public sealed class CertInstallCommand : Command
         config.Set("Certificate:UpdatedAtUtc", DateTimeOffset.UtcNow);
 
         await config.SaveAsync(cancellationToken);
+    }
+
+    private static string GetApiPort(IConfiguration configuration)
+    {
+        var apiPort = configuration["API_PORT"];
+        if (string.IsNullOrWhiteSpace(apiPort))
+        {
+            return CliDefaults.DefaultApiPort.ToString();
+        }
+
+        if (!int.TryParse(apiPort, out var port) || port is < 1 or > 65535)
+        {
+            throw new InvalidOperationException($"API_PORT '{apiPort}' is not a valid TCP port.");
+        }
+
+        return apiPort;
     }
 
     private static async Task<CertificateTarget> ResolveCertificateTargetAsync(

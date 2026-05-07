@@ -1,4 +1,4 @@
-namespace XRayne.Cli.Services;
+namespace XRayne.Cli.Services.Contracts;
 
 public interface IAcmeCertificateService
 {

@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using XRayne.Cli.Models;
+using XRayne.Cli.Services.Contracts;
 
 namespace XRayne.Cli.Services;
 
