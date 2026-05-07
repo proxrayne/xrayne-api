@@ -6,7 +6,6 @@ using XRayne.Cli.Helpers;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
@@ -73,7 +72,6 @@ public sealed class CertInstallCommand : Command
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
         var acmeCertificateService = serviceProvider.GetRequiredService<IAcmeCertificateService>();
-        var networkAddressService = serviceProvider.GetRequiredService<INetworkAddressService>();
 
         try
         {
@@ -83,7 +81,6 @@ public sealed class CertInstallCommand : Command
             var target = await ResolveCertificateTargetAsync(
                 domain,
                 ipAddress,
-                networkAddressService,
                 cancellationToken);
             var certName = CertificateCommandHelper.BuildCertName(target.Mode, target.Identifier);
 
@@ -208,7 +205,6 @@ public sealed class CertInstallCommand : Command
     private static async Task<CertificateTarget> ResolveCertificateTargetAsync(
         string? domain,
         string? ipAddress,
-        INetworkAddressService networkAddressService,
         CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(domain) && !string.IsNullOrWhiteSpace(ipAddress))
@@ -222,10 +218,10 @@ public sealed class CertInstallCommand : Command
         }
 
         var resolvedIpAddress = string.IsNullOrWhiteSpace(ipAddress)
-            ? await networkAddressService.GetPublicIpAddressAsync(cancellationToken)
+            ? await NetworkAddress.GetPublicIpAddressAsync(cancellationToken)
             : ipAddress;
 
-        return new CertificateTarget("ip", networkAddressService.NormalizePublicIPv4Address(resolvedIpAddress));
+        return new CertificateTarget("ip", NetworkAddress.NormalizePublicIPv4Address(resolvedIpAddress));
     }
 
     private static string NormalizeDomain(string value)

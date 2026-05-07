@@ -7,6 +7,8 @@ using XRayne.Cli.Commands.Xray;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
 using XRayne.Cli.Services.Contracts;
+using XRayne.Cli.Values;
+using XRayne.Infrastructure.GitHub;
 
 namespace XRayne.Infrastructure;
 
@@ -16,7 +18,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<ICliConsole, CliConsole>();
         services.AddScoped<IShellService, ShellService>();
-        services.AddScoped<IGitHubReleaseService, GitHubReleaseService>();
+        services.AddScoped(_ => new GitHubRepository(CliDefaults.XRayneRepositoryUrl));
         services.AddScoped<IApiInstallationService, ApiInstallationService>();
         services.AddScoped<IAcmeCertificateService, AcmeCertificateService>();
         services.AddScoped<IDockerComposeFileService, DockerComposeFileService>();

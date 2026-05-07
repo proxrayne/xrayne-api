@@ -7,7 +7,8 @@ using XRayne.Cli.Output;
 using XRayne.Cli.Services;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.GitHub;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands;
@@ -33,20 +34,19 @@ public sealed class InfoCommand : Command
         var logger = serviceProvider.GetRequiredService<ILogger<InfoCommand>>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
-        var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
-        var networkAddressService = serviceProvider.GetRequiredService<INetworkAddressService>();
+        var repository = new GitHubRepository(CliDefaults.XRayneRepositoryUrl);
 
         try
         {
             var apiStatus = await GetApiStatusAsync(apiInstallationService, cancellationToken);
             var apiPort = GetConfigurationValue(configuration, "API_PORT", CliDefaults.DefaultApiPort.ToString());
             var pathBase = NormalizePathBase(configuration["PathBase"]);
-            var serverIp = networkAddressService.GetLocalServerIpAddress();
+            var serverIp = NetworkAddress.GetLocalServerIpAddress();
             var apiEndpoint = GetApiEndpoint(configuration, serverIp, apiPort);
             var cliVersion = GetVersion();
             var apiVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
             var updateStatus = await GetUpdateStatusAsync(
-                gitHubReleaseService,
+                repository,
                 cliVersion,
                 apiVersion,
                 cancellationToken);
@@ -89,14 +89,14 @@ public sealed class InfoCommand : Command
     }
 
     private static async Task<UpdateStatus> GetUpdateStatusAsync(
-        IGitHubReleaseService gitHubReleaseService,
+        GitHubRepository gitHubRepository,
         string cliVersion,
         string? apiVersion,
         CancellationToken cancellationToken)
     {
         try
         {
-            var release = await gitHubReleaseService.ResolveReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
+            var release = await gitHubRepository.GetReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
             var latestApiVersion = SanitizeDockerTag(release.TagName);
 
             var cliUpdate = string.Equals(cliVersion, release.TagName, StringComparison.Ordinal)

@@ -2,13 +2,13 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace XRayne.Infrastructure.Services;
+namespace XRayne.Infrastructure.Utilities;
 
-public sealed class NetworkAddressService : INetworkAddressService
+public static class NetworkAddress
 {
     private static readonly Uri PublicIpAddressEndpoint = new("https://api.ipify.org");
 
-    public string GetLocalServerIpAddress()
+    public static string GetLocalServerIpAddress()
     {
         var address = NetworkInterface.GetAllNetworkInterfaces()
             .Where(item => item.OperationalStatus == OperationalStatus.Up)
@@ -20,7 +20,7 @@ public sealed class NetworkAddressService : INetworkAddressService
         return address?.ToString() ?? IPAddress.Loopback.ToString();
     }
 
-    public async Task<string> GetPublicIpAddressAsync(CancellationToken cancellationToken = default)
+    public static async Task<string> GetPublicIpAddressAsync(CancellationToken cancellationToken = default)
     {
         using var httpClient = new HttpClient
         {
@@ -32,7 +32,7 @@ public sealed class NetworkAddressService : INetworkAddressService
         return NormalizePublicIPv4Address(value);
     }
 
-    public async Task<string> ResolveServerIpAddressAsync(CancellationToken cancellationToken = default)
+    public static async Task<string> ResolveServerIpAddressAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -44,13 +44,13 @@ public sealed class NetworkAddressService : INetworkAddressService
         }
     }
 
-    public bool IsUsableIPv4Address(IPAddress address)
+    public static bool IsUsableIPv4Address(IPAddress address)
     {
         return address.AddressFamily == AddressFamily.InterNetwork
             && !IPAddress.IsLoopback(address);
     }
 
-    public bool IsPublicIPv4Address(IPAddress address)
+    public static bool IsPublicIPv4Address(IPAddress address)
     {
         if (!IsUsableIPv4Address(address))
         {
@@ -75,7 +75,7 @@ public sealed class NetworkAddressService : INetworkAddressService
         };
     }
 
-    public string NormalizeUsableIPv4Address(string value)
+    public static string NormalizeUsableIPv4Address(string value)
     {
         var normalized = value.Trim();
         if (!IPAddress.TryParse(normalized, out var address) || !IsUsableIPv4Address(address))
@@ -86,7 +86,7 @@ public sealed class NetworkAddressService : INetworkAddressService
         return address.ToString();
     }
 
-    public string NormalizePublicIPv4Address(string value)
+    public static string NormalizePublicIPv4Address(string value)
     {
         var normalized = value.Trim();
         if (!IPAddress.TryParse(normalized, out var address) || !IsPublicIPv4Address(address))

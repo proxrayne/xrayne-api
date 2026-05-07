@@ -5,7 +5,8 @@
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
 - `XRayne.Core`: domain permissions and xray-core selection.
-- `XRayne.Infrastructure`: JWT token creation, password hashing, `ICoreService` implementation, shared network/IP helpers through `INetworkAddressService`.
+- `XRayne.Infrastructure`: JWT token creation, password hashing, `ICoreService` implementation, shared network/IP helpers through `NetworkAddress`.
+- `XRayne.Infrastructure/GitHub`: reusable GitHub repository client and GitHub release/asset DTOs.
 - Shared random password generation lives in `XRayne.Infrastructure/Security/PasswordGenerator.cs`.
 - `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories.
 - `XRayne.Contracts`: shared contracts placeholder.
@@ -140,6 +141,8 @@ Use `EnvConfig` for reading, writing, setting, or removing `.env` values. Do not
 CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implementations under `XRayne.Cli/Services`.
 
 Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
+
+GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Infrastructure/GitHub`. CLI commands should inject the configured repository instance instead of keeping GitHub HTTP logic under `XRayne.Cli/Services`.
 
 Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
 

@@ -1,13 +1,11 @@
 using System.Net;
 using System.Net.Sockets;
-using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Utilities;
 
 namespace XRayne.Test.Infrastructure;
 
-public sealed class NetworkAddressServiceTests
+public sealed class NetworkAddressTests
 {
-    private readonly NetworkAddressService _service = new();
-
     [Theory]
     [InlineData("8.8.8.8", true)]
     [InlineData("127.0.0.1", false)]
@@ -18,7 +16,7 @@ public sealed class NetworkAddressServiceTests
     {
         var address = IPAddress.Parse(value);
 
-        Assert.Equal(expected, _service.IsUsableIPv4Address(address));
+        Assert.Equal(expected, NetworkAddress.IsUsableIPv4Address(address));
     }
 
     [Theory]
@@ -39,7 +37,7 @@ public sealed class NetworkAddressServiceTests
     {
         var address = IPAddress.Parse(value);
 
-        Assert.Equal(expected, _service.IsPublicIPv4Address(address));
+        Assert.Equal(expected, NetworkAddress.IsPublicIPv4Address(address));
     }
 
     [Fact]
@@ -47,13 +45,13 @@ public sealed class NetworkAddressServiceTests
     {
         var address = IPAddress.Parse("2001:4860:4860::8888");
 
-        Assert.False(_service.IsPublicIPv4Address(address));
+        Assert.False(NetworkAddress.IsPublicIPv4Address(address));
     }
 
     [Fact]
     public void NormalizeUsableIPv4Address_TrimsAndNormalizesValidIPv4()
     {
-        var result = _service.NormalizeUsableIPv4Address(" 8.8.8.8 ");
+        var result = NetworkAddress.NormalizeUsableIPv4Address(" 8.8.8.8 ");
 
         Assert.Equal("8.8.8.8", result);
     }
@@ -64,13 +62,13 @@ public sealed class NetworkAddressServiceTests
     [InlineData("not-an-ip")]
     public void NormalizeUsableIPv4Address_RejectsInvalidOrLoopbackAddress(string value)
     {
-        Assert.Throws<InvalidOperationException>(() => _service.NormalizeUsableIPv4Address(value));
+        Assert.Throws<InvalidOperationException>(() => NetworkAddress.NormalizeUsableIPv4Address(value));
     }
 
     [Fact]
     public void NormalizePublicIPv4Address_TrimsAndNormalizesPublicIPv4()
     {
-        var result = _service.NormalizePublicIPv4Address(" 1.1.1.1 ");
+        var result = NetworkAddress.NormalizePublicIPv4Address(" 1.1.1.1 ");
 
         Assert.Equal("1.1.1.1", result);
     }
@@ -83,7 +81,7 @@ public sealed class NetworkAddressServiceTests
     [InlineData("not-an-ip")]
     public void NormalizePublicIPv4Address_RejectsNonPublicIPv4Address(string value)
     {
-        Assert.Throws<InvalidOperationException>(() => _service.NormalizePublicIPv4Address(value));
+        Assert.Throws<InvalidOperationException>(() => NetworkAddress.NormalizePublicIPv4Address(value));
     }
 
     [Fact]
@@ -92,6 +90,6 @@ public sealed class NetworkAddressServiceTests
         var address = IPAddress.Parse("2001:4860:4860::8888");
 
         Assert.Equal(AddressFamily.InterNetworkV6, address.AddressFamily);
-        Assert.False(_service.IsUsableIPv4Address(address));
+        Assert.False(NetworkAddress.IsUsableIPv4Address(address));
     }
 }

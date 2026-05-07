@@ -12,7 +12,6 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddSingleton<INetworkAddressService, NetworkAddressService>();
         services.AddScoped<ICoreService, CoreService>();
 
         return services;

@@ -3,8 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
-using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
+using XRayne.Infrastructure.GitHub;
 
 namespace XRayne.Cli.Commands.Api;
 
@@ -27,13 +27,13 @@ public sealed class ApiVersionCommand : Command
     {
         var console = serviceProvider.GetRequiredService<ICliConsole>();
         var logger = serviceProvider.GetRequiredService<ILogger<ApiVersionCommand>>();
-        var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var repository = new GitHubRepository(CliDefaults.XRayneRepositoryUrl);
 
         try
         {
             var installedVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
-            var release = await gitHubReleaseService.ResolveReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
+            var release = await repository.GetReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
             var latestVersion = SanitizeDockerTag(release.TagName);
 
             if (string.IsNullOrWhiteSpace(installedVersion))

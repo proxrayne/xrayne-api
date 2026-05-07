@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.GitHub;
 using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
@@ -42,16 +42,21 @@ public sealed class ApiInstallCommand : Command
     {
         var console = serviceProvider.GetRequiredService<ICliConsole>();
         var logger = serviceProvider.GetRequiredService<ILogger<ApiInstallCommand>>();
-        var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
         var shellService = serviceProvider.GetRequiredService<IShellService>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
         var dockerComposeFileService = serviceProvider.GetRequiredService<IDockerComposeFileService>();
+        var repository = new GitHubRepository(CliDefaults.XRayneRepositoryUrl);
 
         try
         {
             var options = ReadInstallOptions();
 
-            var release = await gitHubReleaseService.ResolveReleaseAsync(version, cancellationToken);
+            var release = await repository.GetReleaseAsync(version, cancellationToken);
+            if (release.PreRelease)
+            {
+                throw new InvalidOperationException("Pre-release versions are not supported. Use a stable release tag.");
+            }
+
             var imageTag = SanitizeDockerTag(release.TagName);
             var assetName = $"xrayne-api-image-{imageTag}.tar.gz";
             var asset = release.Assets.SingleOrDefault(item => string.Equals(item.Name, assetName, StringComparison.Ordinal));
@@ -65,9 +70,11 @@ public sealed class ApiInstallCommand : Command
             Directory.CreateDirectory(options.Paths.XrayDirectory);
             Directory.CreateDirectory(options.Paths.DownloadsDirectory);
 
-            var imageArchivePath = Path.Combine(options.Paths.DownloadsDirectory, asset.Name);
-            console.Success($"Downloading {asset.Name} from {gitHubReleaseService.Repository} {release.TagName}.");
-            await gitHubReleaseService.DownloadAssetAsync(asset.DownloadUrl, imageArchivePath, cancellationToken);
+            console.Success($"Downloading {asset.Name} from {repository.FullName} {release.TagName}.");
+            var imageArchivePath = await repository.DownloadAssetAsync(
+                asset,
+                options.Paths.DownloadsDirectory,
+                cancellationToken);
 
             var imageTarPath = Path.Combine(options.Paths.Root, $"{CliDefaults.ImageName}-{imageTag}.tar");
             await DecompressGzipAsync(imageArchivePath, imageTarPath, cancellationToken);

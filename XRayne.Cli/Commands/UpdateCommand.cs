@@ -8,12 +8,11 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using XRayne.Cli.Models;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.GitHub;
 using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
@@ -67,20 +66,25 @@ public sealed class UpdateCommand : Command
     {
         var console = serviceProvider.GetRequiredService<ICliConsole>();
         var logger = serviceProvider.GetRequiredService<ILogger<UpdateCommand>>();
-        var gitHubReleaseService = serviceProvider.GetRequiredService<IGitHubReleaseService>();
         var shellService = serviceProvider.GetRequiredService<IShellService>();
         var apiInstallationService = serviceProvider.GetRequiredService<IApiInstallationService>();
         var runtimeMigrationService = serviceProvider.GetRequiredService<IRuntimeMigrationService>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var repository = new GitHubRepository(CliDefaults.XRayneRepositoryUrl);
 
         try
         {
-            var release = await gitHubReleaseService.ResolveReleaseAsync(version, cancellationToken);
+            var release = await repository.GetReleaseAsync(version, cancellationToken);
+            if (release.PreRelease)
+            {
+                throw new InvalidOperationException("Pre-release versions are not supported. Use a stable release tag.");
+            }
+
             var targetVersion = SanitizeDockerTag(release.TagName);
             var targetSchemaVersion = RuntimeSchemaCatalog.ResolveForRelease(release.TagName);
 
             console.Header("XRayne update");
-            console.Value("Repository", gitHubReleaseService.Repository);
+            console.Value("Repository", repository.FullName);
             console.Value("Target release", release.TagName);
             console.Value("Target runtime schema", targetSchemaVersion.ToString());
             console.Value("Component", component.Value);
@@ -96,7 +100,7 @@ public sealed class UpdateCommand : Command
             {
                 apiRestarted = await UpdateApiAsync(
                     console,
-                    gitHubReleaseService,
+                    repository,
                     shellService,
                     apiInstallationService,
                     configuration,
@@ -116,7 +120,7 @@ public sealed class UpdateCommand : Command
             {
                 await UpdateCliAsync(
                     console,
-                    gitHubReleaseService,
+                    repository,
                     release,
                     force,
                     cancellationToken);
@@ -141,7 +145,7 @@ public sealed class UpdateCommand : Command
 
     private static async Task<bool> UpdateApiAsync(
         ICliConsole console,
-        IGitHubReleaseService gitHubReleaseService,
+        GitHubRepository gitHubRepository,
         IShellService shellService,
         IApiInstallationService apiInstallationService,
         IConfiguration configuration,
@@ -174,9 +178,11 @@ public sealed class UpdateCommand : Command
 
         Directory.CreateDirectory(PathProvider.Paths.DownloadsDirectory);
 
-        var imageArchivePath = Path.Combine(PathProvider.Paths.DownloadsDirectory, asset.Name);
-        console.Success($"Downloading {asset.Name} from {gitHubReleaseService.Repository} {release.TagName}.");
-        await gitHubReleaseService.DownloadAssetAsync(asset.DownloadUrl, imageArchivePath, cancellationToken);
+        console.Success($"Downloading {asset.Name} from {gitHubRepository.FullName} {release.TagName}.");
+        var imageArchivePath = await gitHubRepository.DownloadAssetAsync(
+            asset,
+            PathProvider.Paths.DownloadsDirectory,
+            cancellationToken);
 
         var imageTarPath = Path.Combine(PathProvider.Paths.Root, $"{CliDefaults.ImageName}-{targetVersion}.tar");
         await DecompressGzipAsync(imageArchivePath, imageTarPath, cancellationToken);
@@ -231,7 +237,7 @@ public sealed class UpdateCommand : Command
 
     private static async Task UpdateCliAsync(
         ICliConsole console,
-        IGitHubReleaseService gitHubReleaseService,
+        GitHubRepository gitHubRepository,
         GitHubRelease release,
         bool force,
         CancellationToken cancellationToken)
@@ -258,14 +264,13 @@ public sealed class UpdateCommand : Command
         Directory.CreateDirectory(PathProvider.Paths.DownloadsDirectory);
 
         var updateDirectory = Path.Combine(PathProvider.Paths.DownloadsDirectory, $"cli-update-{Guid.NewGuid():N}");
-        var archivePath = Path.Combine(updateDirectory, asset.Name);
         var extractDirectory = Path.Combine(updateDirectory, "extract");
 
         Directory.CreateDirectory(updateDirectory);
         Directory.CreateDirectory(extractDirectory);
 
-        console.Success($"Downloading {asset.Name} from {gitHubReleaseService.Repository} {release.TagName}.");
-        await gitHubReleaseService.DownloadAssetAsync(asset.DownloadUrl, archivePath, cancellationToken);
+        console.Success($"Downloading {asset.Name} from {gitHubRepository.FullName} {release.TagName}.");
+        var archivePath = await gitHubRepository.DownloadAssetAsync(asset, updateDirectory, cancellationToken);
 
         ExtractCliArchive(archivePath, extractDirectory, assetInfo);
 
