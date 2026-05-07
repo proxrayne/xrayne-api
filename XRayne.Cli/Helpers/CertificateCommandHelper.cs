@@ -1,4 +1,3 @@
-using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Helpers;
@@ -14,13 +13,6 @@ internal static class CertificateCommandHelper
     public static string AcmeCertHome => Path.Combine(AcmeHome, "certs");
 
     public static string AcmeScriptPath => Path.Combine(AcmeHome, "acme.sh");
-
-    public static async Task<JsonConfigService> LoadRuntimeConfigAsync(CancellationToken cancellationToken)
-    {
-        return File.Exists(PathProvider.Paths.JsonConfig)
-            ? await JsonConfigService.FromPath(PathProvider.Paths.JsonConfig, cancellationToken)
-            : new JsonConfigService(PathProvider.Paths.JsonConfig);
-    }
 
     public static string BuildCertName(string mode, string identifier)
     {

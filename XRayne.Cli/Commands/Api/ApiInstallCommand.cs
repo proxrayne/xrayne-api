@@ -1,13 +1,12 @@
 using System.CommandLine;
 using System.IO.Compression;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands.Api;
@@ -187,7 +186,6 @@ public sealed class ApiInstallCommand : Command
         InstallOptions options,
         CancellationToken cancellationToken)
     {
-        var env = new EnvConfigService(options.Paths.EnvConfig);
         var values = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["API_PORT"] = options.ApiPort.ToString(),
@@ -201,24 +199,30 @@ public sealed class ApiInstallCommand : Command
             ["POSTGRES_PORT"] = "5432"
         };
 
-        foreach (var (key, value) in values)
-        {
-            env.Set(key, value);
-        }
-
-        await env.SaveAsync(cancellationToken);
+        await EnvConfig.UpdateAsync(
+            options.Paths.EnvConfig,
+            env =>
+            {
+                foreach (var (key, value) in values)
+                {
+                    EnvConfig.Set(env, key, value);
+                }
+            },
+            cancellationToken);
     }
 
     private static async Task WriteConfigFileAsync(
         InstallOptions options,
         CancellationToken cancellationToken)
     {
-        var config = new JsonConfigService(options.Paths.JsonConfig);
-
-        config.Set("PathBase", options.ApiPrefix);
-        config.Set("Kestrel:Endpoints:Http:Url", $"http://+:{options.ApiPort}");
-
-        await config.SaveAsync(cancellationToken);
+        await JsonConfig.UpdateAsync(
+            options.Paths.JsonConfig,
+            config =>
+            {
+                JsonConfig.Set(config, "PathBase", options.ApiPrefix);
+                JsonConfig.Set(config, "Kestrel:Endpoints:Http:Url", $"http://+:{options.ApiPort}");
+            },
+            cancellationToken);
     }
 
     private static void PrintInstallSummary(

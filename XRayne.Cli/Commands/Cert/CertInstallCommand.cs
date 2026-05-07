@@ -7,6 +7,7 @@ using XRayne.Cli.Output;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands.Cert;
@@ -159,30 +160,33 @@ public sealed class CertInstallCommand : Command
         bool staging,
         CancellationToken cancellationToken)
     {
-        var config = await CertificateCommandHelper.LoadRuntimeConfigAsync(cancellationToken);
         var fullChainPath = CertificateCommandHelper.GetContainerFullChainPath(certName);
         var privateKeyPath = CertificateCommandHelper.GetContainerPrivateKeyPath(certName);
 
-        config.Remove("Kestrel:Endpoints:Http");
-        config.Set("Kestrel:Endpoints:Https:Url", $"https://+:{apiPort}");
-        config.Set("Kestrel:Endpoints:Https:Certificate:Path", fullChainPath);
-        config.Set("Kestrel:Endpoints:Https:Certificate:KeyPath", privateKeyPath);
-        config.Set("Certificate:Mode", mode);
-        config.Set("Certificate:Identifier", identifier);
-        config.Set("Certificate:Email", email);
-        config.Set("Certificate:Staging", staging);
-        config.Set("Certificate:AcmeClient", "acme.sh");
-        config.Set("Certificate:Issuer", "letsencrypt");
-        config.Set("Certificate:CertProfile", mode == "ip" ? "shortlived" : string.Empty);
-        config.Set("Certificate:AutoRenew", true);
-        config.Set("Certificate:CertName", certName);
-        config.Set("Certificate:FullChainPath", fullChainPath);
-        config.Set("Certificate:PrivateKeyPath", privateKeyPath);
-        config.Set("Certificate:HostFullChainPath", CertificateCommandHelper.GetHostFullChainPath(certName));
-        config.Set("Certificate:HostPrivateKeyPath", CertificateCommandHelper.GetHostPrivateKeyPath(certName));
-        config.Set("Certificate:UpdatedAtUtc", DateTimeOffset.UtcNow);
-
-        await config.SaveAsync(cancellationToken);
+        await JsonConfig.UpdateAsync(
+            PathProvider.Paths.JsonConfig,
+            config =>
+            {
+                JsonConfig.Remove(config, "Kestrel:Endpoints:Http");
+                JsonConfig.Set(config, "Kestrel:Endpoints:Https:Url", $"https://+:{apiPort}");
+                JsonConfig.Set(config, "Kestrel:Endpoints:Https:Certificate:Path", fullChainPath);
+                JsonConfig.Set(config, "Kestrel:Endpoints:Https:Certificate:KeyPath", privateKeyPath);
+                JsonConfig.Set(config, "Certificate:Mode", mode);
+                JsonConfig.Set(config, "Certificate:Identifier", identifier);
+                JsonConfig.Set(config, "Certificate:Email", email);
+                JsonConfig.Set(config, "Certificate:Staging", staging);
+                JsonConfig.Set(config, "Certificate:AcmeClient", "acme.sh");
+                JsonConfig.Set(config, "Certificate:Issuer", "letsencrypt");
+                JsonConfig.Set(config, "Certificate:CertProfile", mode == "ip" ? "shortlived" : string.Empty);
+                JsonConfig.Set(config, "Certificate:AutoRenew", true);
+                JsonConfig.Set(config, "Certificate:CertName", certName);
+                JsonConfig.Set(config, "Certificate:FullChainPath", fullChainPath);
+                JsonConfig.Set(config, "Certificate:PrivateKeyPath", privateKeyPath);
+                JsonConfig.Set(config, "Certificate:HostFullChainPath", CertificateCommandHelper.GetHostFullChainPath(certName));
+                JsonConfig.Set(config, "Certificate:HostPrivateKeyPath", CertificateCommandHelper.GetHostPrivateKeyPath(certName));
+                JsonConfig.Set(config, "Certificate:UpdatedAtUtc", DateTimeOffset.UtcNow);
+            },
+            cancellationToken);
     }
 
     private static string GetApiPort(IConfiguration configuration)

@@ -1,4 +1,5 @@
 using System.Text;
+using XRayne.Infrastructure.Utilities;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -32,20 +33,24 @@ internal sealed class V1UseHostNetworkForApiMigration : IRuntimeMigration
         await RuntimeMigrationFileHelpers.SetEnvValueAsync(context.Paths.EnvConfig, "POSTGRES_HOST_API", "localhost", cancellationToken);
         await RuntimeMigrationFileHelpers.SetEnvValueAsync(context.Paths.EnvConfig, "POSTGRES_CONTAINER_PORT", "5432", cancellationToken);
 
-        var config = await RuntimeMigrationFileHelpers.LoadConfigAsync(context.Paths, cancellationToken);
-        if (hasCertificate)
-        {
-            config.Remove("Kestrel:Endpoints:Http");
-            config.Set("Kestrel:Endpoints:Https:Url", $"https://+:{apiPort}");
-        }
-        else
-        {
-            config.Remove("Kestrel:Endpoints:Https");
-            config.Set("Kestrel:Endpoints:Http:Url", $"http://+:{apiPort}");
-        }
+        await JsonConfig.UpdateAsync(
+            context.Paths.JsonConfig,
+            config =>
+            {
+                if (hasCertificate)
+                {
+                    JsonConfig.Remove(config, "Kestrel:Endpoints:Http");
+                    JsonConfig.Set(config, "Kestrel:Endpoints:Https:Url", $"https://+:{apiPort}");
+                }
+                else
+                {
+                    JsonConfig.Remove(config, "Kestrel:Endpoints:Https");
+                    JsonConfig.Set(config, "Kestrel:Endpoints:Http:Url", $"http://+:{apiPort}");
+                }
 
-        config.Set("Runtime:SchemaVersion", ToVersion);
-        await config.SaveAsync(cancellationToken);
+                JsonConfig.Set(config, "Runtime:SchemaVersion", ToVersion);
+            },
+            cancellationToken);
     }
 
     public async Task DownAsync(
@@ -58,20 +63,24 @@ internal sealed class V1UseHostNetworkForApiMigration : IRuntimeMigration
         await RuntimeMigrationFileHelpers.SetEnvValueAsync(context.Paths.EnvConfig, "POSTGRES_HOST_API", "postgres", cancellationToken);
         await RuntimeMigrationFileHelpers.SetEnvValueAsync(context.Paths.EnvConfig, "POSTGRES_CONTAINER_PORT", "5432", cancellationToken);
 
-        var config = await RuntimeMigrationFileHelpers.LoadConfigAsync(context.Paths, cancellationToken);
-        if (hasCertificate)
-        {
-            config.Remove("Kestrel:Endpoints:Http");
-            config.Set("Kestrel:Endpoints:Https:Url", "https://+:8443");
-        }
-        else
-        {
-            config.Remove("Kestrel:Endpoints:Https");
-            config.Set("Kestrel:Endpoints:Http:Url", "http://+:8080");
-        }
+        await JsonConfig.UpdateAsync(
+            context.Paths.JsonConfig,
+            config =>
+            {
+                if (hasCertificate)
+                {
+                    JsonConfig.Remove(config, "Kestrel:Endpoints:Http");
+                    JsonConfig.Set(config, "Kestrel:Endpoints:Https:Url", "https://+:8443");
+                }
+                else
+                {
+                    JsonConfig.Remove(config, "Kestrel:Endpoints:Https");
+                    JsonConfig.Set(config, "Kestrel:Endpoints:Http:Url", "http://+:8080");
+                }
 
-        config.Set("Runtime:SchemaVersion", FromVersion);
-        await config.SaveAsync(cancellationToken);
+                JsonConfig.Set(config, "Runtime:SchemaVersion", FromVersion);
+            },
+            cancellationToken);
     }
 
     private async Task MigrateComposeUpAsync(

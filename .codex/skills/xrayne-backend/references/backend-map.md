@@ -94,7 +94,7 @@ Repository pattern:
 
 - Builds a generic host.
 - Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.ConfigPath`.
-- Reads `PathProvider.EnvironmentPath` with `Dotenv.Extensions.Microsoft.Configuration` when the runtime API is installed. Reading is done through standard `IConfiguration`; `IJsonConfigService`/`JsonConfigService` in `XRayne.Infrastructure.Services` is only for writing mutable values to `config.json`. `.env` is static read-only compose/bootstrap configuration. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
+- Reads `PathProvider.EnvironmentPath` with `Dotenv.Extensions.Microsoft.Configuration` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `XRayne.Infrastructure.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
 - Derives the default project path from the installed CLI location when `AppContext.BaseDirectory` is a `cli` directory, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
 - Adds environment variables without a custom prefix.
 - Registers core, infrastructure, repositories, and CLI actions.
@@ -133,7 +133,7 @@ Database-dependent commands should call `MigrateDatabaseAsync()` inside their ac
 
 `api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation. The API compose service uses `network_mode: host` for host-level xray-core networking, so `API_PORT` is the real host port Kestrel listens on; do not add API `ports:` mappings.
 
-Use `EnvConfigService` for reading, writing, setting, or removing `.env` values. Do not hand-edit `.env` with command-local line parsing.
+Use `EnvConfig` for reading, writing, setting, or removing `.env` values. Do not hand-edit `.env` with command-local line parsing.
 
 `update` resolves the target runtime schema from the selected release through `RuntimeSchemaCatalog`, runs `IRuntimeMigrationService.MigrateToAsync(...)` before replacing the CLI, and supports both `UpAsync` and `DownAsync` migrations so explicit downgrades can roll runtime files back. Runtime migration backups go under `<project>/backups/runtime-migrations`.
 

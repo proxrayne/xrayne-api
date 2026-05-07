@@ -1,21 +1,12 @@
 using System.Text.Json.Nodes;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Services.RuntimeMigrations;
 
 internal static class RuntimeMigrationFileHelpers
 {
-    public static async Task<JsonConfigService> LoadConfigAsync(
-        ProjectPaths paths,
-        CancellationToken cancellationToken)
-    {
-        return File.Exists(paths.JsonConfig)
-            ? await JsonConfigService.FromPath(paths.JsonConfig, cancellationToken)
-            : new JsonConfigService(paths.JsonConfig);
-    }
-
     public static async Task<int> ReadSchemaVersionAsync(
         ProjectPaths paths,
         CancellationToken cancellationToken)
@@ -44,20 +35,20 @@ internal static class RuntimeMigrationFileHelpers
         int schemaVersion,
         CancellationToken cancellationToken)
     {
-        var config = await LoadConfigAsync(paths, cancellationToken);
-        config.Set("Runtime:SchemaVersion", schemaVersion);
-
-        await config.SaveAsync(cancellationToken);
+        await JsonConfig.SetAsync(
+            "Runtime:SchemaVersion",
+            schemaVersion,
+            paths.JsonConfig,
+            cancellationToken);
     }
 
     public static async Task<string> GetApiPortAsync(
         ProjectPaths paths,
         CancellationToken cancellationToken)
     {
-        var env = File.Exists(paths.EnvConfig)
-            ? await EnvConfigService.FromPath(paths.EnvConfig, cancellationToken)
-            : new EnvConfigService(paths.EnvConfig);
-        var apiPort = env.Get("API_PORT");
+        var apiPort = File.Exists(paths.EnvConfig)
+            ? await EnvConfig.GetAsync("API_PORT", paths.EnvConfig, cancellationToken)
+            : null;
 
         return !string.IsNullOrWhiteSpace(apiPort)
             ? apiPort
@@ -91,11 +82,6 @@ internal static class RuntimeMigrationFileHelpers
         string value,
         CancellationToken cancellationToken)
     {
-        var env = File.Exists(envPath)
-            ? await EnvConfigService.FromPath(envPath, cancellationToken)
-            : new EnvConfigService(envPath);
-        env.Set(key, value);
-
-        await env.SaveAsync(cancellationToken);
+        await EnvConfig.SetAsync(key, value, envPath, cancellationToken);
     }
 }

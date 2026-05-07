@@ -14,6 +14,7 @@ using XRayne.Cli.Services;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
 
 namespace XRayne.Cli.Commands;
@@ -428,10 +429,11 @@ public sealed class UpdateCommand : Command
         string imageTag,
         CancellationToken cancellationToken)
     {
-        var env = await EnvConfigService.FromPath(PathProvider.Paths.EnvConfig, cancellationToken);
-        env.Set(CliDefaults.ApiImageVariable, $"{CliDefaults.ImageName}:{imageTag}");
-
-        await env.SaveAsync(cancellationToken);
+        await EnvConfig.SetAsync(
+            CliDefaults.ApiImageVariable,
+            $"{CliDefaults.ImageName}:{imageTag}",
+            PathProvider.Paths.EnvConfig,
+            cancellationToken);
     }
 
     private static async Task DecompressGzipAsync(
