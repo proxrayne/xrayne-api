@@ -1,6 +1,6 @@
-namespace XRayne.Infrastructure.Values;
-
 using System.Runtime.InteropServices;
+
+namespace XRayne.Contracts.Values;
 
 public static class PathProvider
 {

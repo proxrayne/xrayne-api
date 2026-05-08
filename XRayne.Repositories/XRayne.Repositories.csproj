@@ -12,6 +12,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../XRayne.Contracts/XRayne.Contracts.csproj" />
-    <ProjectReference Include="../XRayne.Core/XRayne.Core.csproj" />
   </ItemGroup>
 </Project>

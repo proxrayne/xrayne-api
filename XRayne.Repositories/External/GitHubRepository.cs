@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace XRayne.Repositories.External;
 
@@ -27,11 +28,31 @@ public sealed class GitHubRepository : IDisposable
 
     public string Url => $"https://github.com/{FullName}";
 
-    public async Task<IReadOnlyCollection<GitHubRelease>> GetReleasesAsync(
+    public async Task<ICollection<GitHubRelease>> GetReleasesAsync(
         CancellationToken cancellationToken = default)
     {
         return await GetJsonAsync<GitHubRelease[]>(
             $"https://api.github.com/repos/{FullName}/releases",
+            cancellationToken) ?? [];
+    }
+
+    public async Task<ICollection<GitHubRelease>> GetReleasesAsync(
+        GithubRepositoriesFilter filter,
+        CancellationToken cancellationToken = default)
+    {
+        var url = $"https://api.github.com/repos/{FullName}/releases";
+        if (filter.PerPage != null)
+        {
+            url = QueryHelpers.AddQueryString(url, "per_page", filter.PerPage.ToString()!);
+        }
+
+        if (filter.Page != null)
+        {
+            url = QueryHelpers.AddQueryString(url, "page", filter.Page.ToString()!);
+        }
+
+        return await GetJsonAsync<GitHubRelease[]>(
+            url,
             cancellationToken) ?? [];
     }
 
@@ -157,6 +178,8 @@ public sealed class GitHubRepository : IDisposable
     }
 }
 
+public sealed record GithubRepositoriesFilter(int? PerPage, int? Page);
+
 public sealed record GitHubAsset(
     [property: JsonPropertyName("url")] string Url,
     [property: JsonPropertyName("id")] long Id,
@@ -171,7 +194,6 @@ public sealed record GitHubAsset(
     [property: JsonPropertyName("created_at")] DateTimeOffset CreatedAt,
     [property: JsonPropertyName("updated_at")] DateTimeOffset UpdatedAt,
     [property: JsonPropertyName("browser_download_url")] string BrowserDownloadUrl);
-
 
 public sealed record GitHubUser(
     [property: JsonPropertyName("login")] string Login,

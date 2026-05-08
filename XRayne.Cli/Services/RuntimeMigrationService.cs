@@ -1,6 +1,6 @@
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Services.RuntimeMigrations;
-using XRayne.Infrastructure.Values;
+using XRayne.Contracts.Values;
 
 namespace XRayne.Cli.Services;
 

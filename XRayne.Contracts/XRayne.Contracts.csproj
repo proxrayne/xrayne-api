@@ -2,4 +2,8 @@
   <ItemGroup>
     <PackageReference Include="Xray.Sdk" Version="0.0.2-beta" />
   </ItemGroup>
+
+   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 </Project>

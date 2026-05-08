@@ -4,11 +4,11 @@
 
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
-- `XRayne.Core`: xray-core selection and core runtime abstractions.
-- `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService`, `ICoreService` implementation, static config/network utilities.
+- `XRayne.Core`: xray-core services, release lookup/download abstractions, and core runtime abstractions.
+- `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus static config/network utilities.
 - Shared random password generation lives in `XRayne.Infrastructure/Utilities/PasswordGenerator.cs`.
 - `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories, and external repository clients under `External`.
-- `XRayne.Contracts`: shared contracts, configuration DTOs, permission enums, and permission names.
+- `XRayne.Contracts`: shared contracts, configuration DTOs/options, permission enums, permission names, runtime path helpers, and contract-level DI registration.
 - `XRayne.Test`: tests.
 
 ## API Startup Pattern
@@ -22,7 +22,7 @@
 - Adds AutoMapper from API assembly.
 - Configures JWT Bearer with `JwtOptions` from `XRayne.Contracts.Configurations`.
 - Adds authorization policies via `AddAdminPermissionPolicies`.
-- Calls `AddCoreDependencies`, `AddInfrastructure`, and `AddRepositories`.
+- Calls `AddCoreDependencies`, `AddInfrastructure`, `AddRepositories`, and `AddContracts`.
 - Calls `MigrateDatabaseAsync()` on startup.
 - Serves default/static files and maps SPA fallback for non-API paths.
 
@@ -34,7 +34,9 @@
   - `GET api/auth/me`: authorized current admin lookup.
   - `POST api/auth/login`: anonymous login, returns `LoginResponse`.
 - Admin endpoints require `[Authorize(Policy = AdminPermissionNames.SuperAdmin)]`.
-- Core endpoint currently `POST api/core/start`, requires `change_xray_settings`.
+- Core endpoints live under `api/core`, require `change_xray_settings`, and currently expose:
+  - `GET api/core/status`: installation/running/version state.
+  - `GET api/core/releases`: paged xray-core release lookup with optional cache bypass.
 
 ## Errors
 
@@ -95,11 +97,11 @@ Repository pattern:
 `XRayne.Cli/Program.cs`:
 
 - Builds a generic host.
-- Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.ConfigPath`.
-- Reads `PathProvider.EnvironmentPath` with `Dotenv.Extensions.Microsoft.Configuration` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `XRayne.Infrastructure.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
-- Derives the default project path from the installed CLI location when `AppContext.BaseDirectory` is a `cli` directory, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
+- Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.Paths.JsonConfig`.
+- Reads `PathProvider.Paths.EnvConfig` through `AddEnvFile(...)` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `XRayne.Infrastructure.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
+- `PathProvider` lives in `XRayne.Contracts.Values`. `PathProvider.Paths` uses `PROJECT_PATH` when present, otherwise the OS-specific system project directory. `PathProvider.GetProjectDirectory()` can derive the parent project path from an installed `cli` folder, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
 - Adds environment variables without a custom prefix.
-- Registers core, infrastructure, repositories, and CLI actions.
+- Registers core, infrastructure, repositories, contracts, and CLI actions.
 - Does not migrate database on startup, so non-database commands can run before PostgreSQL is available.
 - Resolves `RootCommandFactory`, creates `CommandLineConfiguration`, and invokes args.
 
@@ -143,7 +145,7 @@ CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implemen
 
 Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
 
-GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; do not reintroduce `GitHubReleaseService` under `XRayne.Cli/Services`.
+GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing is exposed through `ICoreDownloadService` and a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `XRayne.Cli/Services`.
 
 Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
 
@@ -151,12 +153,12 @@ Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerC
 
 ## Xray Core
 
-`AddCoreDependencies` reads `XrayInstanceConfig`.
+`AddCoreDependencies` registers:
 
-- If `UseProcessCore` is true, register `XrayProcessCore` using `WorkingDirectory`.
-- Otherwise register `XrayLibCore` using `Path.Combine(Directory, FileName)`.
+- `ICoreService` -> `CoreService`
+- `ICoreDownloadService` -> `CoreDownloadService`
 
-`CoreService` currently logs xray version on start and stubs stop/restart behavior.
+`CoreService` currently tracks an optional `IXrayCore` instance and exposes installed/running/version checks. `CoreDownloadService` uses memory cache for xray-core release pages and supports a `noCache` bypass.
 
 ## Migrations
 

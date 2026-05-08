@@ -5,4 +5,8 @@
   <ItemGroup>
     <PackageReference Include="Xray.Sdk" Version="0.0.2-beta" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../XRayne.Contracts/XRayne.Contracts.csproj" />
+    <ProjectReference Include="../XRayne.Repositories/XRayne.Repositories.csproj" />
+  </ItemGroup>
 </Project>

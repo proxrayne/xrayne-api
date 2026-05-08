@@ -5,9 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using XRayne.Cli.Commands;
+using XRayne.Contracts;
+using XRayne.Contracts.Values;
 using XRayne.Core;
 using XRayne.Infrastructure;
-using XRayne.Infrastructure.Values;
 using XRayne.Repositories;
 
 Log.Logger = new LoggerConfiguration()
@@ -46,9 +47,10 @@ try
 
     host.ConfigureServices((context, services) =>
     {
-        services.AddCoreDependencies(context.Configuration);
+        services.AddCoreDependencies();
         services.AddInfrastructure(context.Configuration);
         services.AddRepositories(GetEnvConnectionString(context.Configuration) ?? context.Configuration.GetConnectionString("Default"));
+        services.AddContracts(context.Configuration);
 
         services.AddCliActions();
     });

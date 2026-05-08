@@ -1,34 +1,14 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Xray.Core;
-using XRayne.Core.Configurations;
+using XRayne.Core.Services;
 
 namespace XRayne.Core;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddCoreDependencies(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddCoreDependencies(this IServiceCollection services)
     {
-        services.Configure<XrayInstanceConfig>(configuration.GetSection("Xray"));
-
-        services.AddSingleton<IXrayCore>((provider) =>
-        {
-            var configOptions = provider.GetRequiredService<IOptions<XrayInstanceConfig>>();
-
-            if (configOptions.Value.UseProcessCore)
-            {
-                return new XrayProcessCore(new XrayProcessOptions()
-                {
-                    WorkingDirectory = configOptions.Value.Directory,
-                });
-            }
-
-            return new XrayLibCore(new XrayLibOptions()
-            {
-                LibPath = Path.Combine(configOptions.Value.Directory, configOptions.Value.FileName)
-            });
-        });
+        services.AddSingleton<ICoreService, CoreService>();
+        services.AddSingleton<ICoreDownloadService, CoreDownloadService>();
 
         return services;
     }

@@ -7,10 +7,11 @@ using Scalar.AspNetCore;
 using Serilog;
 using XRayne.Api.Auth;
 using XRayne.Api.Filters;
+using XRayne.Contracts;
 using XRayne.Contracts.Configurations;
+using XRayne.Contracts.Values;
 using XRayne.Core;
 using XRayne.Infrastructure;
-using XRayne.Infrastructure.Values;
 using XRayne.Repositories;
 
 Log.Logger = new LoggerConfiguration()
@@ -40,6 +41,7 @@ try
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"),
             sinkMapCountLimit: 1));
 
+    builder.Services.AddMemoryCache();
     builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ApiExceptionFilter>();
@@ -112,9 +114,10 @@ try
         options.AddAdminPermissionPolicies();
     });
 
-    builder.Services.AddCoreDependencies(builder.Configuration);
+    builder.Services.AddCoreDependencies();
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddRepositories(builder.Configuration.GetConnectionString("Default"));
+    builder.Services.AddContracts(builder.Configuration);
 
     var app = builder.Build();
     var pathBase = NormalizePathBase(app.Configuration["PathBase"]);

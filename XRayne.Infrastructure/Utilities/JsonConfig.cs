@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using XRayne.Infrastructure.Values;
+using XRayne.Contracts.Values;
 
 namespace XRayne.Infrastructure.Utilities;
 

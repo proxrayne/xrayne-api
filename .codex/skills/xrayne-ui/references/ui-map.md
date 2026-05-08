@@ -52,7 +52,8 @@ Route type imports come from generated `+types` files.
 
 `src/core/api/instance.ts`:
 
-- Base URL is `${import.meta.env.VITE_API_DOMAIN}/api`.
+- Base URL is `${getApiDomain()}/api`.
+- `getApiDomain()` uses `VITE_API_DOMAIN` when present, otherwise returns an empty same-origin prefix in the browser/server. If the first browser path segment is not a known app route, it is treated as a deployed `PathBase` prefix.
 - Adds `Content-Type` and `X-Platform: Web`.
 - Adds `Authorization: Bearer <token>` from cookie key `auth_token`.
 - On 401, clears auth token and dispatches `unauthorize`.
@@ -99,5 +100,4 @@ Important env key:
 VITE_API_DOMAIN
 ```
 
-When empty or undefined, Axios base URL becomes `undefined/api`; verify env behavior if changing startup scripts.
-
+When empty or undefined, the UI calls same-origin `/api`. For deployments under an API `PathBase`, the API client infers the first URL segment unless it is one of the known root routes.

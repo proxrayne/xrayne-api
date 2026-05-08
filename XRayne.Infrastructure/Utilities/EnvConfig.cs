@@ -1,4 +1,5 @@
-using XRayne.Infrastructure.Values;
+
+using XRayne.Contracts.Values;
 
 namespace XRayne.Infrastructure.Utilities;
 
