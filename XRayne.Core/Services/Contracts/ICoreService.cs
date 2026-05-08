@@ -2,8 +2,11 @@ namespace XRayne.Core.Services;
 
 public interface ICoreService
 {
-    public bool GetIsRunning();
-    public bool GetIsInstalled();
-    public string GetVersion();
-    public string? TryGetVersion();
+    bool GetIsRunning();
+    bool GetIsInstalled();
+    string GetVersion();
+    string? TryGetVersion();
+
+    Task StopAsync();
+    Task SetupAsync(string corePath);
 }

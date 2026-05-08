@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using XRayne.Cli.Values;
 using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Utilities;
+using XRayne.Repositories.Utilities;
 
 namespace XRayne.Cli.Services.RuntimeMigrations;
 

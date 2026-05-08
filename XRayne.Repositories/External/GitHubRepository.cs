@@ -71,7 +71,8 @@ public sealed class GitHubRepository : IDisposable
     public async Task<string> DownloadAssetAsync(
         GitHubAsset asset,
         string destinationDirectory,
-        CancellationToken cancellationToken = default)
+        string? assetName = default,
+        CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(asset.Name))
         {
@@ -80,7 +81,7 @@ public sealed class GitHubRepository : IDisposable
 
         Directory.CreateDirectory(destinationDirectory);
 
-        var destinationPath = Path.Combine(destinationDirectory, asset.Name);
+        var destinationPath = Path.Combine(destinationDirectory, assetName ?? asset.Name);
         using var request = new HttpRequestMessage(HttpMethod.Get, asset.Url);
         request.Headers.Accept.Clear();
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
@@ -88,12 +89,12 @@ public sealed class GitHubRepository : IDisposable
         using var response = await _httpClient.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
+            ct);
         response.EnsureSuccessStatusCode();
 
-        await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await using var input = await response.Content.ReadAsStreamAsync(ct);
         await using var output = File.Create(destinationPath);
-        await input.CopyToAsync(output, cancellationToken);
+        await input.CopyToAsync(output, ct);
 
         return destinationPath;
     }

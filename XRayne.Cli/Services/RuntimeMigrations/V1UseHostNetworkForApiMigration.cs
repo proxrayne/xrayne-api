@@ -1,5 +1,5 @@
 using System.Text;
-using XRayne.Infrastructure.Utilities;
+using XRayne.Repositories.Utilities;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 

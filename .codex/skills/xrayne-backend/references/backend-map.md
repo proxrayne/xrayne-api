@@ -5,9 +5,9 @@
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
 - `XRayne.Core`: xray-core services, release lookup/download abstractions, and core runtime abstractions.
-- `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus static config/network utilities.
+- `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
 - Shared random password generation lives in `XRayne.Infrastructure/Utilities/PasswordGenerator.cs`.
-- `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories, and external repository clients under `External`.
+- `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories, runtime config file utilities, and external repository clients under `External`.
 - `XRayne.Contracts`: shared contracts, configuration DTOs/options, permission enums, permission names, runtime path helpers, and contract-level DI registration.
 - `XRayne.Test`: tests.
 
@@ -98,7 +98,7 @@ Repository pattern:
 
 - Builds a generic host.
 - Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.Paths.JsonConfig`.
-- Reads `PathProvider.Paths.EnvConfig` through `AddEnvFile(...)` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `XRayne.Infrastructure.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
+- Reads `PathProvider.Paths.EnvConfig` through `AddEnvFile(...)` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `XRayne.Repositories.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
 - `PathProvider` lives in `XRayne.Contracts.Values`. `PathProvider.Paths` uses `PROJECT_PATH` when present, otherwise the OS-specific system project directory. `PathProvider.GetProjectDirectory()` can derive the parent project path from an installed `cli` folder, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
 - Adds environment variables without a custom prefix.
 - Registers core, infrastructure, repositories, contracts, and CLI actions.

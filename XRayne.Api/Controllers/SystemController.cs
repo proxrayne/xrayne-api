@@ -1,0 +1,21 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using XRayne.Contracts.Values;
+using XRayne.Infrastructure.Models;
+using XRayne.Infrastructure.Services;
+
+namespace XRayne.Api.Controllers;
+
+[Route("api/system")]
+[Authorize(Policy = AdminPermissionNames.ViewLogs)]
+public sealed class SystemController(ISystemInfoService systemInfoService) : ApiControllerBase
+{
+    [HttpGet("snapshot")]
+    [EndpointSummary("System statistics snapshot")]
+    [EndpointDescription("Gets a current system statistics snapshot with CPU, memory, swap, disk, uptime, thread, and network information.")]
+    [ProducesResponseType(typeof(SystemInfoSnapshot), StatusCodes.Status200OK)]
+    public Task<SystemInfoSnapshot> GetSnapshot(CancellationToken cancellationToken)
+    {
+        return systemInfoService.GetSnapshotAsync(cancellationToken);
+    }
+}

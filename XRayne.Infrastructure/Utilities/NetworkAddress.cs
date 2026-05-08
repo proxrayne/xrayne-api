@@ -8,13 +8,31 @@ public static class NetworkAddress
 {
     private static readonly Uri PublicIpAddressEndpoint = new("https://api.ipify.org");
 
+    public static ServerIpAddresses GetServerIpAddresses()
+    {
+        var addresses = GetUsableServerAddresses().ToArray();
+
+        var ipv4 = addresses
+            .Where(address => address.AddressFamily == AddressFamily.InterNetwork)
+            .Select(address => address.ToString())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order()
+            .ToArray();
+
+        var ipv6 = addresses
+            .Where(address => address.AddressFamily == AddressFamily.InterNetworkV6)
+            .Where(IsUsableIPv6Address)
+            .Select(address => address.ToString())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order()
+            .ToArray();
+
+        return new ServerIpAddresses(ipv4, ipv6);
+    }
+
     public static string GetLocalServerIpAddress()
     {
-        var address = NetworkInterface.GetAllNetworkInterfaces()
-            .Where(item => item.OperationalStatus == OperationalStatus.Up)
-            .Where(item => item.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-            .SelectMany(item => item.GetIPProperties().UnicastAddresses)
-            .Select(item => item.Address)
+        var address = GetUsableServerAddresses()
             .FirstOrDefault(IsUsableIPv4Address);
 
         return address?.ToString() ?? IPAddress.Loopback.ToString();
@@ -48,6 +66,14 @@ public static class NetworkAddress
     {
         return address.AddressFamily == AddressFamily.InterNetwork
             && !IPAddress.IsLoopback(address);
+    }
+
+    public static bool IsUsableIPv6Address(IPAddress address)
+    {
+        return address.AddressFamily == AddressFamily.InterNetworkV6
+            && !IPAddress.IsLoopback(address)
+            && !address.IsIPv6LinkLocal
+            && !address.IsIPv6Multicast;
     }
 
     public static bool IsPublicIPv4Address(IPAddress address)
@@ -96,4 +122,18 @@ public static class NetworkAddress
 
         return address.ToString();
     }
+
+    private static IEnumerable<IPAddress> GetUsableServerAddresses()
+    {
+        return NetworkInterface.GetAllNetworkInterfaces()
+            .Where(item => item.OperationalStatus == OperationalStatus.Up)
+            .Where(item => item.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+            .SelectMany(item => item.GetIPProperties().UnicastAddresses)
+            .Select(item => item.Address)
+            .Where(address => !IPAddress.IsLoopback(address));
+    }
 }
+
+public sealed record ServerIpAddresses(
+    IReadOnlyCollection<string> IPv4Addresses,
+    IReadOnlyCollection<string> IPv6Addresses);

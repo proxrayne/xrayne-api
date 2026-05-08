@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-using XRayne.Infrastructure.Utilities;
+using XRayne.Repositories.Utilities;
 
 namespace XRayne.Test.Infrastructure;
 

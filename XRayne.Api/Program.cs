@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Quartz;
 using Scalar.AspNetCore;
 using Serilog;
 using XRayne.Api.Auth;
@@ -36,7 +37,7 @@ try
         .WriteTo.Map(
             logEvent => logEvent.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             (date, writeTo) => writeTo.File(
-                path:  Path.Combine("logs", $"api-{date}.log"),
+                path: Path.Combine("logs", $"api-{date}.log"),
                 shared: true,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"),
             sinkMapCountLimit: 1));
@@ -118,6 +119,22 @@ try
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddRepositories(builder.Configuration.GetConnectionString("Default"));
     builder.Services.AddContracts(builder.Configuration);
+
+    builder.Services.AddQuartz(options =>
+    {
+        options.SchedulerName = "XRayneScheduler";
+        options.SchedulerId = "XRayneApi";
+
+        options.UseInMemoryStore();
+        options.UseDefaultThreadPool(threadPool =>
+        {
+            threadPool.MaxConcurrency = 5;
+        });
+    });
+    builder.Services.AddQuartzHostedService(options =>
+    {
+        options.WaitForJobsToComplete = true;
+    });
 
     var app = builder.Build();
     var pathBase = NormalizePathBase(app.Configuration["PathBase"]);

@@ -7,6 +7,7 @@ using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Utilities;
+using XRayne.Repositories.Utilities;
 using XRayne.Repositories.External;
 
 namespace XRayne.Cli.Commands.Api;

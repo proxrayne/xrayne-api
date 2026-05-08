@@ -92,4 +92,28 @@ public sealed class NetworkAddressTests
         Assert.Equal(AddressFamily.InterNetworkV6, address.AddressFamily);
         Assert.False(NetworkAddress.IsUsableIPv4Address(address));
     }
+
+    [Theory]
+    [InlineData("2001:4860:4860::8888", true)]
+    [InlineData("fe80::1", false)]
+    [InlineData("ff02::1", false)]
+    [InlineData("::1", false)]
+    [InlineData("8.8.8.8", false)]
+    public void IsUsableIPv6Address_ReturnsExpectedResult(
+        string value,
+        bool expected)
+    {
+        var address = IPAddress.Parse(value);
+
+        Assert.Equal(expected, NetworkAddress.IsUsableIPv6Address(address));
+    }
+
+    [Fact]
+    public void GetServerIpAddresses_ReturnsAddressCollections()
+    {
+        var result = NetworkAddress.GetServerIpAddresses();
+
+        Assert.NotNull(result.IPv4Addresses);
+        Assert.NotNull(result.IPv6Addresses);
+    }
 }

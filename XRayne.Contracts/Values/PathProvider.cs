@@ -51,7 +51,7 @@ public static class PathProvider
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
             return Path.Combine(programFiles, projectName);
         }

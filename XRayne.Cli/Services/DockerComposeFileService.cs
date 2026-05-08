@@ -1,7 +1,7 @@
 using System.Text;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
-using XRayne.Infrastructure.Values;
+using XRayne.Contracts.Values;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
