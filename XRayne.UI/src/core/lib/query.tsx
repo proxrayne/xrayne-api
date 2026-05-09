@@ -6,7 +6,6 @@ export const makeQueryClient = () =>
     defaultOptions: {
       queries: {
         retry: 1,
-        refetchOnWindowFocus: false,
         staleTime({ state }) {
           if (!state.dataUpdateCount || state.isInvalidated) {
             return 0;

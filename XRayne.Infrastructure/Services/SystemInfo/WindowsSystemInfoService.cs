@@ -1,4 +1,4 @@
-using System.Globalization;
+using System.Runtime.InteropServices;
 using XRayne.Infrastructure.Models;
 
 namespace XRayne.Infrastructure.Services;
@@ -9,15 +9,28 @@ public sealed class WindowsSystemInfoService : SystemInfoService
     {
         try
         {
-            var output = await RunPowerShellAsync(
-                "(Get-Counter '\\Processor(*)\\% Processor Time').CounterSamples | Where-Object {$_.InstanceName -ne '_total'} | Sort-Object {[int]$_.InstanceName} | ForEach-Object {$_.CookedValue.ToString([System.Globalization.CultureInfo]::InvariantCulture)}",
-                cancellationToken);
+            var first = ReadProcessorPerformance();
+            await Task.Delay(250, cancellationToken);
+            var second = ReadProcessorPerformance();
 
-            var usages = output
-                .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(value => double.TryParse(value, CultureInfo.InvariantCulture, out var parsed)
-                    ? ClampPercent(parsed)
-                    : (double?)null)
+            var usages = second
+                .Select((current, index) =>
+                {
+                    if (index >= first.Length)
+                    {
+                        return null;
+                    }
+
+                    var previous = first[index];
+                    var idleDelta = current.IdleTime - previous.IdleTime;
+                    var kernelDelta = current.KernelTime - previous.KernelTime;
+                    var userDelta = current.UserTime - previous.UserTime;
+                    var totalDelta = kernelDelta + userDelta;
+
+                    return totalDelta <= 0
+                        ? null
+                        : (double?)ClampPercent((1 - (idleDelta / (double)totalDelta)) * 100);
+                })
                 .ToArray();
 
             return usages.Length == 0
@@ -106,5 +119,59 @@ public sealed class WindowsSystemInfoService : SystemInfoService
             "powershell",
             $"-NoProfile -ExecutionPolicy Bypass -Command \"{escapedCommand}\"",
             cancellationToken);
+    }
+
+    private static ProcessorPerformance[] ReadProcessorPerformance()
+    {
+        var processorCount = Environment.ProcessorCount;
+        var entrySize = Marshal.SizeOf<ProcessorPerformance>();
+        var buffer = new byte[entrySize * processorCount];
+        var status = NtQuerySystemInformation(
+            SystemProcessorPerformanceInformation,
+            buffer,
+            buffer.Length,
+            out _);
+        if (status != 0)
+        {
+            return [];
+        }
+
+        var result = new ProcessorPerformance[processorCount];
+        var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+        try
+        {
+            var baseAddress = handle.AddrOfPinnedObject();
+            for (var index = 0; index < result.Length; index++)
+            {
+                var entryAddress = IntPtr.Add(baseAddress, index * entrySize);
+                result[index] = Marshal.PtrToStructure<ProcessorPerformance>(entryAddress);
+            }
+        }
+        finally
+        {
+            handle.Free();
+        }
+
+        return result;
+    }
+
+    private const int SystemProcessorPerformanceInformation = 8;
+
+    [DllImport("ntdll.dll")]
+    private static extern int NtQuerySystemInformation(
+        int systemInformationClass,
+        byte[] systemInformation,
+        int systemInformationLength,
+        out int returnLength);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly struct ProcessorPerformance
+    {
+        public readonly long IdleTime;
+        public readonly long KernelTime;
+        public readonly long UserTime;
+        public readonly long DpcTime;
+        public readonly long InterruptTime;
+        public readonly uint InterruptCount;
     }
 }

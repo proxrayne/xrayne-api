@@ -12,7 +12,7 @@ public interface ISystemInfoService
 
     Task<SwapInfo> GetSwapInfoAsync(CancellationToken cancellationToken = default);
 
-    IReadOnlyCollection<DiskInfo> GetDiskInfo();
+    StorageInfo GetStorageInfo();
 
     TimeSpan GetUptime();
 

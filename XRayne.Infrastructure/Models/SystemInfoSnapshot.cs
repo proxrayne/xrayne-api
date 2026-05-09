@@ -4,7 +4,7 @@ public sealed record SystemInfoSnapshot(
     CpuInfo Cpu,
     MemoryInfo Memory,
     SwapInfo Swap,
-    IReadOnlyCollection<DiskInfo> Disks,
+    StorageInfo Storage,
     TimeSpan Uptime,
     int CurrentProcessThreadCount,
     long? SystemThreadCount,
@@ -12,6 +12,7 @@ public sealed record SystemInfoSnapshot(
 
 public sealed record CpuInfo(
     int LogicalCoreCount,
+    double? AverageUsagePercent,
     IReadOnlyCollection<CpuCoreUsage> Cores);
 
 public sealed record CpuCoreUsage(
@@ -28,13 +29,14 @@ public sealed record SwapInfo(
     long UsedBytes,
     long AvailableBytes);
 
-public sealed record DiskInfo(
-    string Name,
-    string RootDirectory,
-    string DriveFormat,
-    long TotalBytes,
-    long UsedBytes,
-    long AvailableBytes);
+public sealed record StorageInfo(
+    DirectorySizeInfo ApplicationDirectory,
+    DirectorySizeInfo DownloadsDirectory,
+    double ApplicationDirectoryUsedDiskPercent);
+
+public sealed record DirectorySizeInfo(
+    string Path,
+    long SizeBytes);
 
 public sealed record NetworkInfo(
     IReadOnlyCollection<string> IPv4Addresses,

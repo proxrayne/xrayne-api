@@ -15,7 +15,7 @@ function PageHeader({ className, children, hint, classNames = {} }: Props) {
   return (
     <div
       className={cn(
-        "-mx-3 px-3 py-3 backdrop-blur-2xl flex items-center gap-x-3 sticky top-0",
+        "-mx-3 px-3 pb-3 pt-5 mb-4 backdrop-blur-2xl flex items-center gap-x-3 sticky top-0",
         className,
       )}
     >

@@ -1,10 +1,10 @@
 import { Outlet } from "react-router";
 
-import { Route } from "./sign-in/+types";
+import { Route } from "./+types/unauthorized-layout";
 
 import CommonTemplate from "@core/ui/common-template";
 
-import { requireNoAuthMiddleware } from "../lib/middlewares";
+import { requireNoAuthMiddleware } from "@features/auth";
 
 function UnauthorizedLayout() {
   return (

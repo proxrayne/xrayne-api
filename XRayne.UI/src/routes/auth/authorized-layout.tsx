@@ -1,14 +1,16 @@
 import { Outlet } from "react-router";
 
-import { Route } from "./sign-in/+types";
+import { Route } from "./+types/authorized-layout";
 
-import Sidebar, { SidebarProvider } from "../ui/sidebar";
-
-import { requireAuthMiddleware } from "../lib/middlewares";
+import {
+  Sidebar,
+  SidebarProvider,
+  requireAuthMiddleware,
+} from "@features/auth";
 
 function AuthLayout() {
   return (
-    <main className="container flex-auto flex">
+    <main className="max-w-390 w-full flex-auto flex">
       <SidebarProvider>
         <Sidebar />
         <div className="flex-auto px-3 md:px-5">

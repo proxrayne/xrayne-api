@@ -7,9 +7,9 @@ using XRayne.Repositories.Utilities;
 
 namespace XRayne.Core.Services;
 
-public sealed class CoreService(ILogger<CoreService> logger, IOptions<XrayOptions> options) : ICoreService
+public sealed class CoreService(ILogger<CoreService> logger, IOptionsMonitor<XrayOptions> options) : ICoreService
 {
-    private IXrayCore? _core = TryInitializeCore(options.Value, logger);
+    private IXrayCore? _core = TryInitializeCore(options.CurrentValue, logger);
 
     private IXrayCore _safeCore => _core == null ? throw new Exception("Core not installed.") : _core;
 

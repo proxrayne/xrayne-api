@@ -13,6 +13,11 @@ public sealed class SystemInfoServiceTests
 
         Assert.True(snapshot.Cpu.LogicalCoreCount > 0);
         Assert.NotEmpty(snapshot.Cpu.Cores);
+        if (snapshot.Cpu.AverageUsagePercent.HasValue)
+        {
+            Assert.InRange(snapshot.Cpu.AverageUsagePercent.Value, 0, 100);
+        }
+
         Assert.All(snapshot.Cpu.Cores, core =>
         {
             if (core.UsagePercent.HasValue)
@@ -27,7 +32,9 @@ public sealed class SystemInfoServiceTests
         Assert.True(snapshot.Swap.TotalBytes >= 0);
         Assert.True(snapshot.Swap.UsedBytes >= 0);
         Assert.True(snapshot.Swap.AvailableBytes >= 0);
-        Assert.NotEmpty(snapshot.Disks);
+        Assert.True(snapshot.Storage.ApplicationDirectory.SizeBytes >= 0);
+        Assert.True(snapshot.Storage.DownloadsDirectory.SizeBytes >= 0);
+        Assert.InRange(snapshot.Storage.ApplicationDirectoryUsedDiskPercent, 0, 100);
         Assert.True(snapshot.Uptime > TimeSpan.Zero);
         Assert.True(snapshot.CurrentProcessThreadCount > 0);
         Assert.NotNull(snapshot.Network.IPv4Addresses);
@@ -42,7 +49,7 @@ public sealed class SystemInfoServiceTests
         var cpu = await service.GetCpuInfoAsync();
         var memory = await service.GetMemoryInfoAsync();
         var swap = await service.GetSwapInfoAsync();
-        var disks = service.GetDiskInfo();
+        var storage = service.GetStorageInfo();
         var uptime = service.GetUptime();
         var currentProcessThreadCount = service.GetCurrentProcessThreadCount();
         var systemThreadCount = await service.GetSystemThreadCountAsync();
@@ -50,9 +57,22 @@ public sealed class SystemInfoServiceTests
 
         Assert.True(cpu.LogicalCoreCount > 0);
         Assert.NotEmpty(cpu.Cores);
+        if (cpu.AverageUsagePercent.HasValue)
+        {
+            Assert.InRange(cpu.AverageUsagePercent.Value, 0, 100);
+        }
+
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Contains(cpu.Cores, core => core.UsagePercent.HasValue);
+            Assert.NotNull(cpu.AverageUsagePercent);
+        }
+
         Assert.True(memory.TotalBytes >= 0);
         Assert.True(swap.TotalBytes >= 0);
-        Assert.NotEmpty(disks);
+        Assert.True(storage.ApplicationDirectory.SizeBytes >= 0);
+        Assert.True(storage.DownloadsDirectory.SizeBytes >= 0);
+        Assert.InRange(storage.ApplicationDirectoryUsedDiskPercent, 0, 100);
         Assert.True(uptime > TimeSpan.Zero);
         Assert.True(currentProcessThreadCount > 0);
         Assert.True(systemThreadCount is null or >= 0);

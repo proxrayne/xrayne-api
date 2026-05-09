@@ -13,7 +13,7 @@ function CommonTemplate({ children }: Props) {
   return (
     <>
       <header className="w-full sticky top-0 backdrop-blur-2xl">
-        <div className="container h-16 px-5 flex items-center justify-between gap-x-4 mx-auto">
+        <div className="max-w-390 h-16 px-5 flex items-center justify-between gap-x-4 mx-auto">
           <Link to={urls.root()} className="text-2xl font-semibold">
             XRayne
           </Link>
@@ -24,7 +24,7 @@ function CommonTemplate({ children }: Props) {
         </div>
       </header>
       {children}
-      <footer className="container px-5 pb-10 pt-7 flex items-center justify-between gap-x-3">
+      <footer className="max-w-390 px-5 pb-10 pt-7 flex items-center justify-between gap-x-3">
         <p className="text-muted text-xs">
           © {new Date().getFullYear()}. All rights reserved
         </p>

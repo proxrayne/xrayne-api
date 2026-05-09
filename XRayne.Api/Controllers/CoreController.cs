@@ -25,7 +25,7 @@ public sealed class CoreController(
     [HttpGet("status")]
     [EndpointSummary("Core status")]
     [EndpointDescription("Get is actual core status.")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CoreStatusResponse), StatusCodes.Status200OK)]
     public async Task<CoreStatusResponse> GetStatus()
     {
         return new CoreStatusResponse(
