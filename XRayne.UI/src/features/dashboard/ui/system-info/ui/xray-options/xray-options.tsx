@@ -1,16 +1,16 @@
-import { Button, ButtonGroup, Card, Chip, Skeleton } from "@heroui/react";
+import { Button, Card, Skeleton } from "@heroui/react";
 
-import {
-  ArrowDownTrayIcon,
-  ArrowPathIcon,
-  PlayIcon,
-  StopIcon,
-} from "@heroicons/react/16/solid";
+import { Cog6ToothIcon, Cog8ToothIcon, CogIcon } from "@heroicons/react/16/solid";
 
 import Placeholder from "@core/ui/placeholder";
 
 import { useCoreStatus } from "@features/core";
-import InfoRow from "./info-row";
+
+import InfoRow from "../info-row";
+import CoreUpdateModal from "../core-update-modal";
+import CoreControl from "./ui/core-control";
+
+const GRID_COLS = "col-span-4 md:col-span-2";
 
 function XrayOptions() {
   const { status, error, isLoaded, refetch } = useCoreStatus();
@@ -21,7 +21,7 @@ function XrayOptions() {
 
   if (error || !status) {
     return (
-      <Card className="col-span-3">
+      <Card className={GRID_COLS}>
         <Placeholder>
           <Placeholder.Header>Failed data loading</Placeholder.Header>
           <Placeholder.Subheader>
@@ -36,49 +36,31 @@ function XrayOptions() {
   }
 
   return (
-    <Card className="col-span-3">
+    <Card className={GRID_COLS}>
       <Card.Header className="min-h-8 flex justify-between items-center gap-x-3 flex-row">
-        <Card.Title>Xray info</Card.Title>
-        {status.isInstalled ? (
-          <ButtonGroup size="sm" variant="tertiary">
-            {status.isStarted ? (
-              <Button>
-                <StopIcon />
-                Stop
-              </Button>
-            ) : (
-              <Button>
-                <PlayIcon />
-                Start
-              </Button>
-            )}
-            <Button>
-              <ButtonGroup.Separator />
-              <ArrowPathIcon />
-              Restart
-            </Button>
-          </ButtonGroup>
-        ) : (
-          <Button size="sm" variant="secondary">
-            <ArrowDownTrayIcon />
-            Install
-          </Button>
-        )}
+        <Card.Title className="font-semibold">Xray info</Card.Title>
+        <CoreControl {...status} />
       </Card.Header>
       <Card.Content>
-        <InfoRow label="Core status" defaultValue="Not started">
+        <InfoRow label="Status" defaultValue="Not installed">
           {status.isInstalled && `${status.isStarted ? "Working" : "Stoped"}`}
         </InfoRow>
-        <InfoRow label="Core version">
+        <InfoRow label="Version" classNames={{ content: "flex gap-x-1" }}>
           {status.isInstalled && `v${status.version}`}
+          <CoreUpdateModal>
+            <Button size="sm" isIconOnly variant="ghost" className="size-5">
+              <Cog6ToothIcon className="size-4" />
+            </Button>
+          </CoreUpdateModal>
         </InfoRow>
+        <InfoRow label="Uptime"></InfoRow>
       </Card.Content>
     </Card>
   );
 }
 
 XrayOptions.Skeleton = () => (
-  <Card className="col-span-3">
+  <Card className={GRID_COLS}>
     <Card.Header>
       <Card.Title className="min-h-8 flex justify-between items-center gap-x-3">
         <Skeleton className="h-4 my-1 w-25" />

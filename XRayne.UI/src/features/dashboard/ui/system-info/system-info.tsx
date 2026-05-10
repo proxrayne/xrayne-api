@@ -5,7 +5,7 @@ import { ExclamationCircleIcon } from "@heroicons/react/16/solid";
 
 import Placeholder from "@core/ui/placeholder";
 
-import XrayOptions from "./ui/xray-options";
+import XrayOptions from "./ui/xray-options/xray-options";
 import CommonOptions from "./ui/common-options";
 import UsedCard from "./ui/used-card";
 
@@ -15,12 +15,25 @@ function SystemInfo() {
   const { stats, isLoaded, error, refetch } = useSystemStats();
 
   return (
-    <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
+    <div className="grid grid-cols-4 gap-x-2 gap-y-3 md:gap-4">
       {(() => {
         if (!isLoaded) {
-          return Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton className="h-56 rounded-3xl col-span-2" key={i} />
-          ));
+          return (
+            <>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton
+                  className="h-56 rounded-3xl col-span-4 sm:col-span-2 lg:col-span-1 "
+                  key={i}
+                />
+              ))}
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton
+                  className="h-40 rounded-3xl col-span-4 md:col-span-2"
+                  key={i}
+                />
+              ))}
+            </>
+          );
         }
 
         if (error || !stats) {
@@ -44,7 +57,7 @@ function SystemInfo() {
           );
         }
 
-        const { cpu, memory, swap } = stats;
+        const { cpu, memory, swap, storage } = stats;
 
         return (
           <>
@@ -54,23 +67,25 @@ function SystemInfo() {
               subheader="Average value"
               label="CPU Usage"
             />
-
             <UsedCard
               percent={memory.usedBytes / (memory.totalBytes / 100)}
               footer={`RAM: ${prettyBytes(memory.totalBytes)}`}
               subheader={`Used ${prettyBytes(memory.usedBytes)}`}
               label="RAM Usage"
             />
-
             <UsedCard
               percent={swap.usedBytes / (swap.totalBytes / 100)}
               footer={`SWAP: ${prettyBytes(swap.totalBytes)}`}
               subheader={`Used ${prettyBytes(swap.usedBytes)}`}
               label="SWAP Usage"
             />
-
+            <UsedCard
+              percent={storage.applicationDirectoryUsedDiskPercent}
+              footer="Disk usage"
+              subheader={`Used ${prettyBytes(storage.applicationDirectory.sizeBytes)}`}
+              label="Disk usage"
+            />
             <CommonOptions stats={stats} />
-
             <XrayOptions />
           </>
         );

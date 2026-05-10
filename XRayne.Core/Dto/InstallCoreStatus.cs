@@ -8,6 +8,9 @@ public enum InstallCoreStep
 {
     [EnumMember(Value = "idle")]
     Idle,
+
+    [EnumMember(Value = "version")]
+    Version,
     
     [EnumMember(Value = "preparing")]
     Preparing,

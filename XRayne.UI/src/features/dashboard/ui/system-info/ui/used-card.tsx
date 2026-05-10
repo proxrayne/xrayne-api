@@ -13,10 +13,10 @@ interface Props {
 
 function UsedCard({ footer, percent, subheader, label }: Props) {
   return (
-    <Surface className="rounded-4xl pt-3 relative col-span-2">
+    <Surface className="rounded-4xl pt-2 md:pt-3 relative col-span-4 sm:col-span-2 lg:col-span-1">
       <RadialChart
         className="h-48"
-        strokeWidth={12}
+        strokeWidth={10}
         data={[
           {
             label,
@@ -29,7 +29,9 @@ function UsedCard({ footer, percent, subheader, label }: Props) {
           <p className="text-xs font-medium text-foreground/60">{footer}</p>
         }
       >
-        <p className="text-xl/tight font-semibold">{percent.toFixed(2)}%</p>
+        <p className="text-xl/tight font-semibold">
+          {percent < 0.01 ? "< 0.01" : percent.toFixed(2)}%
+        </p>
         <p className="text-xs text-muted font-medium mt-0.5">{subheader}</p>
       </RadialChart>
     </Surface>

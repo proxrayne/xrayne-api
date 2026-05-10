@@ -31,30 +31,41 @@ public sealed class InstallCoreJob(ICoreService coreService, IMemoryCache cache)
 
         var version = context.MergedJobDataMap.GetString(VersionKey) ?? "latest";
         var release = await xrayRepository.GetReleaseAsync(version, context.CancellationToken);
-        var assetName = CoreReleasesUtilities.GetCurrentPlatformAssetName();
-        var asset = release.Assets.FirstOrDefault(item =>
-            string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
-        if (asset is null)
-        {
-            UpdateStatus(InstallCoreStep.Failure, "Release does not contain the required asset.");
-
-            throw new InvalidOperationException($"Release '{release.TagName}' does not contain asset '{assetName}'.");
-        }
-
-        UpdateStatus(InstallCoreStep.Downloading, "Downloading required asset.");
-
-        var downloadsDirectory = Path.Combine(PathProvider.Paths.DownloadsDirectory, "xray-core");
         var localAssetName = $"xray-{release.TagName.Replace(".", "_")}";
-        var destinationPath = await xrayRepository.DownloadAssetAsync(asset, downloadsDirectory, $"{localAssetName}.zip", context.CancellationToken);
 
-        UpdateStatus(InstallCoreStep.Extracting, "Extracting downloaded asset.");
+        if (!Directory.Exists(Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName)))
+        {
+            var assetName = CoreReleasesUtilities.GetCurrentPlatformAssetName();
+            var asset = release.Assets.FirstOrDefault(item =>
+                string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
+            if (asset is null)
+            {
+                UpdateStatus(InstallCoreStep.Failure, "Release does not contain the required asset.");
 
-        ZipFile.ExtractToDirectory(destinationPath, Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName));
-        File.Delete(destinationPath);
+                throw new InvalidOperationException($"Release '{release.TagName}' does not contain asset '{assetName}'.");
+            }
+
+            UpdateStatus(InstallCoreStep.Downloading, "Downloading required asset.");
+
+            var downloadsDirectory = Path.Combine(PathProvider.Paths.DownloadsDirectory, "xray-core");
+            var destinationPath = await xrayRepository.DownloadAssetAsync(asset, downloadsDirectory, $"{localAssetName}.zip", context.CancellationToken);
+
+            UpdateStatus(InstallCoreStep.Extracting, "Extracting downloaded asset.");
+
+            ZipFile.ExtractToDirectory(destinationPath, Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName));
+            File.Delete(destinationPath);
+        }
 
         UpdateStatus(InstallCoreStep.SettingUp, "Setting up core...");
 
-        await coreService.SetupAsync(localAssetName);
+        try
+        {
+            await coreService.SetupAsync(localAssetName);
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus(InstallCoreStep.Failure, ex.Message);
+        }
 
         cache.Remove(nameof(InstallCoreStatus));
     }

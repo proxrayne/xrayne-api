@@ -22,17 +22,17 @@ import { ErrorScreen, parseRouteError } from "@features/service";
 import { adminAccountQuery } from "@features/admin";
 
 import "@core/styles/app.css";
+import { Toast } from "@heroui/react";
 
 export function Layout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" suppressHydrationWarning translate="no" className="h-full">
+    <html lang="en" suppressHydrationWarning className="h-full">
       <head>
         <meta charSet="utf-8" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
         />
-        <meta name="google" content="notranslate" />
         <meta name="theme-color" content="#0a0a0a" suppressHydrationWarning />
         <meta name="color-scheme" content="light dark" />
         <meta
@@ -51,6 +51,7 @@ export function Layout({ children }: PropsWithChildren) {
           enableColorScheme
           disableTransitionOnChange
         >
+          <Toast.Provider />
           <QueryClientProvider client={query}>{children}</QueryClientProvider>
         </ThemeProvider>
         <ScrollRestoration />

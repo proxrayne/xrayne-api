@@ -74,7 +74,7 @@ public sealed class CoreController(
             return new InstallCoreStatus(InstallCoreStep.Idle, "Ready to install.");
         }
 
-        return new InstallCoreStatus(InstallCoreStep.Idle, "Xray with version '" + coreService.TryGetVersion() + "' is already installed.");
+        return new InstallCoreStatus(InstallCoreStep.Version, coreService.TryGetVersion() ?? "Unknown");
     }
 
     [HttpPost("install")]
