@@ -24,7 +24,7 @@ function CommonTemplate({ children }: Props) {
         </div>
       </header>
       {children}
-      <footer className="max-w-390 px-5 pb-10 pt-7 flex items-center justify-between gap-x-3">
+      <footer className="max-w-390 w-full px-5 pb-10 pt-7 flex items-center justify-between gap-x-3">
         <p className="text-muted text-xs">
           © {new Date().getFullYear()}. All rights reserved
         </p>
@@ -35,7 +35,7 @@ function CommonTemplate({ children }: Props) {
           </Link>
           <span className="mx-1">&bull;</span>
           <Link
-            to="https://github.com/VanyaKrotov/XRayna"
+            to="https://github.com/VanyaKrotov/xrayne"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-x-1"
