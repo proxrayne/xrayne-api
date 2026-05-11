@@ -20,12 +20,12 @@ export interface GitHubReleaseDto {
 
 export interface CoreInstallingStatus {
   step:
-    | "Idle"
-    | "Version"
-    | "Preparing"
-    | "Failure"
-    | "Downloading"
-    | "Extracting"
-    | "SettingUp";
-  message: string;
+    | "queued"
+    | "validation"
+    | "downloading"
+    | "extracting"
+    | "installing"
+    | "installed"
+    | "failure";
+  message: string | null;
 }

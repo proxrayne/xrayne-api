@@ -1,3 +1,5 @@
+using XRayne.Core.States;
+
 namespace XRayne.Api.Responses;
 
-public sealed record CoreStatusResponse(bool IsInstalled, bool IsStarted, string? Version);
+public sealed record CoreStatusResponse(bool IsInstalled, bool IsStarted, string? Version, InstallCoreState? InstallStatus);

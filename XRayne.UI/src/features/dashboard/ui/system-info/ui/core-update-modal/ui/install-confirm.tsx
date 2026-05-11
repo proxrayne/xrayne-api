@@ -1,10 +1,21 @@
-import { useEffect } from "react";
-import { Alert, Button, Link, Modal, Surface, WarningIcon } from "@heroui/react";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+  Alert,
+  Button,
+  Link,
+  Modal,
+  Spinner,
+  WarningIcon,
+} from "@heroui/react";
 
-import { CheckIcon } from "@heroicons/react/16/solid";
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/16/solid";
 
 import Placeholder from "@core/ui/placeholder";
+import ColoredIcon from "@core/ui/colored-icon";
+import { compareVersions } from "@core/lib/core";
 
 import {
   GitHubReleaseDto,
@@ -12,89 +23,95 @@ import {
   useCoreInstallingStatus,
 } from "@features/core";
 
-import { compareVersions } from "../../xray-options/lib/helpers";
-
 interface InstallConfirmProps {
+  isUpdate: boolean;
   currentVersion: string | null;
   release: GitHubReleaseDto;
-  onCancel(): void;
 }
 
-function InstallConfirm({
-  release,
-  currentVersion,
-  onCancel,
-}: InstallConfirmProps) {
-  const [install, { isPending, isSuccess }] = useCoreInstall(release.tagName);
-  const { status, isLoaded } = useCoreInstallingStatus({
-    enabled: isSuccess,
-  });
+function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
+  const [install, { isPending, data, error }] = useCoreInstall(release.tagName);
+  const { status, error: statusError } = useCoreInstallingStatus(data ?? null);
 
-  const isProcessing =
-    isPending ||
-    ["Preparing", "Downloading", "Extracting", "SettingUp"].includes(
-      status?.step ?? "Idle",
-    );
-
-  const isSuccessful =
-    status?.step === "Version" && status.message === release.tagName.slice(1);
-
-  const query = useQueryClient();
-  useEffect(() => {
-    if (isSuccessful) {
-      query.invalidateQueries({ queryKey: ["core"] });
-    }
-  }, [isSuccessful, query]);
-
-  if (isSuccessful) {
+  if (error || statusError || status?.step === "failure") {
     return (
       <Placeholder>
-        <Placeholder.Media className="p-4 rounded-3xl bg-accent/10 text-accent">
-          <CheckIcon className="size-8" />
-        </Placeholder.Media>
-        <Placeholder.Header>Install successful</Placeholder.Header>
+        <ColoredIcon variant="danger" asChild>
+          <Placeholder.Media>
+            <ExclamationCircleIcon />
+          </Placeholder.Media>
+        </ColoredIcon>
+        <Placeholder.Header>Installation failure</Placeholder.Header>
         <Placeholder.Subheader>
-          Version {release.tagName} of the xray-core kernel is installed
+          Please check logs for more details
         </Placeholder.Subheader>
+        <Placeholder.Actions>
+          <Button onClick={() => install()}>Try again</Button>
+        </Placeholder.Actions>
       </Placeholder>
     );
   }
 
-  return (
-    <>
-      <Placeholder>
-        <Placeholder.Media className="p-5 rounded-3xl bg-warning/10 text-warning">
-          <WarningIcon className="size-7" />
-        </Placeholder.Media>
-        <Placeholder.Header>
-          Install {release.prerelease ? "pre-release" : "stable"} core
-        </Placeholder.Header>
-        <Placeholder.Subheader>
-          <p>
-            Do you really want to install <b>{release.tagName}</b> version?
-          </p>
-          <p>
-            Please review the{" "}
-            <Link className="text-xs" target="_blank" href={release.htmlUrl}>
-              release changelog
-            </Link>{" "}
-            before installing.
-          </p>
-        </Placeholder.Subheader>
-      </Placeholder>
-      {isLoaded && isSuccess ? (
-        <Surface
-          className="rounded-xl font-mono p-3 text-xs mb-4"
-          variant="secondary"
-        >
-          {status?.message}
-        </Surface>
-      ) : (
-        (!currentVersion ||
+  if (status?.step === "installed") {
+    return (
+      <>
+        <Placeholder>
+          <ColoredIcon variant="success" asChild>
+            <Placeholder.Media>
+              <CheckCircleIcon />
+            </Placeholder.Media>
+          </ColoredIcon>
+          <Placeholder.Header>Installation successful</Placeholder.Header>
+          <Placeholder.Subheader>
+            Version {release.tagName} of the xray-core is installed
+          </Placeholder.Subheader>
+        </Placeholder>
+        <Modal.Footer className="mt-2 max-sm:[&>button]:w-full">
+          <Button variant="secondary" slot="close">
+            Close
+          </Button>
+        </Modal.Footer>
+      </>
+    );
+  }
+
+  if (!data) {
+    return (
+      <>
+        <Placeholder>
+          <ColoredIcon
+            variant={release.prerelease ? "warning" : "accent"}
+            asChild
+          >
+            <Placeholder.Media>
+              {release.prerelease ? (
+                <WarningIcon />
+              ) : (
+                <QuestionMarkCircleIcon />
+              )}
+            </Placeholder.Media>
+          </ColoredIcon>
+          <Placeholder.Header>
+            Install {release.prerelease ? "pre-release" : "stable"} core
+          </Placeholder.Header>
+          <Placeholder.Subheader>
+            <p>
+              Do you really want to install <b>{release.tagName}</b> version?
+            </p>
+            <p>
+              Please review the{" "}
+              <Link className="text-xs" target="_blank" href={release.htmlUrl}>
+                release changelog
+              </Link>{" "}
+              before installing.
+            </p>
+          </Placeholder.Subheader>
+        </Placeholder>
+        {(!currentVersion ||
           compareVersions(release.tagName, currentVersion) === -1) && (
           <Alert
             status="warning"
-            className="shadow-none bg-warning/10 -mt-2 mb-4"
+            className="shadow-none bg-warning/10 -mt-4 mb-6 gap-x-2"
           >
             <Alert.Indicator />
             <Alert.Content>
@@ -104,21 +121,33 @@ function InstallConfirm({
               </Alert.Description>
             </Alert.Content>
           </Alert>
-        )
-      )}
-      <Modal.Footer className="mt-2 max-sm:flex-col-reverse max-sm:[&>button]:w-full">
-        <Button variant="tertiary" onClick={onCancel}>
-          Back
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() => install()}
-          isPending={isProcessing}
-        >
-          Install {release.prerelease && "pre-release"}
-        </Button>
-      </Modal.Footer>
-    </>
+        )}
+        <Modal.Footer className="mt-2 max-sm:[&>button]:w-full">
+          <Button
+            variant="primary"
+            onClick={() => install()}
+            isPending={isPending}
+          >
+            Yes, install {release.tagName}
+          </Button>
+        </Modal.Footer>
+      </>
+    );
+  }
+
+  return (
+    <Placeholder>
+      <ColoredIcon variant="accent" asChild>
+        <Placeholder.Media>
+          <Spinner size="xl" className="flex" />
+        </Placeholder.Media>
+      </ColoredIcon>
+      <Placeholder.Header>Installation in progress</Placeholder.Header>
+      <Placeholder.Subheader>
+        {status?.message ??
+          `Requesting installation xray-core ${release.tagName}`}
+      </Placeholder.Subheader>
+    </Placeholder>
   );
 }
 

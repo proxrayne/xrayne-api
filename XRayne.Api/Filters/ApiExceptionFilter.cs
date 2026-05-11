@@ -9,6 +9,8 @@ public sealed class ApiExceptionFilter(ILogger<ApiExceptionFilter> logger) : IEx
 {
     public int Order => int.MaxValue - 10;
 
+    public void OnActionExecuting(ActionExecutingContext context) { }
+
     public void OnException(ExceptionContext context)
     {
         var response = context.Exception switch

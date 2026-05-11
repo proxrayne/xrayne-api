@@ -7,7 +7,7 @@ interface Props {
 }
 
 function Page({ className, children }: Props) {
-  return <main className={cn("", className)}>{children}</main>;
+  return <main className={cn("pb-8", className)}>{children}</main>;
 }
 
 export default Page;

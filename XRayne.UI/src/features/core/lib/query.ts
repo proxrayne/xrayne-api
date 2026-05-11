@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "@heroui/react";
 
 import {
@@ -25,35 +25,52 @@ export function useCoreStatus(poolingInterval?: number | false) {
   };
 }
 
-export function useCoreReleases(query: FetchXrayReleasesQuery) {
-  const { data, isFetched, error, refetch } = useQuery({
-    queryKey: ["core", "releases", query.page],
-    queryFn: ({ signal }) => fetchXrayReleases(query, signal),
+export function useCoreReleases(
+  query: Pick<FetchXrayReleasesQuery, "perPage">,
+) {
+  const {
+    data,
+    isFetched,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ["core", "releases"],
+    queryFn: ({ signal, pageParam }) =>
+      fetchXrayReleases({ ...query, page: pageParam }, signal),
+    getNextPageParam: (last, pages) =>
+      last.length !== query.perPage ? null : pages.length + 1,
+    initialPageParam: 1,
+    initialData: { pageParams: [1], pages: [] },
   });
 
   return {
-    releases: data,
+    releases: data.pages.flatMap((x) => x),
     isLoaded: isFetched,
     error,
+    hasMore: hasNextPage,
+    isMoreLoading: isFetchingNextPage,
+    loadMore: fetchNextPage,
     refetch,
   };
 }
 
 interface CoreInstallingStatusOptions {
-  enabled?: boolean;
   pullingInterval?: number;
 }
 
-export function useCoreInstallingStatus({
-  pullingInterval = 3_000,
-  enabled = true,
-}: CoreInstallingStatusOptions = {}) {
+export function useCoreInstallingStatus(
+  jobId: string | null,
+  { pullingInterval = 5_000 }: CoreInstallingStatusOptions = {},
+) {
   const { data, isFetched, error, refetch } = useQuery({
-    queryKey: ["core", "install", "status"],
-    queryFn: ({ signal }) => fetchInstallingStatus(signal),
-    refetchInterval: ({ state: { data } }) =>
-      data?.step !== "Idle" && enabled ? pullingInterval : false,
-    enabled,
+    queryKey: ["core", "install", jobId, "status"],
+    queryFn: ({ signal }) => fetchInstallingStatus(jobId!, signal),
+    refetchInterval: ({ state }) =>
+      state.data?.step === "installed" ? false : pullingInterval,
+    enabled: Boolean(jobId),
   });
 
   return {

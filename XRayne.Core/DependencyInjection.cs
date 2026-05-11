@@ -9,6 +9,7 @@ public static class DependencyInjection
     public static IServiceCollection AddCoreDependencies(this IServiceCollection services)
     {
         services.AddSingleton<ICoreService, CoreService>();
+        services.AddSingleton<ICoreStateMachine, CoreStateMachine>();
 
         services.AddTransient<InstallCoreJob>();
 

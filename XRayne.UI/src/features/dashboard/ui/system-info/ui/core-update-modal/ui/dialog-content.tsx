@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Link, Modal, Separator } from "@heroui/react";
+import { Button, Link, Modal, Separator } from "@heroui/react";
 import { AnimatePresence, motion } from "framer-motion";
+
+import { ArrowLeftIcon } from "@heroicons/react/16/solid";
 
 import { CoreStatusDto, GitHubReleaseDto } from "@features/core";
 
@@ -11,17 +13,45 @@ function DialogContent({ isInstalled, version }: CoreStatusDto) {
   const [selected, setSelected] = useState<GitHubReleaseDto | null>(null);
 
   return (
-    <Modal.Dialog className="overflow-x-hidden">
+    <Modal.Dialog className="overflow-hidden">
       <Modal.CloseTrigger />
 
       <AnimatePresence initial={false} mode="popLayout">
-        {!selected && (
+        {selected ? (
+          <motion.div
+            key="install"
+            initial={{ opacity: 0, x: 460 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 460 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+          >
+            <Modal.Header className="flex-row gap-2">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                className="-ml-2"
+                onClick={() => setSelected(null)}
+              >
+                <ArrowLeftIcon />
+              </Button>
+              <Modal.Heading className="flex items-center">
+                Installing
+              </Modal.Heading>
+            </Modal.Header>
+            <InstallConfirm
+              release={selected}
+              currentVersion={version}
+              isUpdate={isInstalled}
+            />
+          </motion.div>
+        ) : (
           <motion.div
             key="choose"
             initial={{ opacity: 0, x: -460 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -460 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
           >
             <Modal.Header>
               <Modal.Heading>
@@ -49,24 +79,6 @@ function DialogContent({ isInstalled, version }: CoreStatusDto) {
             <Modal.Body className="-mx-2">
               <ChooseVersion version={version} onSelect={setSelected} />
             </Modal.Body>
-          </motion.div>
-        )}
-        {selected && (
-          <motion.div
-            key="install"
-            initial={{ opacity: 0, x: 460 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 460 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <Modal.Header>
-              <Modal.Heading>Installing</Modal.Heading>
-            </Modal.Header>
-            <InstallConfirm
-              release={selected}
-              currentVersion={version}
-              onCancel={() => setSelected(null)}
-            />
           </motion.div>
         )}
       </AnimatePresence>

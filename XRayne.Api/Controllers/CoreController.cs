@@ -2,11 +2,12 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using XRayne.Api.Exceptions;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
 using XRayne.Contracts.Values;
-using XRayne.Core.Dto;
 using XRayne.Core.Services;
+using XRayne.Core.States;
 using XRayne.Core.Values;
 using XRayne.Infrastructure.Services;
 using XRayne.Repositories.External;
@@ -14,10 +15,13 @@ using XRayne.Repositories.External;
 namespace XRayne.Api.Controllers;
 
 [Route("api/core")]
+[Authorize(Policy = AdminPermissionNames.SuperAdmin)]
+[Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
 public sealed class CoreController(
     ICoreService coreService,
     IMapper mapper,
     IBackgroundTaskScheduler scheduler,
+    ICoreStateMachine coreState,
     IMemoryCache cache) : ApiControllerBase
 {
     private readonly GitHubRepository xrayRepository = new GitHubRepository(CoreDefaults.XrayRepositoryUrl);
@@ -28,16 +32,20 @@ public sealed class CoreController(
     [ProducesResponseType(typeof(CoreStatusResponse), StatusCodes.Status200OK)]
     public async Task<CoreStatusResponse> GetStatus()
     {
+        var installingStatus = coreState.GetInstallCoreState();
+
         return new CoreStatusResponse(
             coreService.GetIsInstalled(),
             coreService.GetIsRunning(),
-            coreService.TryGetVersion());
+            coreService.TryGetVersion(),
+            installingStatus);
     }
 
     [HttpGet("releases")]
     [EndpointSummary("Xray releases")]
     [EndpointDescription("Get available Xray releases.")]
     [ProducesResponseType(typeof(List<GitHubReleaseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ApiErrorResponse>), StatusCodes.Status400BadRequest)]
     public async Task<List<GitHubReleaseDto>> GetReleases([FromQuery] CoreReleasesQuery query, CancellationToken ct)
     {
         var filter = new GithubRepositoriesFilter(query.PerPage, query.Page);
@@ -56,37 +64,30 @@ public sealed class CoreController(
         return releases.Select(mapper.Map<GitHubReleaseDto>).ToList();
     }
 
-    [HttpGet("install/status")]
+    [HttpGet("install/{jobId}/status")]
     [EndpointSummary("Install Xray status")]
     [EndpointDescription("Get the status of the Xray installation.")]
-    [ProducesResponseType(typeof(InstallCoreStatus), StatusCodes.Status200OK)]
-    [Authorize(Policy = AdminPermissionNames.SuperAdmin)]
-    [Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
-    public async Task<InstallCoreStatus> GetInstallStatus()
+    [ProducesResponseType(typeof(InstallCoreState), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+
+    public async Task<IActionResult> GetInstallState(string jobId)
     {
-        if (cache.TryGetValue(nameof(InstallCoreStatus), out InstallCoreStatus? status) && status is not null)
+        var state = coreState.GetInstallCoreState(jobId);
+        if (state is null)
         {
-            return status;
+            throw new NotFoundException($"Core by JobId = {jobId} not found.");
         }
 
-        if (!coreService.GetIsInstalled())
-        {
-            return new InstallCoreStatus(InstallCoreStep.Idle, "Ready to install.");
-        }
-
-        return new InstallCoreStatus(InstallCoreStep.Version, coreService.TryGetVersion() ?? "Unknown");
+        return Ok(state);
     }
 
     [HttpPost("install")]
     [EndpointSummary("Install Xray")]
     [EndpointDescription("Install the specified Xray version.")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [Authorize(Policy = AdminPermissionNames.SuperAdmin)]
-    [Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
-    public async Task<IActionResult> InstallCore([FromBody] InstallCoreRequest data, CancellationToken ct)
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public Task<string> InstallCore([FromBody] InstallCoreRequest data, CancellationToken ct)
     {
-        await scheduler.ScheduleInstallCore(data.Version ?? "latest", ct);
-
-        return Created();
+        return scheduler.ScheduleInstallCore(data.Version ?? "latest", ct);
     }
 }

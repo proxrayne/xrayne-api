@@ -53,7 +53,7 @@ const Placeholder = forwardRef<HTMLDivElement, PlaceholderProps>(
         {...props}
         ref={ref}
         className={cn(
-          "p-10 min-h-64 flex flex-col gap-2 items-center justify-center",
+          "px-8 py-10 md:p-10 min-h-64 flex flex-col gap-2 items-center justify-center",
           className,
         )}
       >

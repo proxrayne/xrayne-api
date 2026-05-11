@@ -25,14 +25,22 @@ export async function fetchXrayReleases(
   return data;
 }
 
-export async function fetchInstallingStatus(signal?: AbortSignal) {
-  const { data } = await api.get<CoreInstallingStatus>("core/install/status", {
-    signal,
-  });
+export async function fetchInstallingStatus(
+  jobId: string,
+  signal?: AbortSignal,
+) {
+  const { data } = await api.get<CoreInstallingStatus | null>(
+    `core/install/${jobId}/status`,
+    {
+      signal,
+    },
+  );
 
   return data;
 }
 
 export async function installCore(version: string) {
-  await api.post("core/install", { version });
+  const { data } = await api.post<string>("core/install", { version });
+
+  return data;
 }

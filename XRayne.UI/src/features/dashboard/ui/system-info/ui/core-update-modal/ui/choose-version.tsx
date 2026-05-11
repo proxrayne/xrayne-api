@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   cn,
   Description,
@@ -25,7 +24,15 @@ interface ChooseVersionProps {
 }
 
 function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
-  const { releases, isLoaded, error, refetch } = useCoreReleases({
+  const {
+    releases,
+    isLoaded,
+    error,
+    hasMore,
+    isMoreLoading,
+    loadMore,
+    refetch,
+  } = useCoreReleases({
     perPage: 10,
   });
 
@@ -92,15 +99,20 @@ function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
           </ListBox.Item>
         ))}
       </ListBox>
-      <Alert status="warning" className="shadow-none bg-warning/10 mt-2">
-        <Alert.Indicator />
-        <Alert.Content>
-          <Alert.Title>Please note</Alert.Title>
-          <Alert.Description>
-            Older versions may not support current settings.
-          </Alert.Description>
-        </Alert.Content>
-      </Alert>
+      {isMoreLoading ? (
+        <ChooseVersion.ItemSkeleton className="mx-3" />
+      ) : (
+        hasMore && (
+          <Button
+            size="sm"
+            onClick={() => loadMore()}
+            className="mx-auto mt-2 block min-w-3"
+            variant="tertiary"
+          >
+            Load more
+          </Button>
+        )
+      )}
     </>
   );
 }
@@ -108,14 +120,20 @@ function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
 ChooseVersion.Skeleton = () => (
   <div className="flex flex-col gap-1 px-2">
     {Array.from({ length: 10 }).map((_, index) => (
-      <div key={index} className="flex items-center justify-between gap-3 py-2">
-        <div className="min-w-0 flex-1">
-          <Skeleton className="h-4 w-20 rounded-md" />
-          <Skeleton className="mt-2 h-3 w-44 rounded-md" />
-        </div>
-        <Skeleton className="size-6 shrink-0 rounded-full" />
-      </div>
+      <ChooseVersion.ItemSkeleton key={index} />
     ))}
+  </div>
+);
+
+ChooseVersion.ItemSkeleton = ({ className }: { className?: string }) => (
+  <div
+    className={cn("flex items-center justify-between gap-3 py-2", className)}
+  >
+    <div className="min-w-0 flex-1">
+      <Skeleton className="h-4 w-20 rounded-md" />
+      <Skeleton className="mt-2 h-3 w-44 rounded-md" />
+    </div>
+    <Skeleton className="size-6 shrink-0 rounded-full" />
   </div>
 );
 

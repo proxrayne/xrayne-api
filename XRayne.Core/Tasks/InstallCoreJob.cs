@@ -1,9 +1,9 @@
 using System.IO.Compression;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Quartz;
 using XRayne.Contracts.Values;
-using XRayne.Core.Dto;
 using XRayne.Core.Services;
+using XRayne.Core.States;
 using XRayne.Core.Utilities;
 using XRayne.Core.Values;
 using XRayne.Repositories.External;
@@ -11,9 +11,10 @@ using XRayne.Repositories.External;
 namespace XRayne.Core.Tasks;
 
 [DisallowConcurrentExecution]
-public sealed class InstallCoreJob(ICoreService coreService, IMemoryCache cache) : IJob
+public sealed class InstallCoreJob(ICoreService coreService, ICoreStateMachine stateMachine, ILogger<InstallCoreJob> logger) : IJob
 {
     public const string VersionKey = "version";
+    public const string IdentityKey = "id";
 
     public static readonly JobKey JobKey = new JobKey(nameof(InstallCoreJob), "core");
     public static readonly TriggerKey TriggerKey = new TriggerKey(nameof(InstallCoreJob), "core");
@@ -22,56 +23,44 @@ public sealed class InstallCoreJob(ICoreService coreService, IMemoryCache cache)
 
     public async Task Execute(IJobExecutionContext context)
     {
-        if (cache.TryGetValue(nameof(InstallCoreStatus), out InstallCoreStatus? status) && status is not null)
+        var jobId = context.MergedJobDataMap.GetString(IdentityKey)!;
+
+        try
         {
-            throw new InvalidOperationException("Core installation is already in progress.");
-        }
+            var version = context.MergedJobDataMap.GetString(VersionKey) ?? "latest";
 
-        UpdateStatus(InstallCoreStep.Preparing, "Preparing installation...");
+            stateMachine.DispatchInstallState(jobId, InstallCoreState.Validation());
 
-        var version = context.MergedJobDataMap.GetString(VersionKey) ?? "latest";
-        var release = await xrayRepository.GetReleaseAsync(version, context.CancellationToken);
-        var localAssetName = $"xray-{release.TagName.Replace(".", "_")}";
-
-        if (!Directory.Exists(Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName)))
-        {
+            var release = await xrayRepository.GetReleaseAsync(version, context.CancellationToken);
+            var localAssetName = $"xray-{release.TagName.Replace(".", "_")}";
             var assetName = CoreReleasesUtilities.GetCurrentPlatformAssetName();
             var asset = release.Assets.FirstOrDefault(item =>
                 string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
             if (asset is null)
             {
-                UpdateStatus(InstallCoreStep.Failure, "Release does not contain the required asset.");
-
                 throw new InvalidOperationException($"Release '{release.TagName}' does not contain asset '{assetName}'.");
             }
 
-            UpdateStatus(InstallCoreStep.Downloading, "Downloading required asset.");
+            stateMachine.DispatchInstallState(jobId, InstallCoreState.Downloading());
 
             var downloadsDirectory = Path.Combine(PathProvider.Paths.DownloadsDirectory, "xray-core");
             var destinationPath = await xrayRepository.DownloadAssetAsync(asset, downloadsDirectory, $"{localAssetName}.zip", context.CancellationToken);
 
-            UpdateStatus(InstallCoreStep.Extracting, "Extracting downloaded asset.");
+            stateMachine.DispatchInstallState(jobId, InstallCoreState.Extracting());
 
-            ZipFile.ExtractToDirectory(destinationPath, Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName));
+            ZipFile.ExtractToDirectory(destinationPath, Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName), overwriteFiles: true);
             File.Delete(destinationPath);
-        }
 
-        UpdateStatus(InstallCoreStep.SettingUp, "Setting up core...");
+            stateMachine.DispatchInstallState(jobId, InstallCoreState.Installing());
 
-        try
-        {
             await coreService.SetupAsync(localAssetName);
+
+            stateMachine.DispatchInstallState(jobId, InstallCoreState.Installed(version));
         }
         catch (Exception ex)
         {
-            UpdateStatus(InstallCoreStep.Failure, ex.Message);
+            logger.LogError(ex, "Core installation failed.");
+            stateMachine.DispatchInstallState(jobId, InstallCoreState.Failure(ex.Message));
         }
-
-        cache.Remove(nameof(InstallCoreStatus));
-    }
-
-    private void UpdateStatus(InstallCoreStep step, string message)
-    {
-        cache.Set(nameof(InstallCoreStatus), new InstallCoreStatus(step, message), TimeSpan.FromHours(2));
     }
 }
