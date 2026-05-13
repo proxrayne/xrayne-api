@@ -8,7 +8,6 @@ import {
   useRevalidator,
   useRouteError,
 } from "react-router";
-import { ThemeProvider } from "next-themes";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { Route } from "./+types/root";
@@ -17,12 +16,13 @@ import { query } from "@core/lib/query";
 import { constructMetadata } from "@core/lib/meta";
 import CommonTemplate from "@core/ui/common-template";
 import PageProgress from "@core/ui/page-progress";
+import { TooltipProvider } from "@core/ui/tooltip";
+import { Toaster } from "@core/ui/sonner";
 
 import { ErrorScreen, parseRouteError } from "@features/service";
 import { adminAccountQuery } from "@features/admin";
 
 import "@core/styles/app.css";
-import { Toast } from "@heroui/react";
 
 export function Layout({ children }: PropsWithChildren) {
   return (
@@ -44,16 +44,10 @@ export function Layout({ children }: PropsWithChildren) {
         <Links />
       </head>
       <body className="bg-background text-foreground antialiased flex flex-col items-center">
-        <ThemeProvider
-          attribute={["class", "data-theme"]}
-          defaultTheme="system"
-          enableSystem
-          enableColorScheme
-          disableTransitionOnChange
-        >
-          <Toast.Provider />
+        <TooltipProvider>
           <QueryClientProvider client={query}>{children}</QueryClientProvider>
-        </ThemeProvider>
+          <Toaster />
+        </TooltipProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

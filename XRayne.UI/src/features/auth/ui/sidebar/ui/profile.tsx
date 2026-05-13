@@ -1,4 +1,5 @@
-import { Avatar, cn } from "@heroui/react";
+import { cn } from "@core/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@core/ui/avatar";
 
 import { useAdminAccount } from "@features/admin";
 
@@ -10,17 +11,19 @@ function Profile({ className }: Props) {
   const { account, permissionGroup } = useAdminAccount();
 
   return (
-    <div className={cn("flex items-center gap-x-3 py-5 px-2", className)}>
+    <div className={cn("flex items-center gap-x-3", className)}>
       <Avatar>
-        <Avatar.Image
+        <AvatarImage
           alt="Blue"
           src="https://heroui-assets.nyc3.cdn.digitaloceanspaces.com/avatars/blue.jpg"
         />
-        <Avatar.Fallback>{account?.username?.slice(2)}</Avatar.Fallback>
+        <AvatarFallback>{account?.username?.slice(2)}</AvatarFallback>
       </Avatar>
-      <div>
-        <p className="text-lg font-medium">{account?.username}</p>
-        <p className="text-sm text-muted">{permissionGroup}</p>
+      <div className="overflow-hidden">
+        <p className="text-md font-medium text-ellipsis text-nowrap overflow-hidden">
+          {account?.username}
+        </p>
+        <p className="text-sm/tight text-muted-foreground text-ellipsis text-nowrap overflow-hidden">{permissionGroup}</p>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
-import { Button, Card, Skeleton, Surface, ToggleButton } from "@heroui/react";
 import prettyBytes from "pretty-bytes";
-
-import { ExclamationCircleIcon } from "@heroicons/react/16/solid";
+import { CircleAlertIcon } from "lucide-react";
 
 import Placeholder from "@core/ui/placeholder";
+import { Skeleton } from "@core/ui/skeleton";
+import { Button } from "@core/ui/button";
+import ColoredIcon from "@core/ui/colored-icon";
 
 import XrayOptions from "./ui/xray-options/xray-options";
 import CommonOptions from "./ui/common-options";
@@ -38,22 +39,20 @@ function SystemInfo() {
 
         if (error || !stats) {
           return (
-            <Surface className="rounded-4xl">
-              <Placeholder className="col-span-6">
+            <Placeholder className="col-span-full">
+              <ColoredIcon asChild variant="danger">
                 <Placeholder.Media>
-                  <ExclamationCircleIcon className="size-10" />
+                  <CircleAlertIcon />
                 </Placeholder.Media>
-                <Placeholder.Header>Failure loading stats</Placeholder.Header>
-                <Placeholder.Subheader>
-                  Unhandled error. Please, try to reload latter.
-                </Placeholder.Subheader>
-                <Placeholder.Actions>
-                  <Button variant="primary" onClick={() => refetch()}>
-                    Reload
-                  </Button>
-                </Placeholder.Actions>
-              </Placeholder>
-            </Surface>
+              </ColoredIcon>
+              <Placeholder.Header>Failure loading stats</Placeholder.Header>
+              <Placeholder.Subheader>
+                Unhandled error. Please, try to reload latter.
+              </Placeholder.Subheader>
+              <Placeholder.Actions>
+                <Button onClick={() => refetch()}>Reload</Button>
+              </Placeholder.Actions>
+            </Placeholder>
           );
         }
 

@@ -1,33 +1,27 @@
 import { forwardRef, HtmlHTMLAttributes } from "react";
-import { cn } from "@heroui/styles";
+
+import { cn } from "@core/lib/utils";
 
 import ChildSlot from "./child-slot";
 
-type Variants =
-  | "default"
-  | "accent"
-  | "danger"
-  | "warning"
-  | "success"
-  | "secondary";
+type Variants = "accent" | "danger" | "warning" | "success" | "secondary";
 interface Props extends HtmlHTMLAttributes<HTMLDivElement> {
   asChild?: boolean;
   variant?: Variants;
 }
 
 const STYLE_PRESETS: Record<Variants, string> = {
-  accent: "bg-accent/15 text-accent",
-  danger: "bg-danger/15 text-danger",
-  default: "bg-default/15 text-default",
-  secondary: "bg-muted/15 text-muted",
-  success: "bg-success/15 text-success",
-  warning: "bg-warning/15 text-warning",
+  accent: "bg-blue-400/15 text-blue-400",
+  danger: "bg-red-400/15 text-red-400",
+  secondary: "bg-muted text-muted-foreground",
+  success: "bg-green-400/15 text-green-400",
+  warning: "bg-orange-400/15 text-orange-400",
 };
 
 const ColoredIcon = forwardRef<HTMLDivElement, Props>(
-  ({ className, children, variant = "default", asChild, ...props }, ref) => {
+  ({ className, children, variant = "accent", asChild, ...props }, ref) => {
     const classes = cn(
-      "rounded-3xl p-4 [&>svg]:size-8 [&_svg]:shrink-0 [&_img]:size-8",
+      "rounded-2xl p-4 [&>svg]:size-8 [&_svg]:shrink-0 [&_img]:size-8",
       STYLE_PRESETS[variant],
       className,
     );

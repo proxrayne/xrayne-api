@@ -1,8 +1,9 @@
-import { Button, Card, Skeleton } from "@heroui/react";
-
-import { Cog6ToothIcon, Cog8ToothIcon, CogIcon } from "@heroicons/react/16/solid";
+import { SettingsIcon } from "lucide-react";
 
 import Placeholder from "@core/ui/placeholder";
+import { Card, CardContent, CardHeader, CardTitle } from "@core/ui/card";
+import { Button } from "@core/ui/button";
+import { Skeleton } from "@core/ui/skeleton";
 
 import { useCoreStatus } from "@features/core";
 
@@ -37,36 +38,36 @@ function XrayOptions() {
 
   return (
     <Card className={GRID_COLS}>
-      <Card.Header className="min-h-8 flex justify-between items-center gap-x-3 flex-row">
-        <Card.Title className="font-semibold">Xray info</Card.Title>
+      <CardHeader className="min-h-8 flex justify-between items-center gap-x-3 flex-row">
+        <CardTitle className="font-semibold">Xray info</CardTitle>
         <CoreControl {...status} />
-      </Card.Header>
-      <Card.Content>
+      </CardHeader>
+      <CardContent>
         <InfoRow label="Status" defaultValue="Not installed">
           {status.isInstalled && `${status.isStarted ? "Working" : "Stoped"}`}
         </InfoRow>
         <InfoRow label="Version" classNames={{ content: "flex gap-x-1" }}>
-          {status.isInstalled && `v${status.version}`}
           <CoreUpdateModal>
-            <Button size="sm" isIconOnly variant="ghost" className="size-5">
-              <Cog6ToothIcon className="size-4" />
+            <Button size="icon-sm" variant="ghost" className="size-5">
+              <SettingsIcon className="size-4" />
             </Button>
           </CoreUpdateModal>
+          {status.isInstalled && `v${status.version}`}
         </InfoRow>
         <InfoRow label="Uptime"></InfoRow>
-      </Card.Content>
+      </CardContent>
     </Card>
   );
 }
 
 XrayOptions.Skeleton = () => (
   <Card className={GRID_COLS}>
-    <Card.Header>
-      <Card.Title className="min-h-8 flex justify-between items-center gap-x-3">
+    <CardHeader>
+      <CardTitle className="min-h-8 flex justify-between items-center gap-x-3">
         <Skeleton className="h-4 my-1 w-25" />
         <Skeleton className="h-5 rounded-full w-10" />
-      </Card.Title>
-    </Card.Header>
+      </CardTitle>
+    </CardHeader>
   </Card>
 );
 

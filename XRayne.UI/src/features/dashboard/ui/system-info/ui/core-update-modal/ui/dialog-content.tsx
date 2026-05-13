@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Button, Link, Modal, Separator } from "@heroui/react";
+import { ArrowLeftIcon } from "lucide-react";
+import { Link } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { ArrowLeftIcon } from "@heroicons/react/16/solid";
-
 import { CoreStatusDto, GitHubReleaseDto } from "@features/core";
+import { DialogDescription, DialogHeader, DialogTitle } from "@core/ui/dialog";
+import { Button } from "@core/ui/button";
+import { Separator } from "@core/ui/separator";
 
 import ChooseVersion from "./choose-version";
 import InstallConfirm from "./install-confirm";
@@ -13,9 +15,7 @@ function DialogContent({ isInstalled, version }: CoreStatusDto) {
   const [selected, setSelected] = useState<GitHubReleaseDto | null>(null);
 
   return (
-    <Modal.Dialog className="overflow-hidden">
-      <Modal.CloseTrigger />
-
+    <>
       <AnimatePresence initial={false} mode="popLayout">
         {selected ? (
           <motion.div
@@ -25,20 +25,19 @@ function DialogContent({ isInstalled, version }: CoreStatusDto) {
             exit={{ opacity: 0, x: 460 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
           >
-            <Modal.Header className="flex-row gap-2">
+            <DialogHeader className="flex-row gap-2">
               <Button
-                isIconOnly
-                size="sm"
+                size="icon-sm"
                 variant="ghost"
                 className="-ml-2"
                 onClick={() => setSelected(null)}
               >
                 <ArrowLeftIcon />
               </Button>
-              <Modal.Heading className="flex items-center">
+              <DialogTitle className="flex items-center">
                 Installing
-              </Modal.Heading>
-            </Modal.Header>
+              </DialogTitle>
+            </DialogHeader>
             <InstallConfirm
               release={selected}
               currentVersion={version}
@@ -53,11 +52,11 @@ function DialogContent({ isInstalled, version }: CoreStatusDto) {
             exit={{ opacity: 0, x: -460 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
           >
-            <Modal.Header>
-              <Modal.Heading>
+            <DialogHeader>
+              <DialogTitle>
                 {isInstalled ? "Update" : "Install"} xray-core
-              </Modal.Heading>
-              <div className="text-sm/normal text-foreground/90 -mt-1">
+              </DialogTitle>
+              <DialogDescription className="text-foreground/90 mt-1">
                 <p>
                   You can install the required version of xray-core on this
                   node.
@@ -65,24 +64,24 @@ function DialogContent({ isInstalled, version }: CoreStatusDto) {
                 <p>
                   All data received from{" "}
                   <Link
-                    href="https://github.com/xtls/xray-core"
+                    to="https://github.com/xtls/xray-core"
                     target="_blank"
-                    className="text-xs"
+                    className="text-xs font-medium hover:underline text-foreground"
                   >
                     official repository
                   </Link>
                   .
                 </p>
-              </div>
-            </Modal.Header>
+              </DialogDescription>
+            </DialogHeader>
             <Separator className="mt-3 mb-1" />
-            <Modal.Body className="-mx-2">
+            <div className="-mx-2">
               <ChooseVersion version={version} onSelect={setSelected} />
-            </Modal.Body>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </Modal.Dialog>
+    </>
   );
 }
 

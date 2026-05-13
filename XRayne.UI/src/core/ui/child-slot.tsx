@@ -1,10 +1,11 @@
-import { cn } from "@heroui/styles";
 import {
   cloneElement,
   ComponentProps,
   ElementType,
   isValidElement,
 } from "react";
+
+import { cn } from "@core/lib/utils";
 
 function ChildSlot<T extends ElementType = "div">({
   children,

@@ -1,11 +1,12 @@
-import { Button, ButtonGroup } from "@heroui/react";
-
 import {
-  ArrowDownTrayIcon,
-  ArrowPathIcon,
+  CircleStopIcon,
+  HardDriveDownloadIcon,
   PlayIcon,
-  StopIcon,
-} from "@heroicons/react/16/solid";
+  RefreshCwIcon,
+} from "lucide-react";
+
+import { Button } from "@core/ui/button";
+import { ButtonGroup } from "@core/ui/button-group";
 
 import { CoreStatusDto } from "@features/core";
 
@@ -15,8 +16,8 @@ function CoreControl({ isInstalled, isStarted }: CoreStatusDto) {
   if (!isInstalled) {
     return (
       <CoreUpdateModal>
-        <Button size="sm" variant="secondary" className="h-8">
-          <ArrowDownTrayIcon />
+        <Button size="sm" variant="secondary">
+          <HardDriveDownloadIcon />
           Install
         </Button>
       </CoreUpdateModal>
@@ -25,7 +26,7 @@ function CoreControl({ isInstalled, isStarted }: CoreStatusDto) {
 
   if (!isStarted) {
     return (
-      <Button variant="tertiary" size="sm" className="h-8">
+      <Button variant="secondary" size="sm">
         <PlayIcon />
         Start
       </Button>
@@ -33,14 +34,13 @@ function CoreControl({ isInstalled, isStarted }: CoreStatusDto) {
   }
 
   return (
-    <ButtonGroup size="sm" variant="tertiary" className="h-8">
-      <Button>
-        <StopIcon />
+    <ButtonGroup>
+      <Button variant="secondary" size="sm">
+        <CircleStopIcon />
         Stop
       </Button>
-      <Button>
-        <ButtonGroup.Separator />
-        <ArrowPathIcon />
+      <Button variant="secondary" size="sm">
+        <RefreshCwIcon />
         Restart
       </Button>
     </ButtonGroup>

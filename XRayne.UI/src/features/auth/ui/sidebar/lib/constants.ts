@@ -1,51 +1,43 @@
-import { createContext } from "react";
-
 import {
-  AdjustmentsHorizontalIcon,
-  ArrowDownRightIcon,
-  ArrowsRightLeftIcon,
-  ArrowUpRightIcon,
-  PresentationChartBarIcon,
-  UserGroupIcon,
-} from "@heroicons/react/16/solid";
+  ArrowDownToDotIcon,
+  ArrowRightLeftIcon,
+  ArrowUpFromDotIcon,
+  FileChartPieIcon,
+  Settings2Icon,
+  UsersIcon,
+} from "lucide-react";
 
 import { urls } from "@core/lib/urls";
-
-import { SidebarContextType } from "./types";
-
-export const SidebarContext = createContext<SidebarContextType>(
-  {} as SidebarContextType,
-);
 
 export const TOP_NAV = [
   {
     path: urls.root(),
     title: "Dashboard",
-    icon: PresentationChartBarIcon,
+    icon: FileChartPieIcon,
   },
   {
     path: urls.users(),
     title: "Users",
-    icon: UserGroupIcon,
+    icon: UsersIcon,
   },
   {
     path: urls.inbounds(),
     title: "Inbounds",
-    icon: ArrowDownRightIcon,
+    icon: ArrowDownToDotIcon,
   },
   {
     path: urls.outbounds(),
     title: "Outbounds",
-    icon: ArrowUpRightIcon,
+    icon: ArrowUpFromDotIcon,
   },
   {
     path: urls.routing(),
     title: "Routing",
-    icon: ArrowsRightLeftIcon,
+    icon: ArrowRightLeftIcon,
   },
   {
     path: urls.settings(),
     title: "Settings",
-    icon: AdjustmentsHorizontalIcon,
+    icon: Settings2Icon,
   },
 ];

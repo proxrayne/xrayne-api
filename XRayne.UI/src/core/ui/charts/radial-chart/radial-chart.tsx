@@ -1,12 +1,12 @@
-import { cn } from "@heroui/styles";
 import { ReactNode } from "react";
 import {
-  Label,
   PolarAngleAxis,
   RadialBar,
   RadialBarChart,
   ResponsiveContainer,
 } from "recharts";
+
+import { cn } from "@core/lib/utils";
 
 interface DataItem {
   label: string;
@@ -54,7 +54,7 @@ function RadialChart<T extends DataItem>({
             dataKey="value"
             cornerRadius={999}
             background={{
-              fill: "var(--separator)",
+              fill: "var(--secondary)",
             }}
           />
         </RadialBarChart>

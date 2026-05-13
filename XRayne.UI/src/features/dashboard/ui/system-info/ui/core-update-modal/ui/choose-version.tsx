@@ -1,22 +1,23 @@
-import {
-  Button,
-  cn,
-  Description,
-  Label,
-  ListBox,
-  Skeleton,
-} from "@heroui/react";
 import { format } from "date-fns";
-import find from "lodash/find";
+import { Check, CircleAlertIcon } from "lucide-react";
 
 import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/16/solid";
-
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from "@core/ui/item";
+import { Button } from "@core/ui/button";
+import { cn } from "@core/lib/utils";
 import Placeholder from "@core/ui/placeholder";
+import { Skeleton } from "@core/ui/skeleton";
+import ColoredIcon from "@core/ui/colored-icon";
 
 import { GitHubReleaseDto, useCoreReleases } from "@features/core";
+
+const CONTAINER_CLASSES =
+  "mt-3 px-2 -mx-2 overflow-y-auto min-h-100 max-h-[70vh] no-scrollbar";
 
 interface ChooseVersionProps {
   version: string | null;
@@ -37,15 +38,23 @@ function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
   });
 
   if (!isLoaded) {
-    return <ChooseVersion.Skeleton />;
+    return (
+      <div className={CONTAINER_CLASSES}>
+        {Array.from({ length: 10 }).map((_, index) => (
+          <ChooseVersion.ItemSkeleton key={index} />
+        ))}
+      </div>
+    );
   }
 
   if (error || !releases) {
     return (
       <Placeholder>
-        <Placeholder.Media>
-          <ExclamationCircleIcon className="size-10" />
-        </Placeholder.Media>
+        <ColoredIcon asChild variant="danger">
+          <Placeholder.Media>
+            <CircleAlertIcon />
+          </Placeholder.Media>
+        </ColoredIcon>
         <Placeholder.Header>Failed data loading</Placeholder.Header>
         <Placeholder.Subheader>
           Unhandled error. Please, try to reload latter.
@@ -58,47 +67,38 @@ function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
   }
 
   return (
-    <>
-      <ListBox
-        selectedKeys={new Set(version ? [`v${version}`] : [])}
-        selectionMode="single"
-        onSelectionChange={(keys) => {
-          const key = String(Array.from(keys)[0]);
-
-          onSelect(find(releases, { tagName: key })!);
-        }}
-      >
-        {releases.map((release) => (
-          <ListBox.Item
-            id={release.tagName}
-            key={release.tagName}
-            textValue={release.tagName}
+    <div className={CONTAINER_CLASSES}>
+      {releases.map((release) => (
+        <Item key={release.tagName} size="xs" asChild>
+          <button
+            className="hover:bg-accent/65 active:bg-accent"
+            onClick={() => onSelect(release)}
           >
-            <div className="flex flex-col">
-              <Label className="font-medium">{release.tagName}</Label>
-              <Description className="mt-0.5">
+            <ItemContent className="flex flex-col">
+              <ItemTitle>{release.tagName}</ItemTitle>
+              <ItemDescription className="text-xs">
                 <span
                   className={cn(
                     "font-medium",
-                    release.prerelease ? "text-warning/90" : "text-accent/90",
+                    release.prerelease
+                      ? "text-orange-300/90"
+                      : "text-blue-400/90",
                   )}
                 >
                   {release.prerelease ? "Pre-release" : "Stable"}
                 </span>
                 <span className="mx-1">&bull;</span>Published:{" "}
                 {format(release.publishedAt, "dd MMM yyyy")}
-              </Description>
-            </div>
-            <ListBox.ItemIndicator>
-              {({ isSelected }) =>
-                isSelected && (
-                  <CheckCircleIcon className="size-6 text-accent/90" />
-                )
-              }
-            </ListBox.ItemIndicator>
-          </ListBox.Item>
-        ))}
-      </ListBox>
+              </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              {version && release.tagName.endsWith(version) && (
+                <Check className="size-4 text-blue-500" />
+              )}
+            </ItemActions>
+          </button>
+        </Item>
+      ))}
       {isMoreLoading ? (
         <ChooseVersion.ItemSkeleton className="mx-3" />
       ) : (
@@ -106,24 +106,16 @@ function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
           <Button
             size="sm"
             onClick={() => loadMore()}
-            className="mx-auto mt-2 block min-w-3"
-            variant="tertiary"
+            variant="secondary"
+            className="mx-auto mt-2 block"
           >
             Load more
           </Button>
         )
       )}
-    </>
+    </div>
   );
 }
-
-ChooseVersion.Skeleton = () => (
-  <div className="flex flex-col gap-1 px-2">
-    {Array.from({ length: 10 }).map((_, index) => (
-      <ChooseVersion.ItemSkeleton key={index} />
-    ))}
-  </div>
-);
 
 ChooseVersion.ItemSkeleton = ({ className }: { className?: string }) => (
   <div

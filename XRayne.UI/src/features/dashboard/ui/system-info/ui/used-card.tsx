@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
+
 import { RadialChart } from "@core/ui/charts";
-import { Surface } from "@heroui/react";
+import { Card } from "@core/ui/card";
 
 import { getUsagePercentColor } from "../lib/helpers";
 
@@ -13,7 +14,7 @@ interface Props {
 
 function UsedCard({ footer, percent, subheader, label }: Props) {
   return (
-    <Surface className="rounded-4xl pt-2 md:pt-3 relative col-span-4 sm:col-span-2 lg:col-span-1">
+    <Card size="sm" className="py-0 relative col-span-4 sm:col-span-2 lg:col-span-1">
       <RadialChart
         className="h-48"
         strokeWidth={10}
@@ -32,9 +33,9 @@ function UsedCard({ footer, percent, subheader, label }: Props) {
         <p className="text-xl/tight font-semibold">
           {percent < 0.01 ? "< 0.01" : percent.toFixed(2)}%
         </p>
-        <p className="text-xs text-muted font-medium mt-0.5">{subheader}</p>
+        <p className="text-xs text-muted-foreground font-medium mt-0.5">{subheader}</p>
       </RadialChart>
-    </Surface>
+    </Card>
   );
 }
 

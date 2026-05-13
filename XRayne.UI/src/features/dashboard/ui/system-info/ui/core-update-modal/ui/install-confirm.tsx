@@ -1,21 +1,17 @@
 import {
-  Alert,
-  Button,
-  Link,
-  Modal,
-  Spinner,
-  WarningIcon,
-} from "@heroui/react";
-
-import {
   CheckCircleIcon,
-  ExclamationCircleIcon,
-  QuestionMarkCircleIcon,
-} from "@heroicons/react/16/solid";
+  CircleAlertIcon,
+  CircleQuestionMarkIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 
 import Placeholder from "@core/ui/placeholder";
 import ColoredIcon from "@core/ui/colored-icon";
 import { compareVersions } from "@core/lib/core";
+import { Button } from "@core/ui/button";
+import { DialogClose, DialogFooter } from "@core/ui/dialog";
+import { Spinner } from "@core/ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "@core/ui/alert";
 
 import {
   GitHubReleaseDto,
@@ -38,7 +34,7 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
       <Placeholder>
         <ColoredIcon variant="danger" asChild>
           <Placeholder.Media>
-            <ExclamationCircleIcon />
+            <CircleAlertIcon />
           </Placeholder.Media>
         </ColoredIcon>
         <Placeholder.Header>Installation failure</Placeholder.Header>
@@ -66,11 +62,11 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
             Version {release.tagName} of the xray-core is installed
           </Placeholder.Subheader>
         </Placeholder>
-        <Modal.Footer className="mt-2 max-sm:[&>button]:w-full">
-          <Button variant="secondary" slot="close">
-            Close
-          </Button>
-        </Modal.Footer>
+        <DialogFooter className="mt-2 max-sm:[&>button]:w-full">
+          <DialogClose asChild>
+            <Button variant="secondary">Close</Button>
+          </DialogClose>
+        </DialogFooter>
       </>
     );
   }
@@ -85,9 +81,9 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
           >
             <Placeholder.Media>
               {release.prerelease ? (
-                <WarningIcon />
+                <TriangleAlertIcon />
               ) : (
-                <QuestionMarkCircleIcon />
+                <CircleQuestionMarkIcon />
               )}
             </Placeholder.Media>
           </ColoredIcon>
@@ -100,37 +96,32 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
             </p>
             <p>
               Please review the{" "}
-              <Link className="text-xs" target="_blank" href={release.htmlUrl}>
+              <a
+                className="text-xs font-medium hover:underline"
+                target="_blank"
+                href={release.htmlUrl}
+              >
                 release changelog
-              </Link>{" "}
+              </a>{" "}
               before installing.
             </p>
           </Placeholder.Subheader>
         </Placeholder>
         {(!currentVersion ||
           compareVersions(release.tagName, currentVersion) === -1) && (
-          <Alert
-            status="warning"
-            className="shadow-none bg-warning/10 -mt-4 mb-6 gap-x-2"
-          >
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>Please note</Alert.Title>
-              <Alert.Description>
-                Older versions may not support current settings.
-              </Alert.Description>
-            </Alert.Content>
+          <Alert className="shadow-none bg-warning/10 -mt-4 mb-6 gap-x-2">
+            <TriangleAlertIcon />
+            <AlertTitle>Please note</AlertTitle>
+            <AlertDescription>
+              Older versions may not support current settings.
+            </AlertDescription>
           </Alert>
         )}
-        <Modal.Footer className="mt-2 max-sm:[&>button]:w-full">
-          <Button
-            variant="primary"
-            onClick={() => install()}
-            isPending={isPending}
-          >
+        <DialogFooter className="mt-2 max-sm:[&>button]:w-full">
+          <Button onClick={() => install()} disabled={isPending}>
             Yes, install {release.tagName}
           </Button>
-        </Modal.Footer>
+        </DialogFooter>
       </>
     );
   }
@@ -139,7 +130,7 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
     <Placeholder>
       <ColoredIcon variant="accent" asChild>
         <Placeholder.Media>
-          <Spinner size="xl" className="flex" />
+          <Spinner className="flex size-10" />
         </Placeholder.Media>
       </ColoredIcon>
       <Placeholder.Header>Installation in progress</Placeholder.Header>

@@ -1,9 +1,10 @@
 import { ReactNode } from "react";
-import { Link as ButtonLink } from "@heroui/react";
 import { Link } from "react-router";
-import { LanguageIcon } from "@heroicons/react/16/solid";
+import { LanguagesIcon } from "lucide-react";
 
 import { urls } from "@core/lib/urls";
+
+import { Button } from "./button";
 
 interface Props {
   children: ReactNode;
@@ -17,15 +18,15 @@ function CommonTemplate({ children }: Props) {
           <Link to={urls.root()} className="text-2xl font-semibold">
             XRayne
           </Link>
-          <ButtonLink>
-            <LanguageIcon className="size-4 mr-1.5" />
+          <Button variant="link">
+            <LanguagesIcon className="mr-1.5" />
             English
-          </ButtonLink>
+          </Button>
         </div>
       </header>
       {children}
       <footer className="max-w-390 w-full px-5 pb-10 pt-7 flex items-center justify-between gap-x-3">
-        <p className="text-muted text-xs">
+        <p className="text-muted-foreground text-xs">
           © {new Date().getFullYear()}. All rights reserved
         </p>
 

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
-import { cn } from "@heroui/styles";
+
+import { cn } from "@core/lib/utils";
 
 interface Props {
   className?: string;

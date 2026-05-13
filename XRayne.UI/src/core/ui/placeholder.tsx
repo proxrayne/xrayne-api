@@ -1,5 +1,6 @@
-import { cn } from "@heroui/react";
 import { forwardRef, HtmlHTMLAttributes } from "react";
+
+import { cn } from "@core/lib/utils";
 
 type HtmlProps = HtmlHTMLAttributes<HTMLDivElement>;
 type HtmlPProps = HtmlHTMLAttributes<HTMLParagraphElement>;
@@ -29,7 +30,7 @@ const Subheader = forwardRef<HTMLParagraphElement, HtmlProps>(
     <div
       {...props}
       ref={ref}
-      className={cn("text-sm text-center text-muted", className)}
+      className={cn("text-sm text-center text-muted-foreground", className)}
     >
       {children}
     </div>

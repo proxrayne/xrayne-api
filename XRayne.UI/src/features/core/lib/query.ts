@@ -1,5 +1,4 @@
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
-import { toast } from "@heroui/react";
 
 import {
   fetchCoreStatus,
@@ -8,6 +7,7 @@ import {
   installCore,
 } from "./api";
 import { FetchXrayReleasesQuery } from "./api.types";
+import { toast } from "sonner";
 
 export function useCoreStatus(poolingInterval?: number | false) {
   const { data, isFetched, error, refetch } = useQuery({
@@ -86,7 +86,7 @@ export function useCoreInstall(version: string) {
     mutationKey: ["core", "install", version],
     mutationFn: () => installCore(version),
     onError: () => {
-      toast.danger("Unhandled error", {
+      toast.error("Unhandled error", {
         description:
           "An error occurred while installing the kernel, please check the logs for details.",
       });

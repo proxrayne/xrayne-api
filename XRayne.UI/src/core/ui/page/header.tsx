@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
-import { cn } from "@heroui/styles";
 import isString from "lodash/isString";
 
-import { SidebarTrigger } from "@features/auth/ui/sidebar";
+import { cn } from "@core/lib/utils";
+
+import { SidebarTrigger, useSidebar } from "../sidebar";
 
 interface Props {
   className?: string;
@@ -12,6 +13,8 @@ interface Props {
 }
 
 function PageHeader({ className, children, hint, classNames = {} }: Props) {
+  const { isMobile } = useSidebar();
+
   return (
     <div
       className={cn(
@@ -19,7 +22,7 @@ function PageHeader({ className, children, hint, classNames = {} }: Props) {
         className,
       )}
     >
-      <SidebarTrigger />
+      {isMobile && <SidebarTrigger />}
       {isString(children) ? (
         <h3 className="text-xl font-semibold">{children}</h3>
       ) : (

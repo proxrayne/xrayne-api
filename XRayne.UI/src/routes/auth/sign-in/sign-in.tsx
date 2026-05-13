@@ -1,19 +1,21 @@
-import {
-  Button,
-  Card,
-  Checkbox,
-  ErrorMessage,
-  Form,
-  Input,
-  Label,
-  Spinner,
-  TextField,
-} from "@heroui/react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 
 import { urls } from "@core/lib/urls";
 import { ResponseError } from "@core/lib/errors";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@core/ui/card";
+import { Button } from "@core/ui/button";
+import { Spinner } from "@core/ui/spinner";
+import { Field, FieldLabel } from "@core/ui/field";
+import { Input } from "@core/ui/input";
+import { Checkbox } from "@core/ui/checkbox";
 
 import { useAdminAccount } from "@features/admin";
 import { login } from "@features/auth/lib/api";
@@ -26,6 +28,7 @@ function SignIn() {
     handleSubmit,
     register,
     setError,
+    setFocus,
     formState: { errors, isSubmitting, isValid },
   } = useForm({
     defaultValues: { username: "", password: "", saveMe: true },
@@ -34,13 +37,13 @@ function SignIn() {
   return (
     <main className="w-full px-4 py-10 flex-auto flex flex-col items-center justify-center">
       <Card className="max-w-md w-full">
-        <Card.Header>
-          <Card.Title className="text-lg leading-8">Sign in</Card.Title>
-          <Card.Description>
+        <CardHeader>
+          <CardTitle className="text-lg leading-8">Sign in</CardTitle>
+          <CardDescription>
             Use your administrator credentials to continue.
-          </Card.Description>
-        </Card.Header>
-        <Form
+          </CardDescription>
+        </CardHeader>
+        <form
           onSubmit={handleSubmit(async ({ password, username, saveMe }) => {
             try {
               const { admin } = await login(username, password, { saveMe });
@@ -57,61 +60,65 @@ function SignIn() {
                     ? error.message
                     : "Unhandled error.",
               });
+              setFocus("username");
             }
           })}
         >
-          <Card.Content className="flex flex-col gap-4">
-            <TextField name="username" type="text">
-              <Label>Username</Label>
+          <CardContent className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel htmlFor="username-input">Username</FieldLabel>
               <Input
+                autoFocus
+                id="username-input"
                 placeholder="admin"
-                variant="secondary"
                 {...register("username", { required: true })}
               />
-            </TextField>
-            <TextField name="password" type="password">
-              <Label>Password</Label>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="password-input">Password</FieldLabel>
               <Input
+                id="password-input"
                 placeholder="••••••••"
-                variant="secondary"
+                type="password"
                 {...register("password", { required: true })}
               />
-            </TextField>
+            </Field>
 
             <Controller
               control={control}
               name="saveMe"
               render={({ field: { value, ...field } }) => (
-                <Checkbox
-                  id="save-me"
-                  variant="secondary"
-                  isSelected={value}
-                  {...field}
-                >
-                  <Checkbox.Control {...register("saveMe")}>
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Content>
-                    <Label htmlFor="save-me">Remember me</Label>
-                  </Checkbox.Content>
-                </Checkbox>
+                <Field orientation="horizontal">
+                  <Checkbox
+                    checked={value}
+                    id="remember-me-checkbox"
+                    {...field}
+                  />
+                  <FieldLabel htmlFor="remember-me-checkbox">
+                    Remember me
+                  </FieldLabel>
+                </Field>
               )}
             />
 
-            {errors.root && <ErrorMessage>{errors.root.message}</ErrorMessage>}
-          </Card.Content>
-          <Card.Footer className="mt-6 flex flex-col gap-2">
+            {errors.root && (
+              <p className="text-sm text-destructive mt-2">
+                {errors.root.message}
+              </p>
+            )}
+          </CardContent>
+          <CardFooter className="mt-6 flex flex-col gap-2">
             <Button
+              size="lg"
               className="w-full"
               type="submit"
-              isPending={isSubmitting}
-              isDisabled={!isValid}
+              disabled={isSubmitting || !isValid}
             >
               {isSubmitting && <Spinner className="size-4 text-white" />}
               Sign in
             </Button>
-          </Card.Footer>
-        </Form>
+          </CardFooter>
+        </form>
       </Card>
     </main>
   );

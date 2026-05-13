@@ -1,6 +1,6 @@
 import { formatDuration } from "date-fns";
-import { Card } from "@heroui/react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@core/ui/card";
 import { parseDotnetTimeSpan } from "@core/lib/date";
 
 import { SystemInfoDto } from "../lib/api.types";
@@ -18,10 +18,10 @@ function CommonOptions({
 }: Props) {
   return (
     <Card className="col-span-4 md:col-span-2">
-      <Card.Header className="min-h-8 flex-row justify-between items-center gap-x-3">
-        <Card.Title className="font-semibold">System info</Card.Title>
-      </Card.Header>
-      <Card.Content>
+      <CardHeader className="flex-row justify-between items-center gap-x-3">
+        <CardTitle className="font-semibold">System info</CardTitle>
+      </CardHeader>
+      <CardContent>
         <InfoRow label="System uptime">
           {formatDuration(parseDotnetTimeSpan(uptime), {
             format: ["hours", "minutes"],
@@ -33,7 +33,7 @@ function CommonOptions({
         <InfoRow label="IPv6 addresses" defaultValue="n/a">
           {iPv6Addresses.length > 0 && iPv6Addresses.join(", ")}
         </InfoRow>
-      </Card.Content>
+      </CardContent>
     </Card>
   );
 }

@@ -1,9 +1,10 @@
 import { ReactElement } from "react";
-import { Modal } from "@heroui/react";
+
+import { Dialog, DialogContent, DialogTrigger } from "@core/ui/dialog";
 
 import { useCoreStatus } from "@features/core";
 
-import DialogContent from "./ui/dialog-content";
+import Content from "./ui/dialog-content";
 
 interface Props {
   children: ReactElement;
@@ -13,16 +14,12 @@ function CoreUpdateModal({ children }: Props) {
   const { status } = useCoreStatus();
 
   return (
-    <Modal>
-      {children}
-      {status && (
-        <Modal.Backdrop>
-          <Modal.Container scroll="outside">
-            <DialogContent {...status} />
-          </Modal.Container>
-        </Modal.Backdrop>
-      )}
-    </Modal>
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="overflow-hidden">
+        {status && <Content {...status} />}
+      </DialogContent>
+    </Dialog>
   );
 }
 

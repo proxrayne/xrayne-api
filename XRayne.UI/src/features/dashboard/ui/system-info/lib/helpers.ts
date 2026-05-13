@@ -1,11 +1,11 @@
 export function getUsagePercentColor(percent: number): string {
   if (percent > 90) {
-    return "var(--danger)";
+    return "var(--color-red-400)";
   }
 
   if (percent > 60) {
-    return "var(--warning)";
+    return "var(--color-orange-400)";
   }
 
-  return "var(--accent)";
+  return "var(--chart-3)";
 }
