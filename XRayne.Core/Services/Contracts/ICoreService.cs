@@ -7,6 +7,8 @@ public interface ICoreService
     string GetVersion();
     string? TryGetVersion();
 
-    Task StopAsync();
-    Task SetupAsync(string corePath);
+    Task StopAsync(CancellationToken cancellationToken = default);
+    Task StartAsync(CancellationToken cancellationToken = default);
+    Task RestartAsync(CancellationToken cancellationToken = default);
+    Task SetupAsync(string corePath, CancellationToken cancellationToken = default);
 }

@@ -2,7 +2,7 @@ using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
-using XRayne.Infrastructure.Services;
+using XRayne.Core.Services;
 
 namespace XRayne.Cli.Commands.Xray;
 
@@ -29,7 +29,7 @@ public sealed class XrayStartCommand : Command
 
         try
         {
-            await coreService.StartCore(cancellationToken);
+            await coreService.StartAsync(cancellationToken);
             console.Success("xray start completed.");
 
             return 0;

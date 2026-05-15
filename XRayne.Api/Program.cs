@@ -174,11 +174,14 @@ try
         if (context.Request.Path.StartsWithSegments("/api"))
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
+
             return;
         }
 
         var indexPath = Path.Combine(app.Environment.WebRootPath, "index.html");
+        
         context.Response.ContentType = "text/html; charset=utf-8";
+
         await context.Response.SendFileAsync(indexPath);
     });
 
