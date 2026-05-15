@@ -1,4 +1,4 @@
-namespace XRayne.Core.Services;
+namespace XRayne.Infrastructure.Services;
 
 public interface ICoreService
 {

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Quartz;
@@ -11,7 +12,6 @@ using XRayne.Api.Filters;
 using XRayne.Contracts;
 using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
-using XRayne.Core;
 using XRayne.Infrastructure;
 using XRayne.Repositories;
 
@@ -108,6 +108,22 @@ try
                 ValidAudience = jwtOptions.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret))
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    var isEventStreamRequest = context.Request.Headers.Accept.Any(value => value?.Contains("text/event-stream", StringComparison.OrdinalIgnoreCase) == true);
+
+                    if (!string.IsNullOrWhiteSpace(accessToken) && isEventStreamRequest)
+                    {
+                        context.Token = accessToken;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
         });
 
     builder.Services.AddAuthorization(options =>
@@ -115,7 +131,6 @@ try
         options.AddAdminPermissionPolicies();
     });
 
-    builder.Services.AddCoreDependencies();
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddRepositories(builder.Configuration.GetConnectionString("Default"));
     builder.Services.AddContracts(builder.Configuration);
@@ -179,7 +194,7 @@ try
         }
 
         var indexPath = Path.Combine(app.Environment.WebRootPath, "index.html");
-        
+
         context.Response.ContentType = "text/html; charset=utf-8";
 
         await context.Response.SendFileAsync(indexPath);

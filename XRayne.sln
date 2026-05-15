@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Contracts", "XRayne.Contracts\XRayne.Contracts.csproj", "{7364763E-E360-4F7E-92ED-00124C7B3BE0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Core", "XRayne.Core\XRayne.Core.csproj", "{EC9998C5-36CB-4CDC-BA14-673F8799E6B7}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Infrastructure", "XRayne.Infrastructure\XRayne.Infrastructure.csproj", "{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Api", "XRayne.Api\XRayne.Api.csproj", "{9AD635D6-6146-4C19-8A5E-A2F753BD1188}"
@@ -27,10 +25,6 @@ Global
 		{7364763E-E360-4F7E-92ED-00124C7B3BE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7364763E-E360-4F7E-92ED-00124C7B3BE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7364763E-E360-4F7E-92ED-00124C7B3BE0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EC9998C5-36CB-4CDC-BA14-673F8799E6B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EC9998C5-36CB-4CDC-BA14-673F8799E6B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EC9998C5-36CB-4CDC-BA14-673F8799E6B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EC9998C5-36CB-4CDC-BA14-673F8799E6B7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}.Release|Any CPU.ActiveCfg = Release|Any CPU

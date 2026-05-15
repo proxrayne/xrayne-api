@@ -5,7 +5,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../XRayne.Contracts/XRayne.Contracts.csproj" />
-    <ProjectReference Include="../XRayne.Core/XRayne.Core.csproj" />
     <ProjectReference Include="../XRayne.Infrastructure/XRayne.Infrastructure.csproj" />
     <ProjectReference Include="../XRayne.Repositories/XRayne.Repositories.csproj" />
   </ItemGroup>

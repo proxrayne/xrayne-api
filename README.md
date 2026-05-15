@@ -81,8 +81,7 @@ XRayne.Node - нода и панель управления для работы 
 ```text
 XRayne.Api/             REST API и веб-хост
 XRayne.Cli/             CLI для администрирования
-XRayne.Core/            xray-core abstractions and runtime setup
-XRayne.Infrastructure/  service implementations and runtime utilities
+XRayne.Infrastructure/  xray-core runtime, service implementations, background tasks, runtime utilities
 XRayne.Repositories/    EF Core, PostgreSQL repositories, migrations, external clients
 XRayne.Contracts/       DTO, configuration contracts, enums, shared values
 XRayne.UI/              React-интерфейс
@@ -213,7 +212,7 @@ xrayne node register
 ### Этап 1. Базовая структура проекта
 
 - Создать .NET solution.
-- Добавить проекты `XRayne.Api`, `XRayne.Cli`, `XRayne.Core`,
+- Добавить проекты `XRayne.Api`, `XRayne.Cli`,
   `XRayne.Infrastructure`, `XRayne.Contracts`.
 - Добавить React-приложение в `XRayne.UI`.
 - Настроить форматирование, базовые скрипты запуска и README.

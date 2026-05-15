@@ -4,7 +4,7 @@
 
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
-- `XRayne.Core`: xray-core services, release lookup/download abstractions, and core runtime abstractions.
+- `XRayne.Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
 - Shared random password generation lives in `XRayne.Infrastructure/Utilities/PasswordGenerator.cs`.
 - `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories, runtime config file utilities, and external repository clients under `External`.
@@ -22,7 +22,7 @@
 - Adds AutoMapper from API assembly.
 - Configures JWT Bearer with `JwtOptions` from `XRayne.Contracts.Configurations`.
 - Adds authorization policies via `AddAdminPermissionPolicies`.
-- Calls `AddCoreDependencies`, `AddInfrastructure`, `AddRepositories`, and `AddContracts`.
+- Calls `AddInfrastructure`, `AddRepositories`, and `AddContracts`.
 - Calls `MigrateDatabaseAsync()` on startup.
 - Serves default/static files and maps SPA fallback for non-API paths.
 
@@ -145,7 +145,7 @@ CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implemen
 
 Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
 
-GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing is exposed through `ICoreDownloadService` and a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `XRayne.Cli/Services`.
+GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing uses a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `XRayne.Cli/Services`.
 
 Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
 
@@ -153,12 +153,13 @@ Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerC
 
 ## Xray Core
 
-`AddCoreDependencies` registers:
+`AddInfrastructure` registers:
 
 - `ICoreService` -> `CoreService`
-- `ICoreDownloadService` -> `CoreDownloadService`
+- `ICoreStateMachine` -> `CoreStateMachine`
+- `InstallCoreJob`
 
-`CoreService` currently tracks an optional `IXrayCore` instance and exposes installed/running/version checks. `CoreDownloadService` uses memory cache for xray-core release pages and supports a `noCache` bypass.
+`CoreService` currently tracks an optional `IXrayProcessCore` instance and exposes installed/running/version checks. Core installation runs through Quartz `InstallCoreJob` and `IBackgroundTaskScheduler`.
 
 ## Migrations
 

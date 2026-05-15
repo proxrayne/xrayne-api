@@ -1,6 +1,6 @@
 ---
 name: xrayne-backend
-description: Backend development guidance for XRayne.Node. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, config files, or backend tests in XRayne.Api, XRayne.Cli, XRayne.Core, XRayne.Infrastructure, XRayne.Repositories, XRayne.Contracts, or XRayne.Test.
+description: Backend development guidance for XRayne.Node. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, config files, or backend tests in XRayne.Api, XRayne.Cli, XRayne.Infrastructure, XRayne.Repositories, XRayne.Contracts, or XRayne.Test.
 ---
 
 # XRayne Backend
@@ -12,7 +12,7 @@ Read `references/backend-map.md` before backend edits. Use it to place code in t
 ## Implementation Rules
 
 - Keep shared DTOs, configuration contracts, permissions, and API-facing constants in `XRayne.Contracts`.
-- Keep xray-core setup and core runtime abstractions in `XRayne.Core`.
+- Keep xray-core setup, runtime services, and background jobs in `XRayne.Infrastructure`.
 - Register services through the nearest `DependencyInjection.cs` extension.
 - Put HTTP behavior in controllers under `XRayne.Api/Controllers`; keep controllers thin and delegate work to repositories/services.
 - Throw `ApiException` subclasses for intended API errors so `ApiExceptionFilter` can format them.

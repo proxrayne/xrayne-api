@@ -4,6 +4,8 @@ import {
   CircleQuestionMarkIcon,
   TriangleAlertIcon,
 } from "lucide-react";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import Placeholder from "@core/ui/placeholder";
 import ColoredIcon from "@core/ui/colored-icon";
@@ -12,11 +14,12 @@ import { Button } from "@core/ui/button";
 import { DialogClose, DialogFooter } from "@core/ui/dialog";
 import { Spinner } from "@core/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@core/ui/alert";
+import { useStreamPulling } from "@core/hooks/use-stream";
 
 import {
+  CoreInstallingStatus,
   GitHubReleaseDto,
   useCoreInstall,
-  useCoreInstallingStatus,
 } from "@features/core";
 
 interface InstallConfirmProps {
@@ -27,9 +30,20 @@ interface InstallConfirmProps {
 
 function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
   const [install, { isPending, data, error }] = useCoreInstall(release.tagName);
-  const { status, error: statusError } = useCoreInstallingStatus(data ?? null);
+  const { data: status } = useStreamPulling<CoreInstallingStatus>(
+    data ? `core/install/${data}/stream` : null,
+  );
 
-  if (error || statusError || status?.step === "failure") {
+  const query = useQueryClient();
+  useEffect(() => {
+    if (status?.step !== "installed") {
+      return;
+    }
+
+    query.invalidateQueries({ queryKey: ["core"] });
+  }, [status?.step]);
+
+  if (error || status?.step === "failure") {
     return (
       <Placeholder>
         <ColoredIcon variant="danger" asChild>
@@ -111,9 +125,9 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
           compareVersions(release.tagName, currentVersion) === -1) && (
           <Alert className="shadow-none bg-warning/10 -mt-4 mb-6 gap-x-2">
             <TriangleAlertIcon />
-            <AlertTitle>Please note</AlertTitle>
-            <AlertDescription>
-              Older versions may not support current settings.
+            <AlertTitle>Attention</AlertTitle>
+            <AlertDescription className="font-medium">
+              Older versions may not support current settings
             </AlertDescription>
           </Alert>
         )}

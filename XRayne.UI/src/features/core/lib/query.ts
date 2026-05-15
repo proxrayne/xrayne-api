@@ -1,13 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
-
-import {
-  fetchCoreStatus,
-  fetchInstallingStatus,
-  fetchXrayReleases,
-  installCore,
-} from "./api";
-import { FetchXrayReleasesQuery } from "./api.types";
 import { toast } from "sonner";
+
+import { fetchCoreStatus, fetchXrayReleases, installCore } from "./api";
+import { FetchXrayReleasesQuery } from "./api.types";
 
 export function useCoreStatus(poolingInterval?: number | false) {
   const { data, isFetched, error, refetch } = useQuery({
@@ -53,30 +48,6 @@ export function useCoreReleases(
     hasMore: hasNextPage,
     isMoreLoading: isFetchingNextPage,
     loadMore: fetchNextPage,
-    refetch,
-  };
-}
-
-interface CoreInstallingStatusOptions {
-  pullingInterval?: number;
-}
-
-export function useCoreInstallingStatus(
-  jobId: string | null,
-  { pullingInterval = 5_000 }: CoreInstallingStatusOptions = {},
-) {
-  const { data, isFetched, error, refetch } = useQuery({
-    queryKey: ["core", "install", jobId, "status"],
-    queryFn: ({ signal }) => fetchInstallingStatus(jobId!, signal),
-    refetchInterval: ({ state }) =>
-      state.data?.step === "installed" ? false : pullingInterval,
-    enabled: Boolean(jobId),
-  });
-
-  return {
-    status: data,
-    isLoaded: isFetched,
-    error,
     refetch,
   };
 }

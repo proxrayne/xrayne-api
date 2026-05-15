@@ -1,7 +1,6 @@
 using Quartz;
-using XRayne.Core.Services;
-using XRayne.Core.States;
-using XRayne.Core.Tasks;
+using XRayne.Infrastructure.States;
+using XRayne.Infrastructure.Tasks;
 
 namespace XRayne.Infrastructure.Services;
 

@@ -18,7 +18,6 @@ WORKDIR /src
 COPY Directory.Build.props global.json nuget.config XRayne.sln ./
 COPY XRayne.Api/XRayne.Api.csproj XRayne.Api/
 COPY XRayne.Contracts/XRayne.Contracts.csproj XRayne.Contracts/
-COPY XRayne.Core/XRayne.Core.csproj XRayne.Core/
 COPY XRayne.Infrastructure/XRayne.Infrastructure.csproj XRayne.Infrastructure/
 COPY XRayne.Repositories/XRayne.Repositories.csproj XRayne.Repositories/
 

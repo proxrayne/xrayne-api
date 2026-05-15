@@ -11,7 +11,7 @@ XRayne.Node is a node and admin panel for managing `xray-core`. The intended sur
 - `global.json`: SDK `9.0.100` with `latestFeature` roll-forward.
 - `XRayne.Api`: ASP.NET Core web API and static web host.
 - `XRayne.Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
-- `XRayne.Core`: xray-core setup and core runtime abstractions.
+- `XRayne.Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
 - `XRayne.Infrastructure`: JWT/core service implementations plus infrastructure utilities such as `NetworkAddress` and password hashing/generation.
 - `XRayne.Repositories`: EF Core, PostgreSQL, migrations, repositories, runtime config file utilities such as `JsonConfig`/`EnvConfig`, and external clients under `External` such as `GitHubRepository`.
 - `XRayne.Contracts`: shared contracts, configuration DTOs, permission enums, and permission names.

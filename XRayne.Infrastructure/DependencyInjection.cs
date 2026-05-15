@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using XRayne.Contracts.Configurations;
 using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.Tasks;
 
 namespace XRayne.Infrastructure;
 
@@ -14,7 +15,12 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddSingleton<ISystemInfoService>(_ => CreateSystemInfoService());
 
+        services.AddSingleton<IEventStreamManager, EventStreamManager>();
+        services.AddSingleton<ICoreService, CoreService>();
+        services.AddSingleton<ICoreStateMachine, CoreStateMachine>();
         services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
+
+        services.AddTransient<InstallCoreJob>();
 
         return services;
     }

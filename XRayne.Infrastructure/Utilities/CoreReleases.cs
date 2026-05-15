@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace XRayne.Core.Utilities;
+namespace XRayne.Infrastructure.Utilities;
 
 public static class CoreReleasesUtilities
 {

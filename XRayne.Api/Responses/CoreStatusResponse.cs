@@ -1,4 +1,4 @@
-using XRayne.Core.States;
+using XRayne.Infrastructure.States;
 
 namespace XRayne.Api.Responses;
 

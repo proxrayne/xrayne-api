@@ -7,7 +7,6 @@ using Serilog;
 using XRayne.Cli.Commands;
 using XRayne.Contracts;
 using XRayne.Contracts.Values;
-using XRayne.Core;
 using XRayne.Infrastructure;
 using XRayne.Repositories;
 
@@ -47,7 +46,6 @@ try
 
     host.ConfigureServices((context, services) =>
     {
-        services.AddCoreDependencies();
         services.AddInfrastructure(context.Configuration);
         services.AddRepositories(GetEnvConnectionString(context.Configuration) ?? context.Configuration.GetConnectionString("Default"));
         services.AddContracts(context.Configuration);

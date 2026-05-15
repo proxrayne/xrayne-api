@@ -1,11 +1,13 @@
 using Microsoft.Extensions.Caching.Memory;
-using XRayne.Core.States;
+using XRayne.Infrastructure.States;
 
-namespace XRayne.Core.Services;
+namespace XRayne.Infrastructure.Services;
 
-public class CoreStateMachine(IMemoryCache cache) : ICoreStateMachine
+public class CoreStateMachine(IMemoryCache cache, IEventStreamManager eventStreams) : ICoreStateMachine
 {
     private static readonly TimeSpan InstallCacheTimeout = TimeSpan.FromHours(6);
+
+    public static string GetInstallCoreStreamKey(string jobId) => $"core-install:{jobId}";
 
     public void DispatchInstallState(string jobId, InstallCoreState state)
     {
@@ -14,6 +16,7 @@ public class CoreStateMachine(IMemoryCache cache) : ICoreStateMachine
         values[jobId] = state;
 
         cache.Set(nameof(InstallCoreState), values, InstallCacheTimeout);
+        eventStreams.Dispatch(GetInstallCoreStreamKey(jobId), state);
     }
 
     public InstallCoreState? GetInstallCoreState() => cache.Get<Dictionary<string, InstallCoreState>>(nameof(InstallCoreState))?.FirstOrDefault().Value;

@@ -3,6 +3,7 @@ import { addWeeks } from "date-fns";
 
 import { ResponseError } from "@core/lib/errors";
 import { cookies } from "@core/lib/cookie";
+import { IS_SERVER } from "@core/lib/env";
 
 export const api = axios.create({
   baseURL: `${getApiDomain()}/api`,
@@ -17,25 +18,7 @@ function getApiDomain() {
     return import.meta.env.VITE_API_DOMAIN;
   }
 
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  const [firstSegment] = window.location.pathname
-    .split("/")
-    .filter(Boolean);
-  const knownRootSegments = new Set([
-    "sign-in",
-    "users",
-    "inbounds",
-    "outbounds",
-    "routing",
-    "settings",
-  ]);
-
-  return firstSegment && !knownRootSegments.has(firstSegment)
-    ? `/${firstSegment}`
-    : "";
+  return IS_SERVER ? "" : "/";
 }
 
 api.interceptors.request.use((config) => {

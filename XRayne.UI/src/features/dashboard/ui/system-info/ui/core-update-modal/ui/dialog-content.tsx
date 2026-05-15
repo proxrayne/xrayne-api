@@ -56,25 +56,27 @@ function DialogContent({ isInstalled, version }: CoreStatusDto) {
               <DialogTitle>
                 {isInstalled ? "Update" : "Install"} xray-core
               </DialogTitle>
-              <DialogDescription className="text-foreground/90 mt-1">
-                <p>
-                  You can install the required version of xray-core on this
-                  node.
-                </p>
-                <p>
-                  All data received from{" "}
-                  <Link
-                    to="https://github.com/xtls/xray-core"
-                    target="_blank"
-                    className="text-xs font-medium hover:underline text-foreground"
-                  >
-                    official repository
-                  </Link>
-                  .
-                </p>
+              <DialogDescription className="text-foreground/90 mt-1" asChild>
+                <div>
+                  <p>
+                    You can install the required version of xray-core on this
+                    node.
+                  </p>
+                  <p>
+                    All data received from{" "}
+                    <Link
+                      to="https://github.com/xtls/xray-core"
+                      target="_blank"
+                      className="text-xs font-medium hover:underline text-foreground"
+                    >
+                      official repository
+                    </Link>
+                    .
+                  </p>
+                </div>
               </DialogDescription>
             </DialogHeader>
-            <Separator className="mt-3 mb-1" />
+            <Separator className="mt-4 mb-2" />
             <div className="-mx-2">
               <ChooseVersion version={version} onSelect={setSelected} />
             </div>

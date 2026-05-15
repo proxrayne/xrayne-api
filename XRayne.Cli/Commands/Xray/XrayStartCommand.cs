@@ -2,7 +2,7 @@ using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
-using XRayne.Core.Services;
+using XRayne.Infrastructure.Services;
 
 namespace XRayne.Cli.Commands.Xray;
 

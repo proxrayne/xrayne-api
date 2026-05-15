@@ -1,4 +1,4 @@
-namespace XRayne.Core.Values;
+namespace XRayne.Infrastructure.Values;
 
 public static class CoreDefaults
 {

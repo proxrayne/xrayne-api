@@ -2,13 +2,13 @@ using System.IO.Compression;
 using Microsoft.Extensions.Logging;
 using Quartz;
 using XRayne.Contracts.Values;
-using XRayne.Core.Services;
-using XRayne.Core.States;
-using XRayne.Core.Utilities;
-using XRayne.Core.Values;
+using XRayne.Infrastructure.Services;
+using XRayne.Infrastructure.States;
+using XRayne.Infrastructure.Utilities;
+using XRayne.Infrastructure.Values;
 using XRayne.Repositories.External;
 
-namespace XRayne.Core.Tasks;
+namespace XRayne.Infrastructure.Tasks;
 
 [DisallowConcurrentExecution]
 public sealed class InstallCoreJob(ICoreService coreService, ICoreStateMachine stateMachine, ILogger<InstallCoreJob> logger) : IJob

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace XRayne.Core.States;
+namespace XRayne.Infrastructure.States;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum InstallCoreStep

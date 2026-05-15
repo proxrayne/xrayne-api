@@ -7,7 +7,7 @@ using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
 using XRayne.Repositories.Utilities;
 
-namespace XRayne.Core.Services;
+namespace XRayne.Infrastructure.Services;
 
 public sealed class CoreService(ILogger<CoreService> logger, IOptionsMonitor<XrayOptions> options) : ICoreService
 {
@@ -42,7 +42,9 @@ public sealed class CoreService(ILogger<CoreService> logger, IOptionsMonitor<Xra
 
             logger.LogInformation("New core version: {Version}.", newCore.Version());
 
-            await StopUnsafeAsync();
+            var isStarted = GetIsRunning();
+
+            if (isStarted) await StopUnsafeAsync();
 
             _core = newCore;
 
@@ -51,7 +53,8 @@ public sealed class CoreService(ILogger<CoreService> logger, IOptionsMonitor<Xra
                 directory,
                 cancellationToken: cancellationToken);
 
-            await StartUnsafeAsync(cancellationToken);
+            if (isStarted) await StartUnsafeAsync(cancellationToken);
+
         }, cancellationToken);
     }
 
