@@ -1,4 +1,5 @@
 import { SettingsIcon } from "lucide-react";
+import capitalize from "lodash/capitalize";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@core/ui/card";
 import { Button } from "@core/ui/button";
@@ -40,11 +41,11 @@ function XrayOptions() {
     <Card className={GRID_COLS}>
       <CardHeader className="min-h-8 flex justify-between items-center gap-x-3 flex-row">
         <CardTitle className="font-semibold">Xray info</CardTitle>
-        <CoreControl {...status} />
+        <CoreControl />
       </CardHeader>
       <CardContent>
         <InfoRow label="Status" defaultValue="Not installed">
-          {status.isInstalled && `${status.isStarted ? "Working" : "Stoped"}`}
+          {status.isInstalled && capitalize(status.status ?? "unknown")}
         </InfoRow>
         <InfoRow label="Version" classNames={{ content: "flex gap-x-1" }}>
           <CoreUpdateModal>
