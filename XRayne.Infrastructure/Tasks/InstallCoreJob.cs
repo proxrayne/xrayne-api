@@ -11,13 +11,16 @@ using XRayne.Repositories.External;
 namespace XRayne.Infrastructure.Tasks;
 
 [DisallowConcurrentExecution]
-public sealed class InstallCoreJob(ICoreService coreService, ICoreStateMachine stateMachine, ILogger<InstallCoreJob> logger) : IJob
+public sealed class InstallCoreJob(
+    ICoreService coreService,
+    ICoreStateMachine stateMachine,
+    ILogger<InstallCoreJob> logger) : IJob
 {
     public const string VersionKey = "version";
     public const string IdentityKey = "id";
 
-    public static readonly JobKey JobKey = new JobKey(nameof(InstallCoreJob), "core");
-    public static readonly TriggerKey TriggerKey = new TriggerKey(nameof(InstallCoreJob), "core");
+    public static readonly JobKey JobKey = new(nameof(InstallCoreJob), "core-install");
+    public static readonly TriggerKey TriggerKey = new(nameof(InstallCoreJob), "core-install");
 
     private readonly GitHubRepository xrayRepository = new(CoreDefaults.XrayRepositoryUrl);
 
@@ -27,7 +30,7 @@ public sealed class InstallCoreJob(ICoreService coreService, ICoreStateMachine s
 
         try
         {
-            var version = context.MergedJobDataMap.GetString(VersionKey) ?? "latest";
+            var version = context.MergedJobDataMap.GetString(VersionKey) ?? CoreDefaults.DefaultVersion;
 
             stateMachine.DispatchInstallState(jobId, InstallCoreState.Validation());
 
@@ -44,16 +47,23 @@ public sealed class InstallCoreJob(ICoreService coreService, ICoreStateMachine s
             stateMachine.DispatchInstallState(jobId, InstallCoreState.Downloading());
 
             var downloadsDirectory = Path.Combine(PathProvider.Paths.DownloadsDirectory, "xray-core");
-            var destinationPath = await xrayRepository.DownloadAssetAsync(asset, downloadsDirectory, $"{localAssetName}.zip", context.CancellationToken);
+            var destinationPath = await xrayRepository.DownloadAssetAsync(
+                asset,
+                downloadsDirectory,
+                $"{localAssetName}.zip",
+                context.CancellationToken);
 
             stateMachine.DispatchInstallState(jobId, InstallCoreState.Extracting());
 
-            ZipFile.ExtractToDirectory(destinationPath, Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName), overwriteFiles: true);
+            ZipFile.ExtractToDirectory(
+                destinationPath,
+                Path.Combine(PathProvider.Paths.XrayDirectory, localAssetName),
+                overwriteFiles: true);
             File.Delete(destinationPath);
 
             stateMachine.DispatchInstallState(jobId, InstallCoreState.Installing());
 
-            await coreService.SetupAsync(localAssetName);
+            await coreService.SetupAsync(localAssetName, context.CancellationToken);
 
             stateMachine.DispatchInstallState(jobId, InstallCoreState.Installed(version));
         }

@@ -17,7 +17,6 @@ namespace XRayne.Api.Controllers;
 [Authorize(Policy = AdminPermissionNames.SuperAdmin)]
 [Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
 public sealed class CoreController(
-    ICoreService coreService,
     IMapper mapper,
     IBackgroundTaskScheduler scheduler,
     ICoreStateMachine coreState,
@@ -29,16 +28,37 @@ public sealed class CoreController(
     [HttpGet("status")]
     [EndpointSummary("Core status")]
     [EndpointDescription("Get is actual core status.")]
-    [ProducesResponseType(typeof(CoreStatusResponse), StatusCodes.Status200OK)]
-    public CoreStatusResponse GetStatus()
+    [ProducesResponseType(typeof(CoreState), StatusCodes.Status200OK)]
+    public CoreState GetStatus()
     {
-        var installingStatus = coreState.GetInstallCoreState();
+        return coreState.GetCoreState();
+    }
 
-        return new CoreStatusResponse(
-            coreService.GetIsInstalled(),
-            coreService.GetIsRunning(),
-            coreService.TryGetVersion(),
-            installingStatus);
+    [HttpGet("status/stream")]
+    [EndpointSummary("Core status stream")]
+    [EndpointDescription("Subscribe to Xray core status changes.")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task StreamStatus(CancellationToken ct)
+    {
+        var subscription = eventStreams.Subscribe<CoreState>(CoreStateMachine.CoreStateStreamKey);
+
+        SetupStreamHeaders();
+
+        try
+        {
+            await Response.StartAsync(ct);
+            await WriteServerSentEventAsync(coreState.GetCoreState(), ct);
+
+            await foreach (var state in subscription.Reader.ReadAllAsync(ct))
+            {
+                await WriteServerSentEventAsync(state, ct);
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        finally
+        {
+            eventStreams.Unsubscribe(subscription.Id);
+        }
     }
 
     [HttpGet("releases")]
@@ -124,5 +144,41 @@ public sealed class CoreController(
     public Task<string> InstallCore([FromBody] InstallCoreRequest data, CancellationToken ct)
     {
         return scheduler.ScheduleInstallCore(data.Version ?? "latest", ct);
+    }
+
+    [HttpPost("start")]
+    [EndpointSummary("Start Xray")]
+    [EndpointDescription("Schedule Xray core start.")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> StartCore(CancellationToken ct)
+    {
+        await scheduler.ScheduleCoreOperation(CoreOperation.Start, ct);
+
+        return Accepted();
+    }
+
+    [HttpPost("stop")]
+    [EndpointSummary("Stop Xray")]
+    [EndpointDescription("Schedule Xray core stop.")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> StopCore(CancellationToken ct)
+    {
+        await scheduler.ScheduleCoreOperation(CoreOperation.Stop, ct);
+
+        return Accepted();
+    }
+
+    [HttpPost("restart")]
+    [EndpointSummary("Restart Xray")]
+    [EndpointDescription("Schedule Xray core restart.")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RestartCore(CancellationToken ct)
+    {
+        await scheduler.ScheduleCoreOperation(CoreOperation.Restart, ct);
+
+        return Accepted();
     }
 }

@@ -1,24 +1,14 @@
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { fetchCoreStatus, fetchXrayReleases, installCore } from "./api";
+import {
+  fetchXrayReleases,
+  installCore,
+  restartCore,
+  startCore,
+  stopCore,
+} from "./api";
 import { FetchXrayReleasesQuery } from "./api.types";
-
-export function useCoreStatus(poolingInterval?: number | false) {
-  const { data, isFetched, error, refetch } = useQuery({
-    queryKey: ["core", "status"],
-    queryFn: ({ signal }) => fetchCoreStatus(signal),
-    refetchOnWindowFocus: true,
-    refetchInterval: poolingInterval,
-  });
-
-  return {
-    status: data,
-    isLoaded: isFetched,
-    error,
-    refetch,
-  };
-}
 
 export function useCoreReleases(
   query: Pick<FetchXrayReleasesQuery, "perPage">,
@@ -59,7 +49,52 @@ export function useCoreInstall(version: string) {
     onError: () => {
       toast.error("Unhandled error", {
         description:
-          "An error occurred while installing the kernel, please check the logs for details.",
+          "An error occurred while installing the xray-core, please check the logs for details.",
+      });
+    },
+  });
+
+  return [mutateAsync, mutation] as const;
+}
+
+export function useStartCore() {
+  const { mutateAsync, ...mutation } = useMutation({
+    mutationKey: ["core", "start"],
+    mutationFn: () => startCore(),
+    onError: () => {
+      toast.error("Unhandled error", {
+        description:
+          "An error occurred while starting xray-core, please check the logs for details.",
+      });
+    },
+  });
+
+  return [mutateAsync, mutation] as const;
+}
+
+export function useStopCore() {
+  const { mutateAsync, ...mutation } = useMutation({
+    mutationKey: ["core", "stop"],
+    mutationFn: () => stopCore(),
+    onError: () => {
+      toast.error("Unhandled error", {
+        description:
+          "An error occurred while stopping xray-core, please check the logs for details.",
+      });
+    },
+  });
+
+  return [mutateAsync, mutation] as const;
+}
+
+export function useRestartCore() {
+  const { mutateAsync, ...mutation } = useMutation({
+    mutationKey: ["core", "restart"],
+    mutationFn: () => restartCore(),
+    onError: () => {
+      toast.error("Unhandled error", {
+        description:
+          "An error occurred while restarting xray-core, please check the logs for details.",
       });
     },
   });

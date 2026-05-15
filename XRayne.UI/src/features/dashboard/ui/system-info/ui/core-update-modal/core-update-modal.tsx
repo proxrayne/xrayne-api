@@ -11,7 +11,7 @@ interface Props {
 }
 
 function CoreUpdateModal({ children }: Props) {
-  const { status } = useCoreStatus();
+  const status = useCoreStatus();
 
   return (
     <Dialog>

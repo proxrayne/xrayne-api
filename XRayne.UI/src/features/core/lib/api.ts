@@ -2,13 +2,12 @@ import { api } from "@core/api/instance";
 
 import {
   CoreInstallingStatus,
-  CoreStatusDto,
   FetchXrayReleasesQuery,
   GitHubReleaseDto,
 } from "./api.types";
 
 export async function fetchCoreStatus(signal?: AbortSignal) {
-  const { data } = await api.get<CoreStatusDto>("core/status", { signal });
+  const { data } = await api.get<CoreStatus>("core/status", { signal });
 
   return data;
 }
@@ -43,4 +42,16 @@ export async function installCore(version: string) {
   const { data } = await api.post<string>("core/install", { version });
 
   return data;
+}
+
+export async function startCore() {
+  await api.post("core/start");
+}
+
+export async function stopCore() {
+  await api.post("core/stop");
+}
+
+export async function restartCore() {
+  await api.post("core/restart");
 }

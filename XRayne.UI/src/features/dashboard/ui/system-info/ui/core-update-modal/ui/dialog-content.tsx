@@ -3,7 +3,7 @@ import { ArrowLeftIcon } from "lucide-react";
 import { Link } from "react-router";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { CoreStatusDto, GitHubReleaseDto } from "@features/core";
+import { GitHubReleaseDto } from "@features/core";
 import { DialogDescription, DialogHeader, DialogTitle } from "@core/ui/dialog";
 import { Button } from "@core/ui/button";
 import { Separator } from "@core/ui/separator";
@@ -11,7 +11,7 @@ import { Separator } from "@core/ui/separator";
 import ChooseVersion from "./choose-version";
 import InstallConfirm from "./install-confirm";
 
-function DialogContent({ isInstalled, version }: CoreStatusDto) {
+function DialogContent({ isInstalled, version }: CoreStatus) {
   const [selected, setSelected] = useState<GitHubReleaseDto | null>(null);
 
   return (

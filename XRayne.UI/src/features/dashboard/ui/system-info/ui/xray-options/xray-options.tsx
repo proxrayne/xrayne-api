@@ -1,11 +1,11 @@
 import { SettingsIcon } from "lucide-react";
 
-import Placeholder from "@core/ui/placeholder";
 import { Card, CardContent, CardHeader, CardTitle } from "@core/ui/card";
 import { Button } from "@core/ui/button";
 import { Skeleton } from "@core/ui/skeleton";
+import Placeholder from "@core/ui/placeholder";
 
-import { useCoreStatus } from "@features/core";
+import { useCoreStatusContext } from "@features/core";
 
 import InfoRow from "../info-row";
 import CoreUpdateModal from "../core-update-modal";
@@ -14,9 +14,9 @@ import CoreControl from "./ui/core-control";
 const GRID_COLS = "col-span-4 md:col-span-2";
 
 function XrayOptions() {
-  const { status, error, isLoaded, refetch } = useCoreStatus();
+  const { data: status, error, connect } = useCoreStatusContext();
 
-  if (!isLoaded) {
+  if (!status) {
     return <XrayOptions.Skeleton />;
   }
 
@@ -29,7 +29,7 @@ function XrayOptions() {
             Unhandled error. Please, try to reload latter.
           </Placeholder.Subheader>
           <Placeholder.Actions>
-            <Button onClick={() => refetch()}>Try reload</Button>
+            <Button onClick={() => connect()}>Try reload</Button>
           </Placeholder.Actions>
         </Placeholder>
       </Card>

@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
 
         services.AddTransient<InstallCoreJob>();
+        services.AddTransient<CoreOperationJob>();
 
         return services;
     }

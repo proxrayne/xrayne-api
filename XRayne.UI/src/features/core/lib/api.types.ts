@@ -1,9 +1,3 @@
-export interface CoreStatusDto {
-  isInstalled: boolean;
-  isStarted: boolean;
-  version: string | null;
-}
-
 export interface FetchXrayReleasesQuery {
   perPage?: number;
   page?: number;

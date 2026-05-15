@@ -5,25 +5,33 @@ import { api, getAuthorizationToken } from "@core/api/instance";
 interface StreamPullingOptions {
   withAuth?: boolean;
   reconnectDelay?: number;
+  maxReconnectAttempts?: number;
 }
 
-interface StreamPullingResult<T> {
+export interface StreamPullingResult<T> {
   data: T | null;
-  connect: () => void;
-  disconnect: () => void;
+  error: Error | null;
+  connect(): void;
+  disconnect(): void;
   isConnected: boolean;
 }
 
 export function useStreamPulling<T extends Object>(
   path: string | null,
-  { withAuth = true, reconnectDelay = 3_000 }: StreamPullingOptions = {},
+  {
+    withAuth = true,
+    reconnectDelay = 3_000,
+    maxReconnectAttempts = 7,
+  }: StreamPullingOptions = {},
 ): StreamPullingResult<T> {
   const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const reconnectAttemptsRef = useRef(0);
   const isDisposedRef = useRef(false);
   const shouldReconnectRef = useRef(false);
   const connectRef = useRef<() => void>(() => {});
@@ -43,6 +51,7 @@ export function useStreamPulling<T extends Object>(
 
   const disconnect = useCallback(() => {
     shouldReconnectRef.current = false;
+    reconnectAttemptsRef.current = 0;
     clearReconnect();
     closeStream();
   }, [clearReconnect, closeStream]);
@@ -75,38 +84,58 @@ export function useStreamPulling<T extends Object>(
     }
 
     closeStream();
+
+    if (
+      maxReconnectAttempts !== undefined &&
+      reconnectAttemptsRef.current >= maxReconnectAttempts
+    ) {
+      shouldReconnectRef.current = false;
+      setError(new Error("Stream reconnect attempts exceeded."));
+      return;
+    }
+
+    reconnectAttemptsRef.current += 1;
     reconnectTimeoutRef.current = setTimeout(() => {
       reconnectTimeoutRef.current = null;
       connectRef.current();
     }, reconnectDelay);
-  }, [closeStream, reconnectDelay]);
+  }, [closeStream, maxReconnectAttempts, reconnectDelay]);
 
-  const connect = useCallback(() => {
-    const url = createUrl();
-    if (!url || isDisposedRef.current) {
-      return;
-    }
+  const connect = useCallback(
+    (resetReconnectAttempts = true) => {
+      const url = createUrl();
+      if (!url || isDisposedRef.current) {
+        return;
+      }
 
-    shouldReconnectRef.current = true;
-    clearReconnect();
-    closeStream();
+      if (resetReconnectAttempts) {
+        reconnectAttemptsRef.current = 0;
+      }
 
-    const eventSource = new EventSource(url);
-    
-    eventSourceRef.current = eventSource;
-
-    eventSource.addEventListener("open", () => {
+      shouldReconnectRef.current = true;
       clearReconnect();
-      setIsConnected(true);
-    });
-    eventSource.addEventListener("error", scheduleReconnect);
-    eventSource.addEventListener("message", (ev) => {
-      setData(JSON.parse(ev.data));
-    });
-  }, [clearReconnect, closeStream, createUrl, scheduleReconnect]);
+      closeStream();
+      setError(null);
+
+      const eventSource = new EventSource(url);
+
+      eventSourceRef.current = eventSource;
+
+      eventSource.addEventListener("open", () => {
+        clearReconnect();
+        reconnectAttemptsRef.current = 0;
+        setIsConnected(true);
+      });
+      eventSource.addEventListener("error", scheduleReconnect);
+      eventSource.addEventListener("message", (ev) => {
+        setData(JSON.parse(ev.data));
+      });
+    },
+    [clearReconnect, closeStream, createUrl, scheduleReconnect],
+  );
 
   useEffect(() => {
-    connectRef.current = connect;
+    connectRef.current = () => connect(false);
   }, [connect]);
 
   useEffect(() => {
@@ -114,6 +143,7 @@ export function useStreamPulling<T extends Object>(
 
     if (!path) {
       setData(null);
+      setError(null);
       disconnect();
       return;
     }
@@ -126,5 +156,5 @@ export function useStreamPulling<T extends Object>(
     };
   }, [connect, disconnect, path]);
 
-  return { data, connect, disconnect, isConnected };
+  return { data, error, connect, disconnect, isConnected };
 }
