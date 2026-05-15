@@ -92,6 +92,7 @@ export function useStreamPulling<T extends Object>(
     closeStream();
 
     const eventSource = new EventSource(url);
+    
     eventSourceRef.current = eventSource;
 
     eventSource.addEventListener("open", () => {

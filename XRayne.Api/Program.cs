@@ -115,7 +115,6 @@ try
                 {
                     var accessToken = context.Request.Query["access_token"];
                     var isEventStreamRequest = context.Request.Headers.Accept.Any(value => value?.Contains("text/event-stream", StringComparison.OrdinalIgnoreCase) == true);
-
                     if (!string.IsNullOrWhiteSpace(accessToken) && isEventStreamRequest)
                     {
                         context.Token = accessToken;

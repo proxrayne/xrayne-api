@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +25,6 @@ public sealed class CoreController(
     IMemoryCache cache) : ApiControllerBase
 {
     private readonly GitHubRepository xrayRepository = new GitHubRepository(CoreDefaults.XrayRepositoryUrl);
-    private static readonly JsonSerializerOptions SseJsonOptions = new(JsonSerializerDefaults.Web);
 
     [HttpGet("status")]
     [EndpointSummary("Core status")]
@@ -99,10 +97,7 @@ public sealed class CoreController(
         var streamKey = CoreStateMachine.GetInstallCoreStreamKey(jobId);
         var subscription = eventStreams.Subscribe<InstallCoreState>(streamKey);
 
-        Response.ContentType = "text/event-stream; charset=utf-8";
-        Response.Headers.CacheControl = "no-cache";
-        Response.Headers.Connection = "keep-alive";
-        Response.Headers["X-Accel-Buffering"] = "no";
+        SetupStreamHeaders();
 
         try
         {
@@ -129,13 +124,5 @@ public sealed class CoreController(
     public Task<string> InstallCore([FromBody] InstallCoreRequest data, CancellationToken ct)
     {
         return scheduler.ScheduleInstallCore(data.Version ?? "latest", ct);
-    }
-
-    private async Task WriteServerSentEventAsync<T>(T data, CancellationToken ct)
-    {
-        var json = JsonSerializer.Serialize(data, SseJsonOptions);
-
-        await Response.WriteAsync($"data: {json}\n\n", ct);
-        await Response.Body.FlushAsync(ct);
     }
 }
