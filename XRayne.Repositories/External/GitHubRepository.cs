@@ -68,10 +68,16 @@ public sealed class GitHubRepository : IDisposable
             ?? throw new InvalidOperationException($"GitHub release '{version}' response was empty.");
     }
 
+    public Task<string> DownloadAssetAsync(
+        GitHubAsset asset,
+        string destinationDirectory,
+        CancellationToken ct = default)
+    => DownloadAssetAsync(asset, destinationDirectory, asset.Name, ct);
+
     public async Task<string> DownloadAssetAsync(
         GitHubAsset asset,
         string destinationDirectory,
-        string? assetName = default,
+        string assetName,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(asset.Name))
@@ -81,7 +87,7 @@ public sealed class GitHubRepository : IDisposable
 
         Directory.CreateDirectory(destinationDirectory);
 
-        var destinationPath = Path.Combine(destinationDirectory, assetName ?? asset.Name);
+        var destinationPath = Path.Combine(destinationDirectory, assetName);
         using var request = new HttpRequestMessage(HttpMethod.Get, asset.Url);
         request.Headers.Accept.Clear();
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
