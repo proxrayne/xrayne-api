@@ -8,7 +8,7 @@ using XRayne.Api.Responses;
 using XRayne.Contracts.Configurations;
 using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Utilities;
-using XRayne.Repositories.Admins;
+using XRayne.Repositories.Contracts;
 
 namespace XRayne.Api.Controllers;
 

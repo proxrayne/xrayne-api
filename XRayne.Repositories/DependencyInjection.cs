@@ -1,7 +1,11 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
-using XRayne.Repositories.Admins;
+using XRayne.Contracts.Enums;
+using XRayne.Repositories.Contracts;
+using XRayne.Repositories.Implementations;
 
 namespace XRayne.Repositories;
 
@@ -16,14 +20,34 @@ public static class DependencyInjection
             throw new InvalidOperationException("PostgreSQL connection string is not configured.");
         }
 
-        services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
-
         services.AddDbContext<AppDbContext>(options =>
         {
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.ConfigureDataSource(dataSourceBuilder =>
+                {
+                    dataSourceBuilder.MapEnum<UserStatus>();
+                    dataSourceBuilder.MapEnum<LimitResetStrategy>();
+                    dataSourceBuilder.MapEnum<AdminPermission>();
+
+                    dataSourceBuilder
+                        .EnableDynamicJson()
+                        .ConfigureJsonOptions(new JsonSerializerOptions
+                        {
+                            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                            WriteIndented = false
+                        });
+
+                });
+            });
         });
 
         services.AddScoped<IAdminAccountRepository, AdminAccountRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IInboundRepository, InboundRepository>();
+        services.AddScoped<IOutboundRepository, OutboundRepository>();
 
         return services;
     }

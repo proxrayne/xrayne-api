@@ -7,7 +7,7 @@
 - `XRayne.Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
 - Shared random password generation lives in `XRayne.Infrastructure/Utilities/PasswordGenerator.cs`.
-- `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, repositories, runtime config file utilities, and external repository clients under `External`.
+- `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, entity models, repositories, runtime config file utilities, and external repository clients under `External`.
 - `XRayne.Contracts`: shared contracts, configuration DTOs/options, permission enums, permission names, runtime path helpers, and contract-level DI registration.
 - `XRayne.Test`: tests.
 
@@ -71,7 +71,14 @@ String policy names live in `XRayne.Contracts.Values.AdminPermissionNames`:
 
 ## Persistence
 
-`AppDbContext` currently exposes `AdminAccounts`.
+`AppDbContext` currently exposes `AdminAccounts`, `Users`, `Inbounds`, and `Outbounds`.
+
+Common entity base classes live in `XRayne.Repositories/Entities/BaseEntities.cs`:
+
+- `CreatedEntity`: provides `CreatedAt`.
+- `CreateUpdateEntity`: extends `CreatedEntity` with nullable `UpdatedAt`.
+
+`AppDbContext.OnModelCreating` applies `CURRENT_TIMESTAMP` as the database default for every entity property named `CreatedAt`. Avoid repeating per-entity `CreatedAt` defaults unless a table needs a different behavior.
 
 `AdminAccount` maps to `admin_accounts`, with:
 
@@ -82,15 +89,30 @@ String policy names live in `XRayne.Contracts.Values.AdminPermissionNames`:
 - `CreatedAt`
 - `LastLoginAt`
 
+`User` maps to `users`, with a unique `Username`, nullable lifecycle timestamps, `UserStatus`, nullable `LimitResetStrategy`, many-to-many `Inbounds`, owning `AdminAccount`, and protocol-specific `Options` stored as `jsonb`.
+
+`InboundEntity` maps to `inbounds`, stores the native Xray `Inbound` model as `jsonb`, has `Enabled` defaulting to SQL `TRUE`, many-to-many `Users`, owning `AdminAccount`, and not-mapped computed accessors such as `Tag`, `Listen`, `Protocol`, `Network`, `Security`, `Sniffing`, and `Port`.
+
+`OutboundEntity` maps to `outbounds`, stores the native Xray `Outbound` model as `jsonb`, belongs to an `AdminAccount`, and has not-mapped computed accessors such as `Tag`, `Protocol`, `Network`, and `Security`.
+
+PostgreSQL enum mapping is configured for `UserStatus`, `LimitResetStrategy`, and `AdminPermission` both in `AppDbContext.OnModelCreating` through `HasPostgresEnum<T>()` and in repository DI through `ConfigureDataSource(...).MapEnum<T>()`. EF conventions also convert enum properties to strings.
+
+Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.Json` options configured in `XRayne.Repositories.DependencyInjection`.
+
 `AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`; CLI resolves flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values first, then falls back to `ConnectionStrings:Default`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
 External clients that represent remote repositories or APIs live under `XRayne.Repositories/External`. `GitHubRepository` is the release/asset client used by CLI update and install flows.
 
 Repository pattern:
 
-- Define interface under the feature folder, for example `XRayne.Repositories/Admins/IAdminAccountRepository.cs`.
-- Implement async methods in the same feature folder.
+- Define repository interfaces under `XRayne.Repositories/Contracts`.
+- Implement repository classes under `XRayne.Repositories/Implementations`.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `SaveChangesAsync`, and pass cancellation tokens.
+- Repositories for admin-owned entities filter by `AdminId`. Current entities expose `Admin` navigation but not explicit `AdminId`, so repository queries use `EF.Property<Guid>(entity, "AdminId")`.
+- Current repositories registered by `AddRepositories`: `IAdminAccountRepository`, `IUserRepository`, `IInboundRepository`, and `IOutboundRepository`.
+- `AddAsync` methods return the saved entity after `SaveChangesAsync` and `ReloadAsync`, so database-generated values are available to callers.
+- Shared query/pagination models live in `XRayne.Contracts/Models`: `CursorQuery`, `CursorPage<T>`, `SortOrder`, plus one filter file per searchable entity such as `UserFilter` and `InboundFilter`. The static cursor helper lives in `XRayne.Contracts/Utilities/CursorPagination`. Outbound repositories intentionally expose only direct list/CRUD methods, without filtering or cursor pagination.
+- New entity repositories expose both admin-scoped methods and unscoped variants for service/internal use.
 
 ## CLI Pattern
 

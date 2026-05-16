@@ -7,7 +7,7 @@ namespace XRayne.Repositories.Entities;
 
 [Table("admin_accounts")]
 [Index(nameof(Username), IsUnique = true)]
-public sealed class AdminAccount
+public sealed class AdminAccount : CreatedEntity
 {
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -21,8 +21,6 @@ public sealed class AdminAccount
     public required string PasswordHash { get; set; }
 
     public AdminPermission Permissions { get; set; }
-
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset? LastLoginAt { get; set; }
 }

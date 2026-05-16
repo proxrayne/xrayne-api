@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using XRayne.Contracts.Enums;
+using XRayne.Repositories.Contracts;
 using XRayne.Repositories.Entities;
 
-namespace XRayne.Repositories.Admins;
+namespace XRayne.Repositories.Implementations;
 
 public sealed class AdminAccountRepository(AppDbContext dbContext) : IAdminAccountRepository
 {
@@ -24,10 +25,13 @@ public sealed class AdminAccountRepository(AppDbContext dbContext) : IAdminAccou
             .AnyAsync(account => account.Username == username, ct);
     }
 
-    public async Task AddAsync(AdminAccount account, CancellationToken t = default)
+    public async Task<AdminAccount> AddAsync(AdminAccount account, CancellationToken ct = default)
     {
-        await dbContext.AdminAccounts.AddAsync(account, t);
-        await dbContext.SaveChangesAsync(t);
+        await dbContext.AdminAccounts.AddAsync(account, ct);
+        await dbContext.SaveChangesAsync(ct);
+        await dbContext.Entry(account).ReloadAsync(ct);
+
+        return account;
     }
 
     public async Task<AdminAccount?> SetLastLoginAsync(

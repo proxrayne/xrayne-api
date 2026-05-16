@@ -13,6 +13,7 @@ Read `references/backend-map.md` before backend edits. Use it to place code in t
 
 - Keep shared DTOs, configuration contracts, permissions, and API-facing constants in `XRayne.Contracts`.
 - Keep xray-core setup, runtime services, and background jobs in `XRayne.Infrastructure`.
+- Keep EF entity models, base entity classes, migrations, and repository implementations in `XRayne.Repositories`.
 - Register services through the nearest `DependencyInjection.cs` extension.
 - Put HTTP behavior in controllers under `XRayne.Api/Controllers`; keep controllers thin and delegate work to repositories/services.
 - Throw `ApiException` subclasses for intended API errors so `ApiExceptionFilter` can format them.

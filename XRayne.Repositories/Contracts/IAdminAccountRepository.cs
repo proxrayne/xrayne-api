@@ -1,7 +1,7 @@
 using XRayne.Contracts.Enums;
 using XRayne.Repositories.Entities;
 
-namespace XRayne.Repositories.Admins;
+namespace XRayne.Repositories.Contracts;
 
 public interface IAdminAccountRepository
 {
@@ -11,7 +11,7 @@ public interface IAdminAccountRepository
 
     Task<bool> ExistsAsync(string username, CancellationToken cancellationToken = default);
 
-    Task AddAsync(AdminAccount account, CancellationToken cancellationToken = default);
+    Task<AdminAccount> AddAsync(AdminAccount account, CancellationToken cancellationToken = default);
 
     Task<AdminAccount?> SetLastLoginAsync(Guid id, DateTimeOffset lastLoginAt, CancellationToken cancellationToken = default);
 
