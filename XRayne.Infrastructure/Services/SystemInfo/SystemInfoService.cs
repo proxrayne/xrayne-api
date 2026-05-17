@@ -6,8 +6,9 @@ using XRayne.Infrastructure.Utilities;
 
 namespace XRayne.Infrastructure.Services;
 
-public abstract class SystemInfoService : ISystemInfoService
+public abstract class SystemInfoService(IProjectPathResolver paths) : ISystemInfoService
 {
+
     public async Task<SystemInfoSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
     {
         var cpuTask = GetCpuInfoAsync(cancellationToken);
@@ -108,16 +109,16 @@ public abstract class SystemInfoService : ISystemInfoService
 
     public StorageInfo GetStorageInfo()
     {
-        var applicationDirectorySize = GetDirectorySize(PathProvider.Paths.Root);
-        var downloadsDirectorySize = GetDirectorySize(PathProvider.Paths.DownloadsDirectory);
-        var applicationDrive = new DriveInfo(Path.GetPathRoot(PathProvider.Paths.Root) ?? PathProvider.Paths.Root);
+        var applicationDirectorySize = GetDirectorySize(paths.Root);
+        var downloadsDirectorySize = GetDirectorySize(paths.DownloadsDirectory);
+        var applicationDrive = new DriveInfo(Path.GetPathRoot(paths.Root) ?? paths.Root);
         var applicationDirectoryUsedDiskPercent = applicationDrive.TotalSize <= 0
             ? 0
             : ClampPercent(applicationDirectorySize / (double)applicationDrive.TotalSize * 100);
 
         return new StorageInfo(
-            new DirectorySizeInfo(PathProvider.Paths.Root, applicationDirectorySize),
-            new DirectorySizeInfo(PathProvider.Paths.DownloadsDirectory, downloadsDirectorySize),
+            new DirectorySizeInfo(paths.Root, applicationDirectorySize),
+            new DirectorySizeInfo(paths.DownloadsDirectory, downloadsDirectorySize),
             applicationDirectoryUsedDiskPercent);
     }
 

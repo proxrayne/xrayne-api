@@ -74,6 +74,7 @@ public sealed class ProjectPaths
     public string DownloadsDirectory { get; }
     public string CertificatesDirectory { get; }
     public string LetsEncryptDirectory { get; }
+    public string GeoResourcesDirectory { get; }
     public string JsonConfig { get; }
     public string EnvConfig { get; }
     public string DockerCompose { get; }
@@ -88,6 +89,7 @@ public sealed class ProjectPaths
         DownloadsDirectory = Path.Combine(rootPath, "downloads");
         CertificatesDirectory = Path.Combine(rootPath, "certificates");
         LetsEncryptDirectory = Path.Combine(CertificatesDirectory, "letsencrypt");
+        GeoResourcesDirectory = Path.Combine(XrayDirectory, "geo");
 
         JsonConfig = Path.Combine(rootPath, "config.json");
         EnvConfig = Path.Combine(rootPath, ".env");
