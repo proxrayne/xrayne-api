@@ -1,9 +1,10 @@
 using System.Runtime.InteropServices;
+using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Models;
 
 namespace XRayne.Infrastructure.Services;
 
-public sealed class WindowsSystemInfoService : SystemInfoService
+public sealed class WindowsSystemInfoService(IProjectPathResolver paths) : SystemInfoService(paths)
 {
     public override async Task<CpuInfo> GetCpuInfoAsync(CancellationToken cancellationToken = default)
     {

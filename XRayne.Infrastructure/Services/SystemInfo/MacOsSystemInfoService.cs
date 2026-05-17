@@ -1,10 +1,11 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Models;
 
 namespace XRayne.Infrastructure.Services;
 
-public sealed partial class MacOsSystemInfoService : SystemInfoService
+public sealed partial class MacOsSystemInfoService(IProjectPathResolver paths) : SystemInfoService(paths)
 {
     public override async Task<CpuInfo> GetCpuInfoAsync(CancellationToken cancellationToken = default)
     {

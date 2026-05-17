@@ -1,9 +1,10 @@
 using System.Globalization;
+using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Models;
 
 namespace XRayne.Infrastructure.Services;
 
-public sealed class LinuxSystemInfoService : SystemInfoService
+public sealed class LinuxSystemInfoService(IProjectPathResolver paths) : SystemInfoService(paths)
 {
     private const string MemInfoPath = "/proc/meminfo";
     private const string StatPath = "/proc/stat";
