@@ -4,7 +4,7 @@ using XRayne.Infrastructure.Models;
 
 namespace XRayne.Infrastructure.Services;
 
-public sealed class LinuxSystemInfoService(IProjectPathResolver paths) : SystemInfoService(paths)
+public sealed class LinuxSystemInfoService : SystemInfoService
 {
     private const string MemInfoPath = "/proc/meminfo";
     private const string StatPath = "/proc/stat";

@@ -1,6 +1,6 @@
 using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.Services.PanelSettings;
+using XRayne.Infrastructure.Services;
 
 namespace XRayne.Test.Infrastructure;
 
@@ -85,7 +85,7 @@ public sealed class SystemInfoServiceTests
     private static ISystemInfoService CreateService()
     {
         var accessor = Substitute.For<IPanelSettingsAccessor>();
-        accessor.Current.Returns(new XRayne.Contracts.Configurations.PanelOptions());
+        accessor.Current.Returns(new XRayne.Contracts.Configurations.PanelSettings());
         var paths = new ProjectPathResolver(accessor);
 
         if (OperatingSystem.IsWindows())

@@ -9,14 +9,14 @@ import {
 import { Field, FieldDescription, FieldError, FieldLabel } from "@core/ui/field";
 import { Input } from "@core/ui/input";
 
-import type { PanelSettings, UpdatePanelSettingsRequest } from "../lib/api.types";
+import type { PanelSettingsDto, UpdatePanelSettingsRequest } from "../lib/api.types";
 import { FieldImpactBadge } from "./field-impact-badge";
 
 interface PanelSectionProps {
   control: Control<UpdatePanelSettingsRequest>;
   register: UseFormRegister<UpdatePanelSettingsRequest>;
   errors: FieldErrors<UpdatePanelSettingsRequest>;
-  impacts: PanelSettings["fieldImpacts"];
+  impacts: PanelSettingsDto["fieldImpacts"];
 }
 
 export function PanelSection({ control, register, errors, impacts }: PanelSectionProps) {

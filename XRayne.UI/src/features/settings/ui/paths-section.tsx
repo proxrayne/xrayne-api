@@ -11,12 +11,12 @@ import { Alert, AlertDescription, AlertTitle } from "@core/ui/alert";
 import { Field, FieldDescription, FieldLabel } from "@core/ui/field";
 import { Input } from "@core/ui/input";
 
-import type { PanelSettings, UpdatePanelSettingsRequest } from "../lib/api.types";
+import type { PanelSettingsDto, UpdatePanelSettingsRequest } from "../lib/api.types";
 import { FieldImpactBadge } from "./field-impact-badge";
 
 interface PathsSectionProps {
   control: Control<UpdatePanelSettingsRequest>;
-  impacts: PanelSettings["fieldImpacts"];
+  impacts: PanelSettingsDto["fieldImpacts"];
 }
 
 export function PathsSection({ control, impacts }: PathsSectionProps) {

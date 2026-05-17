@@ -3,7 +3,7 @@ using XRayne.Api.Mapping;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
 using XRayne.Contracts.Configurations;
-using PanelSettingsEntity = XRayne.Repositories.Entities.PanelSettings;
+using PanelSettingsEntity = XRayne.Repositories.Entities;
 
 namespace XRayne.Test.Mapping;
 
@@ -21,7 +21,7 @@ public sealed class PanelSettingsProfileTests
     [Fact]
     public void Map_PanelOptions_To_PanelSettingsResponse_FillsFieldImpacts()
     {
-        var source = new PanelOptions { Port = 1234 };
+        var source = new PanelSettings { Port = 1234 };
 
         var response = _mapper.Map<PanelSettingsResponse>(source);
 
@@ -42,16 +42,16 @@ public sealed class PanelSettingsProfileTests
             BindIp = null,
             Domain = "example.com",
             Port = 9090,
-            WebBasePath = "/p/",
+            PathBase = "/p/",
             TrustedProxyCidrs = null
         };
 
-        var options = _mapper.Map<PanelOptions>(request);
+        var options = _mapper.Map<PanelSettings>(request);
 
         options.BindIp.Should().BeNull();
         options.Domain.Should().Be("example.com");
         options.Port.Should().Be(9090);
-        options.WebBasePath.Should().Be("/p/");
+        options.PathBase.Should().Be("/p/");
         options.TrustedProxyCidrs.Should().BeNull();
     }
 
@@ -72,17 +72,17 @@ public sealed class PanelSettingsProfileTests
             PanelCertPrivateKeyPath = "/priv"
         };
 
-        var options = _mapper.Map<PanelOptions>(entity);
+        var options = _mapper.Map<PanelSettings>(entity);
 
         options.BindIp.Should().Be("127.0.0.1");
         options.Domain.Should().Be("panel.local");
         options.Port.Should().Be(5097);
-        options.WebBasePath.Should().Be("/admin/");
+        options.PathBase.Should().Be("/admin/");
         options.SessionLifetimeMinutes.Should().Be(60);
         options.TrustedProxyCidrs.Should().Be("10.0.0.0/8");
         options.CertificatesDirectory.Should().Be("/c");
         options.GeoResourcesDirectory.Should().Be("/g");
-        options.PanelCertPublicKeyPath.Should().Be("/pub");
-        options.PanelCertPrivateKeyPath.Should().Be("/priv");
+        options.CertPublicKeyPath.Should().Be("/pub");
+        options.CertPrivateKeyPath.Should().Be("/priv");
     }
 }

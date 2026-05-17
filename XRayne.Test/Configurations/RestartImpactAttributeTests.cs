@@ -8,7 +8,7 @@ public sealed class RestartImpactAttributeTests
     [Fact]
     public void EveryPropertyOf_PanelOptions_HasRestartImpactAttribute()
     {
-        var properties = typeof(PanelOptions)
+        var properties = typeof(PanelSettings)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanWrite);
 
@@ -22,19 +22,19 @@ public sealed class RestartImpactAttributeTests
     }
 
     [Theory]
-    [InlineData(nameof(PanelOptions.BindIp), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.Port), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.PanelCertPublicKeyPath), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.PanelCertPrivateKeyPath), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.Domain), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.WebBasePath), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.SessionLifetimeMinutes), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.TrustedProxyCidrs), RestartImpact.FullRestart)]
-    [InlineData(nameof(PanelOptions.CertificatesDirectory), RestartImpact.HotReload)]
-    [InlineData(nameof(PanelOptions.GeoResourcesDirectory), RestartImpact.HotReload)]
+    [InlineData(nameof(PanelSettings.BindIp), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.Port), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.CertPublicKeyPath), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.CertPrivateKeyPath), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.Domain), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.PathBase), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.SessionLifetimeMinutes), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.TrustedProxyCidrs), RestartImpact.FullRestart)]
+    [InlineData(nameof(PanelSettings.CertificatesDirectory), RestartImpact.HotReload)]
+    [InlineData(nameof(PanelSettings.GeoResourcesDirectory), RestartImpact.HotReload)]
     public void Property_HasExpectedImpact(string propertyName, RestartImpact expected)
     {
-        var property = typeof(PanelOptions).GetProperty(propertyName)!;
+        var property = typeof(PanelSettings).GetProperty(propertyName)!;
         var actual = property.GetCustomAttribute<RestartImpactAttribute>()!.Impact;
         actual.Should().Be(expected);
     }

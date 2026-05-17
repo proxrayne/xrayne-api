@@ -21,7 +21,8 @@
     "jsx": "react-jsx",
     "paths": {
       "@core/*": ["./src/core/*"],
-      "@features/*": ["./src/features/*"]
+      "@features/*": ["./src/features/*"],
+      "@libs/*": ["./src/libs/*"]
     }
   },
   "include": [

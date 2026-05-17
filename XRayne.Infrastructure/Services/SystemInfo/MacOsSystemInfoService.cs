@@ -5,7 +5,7 @@ using XRayne.Infrastructure.Models;
 
 namespace XRayne.Infrastructure.Services;
 
-public sealed partial class MacOsSystemInfoService(IProjectPathResolver paths) : SystemInfoService(paths)
+public sealed partial class MacOsSystemInfoService : SystemInfoService
 {
     public override async Task<CpuInfo> GetCpuInfoAsync(CancellationToken cancellationToken = default)
     {

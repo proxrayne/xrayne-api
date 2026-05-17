@@ -12,7 +12,7 @@ using XRayne.Repositories.Entities;
 namespace XRayne.Api.Controllers;
 
 [Authorize(Policy = AdminPermissionNames.SuperAdmin)]
-[Route("api/admins")]
+[Route("api/admin")]
 public sealed class AdminsController(
     IAdminAccountRepository adminAccounts,
     IMapper mapper) : ApiControllerBase

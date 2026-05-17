@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Xray.Config.Enums;
 using XRayne.Contracts.Enums;
 using XRayne.Repositories.Entities;
 
@@ -35,7 +34,7 @@ public sealed class AppDbContext : DbContext
         {
             builder.Property(x => x.Enabled)
                 .HasColumnName("Enabled")
-                .HasDefaultValueSql("TRUE");
+                .HasDefaultValue(true);
         });
     }
 

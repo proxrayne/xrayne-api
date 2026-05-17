@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace XRayne.Api.Controllers;
 
 [Authorize]
-[Route("api/inbounds")]
+[Route("api/inbound")]
 public sealed class InboundsController : ApiControllerBase
 {
     

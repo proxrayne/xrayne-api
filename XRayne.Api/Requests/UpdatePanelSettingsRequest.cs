@@ -15,9 +15,9 @@ public sealed class UpdatePanelSettingsRequest : IValidatableObject
     public int Port { get; set; } = 5097;
 
     [Required]
-    [RegularExpression(@"^/$|^/.+/$", ErrorMessage = "WebBasePath must start with '/' and end with '/'.")]
+    [RegularExpression(@"^/$|^/.+/$", ErrorMessage = "PathBase must start with '/' and end with '/'.")]
     [MaxLength(256)]
-    public string WebBasePath { get; set; } = "/";
+    public string PathBase { get; set; } = "/";
 
     [Range(1, int.MaxValue)]
     public int SessionLifetimeMinutes { get; set; } = 7200;
@@ -27,26 +27,20 @@ public sealed class UpdatePanelSettingsRequest : IValidatableObject
     public string? TrustedProxyCidrs { get; set; }
 
     [MaxLength(1024)]
-    public string? CertificatesDirectory { get; set; }
+    public string? CertPublicKeyPath { get; set; }
 
     [MaxLength(1024)]
-    public string? GeoResourcesDirectory { get; set; }
-
-    [MaxLength(1024)]
-    public string? PanelCertPublicKeyPath { get; set; }
-
-    [MaxLength(1024)]
-    public string? PanelCertPrivateKeyPath { get; set; }
+    public string? CertPrivateKeyPath { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        var hasPublicKey = !string.IsNullOrWhiteSpace(PanelCertPublicKeyPath);
-        var hasPrivateKey = !string.IsNullOrWhiteSpace(PanelCertPrivateKeyPath);
+        var hasPublicKey = !string.IsNullOrWhiteSpace(CertPublicKeyPath);
+        var hasPrivateKey = !string.IsNullOrWhiteSpace(CertPrivateKeyPath);
         if (hasPublicKey != hasPrivateKey)
         {
             yield return new ValidationResult(
                 "Panel certificate public and private key paths must be provided together (or both left empty).",
-                [nameof(PanelCertPublicKeyPath), nameof(PanelCertPrivateKeyPath)]);
+                [nameof(CertPublicKeyPath), nameof(CertPrivateKeyPath)]);
         }
     }
 }

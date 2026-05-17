@@ -7,7 +7,7 @@ using XRayne.Api.Mapping;
 using XRayne.Api.Requests;
 using XRayne.Api.Responses;
 using XRayne.Contracts.Configurations;
-using XRayne.Infrastructure.Services.PanelSettings;
+using XRayne.Infrastructure.Services;
 
 namespace XRayne.Test.Controllers;
 
@@ -38,10 +38,10 @@ public sealed class SettingsControllerTests
     [Fact]
     public void Get_ReturnsCurrentSettings_WithFieldImpacts_AndPendingRestart()
     {
-        _accessor.Current.Returns(new PanelOptions { Port = 4242 });
+        _accessor.Current.Returns(new PanelSettings { Port = 4242 });
         _accessor.PendingRestart.Returns(true);
 
-        var response = _controller.GetPanel();
+        var response = _controller.GetCurrent();
 
         response.Port.Should().Be(4242);
         response.PendingRestart.Should().BeTrue();
@@ -55,7 +55,7 @@ public sealed class SettingsControllerTests
     public async Task Update_ReturnsCorrectFlags(RestartImpact impact, bool expectedRestart, int expectedHotCount)
     {
         var changed = impact == RestartImpact.None ? Array.Empty<string>() : new[] { "WebBasePath" };
-        _accessor.ApplyAsync(Arg.Any<PanelOptions>(), Arg.Any<CancellationToken>())
+        _accessor.ApplyAsync(Arg.Any<PanelSettings>(), Arg.Any<CancellationToken>())
             .Returns(new SettingsApplyResult(changed, impact));
 
         var response = await _controller.UpdatePanel(new UpdatePanelSettingsRequest(), CancellationToken.None);
@@ -67,15 +67,15 @@ public sealed class SettingsControllerTests
     [Fact]
     public async Task Update_CallsAccessor_WithMappedOptions()
     {
-        _accessor.ApplyAsync(Arg.Any<PanelOptions>(), Arg.Any<CancellationToken>())
+        _accessor.ApplyAsync(Arg.Any<PanelSettings>(), Arg.Any<CancellationToken>())
             .Returns(new SettingsApplyResult(Array.Empty<string>(), RestartImpact.None));
 
-        var request = new UpdatePanelSettingsRequest { Port = 7070, WebBasePath = "/x/" };
+        var request = new UpdatePanelSettingsRequest { Port = 7070, PathBase = "/x/" };
 
         await _controller.UpdatePanel(request, CancellationToken.None);
 
         await _accessor.Received(1).ApplyAsync(
-            Arg.Is<PanelOptions>(o => o.Port == 7070 && o.WebBasePath == "/x/"),
+            Arg.Is<PanelSettings>(o => o.Port == 7070 && o.PathBase == "/x/"),
             Arg.Any<CancellationToken>());
     }
 

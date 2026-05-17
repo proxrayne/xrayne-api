@@ -1,18 +1,18 @@
 export type RestartImpact = "None" | "HotReload" | "FullRestart";
 
-export interface PanelSettings {
+export interface PanelSettingsDto {
   bindIp: string | null;
   domain: string | null;
   port: number;
-  webBasePath: string;
+  pathBase: string;
   sessionLifetimeMinutes: number;
-  trustedProxyCidrs: string | null;
-  certificatesDirectory: string | null;
-  geoResourcesDirectory: string | null;
   panelCertPublicKeyPath: string | null;
   panelCertPrivateKeyPath: string | null;
+}
+
+export interface PanelSettingsResponse {
+  settings: PanelSettingsDto;
   pendingRestart: boolean;
-  fieldImpacts: Record<string, RestartImpact>;
 }
 
 export interface UpdatePanelSettingsRequest {
@@ -31,5 +31,4 @@ export interface UpdatePanelSettingsRequest {
 export interface UpdatePanelSettingsResponse {
   requiresRestart: boolean;
   changedFields: string[];
-  hotReloaded: string[];
 }

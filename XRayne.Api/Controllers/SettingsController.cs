@@ -5,26 +5,30 @@ using XRayne.Api.Requests;
 using XRayne.Api.Responses;
 using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services.PanelSettings;
+using XRayne.Infrastructure.Services;
 
 namespace XRayne.Api.Controllers;
 
 [Route("api/settings")]
 [Authorize(Policy = AdminPermissionNames.SuperAdmin)]
 public sealed class SettingsController(
-    IPanelSettingsAccessor accessor,
     IMapper mapper,
+    ISettingsService settingsService,
     IPanelRestartService restartService,
     ILogger<SettingsController> logger) : ApiControllerBase
 {
     [HttpGet("panel")]
     [EndpointSummary("Get panel settings")]
     [ProducesResponseType(typeof(PanelSettingsResponse), StatusCodes.Status200OK)]
-    public PanelSettingsResponse GetPanel()
+    public PanelSettingsResponse GetCurrent()
     {
-        var response = mapper.Map<PanelSettingsResponse>(accessor.Current);
-        response.PendingRestart = accessor.PendingRestart;
-        return response;
+        var settings = mapper.Map<PanelSettingsDto>(settingsService.Current);
+
+        return new PanelSettingsResponse()
+        {
+            Settings = settings,
+            PendingRestart = settingsService.PendingRestart,
+        };
     }
 
     [HttpPut("panel")]
@@ -35,14 +39,13 @@ public sealed class SettingsController(
         [FromBody] UpdatePanelSettingsRequest request,
         CancellationToken ct)
     {
-        var next = mapper.Map<PanelOptions>(request);
-        var result = await accessor.ApplyAsync(next, ct);
+        var next = mapper.Map<PanelSettings>(request);
+        var result = await settingsService.ApplyAsync(next, ct);
 
         return new UpdatePanelSettingsResponse
         {
             RequiresRestart = result.RequiresRestart,
             ChangedFields = result.ChangedFields.ToList(),
-            HotReloaded = result.HotReloadedFields.ToList()
         };
     }
 

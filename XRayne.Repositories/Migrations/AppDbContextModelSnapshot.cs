@@ -104,8 +104,8 @@ namespace XRayne.Repositories.Migrations
                     b.Property<bool>("Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasColumnName("Enabled")
-                        .HasDefaultValueSql("TRUE");
+                        .HasDefaultValue(true)
+                        .HasColumnName("Enabled");
 
                     b.Property<DateTimeOffset?>("LastTrafficReset")
                         .HasColumnType("timestamp with time zone");

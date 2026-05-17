@@ -11,7 +11,7 @@ public sealed class InboundEntity : CreateUpdateEntity
     [Key]
     public int Id { get; set; }
 
-    public bool Enabled { get; set; } = true;
+    public bool Enabled { get; set; }
 
     [MaxLength(256)]
     public required string DisplayName { get; set; }

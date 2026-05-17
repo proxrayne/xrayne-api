@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace XRayne.Api.Controllers;
 
 [Authorize]
-[Route("api/users")]
+[Route("api/user")]
 public sealed class UsersController : ApiControllerBase
 {
     

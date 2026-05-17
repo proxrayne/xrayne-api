@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.Services.PanelSettings;
 using XRayne.Infrastructure.Tasks;
 
 namespace XRayne.Infrastructure;
@@ -15,7 +14,7 @@ public static class DependencyInjection
     {
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddSingleton<ISystemInfoService>(sp => CreateSystemInfoService(sp.GetRequiredService<IProjectPathResolver>()));
+        services.AddSingleton<ISystemInfoService>(sp => CreateSystemInfoService());
 
         services.AddSingleton<IEventStreamManager, EventStreamManager>();
         services.AddSingleton<ICoreService, CoreService>();
@@ -25,28 +24,26 @@ public static class DependencyInjection
         services.AddTransient<InstallCoreJob>();
         services.AddTransient<CoreOperationJob>();
 
-        services.AddSingleton<IPanelSettingsAccessor, PanelSettingsAccessor>();
-        services.AddSingleton<IProjectPathResolver, ProjectPathResolver>();
-        services.AddHostedService<PanelSettingsBootstrapService>();
+        services.AddSingleton<ISettingsService, SettingsService>();
 
         return services;
     }
 
-    private static SystemInfoService CreateSystemInfoService(IProjectPathResolver paths)
+    private static SystemInfoService CreateSystemInfoService()
     {
         if (OperatingSystem.IsWindows())
         {
-            return new WindowsSystemInfoService(paths);
+            return new WindowsSystemInfoService();
         }
 
         if (OperatingSystem.IsLinux())
         {
-            return new LinuxSystemInfoService(paths);
+            return new LinuxSystemInfoService();
         }
 
         if (OperatingSystem.IsMacOS())
         {
-            return new MacOsSystemInfoService(paths);
+            return new MacOsSystemInfoService();
         }
 
         throw new PlatformNotSupportedException(

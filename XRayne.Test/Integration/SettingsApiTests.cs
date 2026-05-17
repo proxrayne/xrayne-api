@@ -129,7 +129,7 @@ public sealed class SettingsApiTests
         await using var factory = await CreateFactoryAsync();
         var client = await factory.CreateAuthenticatedClientAsync();
 
-        var put = await client.PutAsJsonAsync("/api/settings/panel", new UpdatePanelSettingsRequest { WebBasePath = path });
+        var put = await client.PutAsJsonAsync("/api/settings/panel", new UpdatePanelSettingsRequest { PathBase = path });
 
         put.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

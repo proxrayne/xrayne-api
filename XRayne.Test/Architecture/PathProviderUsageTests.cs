@@ -2,7 +2,7 @@ using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services.PanelSettings;
+using XRayne.Infrastructure.Services;
 
 namespace XRayne.Test.Architecture;
 

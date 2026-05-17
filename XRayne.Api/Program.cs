@@ -1,8 +1,9 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -15,7 +16,7 @@ using XRayne.Contracts;
 using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
 using XRayne.Infrastructure;
-using XRayne.Infrastructure.Services.PanelSettings;
+using XRayne.Infrastructure.Services;
 using XRayne.Repositories;
 
 Log.Logger = new LoggerConfiguration()
@@ -32,12 +33,13 @@ try
     var IsDocsEnabled = builder.Configuration.GetValue("Docs", false);
     var devSpaOrigins = builder.Configuration.GetSection("Cors:SpaOrigins").Get<string[]>() ?? [];
 
-    var panelStartup = PanelStartupReader.TryRead(builder.Configuration.GetConnectionString("Default"));
-    if (panelStartup is not null && PanelStartupReader.ShouldOverrideKestrel(panelStartup))
+    PanelSettings settings = PanelSettings.Parse(builder.Configuration);
+    if (!builder.Environment.IsDevelopment() && PanelStartupReader.ShouldOverrideKestrel(settings))
     {
         using var bootstrapLoggerFactory = LoggerFactory.Create(b => b.AddSerilog());
         var kestrelLogger = bootstrapLoggerFactory.CreateLogger("Kestrel");
-        builder.WebHost.ConfigureKestrel(o => PanelStartupReader.ApplyKestrel(o, panelStartup, kestrelLogger));
+
+        builder.WebHost.ConfigureKestrel(o => PanelStartupReader.ApplyKestrel(o, settings, kestrelLogger));
     }
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
@@ -59,11 +61,12 @@ try
     }).AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(
-            new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
+            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     });
     builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-    var allowedOrigins = BuildAllowedOrigins(devSpaOrigins, panelStartup?.Domain);
+    var allowedOrigins = BuildAllowedOrigins(devSpaOrigins, settings.Domain);
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("SpaClient", policy =>
@@ -80,9 +83,11 @@ try
         options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
             | ForwardedHeaders.XForwardedProto
             | ForwardedHeaders.XForwardedHost;
+
         options.KnownNetworks.Clear();
         options.KnownProxies.Clear();
-        ApplyTrustedProxyCidrs(options, panelStartup?.TrustedProxyCidrs);
+
+        // ApplyTrustedProxyCidrs(options, settings.TrustedProxyCidrs);
     });
 
     if (IsDocsEnabled)
@@ -118,16 +123,13 @@ try
         });
     }
 
-    var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
-    if (panelStartup is not null && panelStartup.SessionLifetimeMinutes > 0)
-    {
-        jwtOptions.AccessTokenLifetimeMinutes = panelStartup.SessionLifetimeMinutes;
-    }
 
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
+            var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
+
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -165,11 +167,10 @@ try
     builder.Services.AddContracts(builder.Configuration);
     builder.Services.AddSingleton<IPanelRestartService, PanelRestartService>();
 
-    // Override JwtOptions именно после AddInfrastructure — иначе section-binding оттуда перетрёт значение.
-    if (panelStartup is not null && panelStartup.SessionLifetimeMinutes > 0)
+    if (settings.SessionLifetimeMinutes > 0)
     {
         builder.Services.Configure<JwtOptions>(o =>
-            o.AccessTokenLifetimeMinutes = panelStartup.SessionLifetimeMinutes);
+            o.AccessTokenLifetimeMinutes = settings.SessionLifetimeMinutes);
     }
 
     builder.Services.AddQuartz(options =>
@@ -189,18 +190,15 @@ try
     });
 
     var app = builder.Build();
-    var pathBase = NormalizePathBase(panelStartup?.WebBasePath);
 
     await app.Services.MigrateDatabaseAsync();
-
-    // PanelSettingsBootstrapService (IHostedService) загружает accessor до открытия Kestrel.
 
     app.UseSerilogRequestLogging();
     app.UseForwardedHeaders();
 
-    if (!string.IsNullOrWhiteSpace(pathBase))
+    if (!string.IsNullOrWhiteSpace(settings.PathBase))
     {
-        app.UsePathBase(pathBase);
+        app.UsePathBase(settings.PathBase);
     }
 
     if (IsDocsEnabled)
@@ -255,19 +253,6 @@ finally
     Log.CloseAndFlush();
 }
 
-static string NormalizePathBase(string? value)
-{
-    if (string.IsNullOrWhiteSpace(value))
-    {
-        return string.Empty;
-    }
-
-    var pathBase = value.Trim().Trim('/');
-
-    return pathBase.Length == 0
-        ? string.Empty
-        : $"/{pathBase}";
-}
 
 static string[] BuildAllowedOrigins(string[] devOrigins, string? domain)
 {
@@ -280,10 +265,10 @@ static string[] BuildAllowedOrigins(string[] devOrigins, string? domain)
         ? domain.TrimEnd('/')
         : $"https://{domain.TrimEnd('/')}";
 
-    return [..devOrigins, normalized];
+    return [.. devOrigins, normalized];
 }
 
-static void ApplyTrustedProxyCidrs(ForwardedHeadersOptions options, string? cidrs)
+/* static void ApplyTrustedProxyCidrs(ForwardedHeadersOptions options, string? cidrs)
 {
     if (string.IsNullOrWhiteSpace(cidrs))
     {
@@ -303,6 +288,6 @@ static void ApplyTrustedProxyCidrs(ForwardedHeadersOptions options, string? cidr
             options.KnownProxies.Add(ip);
         }
     }
-}
+} */
 
 public partial class Program;

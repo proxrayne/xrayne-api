@@ -1,13 +1,16 @@
 import { api } from "@core/api/instance";
 
 import type {
-  PanelSettings,
+  PanelSettingsResponse,
   UpdatePanelSettingsRequest,
   UpdatePanelSettingsResponse,
 } from "./api.types";
 
 export async function fetchPanelSettings(signal?: AbortSignal) {
-  const { data } = await api.get<PanelSettings>("settings/panel", { signal });
+  const { data } = await api.get<PanelSettingsResponse>("settings/panel", {
+    signal,
+  });
+
   return data;
 }
 
