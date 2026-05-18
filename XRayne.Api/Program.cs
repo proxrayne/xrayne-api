@@ -196,10 +196,11 @@ try
     app.UseSerilogRequestLogging();
     app.UseForwardedHeaders();
 
-    if (!string.IsNullOrWhiteSpace(settings.PathBase))
-    {
-        app.UsePathBase(settings.PathBase);
-    }
+    // TODO: need implement after add frontend logic
+    // if (!string.IsNullOrWhiteSpace(settings.PathBase))
+    // {
+    //     app.UsePathBase(settings.PathBase);
+    // }
 
     if (IsDocsEnabled)
     {

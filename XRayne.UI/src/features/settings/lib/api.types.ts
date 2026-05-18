@@ -18,14 +18,11 @@ export interface PanelSettingsResponse {
 export interface UpdatePanelSettingsRequest {
   bindIp: string | null;
   domain: string | null;
-  port: number;
-  webBasePath: string;
-  sessionLifetimeMinutes: number;
-  trustedProxyCidrs: string | null;
-  certificatesDirectory: string | null;
-  geoResourcesDirectory: string | null;
-  panelCertPublicKeyPath: string | null;
-  panelCertPrivateKeyPath: string | null;
+  port: number | null;
+  pathBase?: string | null;
+  sessionLifetimeMinutes: number | null;
+  certPublicKeyPath: string | null;
+  certPrivateKeyPath: string | null;
 }
 
 export interface UpdatePanelSettingsResponse {

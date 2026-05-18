@@ -91,12 +91,12 @@ public sealed class SettingsService(IConfiguration configuration) : ISettingsSer
                 Target = UpdateTarget.Env,
                 Impact = RestartImpact.FullRestart,
             },
-            new UpdateCommit() {
-                Field = nameof(next.Port),
-                ConfigKey = "Kestrel:Endpoints:Http:Url",
-                Value = $"http://+:{next.Port}",
-                Impact = RestartImpact.FullRestart,
-            },
+            // new UpdateCommit() {
+            //     Field = nameof(next.Port),
+            //     ConfigKey = "Kestrel:Endpoints:Http:Url",
+            //     Value = $"http://+:{next.Port}",
+            //     Impact = RestartImpact.FullRestart,
+            // },
         ]);
 
         AddIfChanged(commits, current.SessionLifetimeMinutes, next.SessionLifetimeMinutes, () => [

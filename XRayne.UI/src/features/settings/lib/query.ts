@@ -6,10 +6,11 @@ import { fetchPanelSettings } from "./api";
 import type { PanelSettingsDto } from "./api.types";
 
 export const panelSettingsQuery = queryOptions({
-  queryKey: ["panel-settings"],
+  queryKey: ["panel", "settings"],
   queryFn: ({ signal }) => fetchPanelSettings(signal),
   refetchOnWindowFocus: false,
   staleTime: 0,
+  retry: 1,
 });
 
 export function usePanelSettings() {
@@ -37,3 +38,5 @@ usePanelSettings.setData = (settings: PanelSettingsDto) =>
 
 usePanelSettings.invalidate = () =>
   query.invalidateQueries({ queryKey: panelSettingsQuery.queryKey });
+
+usePanelSettings.fetch = () => query.fetchQuery(panelSettingsQuery);

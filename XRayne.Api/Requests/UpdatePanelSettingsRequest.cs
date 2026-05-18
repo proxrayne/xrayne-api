@@ -14,10 +14,9 @@ public sealed class UpdatePanelSettingsRequest : IValidatableObject
     [Range(1, 65535)]
     public int Port { get; set; } = 5097;
 
-    [Required]
     [RegularExpression(@"^/$|^/.+/$", ErrorMessage = "PathBase must start with '/' and end with '/'.")]
     [MaxLength(256)]
-    public string PathBase { get; set; } = "/";
+    public string? PathBase { get; set; } 
 
     [Range(1, int.MaxValue)]
     public int SessionLifetimeMinutes { get; set; } = 7200;
