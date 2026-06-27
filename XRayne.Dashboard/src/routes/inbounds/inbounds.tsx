@@ -8,7 +8,7 @@ import { Switch } from "@core/ui/switch";
 import Placeholder from "@core/ui/placeholder";
 import ColoredIcon from "@core/ui/colored-icon";
 
-import { UpsetInboundDialog } from "@features/inbound";
+import { InboundDialog } from "@features/inbound";
 
 function Inbounds() {
   return (
@@ -21,12 +21,12 @@ function Inbounds() {
               <FilterIcon />
               <span className="max-sm:hidden">Filter</span>
             </Button>
-            <UpsetInboundDialog>
+            <InboundDialog>
               <Button variant="secondary">
                 <PlusIcon />
                 New
               </Button>
-            </UpsetInboundDialog>
+            </InboundDialog>
           </ButtonGroup>
         </Page.Toolbar>
       </Page.Header>
@@ -40,12 +40,12 @@ function Inbounds() {
         <Placeholder.Header>Inbounds not found</Placeholder.Header>
         <Placeholder.Subheader>Create inbound to connect clients</Placeholder.Subheader>
         <Placeholder.Actions>
-          <UpsetInboundDialog>
+          <InboundDialog>
             <Button>
               <PlusIcon />
               Create inbound
             </Button>
-          </UpsetInboundDialog>
+          </InboundDialog>
         </Placeholder.Actions>
       </Placeholder>
 

@@ -1,1 +1,1 @@
-export { default as UpsetInboundDialog } from "./ui/upset-inbound-dialog";
+export { default as InboundDialog } from "./ui/inbound-dialog";
