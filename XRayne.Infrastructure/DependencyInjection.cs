@@ -25,6 +25,10 @@ public static class DependencyInjection
         services.AddTransient<CoreOperationJob>();
 
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddScoped<INodeService, NodeService>();
+        services.AddScoped<ICertificateService, CertificateService>();
+        services.AddScoped<IGeoResourceService, GeoResourceService>();
+        services.AddScoped<IRoutingRuleService, RoutingRuleService>();
 
         return services;
     }

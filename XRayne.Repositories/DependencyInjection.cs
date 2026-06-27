@@ -29,6 +29,8 @@ public static class DependencyInjection
                     dataSourceBuilder.MapEnum<UserStatus>();
                     dataSourceBuilder.MapEnum<LimitResetStrategy>();
                     dataSourceBuilder.MapEnum<AdminPermission>();
+                    dataSourceBuilder.MapEnum<SSHAuthType>();
+                    dataSourceBuilder.MapEnum<NodeStatus>();
 
                     dataSourceBuilder
                         .EnableDynamicJson()
@@ -48,6 +50,10 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IInboundRepository, InboundRepository>();
         services.AddScoped<IOutboundRepository, OutboundRepository>();
+        services.AddScoped<INodeRepository, NodeRepository>();
+        services.AddScoped<ICertificateRepository, CertificateRepository>();
+        services.AddScoped<IGeoResourceRepository, GeoResourceRepository>();
+        services.AddScoped<IRoutingRuleRepository, RoutingRuleRepository>();
 
         return services;
     }

@@ -36,6 +36,7 @@ public sealed class User : CreateUpdateEntity
 
     public DateTimeOffset? ExpireAt { get; set; }
 
+    // relation tables
     public List<InboundEntity> Inbounds { get; set; } = new();
 
     public AdminAccount Admin { get; set; } = null!;

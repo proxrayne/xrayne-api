@@ -9,7 +9,7 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
     public Task<List<OutboundEntity>> GetAllAsync(CancellationToken ct = default)
     {
         return dbContext.Outbounds
-            .OrderBy(outbound => outbound.Index)
+            .OrderBy(outbound => outbound.Position)
             .ToListAsync(ct);
     }
 
@@ -17,7 +17,7 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
     {
         return dbContext.Outbounds
             .Where(outbound => EF.Property<Guid>(outbound, "AdminId") == adminId)
-            .OrderBy(outbound => outbound.Index)
+            .OrderBy(outbound => outbound.Position)
             .ToListAsync(ct);
     }
 

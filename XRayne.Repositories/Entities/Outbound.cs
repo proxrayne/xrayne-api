@@ -11,24 +11,33 @@ public sealed class OutboundEntity : CreateUpdateEntity
     [Key]
     public int Id { get; set; }
 
-    public int Index { get; set; }
+    public int Position { get; set; }
+
+    public bool Enabled { get; set; }
+
+    public bool ReadOnly { get; set; }
 
     [Column(TypeName = "jsonb")]
-    public required Outbound Native { get; set; }
+    public required Outbound Config { get; set; }
+
+    // relation tables
+    public List<User> Users { get; set; } = new();
 
     public AdminAccount Admin { get; set; } = null!;
+
+    public NodeEntity Node { get; set; } = null!;
 
     // Computed
 
     [NotMapped]
-    public string? Tag => Native.Tag;
+    public string? Tag => Config.Tag;
 
     [NotMapped]
-    public Protocol Protocol => Native.Protocol;
+    public Protocol Protocol => Config.Protocol;
 
     [NotMapped]
-    public StreamNetwork Network => Native.StreamSettings!.Network;
+    public StreamNetwork Network => Config.StreamSettings!.Network;
 
     [NotMapped]
-    public StreamSecurity Security => Native.StreamSettings!.Security;
+    public StreamSecurity Security => Config.StreamSettings!.Security;
 }

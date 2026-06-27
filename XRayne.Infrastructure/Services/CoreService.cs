@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 using Xray.Core;
+using Xray.Core.Models;
 using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
 using XRayne.Repositories.Utilities;

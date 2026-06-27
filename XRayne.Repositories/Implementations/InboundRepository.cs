@@ -153,7 +153,7 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
             var search = filter.Search.Trim();
             query = query.Where(inbound =>
                 EF.Functions.ILike(inbound.DisplayName, $"%{search}%")
-                || EF.Functions.ILike(inbound.Native.Tag, $"%{search}%"));
+                || EF.Functions.ILike(inbound.Config.Tag, $"%{search}%"));
         }
 
         if (filter.Enabled.HasValue)
@@ -163,17 +163,17 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
 
         if (filter.Protocol is { Count: > 0 })
         {
-            query = query.Where(inbound => filter.Protocol.Contains(inbound.Native.Protocol));
+            query = query.Where(inbound => filter.Protocol.Contains(inbound.Config.Protocol));
         }
 
         if (filter.Network is { Count: > 0 })
         {
-            query = query.Where(inbound => filter.Network.Contains(inbound.Native.StreamSettings.Network));
+            query = query.Where(inbound => filter.Network.Contains(inbound.Config.StreamSettings.Network));
         }
 
         if (filter.Security is { Count: > 0 })
         {
-            query = query.Where(inbound => filter.Security.Contains(inbound.Native.StreamSettings.Security));
+            query = query.Where(inbound => filter.Security.Contains(inbound.Config.StreamSettings.Security));
         }
 
         return query;

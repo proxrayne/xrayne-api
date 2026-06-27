@@ -8,10 +8,14 @@ public sealed class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<AdminAccount> AdminAccounts => Set<AdminAccount>();
-    public DbSet<InboundEntity> Inbounds => Set<InboundEntity>();
-    public DbSet<OutboundEntity> Outbounds => Set<OutboundEntity>();
-    public DbSet<User> Users => Set<User>();
+    public DbSet<AdminAccount> AdminAccounts { get; set; }
+    public DbSet<InboundEntity> Inbounds { get; set; }
+    public DbSet<OutboundEntity> Outbounds { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<NodeEntity> Nodes { get; set; }
+    public DbSet<CertificateEntity> Certificates { get; set; }
+    public DbSet<GeoResourceEntity> GeoResources { get; set; }
+    public DbSet<RoutingRuleEntity> RoutingRules { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +24,8 @@ public sealed class AppDbContext : DbContext
         modelBuilder.HasPostgresEnum<UserStatus>();
         modelBuilder.HasPostgresEnum<LimitResetStrategy>();
         modelBuilder.HasPostgresEnum<AdminPermission>();
+        modelBuilder.HasPostgresEnum<SSHAuthType>();
+        modelBuilder.HasPostgresEnum<NodeStatus>();
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
@@ -35,6 +41,42 @@ public sealed class AppDbContext : DbContext
             builder.Property(x => x.Enabled)
                 .HasColumnName("Enabled")
                 .HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<OutboundEntity>(builder =>
+        {
+            builder.Property(x => x.Enabled)
+                .HasColumnName("Enabled")
+                .HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<NodeEntity>(builder =>
+        {
+            builder.HasMany(x => x.Inbounds)
+                .WithOne(x => x.Node)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.Outbounds)
+                .WithOne(x => x.Node)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.RoutingRules)
+                .WithOne(x => x.Node)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CertificateEntity>(builder =>
+        {
+            builder.HasOne(x => x.Node)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GeoResourceEntity>(builder =>
+        {
+            builder.HasOne(x => x.Node)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

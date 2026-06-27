@@ -13,38 +13,43 @@ public sealed class InboundEntity : CreateUpdateEntity
 
     public bool Enabled { get; set; }
 
+    public bool ReadOnly { get; set; }
+
     [MaxLength(256)]
     public required string DisplayName { get; set; }
 
     public DateTimeOffset? LastTrafficReset { get; set; }
 
     [Column(TypeName = "jsonb")]
-    public required Inbound Native { get; set; }
+    public required Inbound Config { get; set; }
 
+    // relation tables
     public List<User> Users { get; set; } = new();
 
     public AdminAccount Admin { get; set; } = null!;
 
+    public NodeEntity Node { get; set; } = null!;
+
     // Computed
 
     [NotMapped]
-    public string Tag => Native.Tag;
+    public string Tag => Config.Tag;
 
     [NotMapped]
-    public string? Listen => Native.Listen;
+    public string? Listen => Config.Listen;
 
     [NotMapped]
-    public Protocol Protocol => Native.Protocol;
+    public Protocol Protocol => Config.Protocol;
 
     [NotMapped]
-    public StreamNetwork Network => Native.StreamSettings.Network;
+    public StreamNetwork Network => Config.StreamSettings.Network;
 
     [NotMapped]
-    public StreamSecurity Security => Native.StreamSettings.Security;
+    public StreamSecurity Security => Config.StreamSettings.Security;
 
     [NotMapped]
-    public InboundSniffing? Sniffing => Native.Sniffing;
+    public InboundSniffing? Sniffing => Config.Sniffing;
 
     [NotMapped]
-    public Port Port => Native.Port;
+    public Port Port => Config.Port;
 }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using XRayne.Repositories;
@@ -15,9 +16,11 @@ using Xray.Config.Models;
 namespace XRayne.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260627225305_AddConfigModels")]
+    partial class AddConfigModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -118,9 +121,6 @@ namespace XRayne.Repositories.Migrations
                     b.Property<DateTime>("ExpireAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("NodeEntityId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("NodeId")
                         .HasColumnType("bigint");
 
@@ -139,8 +139,6 @@ namespace XRayne.Repositories.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AdminId");
-
-                    b.HasIndex("NodeEntityId");
 
                     b.HasIndex("NodeId");
 
@@ -181,9 +179,6 @@ namespace XRayne.Repositories.Migrations
                     b.Property<DateTime>("NextRunAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("NodeEntityId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("NodeId")
                         .HasColumnType("bigint");
 
@@ -199,8 +194,6 @@ namespace XRayne.Repositories.Migrations
                     b.HasIndex("AdminId");
 
                     b.HasIndex("NextRunAt");
-
-                    b.HasIndex("NodeEntityId");
 
                     b.HasIndex("NodeId");
 
@@ -524,10 +517,6 @@ namespace XRayne.Repositories.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", null)
-                        .WithMany("Certificates")
-                        .HasForeignKey("NodeEntityId");
-
                     b.HasOne("XRayne.Repositories.Entities.NodeEntity", "Node")
                         .WithMany()
                         .HasForeignKey("NodeId")
@@ -546,10 +535,6 @@ namespace XRayne.Repositories.Migrations
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", null)
-                        .WithMany("GeoResources")
-                        .HasForeignKey("NodeEntityId");
 
                     b.HasOne("XRayne.Repositories.Entities.NodeEntity", "Node")
                         .WithMany()
@@ -647,10 +632,6 @@ namespace XRayne.Repositories.Migrations
 
             modelBuilder.Entity("XRayne.Repositories.Entities.NodeEntity", b =>
                 {
-                    b.Navigation("Certificates");
-
-                    b.Navigation("GeoResources");
-
                     b.Navigation("Inbounds");
 
                     b.Navigation("Outbounds");
