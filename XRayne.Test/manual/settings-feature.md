@@ -31,7 +31,7 @@
 
 ## Frontend (статика)
 
-- [ ] `cd XRayne.UI && npx vite build` — собирается без ошибок.
+- [ ] `cd XRayne.Dashboard && npx vite build` — собирается без ошибок.
 - [ ] `npm run lint` — без ошибок (если настроен).
 
 ## Доступ для CI

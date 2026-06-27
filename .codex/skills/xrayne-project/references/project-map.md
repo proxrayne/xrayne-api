@@ -16,7 +16,7 @@ XRayne.Node is a node and admin panel for managing `xray-core`. The intended sur
 - `XRayne.Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, runtime config file utilities such as `JsonConfig`/`EnvConfig`, and external clients under `External` such as `GitHubRepository`.
 - `XRayne.Contracts`: shared contracts, configuration DTOs, shared API/query models, permission enums, and permission names.
 - `XRayne.Test`: backend test project.
-- `XRayne.UI`: React Router app.
+- `XRayne.Dashboard`: React Router app.
 - `.github/workflows/build.yml`: publishes single-file CLI artifacts for `win-x64`, `osx-arm64`, and `linux-x64`, and publishes the API+UI Docker image archive on tags or manual dispatch.
 - `.codex/skills`: project-local Codex skills.
 
@@ -25,7 +25,7 @@ XRayne.Node is a node and admin panel for managing `xray-core`. The intended sur
 - API/UI Docker image build is a release artifact: GitHub Actions builds the API image with UI files in `wwwroot`, saves it as `tar.gz`, and attaches it to releases.
 - `docker-compose.yml` may be absent; if restored for installation, it should run the prebuilt image instead of using `build:`.
 - `.env.example` contains PostgreSQL, JWT, CORS, docs, and Xray config keys, not API container settings.
-- `XRayne.Api/Dockerfile` builds UI first, copies `XRayne.UI/build/client` into `XRayne.Api/wwwroot`, publishes API, and produces the runtime image.
+- `XRayne.Api/Dockerfile` builds dashboard first, copies `XRayne.Dashboard/build/client` into `XRayne.Api/wwwroot`, publishes API, and produces the runtime image.
 
 ## Common Commands
 
@@ -43,7 +43,7 @@ dotnet run --project XRayne.Cli -- admin create admin --password password --perm
 For UI:
 
 ```powershell
-Set-Location XRayne.UI
+Set-Location XRayne.Dashboard
 npm run dev
 npm run typecheck
 npm run lint

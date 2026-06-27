@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -175,8 +174,8 @@ try
 
     builder.Services.AddQuartz(options =>
     {
-        options.SchedulerName = "XRayneScheduler";
-        options.SchedulerId = "XRayneApi";
+        options.SchedulerName = "xrayne-scheduler";
+        options.SchedulerId = "xrayne-api";
 
         options.UseInMemoryStore();
         options.UseDefaultThreadPool(threadPool =>

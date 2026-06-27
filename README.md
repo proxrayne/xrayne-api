@@ -84,7 +84,7 @@ XRayne.Cli/             CLI для администрирования
 XRayne.Infrastructure/  xray-core runtime, service implementations, background tasks, runtime utilities
 XRayne.Repositories/    EF Core, PostgreSQL repositories, migrations, external clients
 XRayne.Contracts/       DTO, configuration contracts, enums, shared values
-XRayne.UI/              React-интерфейс
+XRayne.Dashboard/       React-интерфейс
 XRayne.Test/            unit- и integration-тесты
 ```
 
@@ -214,7 +214,7 @@ xrayne node register
 - Создать .NET solution.
 - Добавить проекты `XRayne.Api`, `XRayne.Cli`,
   `XRayne.Infrastructure`, `XRayne.Contracts`.
-- Добавить React-приложение в `XRayne.UI`.
+- Добавить React-приложение в `XRayne.Dashboard`.
 - Настроить форматирование, базовые скрипты запуска и README.
 - Подключить Swagger для API.
 

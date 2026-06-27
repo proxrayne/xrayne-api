@@ -1,15 +1,15 @@
 # syntax=docker/dockerfile:1
 
 FROM node:22-alpine AS ui-build
-WORKDIR /src/XRayne.UI
+WORKDIR /src/XRayne.Dashboard
 
 ARG VITE_API_DOMAIN=
 ENV VITE_API_DOMAIN=${VITE_API_DOMAIN}
 
-COPY XRayne.UI/package.json XRayne.UI/package-lock.json ./
+COPY XRayne.Dashboard/package.json XRayne.Dashboard/package-lock.json ./
 RUN npm ci
 
-COPY XRayne.UI/ ./
+COPY XRayne.Dashboard/ ./
 RUN npm run build
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS api-build
@@ -24,7 +24,7 @@ COPY XRayne.Repositories/XRayne.Repositories.csproj XRayne.Repositories/
 RUN dotnet restore XRayne.Api/XRayne.Api.csproj
 
 COPY . .
-COPY --from=ui-build /src/XRayne.UI/build/client /ui-build/client
+COPY --from=ui-build /src/XRayne.Dashboard/build/client /ui-build/client
 RUN rm -rf XRayne.Api/wwwroot && \
     mkdir -p XRayne.Api/wwwroot && \
     cp -R /ui-build/client/. XRayne.Api/wwwroot/ && \
