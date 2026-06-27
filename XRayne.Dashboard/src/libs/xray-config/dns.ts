@@ -110,4 +110,3 @@ export interface FakeDnsConfig {
  * names. Docs (https://xtls.github.io/config/fakedns.html)
  */
 export interface FaceDnsConfig extends FakeDnsConfig {}
-

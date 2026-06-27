@@ -35,10 +35,7 @@ export function Layout({ children }: PropsWithChildren) {
         />
         <meta name="theme-color" content="#0a0a0a" suppressHydrationWarning />
         <meta name="color-scheme" content="light dark" />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
-        />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <Meta />
         <Links />

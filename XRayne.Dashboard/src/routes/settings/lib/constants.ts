@@ -31,15 +31,11 @@ export const formSchema = z
     certPublicKeyPath: max1024NullableString,
     certPrivateKeyPath: max1024NullableString,
   })
-  .refine(
-    (value) =>
-      isEmpty(value.certPublicKeyPath) === isEmpty(value.certPrivateKeyPath),
-    {
-      message:
-        "Panel certificate public and private key paths must be provided together (or both left empty).",
-      path: ["panelCertPublicKeyPath"],
-    },
-  );
+  .refine((value) => isEmpty(value.certPublicKeyPath) === isEmpty(value.certPrivateKeyPath), {
+    message:
+      "Panel certificate public and private key paths must be provided together (or both left empty).",
+    path: ["panelCertPublicKeyPath"],
+  });
 
 export type FormValues = z.infer<typeof formSchema>;
 

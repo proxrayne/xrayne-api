@@ -25,9 +25,7 @@ function Basic() {
       <Field>
         <FieldHeader>
           <FieldLabel htmlFor="enable-switch">Enable</FieldLabel>
-          <FieldDescription>
-            Indicates whether the connection is active
-          </FieldDescription>
+          <FieldDescription>Indicates whether the connection is active</FieldDescription>
         </FieldHeader>
         <FieldContent>
           <Switch id="enable-switch" />
@@ -37,9 +35,7 @@ function Basic() {
       <Field>
         <FieldHeader>
           <FieldLabel htmlFor="display-name-input">DisplayName</FieldLabel>
-          <FieldDescription>
-            The name displayed in the interface
-          </FieldDescription>
+          <FieldDescription>The name displayed in the interface</FieldDescription>
         </FieldHeader>
         <FieldContent>
           <Input id="display-name-input" placeholder="Base inbound" />

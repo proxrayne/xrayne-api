@@ -24,8 +24,7 @@ export function useAdminAccount() {
       return "Super admin";
     }
 
-    const contains = (...roles: AdminAccountPermission[]) =>
-      roles.some(data.permissions.includes);
+    const contains = (...roles: AdminAccountPermission[]) => roles.some(data.permissions.includes);
 
     if (contains("manage_admins")) {
       return "Manager";

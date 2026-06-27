@@ -1,6 +1,15 @@
 import type { ClientServer, VNextModel, WithLevel, WithUserLevel } from "./common";
 
-import type { DomainStrategy, EncryptionMethod, HeadersType, NonIPQueryType, Protocol, TransportProtocol, VMessSecurity, XtlsFlow } from "./enums";
+import type {
+  DomainStrategy,
+  EncryptionMethod,
+  HeadersType,
+  NonIPQueryType,
+  Protocol,
+  TransportProtocol,
+  VMessSecurity,
+  XtlsFlow,
+} from "./enums";
 
 import type { TrojanServer, VlessUser } from "./protocols";
 
@@ -439,4 +448,3 @@ export interface WireguardPeer {
   /** Allowed source IP addresses. */
   allowedIPs?: string[];
 }
-

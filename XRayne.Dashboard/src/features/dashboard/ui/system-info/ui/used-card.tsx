@@ -26,9 +26,7 @@ function UsedCard({ footer, percent, subheader, label }: Props) {
           },
         ]}
         classNames={{ content: "flex flex-col pt-1 items-center" }}
-        footer={
-          <p className="text-xs font-medium text-foreground/60">{footer}</p>
-        }
+        footer={<p className="text-xs font-medium text-foreground/60">{footer}</p>}
       >
         <p className="text-xl/tight font-semibold">
           {percent < 0.01 ? "< 0.01" : percent.toFixed(2)}%

@@ -34,15 +34,9 @@ function DialogContent({ isInstalled, version }: CoreStatus) {
               >
                 <ArrowLeftIcon />
               </Button>
-              <DialogTitle className="flex items-center">
-                Installing
-              </DialogTitle>
+              <DialogTitle className="flex items-center">Installing</DialogTitle>
             </DialogHeader>
-            <InstallConfirm
-              release={selected}
-              currentVersion={version}
-              isUpdate={isInstalled}
-            />
+            <InstallConfirm release={selected} currentVersion={version} isUpdate={isInstalled} />
           </motion.div>
         ) : (
           <motion.div
@@ -53,15 +47,10 @@ function DialogContent({ isInstalled, version }: CoreStatus) {
             transition={{ duration: 0.28, ease: "easeOut" }}
           >
             <DialogHeader>
-              <DialogTitle>
-                {isInstalled ? "Update" : "Install"} xray-core
-              </DialogTitle>
+              <DialogTitle>{isInstalled ? "Update" : "Install"} xray-core</DialogTitle>
               <DialogDescription className="text-foreground/90 mt-1" asChild>
                 <div>
-                  <p>
-                    You can install the required version of xray-core on this
-                    node.
-                  </p>
+                  <p>You can install the required version of xray-core on this node.</p>
                   <p>
                     All data received from{" "}
                     <Link

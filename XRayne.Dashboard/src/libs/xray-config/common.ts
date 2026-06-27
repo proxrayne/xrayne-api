@@ -53,4 +53,3 @@ export interface VNextModel<T extends WithLevel = WithLevel> {
   port?: number;
   users?: T[];
 }
-

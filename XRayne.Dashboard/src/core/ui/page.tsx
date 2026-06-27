@@ -16,17 +16,11 @@ type SubtitleProps = ComponentPropsWithoutRef<"p">;
 
 type ToolbarProps = ComponentPropsWithoutRef<"div">;
 
-const Page = forwardRef<HTMLElement, PageProps>(
-  ({ className, children, ...props }, ref) => (
-    <main
-      ref={ref}
-      className={cn("pb-8 flex flex-col min-h-full", className)}
-      {...props}
-    >
-      {children}
-    </main>
-  ),
-);
+const Page = forwardRef<HTMLElement, PageProps>(({ className, children, ...props }, ref) => (
+  <main ref={ref} className={cn("pb-8 flex flex-col min-h-full", className)} {...props}>
+    {children}
+  </main>
+));
 
 Page.displayName = "Page";
 

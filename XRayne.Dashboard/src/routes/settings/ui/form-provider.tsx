@@ -20,10 +20,7 @@ interface Props {
 }
 
 function FormProvider({ children, settings }: Props) {
-  const defaultValues = useMemo(
-    () => formSchema.safeParse(settings).data,
-    [settings],
-  );
+  const defaultValues = useMemo(() => formSchema.safeParse(settings).data, [settings]);
 
   const form = useForm({
     defaultValues,

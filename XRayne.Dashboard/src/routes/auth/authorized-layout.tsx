@@ -29,8 +29,6 @@ function AuthLayout() {
   );
 }
 
-export const clientMiddleware: Route.MiddlewareFunction[] = [
-  requireAuthMiddleware,
-];
+export const clientMiddleware: Route.MiddlewareFunction[] = [requireAuthMiddleware];
 
 export default AuthLayout;

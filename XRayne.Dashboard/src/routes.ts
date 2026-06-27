@@ -7,9 +7,7 @@ export default [
     route("inbounds", "routes/inbounds/index.ts"),
   ]),
 
-  layout("routes/auth/unauthorized-layout.tsx", [
-    route("sign-in", "routes/auth/sign-in/index.ts"),
-  ]),
+  layout("routes/auth/unauthorized-layout.tsx", [route("sign-in", "routes/auth/sign-in/index.ts")]),
 
   route("*", "features/service/routes/not-found.tsx"),
 ];

@@ -28,10 +28,7 @@ function SystemInfo() {
                 />
               ))}
               {Array.from({ length: 2 }).map((_, i) => (
-                <Skeleton
-                  className="h-40 rounded-3xl col-span-4 md:col-span-2"
-                  key={i}
-                />
+                <Skeleton className="h-40 rounded-3xl col-span-4 md:col-span-2" key={i} />
               ))}
             </>
           );

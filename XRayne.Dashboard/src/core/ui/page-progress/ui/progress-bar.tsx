@@ -13,9 +13,7 @@ function ProgressBar({ progress }: { progress: number }) {
     smoothProgress.set(progress);
   }, [progress]);
 
-  return (
-    <motion.div className="h-full bg-accent rounded-full" style={{ width }} />
-  );
+  return <motion.div className="h-full bg-accent rounded-full" style={{ width }} />;
 }
 
 export default ProgressBar;

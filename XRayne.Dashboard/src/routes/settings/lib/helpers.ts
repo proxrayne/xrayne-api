@@ -17,10 +17,7 @@ export async function waitRestart(func: () => Promise<void>, timeout: number) {
   throw new Error("Waiting for restart timeout");
 }
 
-export function buildPanelUrl({
-  domain,
-  port,
-}: Pick<FormValues, "domain" | "port" | "pathBase">) {
+export function buildPanelUrl({ domain, port }: Pick<FormValues, "domain" | "port" | "pathBase">) {
   const url = new URL(location.href);
 
   if (import.meta.env.DEV) {

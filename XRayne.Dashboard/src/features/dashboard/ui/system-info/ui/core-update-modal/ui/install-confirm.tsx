@@ -16,11 +16,7 @@ import { Spinner } from "@core/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@core/ui/alert";
 import { useStreamPulling } from "@core/hooks/use-stream";
 
-import {
-  CoreInstallingStatus,
-  GitHubReleaseDto,
-  useCoreInstall,
-} from "@features/core";
+import { CoreInstallingStatus, GitHubReleaseDto, useCoreInstall } from "@features/core";
 
 interface InstallConfirmProps {
   isUpdate: boolean;
@@ -52,9 +48,7 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
           </Placeholder.Media>
         </ColoredIcon>
         <Placeholder.Header>Installation failure</Placeholder.Header>
-        <Placeholder.Subheader>
-          Please check logs for more details
-        </Placeholder.Subheader>
+        <Placeholder.Subheader>Please check logs for more details</Placeholder.Subheader>
         <Placeholder.Actions>
           <Button onClick={() => install()}>Try again</Button>
         </Placeholder.Actions>
@@ -89,16 +83,9 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
     return (
       <>
         <Placeholder>
-          <ColoredIcon
-            variant={release.prerelease ? "warning" : "accent"}
-            asChild
-          >
+          <ColoredIcon variant={release.prerelease ? "warning" : "accent"} asChild>
             <Placeholder.Media>
-              {release.prerelease ? (
-                <TriangleAlertIcon />
-              ) : (
-                <CircleQuestionMarkIcon />
-              )}
+              {release.prerelease ? <TriangleAlertIcon /> : <CircleQuestionMarkIcon />}
             </Placeholder.Media>
           </ColoredIcon>
           <Placeholder.Header>
@@ -121,8 +108,7 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
             </p>
           </Placeholder.Subheader>
         </Placeholder>
-        {(!currentVersion ||
-          compareVersions(release.tagName, currentVersion) === -1) && (
+        {(!currentVersion || compareVersions(release.tagName, currentVersion) === -1) && (
           <Alert className="shadow-none bg-warning/10 -mt-4 mb-6 gap-x-2">
             <TriangleAlertIcon />
             <AlertTitle>Attention</AlertTitle>
@@ -149,8 +135,7 @@ function InstallConfirm({ release, currentVersion }: InstallConfirmProps) {
       </ColoredIcon>
       <Placeholder.Header>Installation in progress</Placeholder.Header>
       <Placeholder.Subheader>
-        {status?.message ??
-          `Requesting installation xray-core ${release.tagName}`}
+        {status?.message ?? `Requesting installation xray-core ${release.tagName}`}
       </Placeholder.Subheader>
     </Placeholder>
   );

@@ -1,13 +1,7 @@
 import { format } from "date-fns";
 import { Check, CircleAlertIcon } from "lucide-react";
 
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemTitle,
-} from "@core/ui/item";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@core/ui/item";
 import { Button } from "@core/ui/button";
 import { cn } from "@core/lib/utils";
 import Placeholder from "@core/ui/placeholder";
@@ -16,8 +10,7 @@ import ColoredIcon from "@core/ui/colored-icon";
 
 import { GitHubReleaseDto, useCoreReleases } from "@features/core";
 
-const CONTAINER_CLASSES =
-  "mt-3 px-2 -mx-2 overflow-y-auto min-h-100 max-h-[70vh] no-scrollbar";
+const CONTAINER_CLASSES = "mt-3 px-2 -mx-2 overflow-y-auto min-h-100 max-h-[70vh] no-scrollbar";
 
 interface ChooseVersionProps {
   version: string | null;
@@ -25,15 +18,7 @@ interface ChooseVersionProps {
 }
 
 function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
-  const {
-    releases,
-    isLoaded,
-    error,
-    hasMore,
-    isMoreLoading,
-    loadMore,
-    refetch,
-  } = useCoreReleases({
+  const { releases, isLoaded, error, hasMore, isMoreLoading, loadMore, refetch } = useCoreReleases({
     perPage: 10,
   });
 
@@ -70,19 +55,14 @@ function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
     <div className={CONTAINER_CLASSES}>
       {releases.map((release) => (
         <Item key={release.tagName} size="xs" asChild>
-          <button
-            className="hover:bg-accent/65 active:bg-accent"
-            onClick={() => onSelect(release)}
-          >
+          <button className="hover:bg-accent/65 active:bg-accent" onClick={() => onSelect(release)}>
             <ItemContent className="flex flex-col">
               <ItemTitle>{release.tagName}</ItemTitle>
               <ItemDescription className="text-xs">
                 <span
                   className={cn(
                     "font-medium",
-                    release.prerelease
-                      ? "text-orange-300/90"
-                      : "text-blue-400/90",
+                    release.prerelease ? "text-orange-300/90" : "text-blue-400/90",
                   )}
                 >
                   {release.prerelease ? "Pre-release" : "Stable"}
@@ -118,9 +98,7 @@ function ChooseVersion({ version, onSelect }: ChooseVersionProps) {
 }
 
 ChooseVersion.ItemSkeleton = ({ className }: { className?: string }) => (
-  <div
-    className={cn("flex items-center justify-between gap-3 py-2", className)}
-  >
+  <div className={cn("flex items-center justify-between gap-3 py-2", className)}>
     <div className="min-w-0 flex-1">
       <Skeleton className="h-4 w-20 rounded-md" />
       <Skeleton className="mt-2 h-3 w-44 rounded-md" />

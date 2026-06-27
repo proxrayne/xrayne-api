@@ -10,13 +10,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@core/ui/combobox";
-import {
-  Field,
-  FieldContent,
-  FieldHeader,
-  FieldLabel,
-  FieldSet,
-} from "@core/ui/field";
+import { Field, FieldContent, FieldHeader, FieldLabel, FieldSet } from "@core/ui/field";
 import { Switch } from "@core/ui/switch";
 import { Input } from "@core/ui/input";
 

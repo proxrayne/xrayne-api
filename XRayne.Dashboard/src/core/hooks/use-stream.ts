@@ -18,19 +18,13 @@ export interface StreamPullingResult<T> {
 
 export function useStreamPulling<T extends Object>(
   path: string | null,
-  {
-    withAuth = true,
-    reconnectDelay = 3_000,
-    maxReconnectAttempts = 7,
-  }: StreamPullingOptions = {},
+  { withAuth = true, reconnectDelay = 3_000, maxReconnectAttempts = 7 }: StreamPullingOptions = {},
 ): StreamPullingResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isDisposedRef = useRef(false);
   const shouldReconnectRef = useRef(false);
@@ -61,10 +55,7 @@ export function useStreamPulling<T extends Object>(
       return null;
     }
 
-    const url = new URL(
-      `${api.defaults.baseURL}/${path}`,
-      window.location.origin,
-    );
+    const url = new URL(`${api.defaults.baseURL}/${path}`, window.location.origin);
     const authToken = getAuthorizationToken();
 
     if (withAuth && authToken) {
@@ -75,11 +66,7 @@ export function useStreamPulling<T extends Object>(
   }, [path, withAuth]);
 
   const scheduleReconnect = useCallback(() => {
-    if (
-      isDisposedRef.current ||
-      !shouldReconnectRef.current ||
-      reconnectTimeoutRef.current
-    ) {
+    if (isDisposedRef.current || !shouldReconnectRef.current || reconnectTimeoutRef.current) {
       return;
     }
 

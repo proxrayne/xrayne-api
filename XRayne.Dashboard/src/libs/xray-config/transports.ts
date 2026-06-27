@@ -1,6 +1,20 @@
 import type { HeaderMap, JsonValue } from "./common";
 
-import type { AddressPortStrategy, CertificateUsageType, DomainStrategy, Fingerprint, HeadersType, HysteriaMasqueradeType, KcpHeaderType, OperationSystem, StreamNetwork, StreamSecurity, TProxy, TcpCongestion, XHttpMode } from "./enums";
+import type {
+  AddressPortStrategy,
+  CertificateUsageType,
+  DomainStrategy,
+  Fingerprint,
+  HeadersType,
+  HysteriaMasqueradeType,
+  KcpHeaderType,
+  OperationSystem,
+  StreamNetwork,
+  StreamSecurity,
+  TProxy,
+  TcpCongestion,
+  XHttpMode,
+} from "./enums";
 
 import type { InboundHttpSettings } from "./inbounds";
 
@@ -763,4 +777,3 @@ export interface XMux {
   hMaxReusableSecs?: number;
   hKeepAlivePeriod?: number;
 }
-

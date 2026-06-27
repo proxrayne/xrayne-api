@@ -39,9 +39,7 @@ function SignIn() {
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle className="text-lg leading-8">Sign in</CardTitle>
-          <CardDescription>
-            Use your administrator credentials to continue.
-          </CardDescription>
+          <CardDescription>Use your administrator credentials to continue.</CardDescription>
         </CardHeader>
         <form
           onSubmit={handleSubmit(async ({ password, username, saveMe }) => {
@@ -55,10 +53,7 @@ function SignIn() {
               });
             } catch (error) {
               setError("root", {
-                message:
-                  error instanceof ResponseError
-                    ? error.message
-                    : "Unhandled error.",
+                message: error instanceof ResponseError ? error.message : "Unhandled error.",
               });
               setFocus("username");
             }
@@ -89,31 +84,16 @@ function SignIn() {
               name="saveMe"
               render={({ field: { value, ...field } }) => (
                 <Field orientation="horizontal">
-                  <Checkbox
-                    checked={value}
-                    id="remember-me-checkbox"
-                    {...field}
-                  />
-                  <FieldLabel htmlFor="remember-me-checkbox">
-                    Remember me
-                  </FieldLabel>
+                  <Checkbox checked={value} id="remember-me-checkbox" {...field} />
+                  <FieldLabel htmlFor="remember-me-checkbox">Remember me</FieldLabel>
                 </Field>
               )}
             />
 
-            {errors.root && (
-              <p className="text-sm text-destructive mt-2">
-                {errors.root.message}
-              </p>
-            )}
+            {errors.root && <p className="text-sm text-destructive mt-2">{errors.root.message}</p>}
           </CardContent>
           <CardFooter className="mt-6 flex flex-col gap-2">
-            <Button
-              size="lg"
-              className="w-full"
-              type="submit"
-              disabled={isSubmitting || !isValid}
-            >
+            <Button size="lg" className="w-full" type="submit" disabled={isSubmitting || !isValid}>
               {isSubmitting && <Spinner className="size-4 text-white" />}
               Sign in
             </Button>

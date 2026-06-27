@@ -1,35 +1,18 @@
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  fetchXrayReleases,
-  installCore,
-  restartCore,
-  startCore,
-  stopCore,
-} from "./api";
+import { fetchXrayReleases, installCore, restartCore, startCore, stopCore } from "./api";
 import { FetchXrayReleasesQuery } from "./api.types";
 
-export function useCoreReleases(
-  query: Pick<FetchXrayReleasesQuery, "perPage">,
-) {
-  const {
-    data,
-    isFetched,
-    error,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ["core", "releases"],
-    queryFn: ({ signal, pageParam }) =>
-      fetchXrayReleases({ ...query, page: pageParam }, signal),
-    getNextPageParam: (last, pages) =>
-      last.length !== query.perPage ? null : pages.length + 1,
-    initialPageParam: 1,
-    initialData: { pageParams: [1], pages: [] },
-  });
+export function useCoreReleases(query: Pick<FetchXrayReleasesQuery, "perPage">) {
+  const { data, isFetched, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: ["core", "releases"],
+      queryFn: ({ signal, pageParam }) => fetchXrayReleases({ ...query, page: pageParam }, signal),
+      getNextPageParam: (last, pages) => (last.length !== query.perPage ? null : pages.length + 1),
+      initialPageParam: 1,
+      initialData: { pageParams: [1], pages: [] },
+    });
 
   return {
     releases: data.pages.flatMap((x) => x),

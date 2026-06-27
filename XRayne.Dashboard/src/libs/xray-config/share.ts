@@ -1,4 +1,11 @@
-import type { Fingerprint, Protocol, StreamNetwork, StreamSecurity, VMessSecurity, XtlsFlow } from "./enums";
+import type {
+  Fingerprint,
+  Protocol,
+  StreamNetwork,
+  StreamSecurity,
+  VMessSecurity,
+  XtlsFlow,
+} from "./enums";
 
 export interface HysteriaOptions {
   sni?: string;
@@ -94,4 +101,3 @@ export interface VMessOptions {
 }
 
 export interface VMessShareEntity extends V2RayShareEntity {}
-

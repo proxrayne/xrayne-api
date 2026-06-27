@@ -57,8 +57,6 @@ export class Path implements RouterPath {
   }
 
   static join(path: string, ...paths: string[]): string {
-    return [path, ...paths]
-      .map((path) => path.trim().replace(/^\/|\/$/g, ""))
-      .join("/");
+    return [path, ...paths].map((path) => path.trim().replace(/^\/|\/$/g, "")).join("/");
   }
 }

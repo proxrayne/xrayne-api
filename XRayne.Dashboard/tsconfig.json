@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "target": "ES2022",
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
@@ -25,11 +25,6 @@
       "@libs/*": ["./src/libs/*"]
     }
   },
-  "include": [
-    "**/*",
-    "**/.server/**/*",
-    "**/.client/**/*",
-    ".react-router/types/**/*"
-  ],
+  "include": ["**/*", "**/.server/**/*", "**/.client/**/*", ".react-router/types/**/*"],
   "references": []
 }

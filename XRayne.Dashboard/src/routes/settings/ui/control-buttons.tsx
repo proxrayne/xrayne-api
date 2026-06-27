@@ -90,11 +90,7 @@ function RestartButton() {
   });
 
   return (
-    <Button
-      variant="destructive"
-      onClick={() => mutateAsync()}
-      disabled={isPending}
-    >
+    <Button variant="destructive" onClick={() => mutateAsync()} disabled={isPending}>
       {isPending && <Spinner />}
       Restart panel
     </Button>

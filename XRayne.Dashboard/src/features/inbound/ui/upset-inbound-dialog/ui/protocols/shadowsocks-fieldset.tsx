@@ -9,11 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@core/ui/select";
-import {
-  InputGroup,
-  InputGroupButton,
-  InputGroupInput,
-} from "@core/ui/input-group";
+import { InputGroup, InputGroupButton, InputGroupInput } from "@core/ui/input-group";
 import { randomShadowsocksPassword } from "@core/lib/crypto";
 import { Switch } from "@core/ui/switch";
 

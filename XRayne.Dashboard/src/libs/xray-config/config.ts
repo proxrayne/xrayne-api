@@ -227,4 +227,3 @@ export interface XrayMergeOptions {
   overwriteWithDefaultValues?: boolean;
   keyProperties?: string[];
 }
-

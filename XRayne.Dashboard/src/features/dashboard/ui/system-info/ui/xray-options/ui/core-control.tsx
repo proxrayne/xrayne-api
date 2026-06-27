@@ -1,21 +1,11 @@
-import {
-  CircleStopIcon,
-  HardDriveDownloadIcon,
-  PlayIcon,
-  RefreshCwIcon,
-} from "lucide-react";
+import { CircleStopIcon, HardDriveDownloadIcon, PlayIcon, RefreshCwIcon } from "lucide-react";
 
 import { Button } from "@core/ui/button";
 import { ButtonGroup } from "@core/ui/button-group";
 import { Skeleton } from "@core/ui/skeleton";
 import { Spinner } from "@core/ui/spinner";
 
-import {
-  useCoreStatus,
-  useRestartCore,
-  useStartCore,
-  useStopCore,
-} from "@features/core";
+import { useCoreStatus, useRestartCore, useStartCore, useStopCore } from "@features/core";
 
 import CoreUpdateModal from "../../core-update-modal";
 
@@ -49,12 +39,7 @@ function StartAction({ status }: CoreStatus) {
   const isStarting = isPending || status === "starting";
 
   return (
-    <Button
-      variant="secondary"
-      size="sm"
-      onClick={() => start()}
-      disabled={isStarting}
-    >
+    <Button variant="secondary" size="sm" onClick={() => start()} disabled={isStarting}>
       {isStarting ? <Spinner /> : <PlayIcon />}
       Start
     </Button>
@@ -70,21 +55,11 @@ function StopAndRestartAction({ status }: CoreStatus) {
 
   return (
     <ButtonGroup>
-      <Button
-        variant="secondary"
-        size="sm"
-        disabled={isStopping}
-        onClick={() => stop()}
-      >
+      <Button variant="secondary" size="sm" disabled={isStopping} onClick={() => stop()}>
         {isStopping ? <Spinner /> : <CircleStopIcon />}
         Stop
       </Button>
-      <Button
-        variant="secondary"
-        size="sm"
-        disabled={isRestarting}
-        onClick={() => restart()}
-      >
+      <Button variant="secondary" size="sm" disabled={isRestarting} onClick={() => restart()}>
         {isRestarting ? <Spinner /> : <RefreshCwIcon />}
         Restart
       </Button>

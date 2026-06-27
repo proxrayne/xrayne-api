@@ -1,10 +1,6 @@
 import { api } from "@core/api/instance";
 
-import {
-  CoreInstallingStatus,
-  FetchXrayReleasesQuery,
-  GitHubReleaseDto,
-} from "./api.types";
+import { CoreInstallingStatus, FetchXrayReleasesQuery, GitHubReleaseDto } from "./api.types";
 
 export async function fetchCoreStatus(signal?: AbortSignal) {
   const { data } = await api.get<CoreStatus>("core/status", { signal });
@@ -12,10 +8,7 @@ export async function fetchCoreStatus(signal?: AbortSignal) {
   return data;
 }
 
-export async function fetchXrayReleases(
-  query: FetchXrayReleasesQuery,
-  signal?: AbortSignal,
-) {
+export async function fetchXrayReleases(query: FetchXrayReleasesQuery, signal?: AbortSignal) {
   const { data } = await api.get<GitHubReleaseDto[]>(
     `core/releases?${new URLSearchParams(Object.entries(query))}`,
     { signal },
@@ -24,16 +17,10 @@ export async function fetchXrayReleases(
   return data;
 }
 
-export async function fetchInstallingStatus(
-  jobId: string,
-  signal?: AbortSignal,
-) {
-  const { data } = await api.get<CoreInstallingStatus | null>(
-    `core/install/${jobId}/status`,
-    {
-      signal,
-    },
-  );
+export async function fetchInstallingStatus(jobId: string, signal?: AbortSignal) {
+  const { data } = await api.get<CoreInstallingStatus | null>(`core/install/${jobId}/status`, {
+    signal,
+  });
 
   return data;
 }

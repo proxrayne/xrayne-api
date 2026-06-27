@@ -2,9 +2,23 @@ import type { ClientServer, WithLevel } from "./common";
 
 import type { EncryptionMethod, XtlsFlow } from "./enums";
 
-import type { InboundShadowSocksSettings, InboundSocksSettings, InboundTrojanSettings, InboundVMessSettings, InboundVlessSettings, InboundWireguardSettings } from "./inbounds";
+import type {
+  InboundShadowSocksSettings,
+  InboundSocksSettings,
+  InboundTrojanSettings,
+  InboundVMessSettings,
+  InboundVlessSettings,
+  InboundWireguardSettings,
+} from "./inbounds";
 
-import type { OutboundShadowSocksSettings, OutboundSocksSettings, OutboundTrojanSettings, OutboundVMessSettings, OutboundVlessSettings, OutboundWireguardSettings } from "./outbounds";
+import type {
+  OutboundShadowSocksSettings,
+  OutboundSocksSettings,
+  OutboundTrojanSettings,
+  OutboundVMessSettings,
+  OutboundVlessSettings,
+  OutboundWireguardSettings,
+} from "./outbounds";
 
 export interface ShadowSocksCommon {
   email?: string;
@@ -35,4 +49,3 @@ export interface VlessUser extends WithLevel {
 export type VMessSettings = InboundVMessSettings | OutboundVMessSettings;
 
 export type WireguardSettings = InboundWireguardSettings | OutboundWireguardSettings;
-

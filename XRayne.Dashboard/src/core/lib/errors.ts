@@ -10,9 +10,7 @@ export class ResponseError extends Error {
     this.name = name;
   }
 
-  static axios(
-    error: AxiosError<{ detail: string; name: string; status: number }>,
-  ) {
+  static axios(error: AxiosError<{ detail: string; name: string; status: number }>) {
     let message: string;
     if (error.response?.data?.detail) {
       message = error.response.data.detail;
@@ -22,10 +20,6 @@ export class ResponseError extends Error {
       message = "Unknown error";
     }
 
-    return new ResponseError(
-      message,
-      error?.response?.data?.name,
-      error.response?.status,
-    );
+    return new ResponseError(message, error?.response?.data?.name, error.response?.status);
   }
 }

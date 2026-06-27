@@ -51,9 +51,7 @@ function UpsetInboundDialog({ children }: Props) {
             <DialogTitle>Add inbound</DialogTitle>
             <TabsList className="w-full mt-3">
               <TabsTrigger value="basic">Basic</TabsTrigger>
-              {hasProtocols && (
-                <TabsTrigger value="protocol">Protocol</TabsTrigger>
-              )}
+              {hasProtocols && <TabsTrigger value="protocol">Protocol</TabsTrigger>}
               <TabsTrigger value="stream">Stream</TabsTrigger>
               <TabsTrigger value="sniffing">Sniffing</TabsTrigger>
             </TabsList>

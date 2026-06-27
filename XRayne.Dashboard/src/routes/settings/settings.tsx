@@ -13,8 +13,7 @@ import CertsSection from "./ui/certs-section";
 import ControlButtons from "./ui/control-buttons";
 
 function Settings() {
-  const { settings, pendingRestart, isLoaded, error, refetch } =
-    usePanelSettings();
+  const { settings, pendingRestart, isLoaded, error, refetch } = usePanelSettings();
 
   return (
     <Page>
@@ -34,9 +33,7 @@ function Settings() {
               </ColoredIcon>
 
               <Placeholder.Header>Failure loading settings</Placeholder.Header>
-              <Placeholder.Subheader>
-                Try reload or check logs for details.
-              </Placeholder.Subheader>
+              <Placeholder.Subheader>Try reload or check logs for details.</Placeholder.Subheader>
               <Placeholder.Actions>
                 <Button onClick={() => refetch()}>Try reload</Button>
               </Placeholder.Actions>
@@ -50,10 +47,7 @@ function Settings() {
 
         return (
           <FormProvider settings={settings!}>
-            <ControlButtons
-              isLoading={!isLoaded}
-              pendingRestart={pendingRestart}
-            />
+            <ControlButtons isLoading={!isLoaded} pendingRestart={pendingRestart} />
             <GeneralSection />
             <CertsSection />
           </FormProvider>

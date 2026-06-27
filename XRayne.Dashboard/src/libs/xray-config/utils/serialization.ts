@@ -84,7 +84,9 @@ export function normalizeDnsHosts(hosts: DnsConfig["hosts"]): Record<string, str
   return result;
 }
 
-export function normalizeFakeDns(value: XrayConfig["fakedns"]): FakeDnsConfig | FakeDnsConfig[] | undefined {
+export function normalizeFakeDns(
+  value: XrayConfig["fakedns"],
+): FakeDnsConfig | FakeDnsConfig[] | undefined {
   if (value == null) {
     return undefined;
   }
@@ -92,7 +94,9 @@ export function normalizeFakeDns(value: XrayConfig["fakedns"]): FakeDnsConfig | 
   return Array.isArray(value) && value.length === 1 ? value[0] : value;
 }
 
-export function toXrayObject<T extends XrayConfig | InboundConfig | OutboundConfig | StreamSettings>(value: T): T {
+export function toXrayObject<
+  T extends XrayConfig | InboundConfig | OutboundConfig | StreamSettings,
+>(value: T): T {
   const normalized = normalizeValue(value) as T;
 
   if (isPlainObject(normalized) && "dns" in normalized && isPlainObject(normalized.dns)) {

@@ -8,7 +8,9 @@
     "build": "react-router build",
     "start": "serve -s ./build/client",
     "typecheck": "react-router typegen && tsc",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "format": "prettier \"**/*.{ts,tsx,json,md,css}\" --write",
+    "check-format": "prettier \"**/*.{ts,tsx,json,md,css}\" --check"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -51,6 +53,7 @@
     "@types/tinycolor2": "^1.4.6",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.5.0",
+    "prettier": "^3.8.3",
     "tailwindcss": "^4.1.16",
     "typescript": "^5.0.0",
     "vite": "^7.0.0",

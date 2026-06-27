@@ -15,10 +15,7 @@ export async function fetchPanelSettings(signal?: AbortSignal) {
 }
 
 export async function updatePanelSettings(payload: UpdatePanelSettingsRequest) {
-  const { data } = await api.put<UpdatePanelSettingsResponse>(
-    "settings/panel",
-    payload,
-  );
+  const { data } = await api.put<UpdatePanelSettingsResponse>("settings/panel", payload);
   return data;
 }
 

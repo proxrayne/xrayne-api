@@ -1,20 +1,9 @@
-import {
-  FilterIcon,
-  FolderOpenIcon,
-  /* MoreVerticalIcon, */ PlusIcon,
-} from "lucide-react";
+import { FilterIcon, FolderOpenIcon, /* MoreVerticalIcon, */ PlusIcon } from "lucide-react";
 
 import { Button } from "@core/ui/button";
 import Page from "@core/ui/page";
 import { ButtonGroup } from "@core/ui/button-group";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@core/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@core/ui/table";
 import { Switch } from "@core/ui/switch";
 import Placeholder from "@core/ui/placeholder";
 import ColoredIcon from "@core/ui/colored-icon";
@@ -49,9 +38,7 @@ function Inbounds() {
           </Placeholder.Media>
         </ColoredIcon>
         <Placeholder.Header>Inbounds not found</Placeholder.Header>
-        <Placeholder.Subheader>
-          Create inbound to connect clients
-        </Placeholder.Subheader>
+        <Placeholder.Subheader>Create inbound to connect clients</Placeholder.Subheader>
         <Placeholder.Actions>
           <UpsetInboundDialog>
             <Button>

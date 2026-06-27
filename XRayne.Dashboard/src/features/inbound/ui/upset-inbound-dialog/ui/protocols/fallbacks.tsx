@@ -50,9 +50,7 @@ function FallbackItem({ index }: ItemProps) {
       <div className="p-4 bg-muted/70 rounded-xl flex flex-col gap-y-2">
         <Field>
           <FieldHeader>
-            <FieldLabel htmlFor="server-name-input">
-              Server name (SNI)
-            </FieldLabel>
+            <FieldLabel htmlFor="server-name-input">Server name (SNI)</FieldLabel>
           </FieldHeader>
           <FieldContent>
             <Input id="server-name-input" placeholder="Empty for ignore" />
@@ -86,10 +84,7 @@ function FallbackItem({ index }: ItemProps) {
             <FieldLabel htmlFor="path-input">Path</FieldLabel>
           </FieldHeader>
           <FieldContent>
-            <Input
-              id="path-input"
-              placeholder="Empty for ignore or /you-path"
-            />
+            <Input id="path-input" placeholder="Empty for ignore or /you-path" />
           </FieldContent>
         </Field>
 

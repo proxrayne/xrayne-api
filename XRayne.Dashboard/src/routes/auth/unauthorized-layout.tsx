@@ -14,8 +14,6 @@ function UnauthorizedLayout() {
   );
 }
 
-export const clientMiddleware: Route.MiddlewareFunction[] = [
-  requireNoAuthMiddleware,
-];
+export const clientMiddleware: Route.MiddlewareFunction[] = [requireNoAuthMiddleware];
 
 export default UnauthorizedLayout;

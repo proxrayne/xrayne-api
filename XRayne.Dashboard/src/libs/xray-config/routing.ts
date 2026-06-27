@@ -1,4 +1,11 @@
-import type { BalancerStrategyType, DomainMatcher, NetProtocol, Network, RoutingDomainStrategy, RoutingRuleType } from "./enums";
+import type {
+  BalancerStrategyType,
+  DomainMatcher,
+  NetProtocol,
+  Network,
+  RoutingDomainStrategy,
+  RoutingRuleType,
+} from "./enums";
 
 /** This is an optional configuration parameter whose format varies for different load balancing strategies. */
 export interface BalancerStrategySettings {
@@ -192,4 +199,3 @@ export interface RoutingRule {
   /** Optional, has no actual effect, used only to identify the name of this rule. */
   ruleTag?: string;
 }
-

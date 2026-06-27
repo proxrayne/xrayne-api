@@ -62,4 +62,3 @@ export interface SystemPolicy {
   /** If the value is true, enable incoming traffic accounting for all outgoing connections. */
   statsOutboundDownlink?: boolean;
 }
-

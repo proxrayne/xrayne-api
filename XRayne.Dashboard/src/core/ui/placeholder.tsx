@@ -5,13 +5,11 @@ import { cn } from "@core/lib/utils";
 type HtmlProps = HtmlHTMLAttributes<HTMLDivElement>;
 type HtmlPProps = HtmlHTMLAttributes<HTMLParagraphElement>;
 
-const Media = forwardRef<HTMLDivElement, HtmlProps>(
-  ({ className, children, ...props }, ref) => (
-    <div {...props} ref={ref} className={cn("mb-2", className)}>
-      {children}
-    </div>
-  ),
-);
+const Media = forwardRef<HTMLDivElement, HtmlProps>(({ className, children, ...props }, ref) => (
+  <div {...props} ref={ref} className={cn("mb-2", className)}>
+    {children}
+  </div>
+));
 
 const Header = forwardRef<HTMLParagraphElement, HtmlPProps>(
   ({ className, children, ...props }, ref) => (

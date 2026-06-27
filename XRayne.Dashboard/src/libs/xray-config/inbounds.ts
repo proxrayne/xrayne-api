@@ -1,6 +1,14 @@
 import type { Port, WithLevel, WithUserLevel } from "./common";
 
-import type { AllocateStrategy, EncryptionMethod, Protocol, SocksAuth, TransportProtocol, VlessEncryption, XtlsFlow } from "./enums";
+import type {
+  AllocateStrategy,
+  EncryptionMethod,
+  Protocol,
+  SocksAuth,
+  TransportProtocol,
+  VlessEncryption,
+  XtlsFlow,
+} from "./enums";
 
 import type { VMessDefaultSettings, WireguardPeer } from "./outbounds";
 
@@ -348,4 +356,3 @@ export interface VMessClient extends InboundClient {
   /** The VMess user ID. This can be any string less than 30 bytes long or a valid UUID. */
   id?: string;
 }
-

@@ -1,10 +1,5 @@
 import { ReactNode } from "react";
-import {
-  PolarAngleAxis,
-  RadialBar,
-  RadialBarChart,
-  ResponsiveContainer,
-} from "recharts";
+import { PolarAngleAxis, RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
 
 import { cn } from "@core/lib/utils";
 
@@ -44,12 +39,7 @@ function RadialChart<T extends DataItem>({
           endAngle={-45}
           barSize={strokeWidth}
         >
-          <PolarAngleAxis
-            type="number"
-            domain={[0, 100]}
-            dataKey="value"
-            tick={false}
-          />
+          <PolarAngleAxis type="number" domain={[0, 100]} dataKey="value" tick={false} />
           <RadialBar
             dataKey="value"
             cornerRadius={999}
@@ -60,20 +50,11 @@ function RadialChart<T extends DataItem>({
         </RadialBarChart>
       </ResponsiveContainer>
       {children && (
-        <div
-          className={cn(
-            "absolute left-[50%] top-[50%] translate-[-50%]",
-            classNames.content,
-          )}
-        >
+        <div className={cn("absolute left-[50%] top-[50%] translate-[-50%]", classNames.content)}>
           {children}
         </div>
       )}
-      {footer && (
-        <div className="absolute bottom-3 left-[50%] translate-[-50%]">
-          {footer}
-        </div>
-      )}
+      {footer && <div className="absolute bottom-3 left-[50%] translate-[-50%]">{footer}</div>}
     </div>
   );
 }

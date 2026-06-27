@@ -23,7 +23,9 @@ function Profile({ className }: Props) {
         <p className="text-md font-medium text-ellipsis text-nowrap overflow-hidden">
           {account?.username}
         </p>
-        <p className="text-sm/tight text-muted-foreground text-ellipsis text-nowrap overflow-hidden">{permissionGroup}</p>
+        <p className="text-sm/tight text-muted-foreground text-ellipsis text-nowrap overflow-hidden">
+          {permissionGroup}
+        </p>
       </div>
     </div>
   );

@@ -16,9 +16,7 @@ function CoreUpdateModal({ children }: Props) {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="overflow-hidden">
-        {status && <Content {...status} />}
-      </DialogContent>
+      <DialogContent className="overflow-hidden">{status && <Content {...status} />}</DialogContent>
     </Dialog>
   );
 }

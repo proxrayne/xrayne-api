@@ -8,9 +8,11 @@
 - TypeScript strict mode.
 - TanStack Query 5.
 - Axios.
-- HeroUI React and styles.
+- shadcn configured through `components.json`.
+- Radix/Base UI primitives through generated shadcn components where needed.
 - React Hook Form.
 - next-themes.
+- Prettier.
 
 ## Scripts
 
@@ -22,9 +24,13 @@ npm run build
 npm run start
 npm run typecheck
 npm run lint
+npm run check-format
+npm run format
 ```
 
 `typecheck` runs `react-router typegen && tsc`.
+`check-format` verifies Prettier formatting without writing files.
+`format` applies Prettier formatting.
 
 ## Routing
 
@@ -90,7 +96,10 @@ Feature query example: `src/features/admin/lib/query.ts`.
 - Authorized layout uses `SidebarProvider`, `Sidebar`, and a content area.
 - Core UI primitives live under `src/core/ui`.
 - Auth sidebar components live under `src/features/auth/ui/sidebar`.
-- Use HeroUI components where existing screens use them: `Button`, `Card`, `Form`, `Input`, `Checkbox`, `Spinner`, `ErrorMessage`, etc.
+- Use shadcn components from `@core/ui` as the primary UI source.
+- Add missing shadcn components with `npx shadcn@latest add <component name>`.
+- Create custom UI primitives only when shadcn does not cover the need.
+- Follow `XRayne.Dashboard/STYLEGUIDE.md` for one-file-one-component, feature nesting, library usage, and Prettier rules.
 
 ## Environment
 

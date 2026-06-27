@@ -103,9 +103,7 @@ function merge(meta: MetaDescriptor[], parent: MetaMatch[]): MetaDescriptor[] {
       for (const parentMeta of match.meta) {
         const index = acc.findIndex(
           (meta) =>
-            ("name" in meta &&
-              "name" in parentMeta &&
-              meta.name === parentMeta.name) ||
+            ("name" in meta && "name" in parentMeta && meta.name === parentMeta.name) ||
             ("property" in meta &&
               "property" in parentMeta &&
               meta.property === parentMeta.property) ||

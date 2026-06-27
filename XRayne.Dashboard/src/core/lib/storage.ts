@@ -168,10 +168,6 @@ class ReactiveLocalStorage extends ObjectStorage {
   }
 }
 
-export const lStorage = new ReactiveLocalStorage(
-  IS_SERVER ? new FakeStorage() : localStorage,
-);
+export const lStorage = new ReactiveLocalStorage(IS_SERVER ? new FakeStorage() : localStorage);
 
-export const sStorage = new ObjectStorage(
-  IS_SERVER ? new FakeStorage() : sessionStorage,
-);
+export const sStorage = new ObjectStorage(IS_SERVER ? new FakeStorage() : sessionStorage);

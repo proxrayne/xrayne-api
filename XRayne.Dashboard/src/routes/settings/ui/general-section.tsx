@@ -27,34 +27,20 @@ function GeneralSection() {
         <FieldSet>
           <Field>
             <FieldHeader>
-              <FieldLabel htmlFor="bind-ip-input">
-                Control panel IP address
-              </FieldLabel>
-              <FieldDescription>
-                Leave blank to connect from any IP
-              </FieldDescription>
+              <FieldLabel htmlFor="bind-ip-input">Control panel IP address</FieldLabel>
+              <FieldDescription>Leave blank to connect from any IP</FieldDescription>
             </FieldHeader>
             <FieldContent>
-              <Input
-                placeholder="0.0.0.0/24"
-                id="bind-ip-input"
-                {...register("bindIp")}
-              />
-              {errors.bindIp && (
-                <FieldError>{errors.bindIp.message}</FieldError>
-              )}
+              <Input placeholder="0.0.0.0/24" id="bind-ip-input" {...register("bindIp")} />
+              {errors.bindIp && <FieldError>{errors.bindIp.message}</FieldError>}
             </FieldContent>
           </Field>
 
           <Field>
             <FieldHeader>
               <FieldLabel>Panel domain</FieldLabel>
-              <FieldDescription>
-                Leave blank to connect with any domains and IPs
-              </FieldDescription>
-              {errors.domain && (
-                <FieldError>{errors.domain.message}</FieldError>
-              )}
+              <FieldDescription>Leave blank to connect with any domains and IPs</FieldDescription>
+              {errors.domain && <FieldError>{errors.domain.message}</FieldError>}
             </FieldHeader>
             <FieldContent>
               <Input placeholder="my.domain.com" {...register("domain")} />
@@ -64,17 +50,10 @@ function GeneralSection() {
           <Field>
             <FieldHeader>
               <FieldLabel>Panel port</FieldLabel>
-              <FieldDescription>
-                The port on which the panel operates
-              </FieldDescription>
+              <FieldDescription>The port on which the panel operates</FieldDescription>
             </FieldHeader>
             <FieldContent>
-              <Input
-                type="number"
-                inputMode="decimal"
-                placeholder="5097"
-                {...register("port")}
-              />
+              <Input type="number" inputMode="decimal" placeholder="5097" {...register("port")} />
               {errors.port && <FieldError>{errors.port.message}</FieldError>}
             </FieldContent>
           </Field>
@@ -82,24 +61,18 @@ function GeneralSection() {
           <Field>
             <FieldHeader>
               <FieldLabel>Root path of the panel URL</FieldLabel>
-              <FieldDescription>
-                Must start with '/' and end with '/'
-              </FieldDescription>
+              <FieldDescription>Must start with '/' and end with '/'</FieldDescription>
             </FieldHeader>
             <FieldContent>
               <Input placeholder="/" {...register("pathBase")} />
-              {errors.pathBase && (
-                <FieldError>{errors.pathBase.message}</FieldError>
-              )}
+              {errors.pathBase && <FieldError>{errors.pathBase.message}</FieldError>}
             </FieldContent>
           </Field>
 
           <Field>
             <FieldHeader>
               <FieldLabel>Lifetime session</FieldLabel>
-              <FieldDescription>
-                Session duration in the system (value: minute)
-              </FieldDescription>
+              <FieldDescription>Session duration in the system (value: minute)</FieldDescription>
             </FieldHeader>
             <FieldContent>
               <Input

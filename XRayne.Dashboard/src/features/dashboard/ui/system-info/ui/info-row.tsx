@@ -10,13 +10,7 @@ interface Props {
   classNames?: Partial<{ content: string }>;
 }
 
-function InfoRow({
-  children,
-  label,
-  className,
-  classNames = {},
-  defaultValue = "n/a",
-}: Props) {
+function InfoRow({ children, label, className, classNames = {}, defaultValue = "n/a" }: Props) {
   return (
     <div className={cn("flex items-end gap-2 not-first:mt-2", className)}>
       <p className="text-sm text-foreground/70">{label}</p>
