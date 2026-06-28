@@ -30,7 +30,7 @@ function AppSidebar() {
   return (
     <Sidebar variant="floating" className="sticky top-0">
       <SidebarHeader className="p-4 flex-row items-center gap-x-2">
-        <Logo className="size-8" />
+        <Logo className="size-6" />
         <span className="font-semibold text-lg">XRayne</span>
       </SidebarHeader>
       <SidebarContent>
