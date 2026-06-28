@@ -7,11 +7,13 @@ description: Backend development guidance for XRayne. Use when Codex works on C#
 
 ## Quick Start
 
-Read `references/backend-map.md` before backend edits. Use it to place code in the right project and choose the existing pattern.
+Read `references/backend-map.md`, `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md` before backend edits. Use them to place code in the right project and choose the existing pattern.
 
 ## Implementation Rules
 
 - Keep shared DTOs, configuration contracts, permissions, and API-facing constants in `XRayne.Contracts`.
+- Add English XML `<summary>` documentation to public classes, methods, services, DTOs, handlers, controllers, and endpoints.
+- Keep Scalar/OpenAPI metadata complete with endpoint summary, description, request/response models, and status codes.
 - Keep xray-core setup, runtime services, and background jobs in `XRayne.Infrastructure`.
 - Keep EF entity models, base entity classes, migrations, and repository implementations in `XRayne.Repositories`.
 - Register services through the nearest `DependencyInjection.cs` extension.
@@ -23,6 +25,7 @@ Read `references/backend-map.md` before backend edits. Use it to place code in t
 - For CLI commands, derive from `System.CommandLine.Command`, inject `IServiceProvider`, create an async scope in `SetAction`, and return integer exit codes.
 - Read configuration through standard `IConfiguration`; use `JsonConfig` only when mutating runtime `config.json`, and `EnvConfig` only when mutating `.env`.
 - API/UI Docker image artifacts are produced by release GitHub Actions; backend code should keep the image build reproducible and avoid local-only assumptions.
+- Update `docs/` when API behavior, backend architecture, configuration, or packaging changes.
 
 ## Validation
 

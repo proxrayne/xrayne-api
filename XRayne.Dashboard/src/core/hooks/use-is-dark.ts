@@ -24,6 +24,12 @@ function subscribe(onStoreChange: () => void) {
   };
 }
 
+/**
+ * Returns the current dark-mode state from the document theme or system preference.
+ *
+ * Reacts to `class` and `data-theme` changes on the root element and to
+ * `prefers-color-scheme` changes when the document does not force a theme.
+ */
 export function useIsDark() {
   return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }

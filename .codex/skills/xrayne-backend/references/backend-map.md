@@ -2,7 +2,10 @@
 
 ## Projects
 
+Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md`.
+
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
+- `XRayne.Node`: standalone ASP.NET Core API-key protected remote-node API skeleton. It must not reference panel projects directly.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
 - `XRayne.Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
@@ -30,6 +33,8 @@
 
 - Base route style: `[Route("api/...")]`.
 - Use `[EndpointSummary]`, `[EndpointDescription]`, and `[ProducesResponseType]` annotations for API docs.
+- Add English XML `<summary>` documentation to public controllers and endpoint methods.
+- Keep request/response models and possible status codes explicit for Scalar/OpenAPI.
 - Auth endpoints:
   - `GET api/auth/me`: authorized current admin lookup.
   - `POST api/auth/login`: anonymous login, returns `LoginResponse`.

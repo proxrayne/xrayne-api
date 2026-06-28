@@ -4,6 +4,8 @@
 
 XRayne is an admin panel for managing `xray-core`. The intended surface includes CLI commands, a REST API, and a React web UI for standalone server administration. `XRayne.Node` is a separate infrastructure REST API service for remote node hosts.
 
+Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for project-wide rules and `docs/conventions/inconsistencies.md` before broad cleanup work.
+
 ## Repository Layout
 
 - `XRayne.sln`: .NET solution.
@@ -20,6 +22,7 @@ XRayne is an admin panel for managing `xray-core`. The intended surface includes
 - `XRayne.Dashboard`: React Router app.
 - `.github/workflows/build.yml`: publishes single-file CLI artifacts for `win-x64`, `osx-arm64`, and `linux-x64`, publishes the API+UI Docker image archive on tags or manual dispatch, and pushes the `XRayne.Node` image to GHCR.
 - `.codex/skills`: project-local Codex skills.
+- `docs`: canonical architecture, styleguide, conventions, and project skill documentation.
 
 ## Important Current State
 

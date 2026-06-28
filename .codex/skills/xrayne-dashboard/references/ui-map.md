@@ -2,6 +2,8 @@
 
 ## Stack
 
+Canonical frontend documentation lives in `docs/architecture/frontend.md` and `docs/styleguide/react.md`.
+
 - React 19.
 - React Router 7 framework mode via `@react-router/dev`.
 - Vite 7 with plugins: `mkcert`, `reactRouter`, Tailwind CSS 4, `vite-tsconfig-paths`, `svgr`.
@@ -49,7 +51,7 @@ Route type imports come from generated `+types` files.
 `src/root.tsx`:
 
 - Defines document shell and metadata.
-- Wraps children in `ThemeProvider` and `QueryClientProvider`.
+- Wraps children in `QueryClientProvider` and shared providers.
 - Shows `PageProgress`.
 - Listens for `unauthorize` events, invalidates `admin-account`, and revalidates routes.
 - Uses `CommonTemplate` and `ErrorScreen` in `ErrorBoundary`.

@@ -7,7 +7,7 @@ description: Frontend development guidance for XRayne. Use when Codex works on X
 
 ## Quick Start
 
-Read `references/ui-map.md` and `XRayne.Dashboard/STYLEGUIDE.md` before UI edits. Keep changes consistent with the existing feature-sliced structure and React Router conventions.
+Read `references/ui-map.md`, `docs/architecture/frontend.md`, and `docs/styleguide/react.md` before UI edits. `XRayne.Dashboard/STYLEGUIDE.md` is legacy supporting context; `/docs` is canonical.
 
 ## Implementation Rules
 
@@ -17,6 +17,7 @@ Read `references/ui-map.md` and `XRayne.Dashboard/STYLEGUIDE.md` before UI edits
 - Keep auth redirects in client middleware, not ad hoc component effects.
 - Use the shared Axios instance from `@core/api/instance`.
 - Use TanStack Query helpers near each feature's `lib/query.ts`.
+- Add concise JSDoc to Codex-added shared utilities and hooks in `src/core`.
 - Use shadcn components from `@core/ui` as the primary UI source.
 - Add missing shadcn components with `npx shadcn@latest add <component name>`.
 - Create custom UI primitives only when shadcn does not cover the need.
@@ -24,6 +25,7 @@ Read `references/ui-map.md` and `XRayne.Dashboard/STYLEGUIDE.md` before UI edits
 - Keep UI text in English unless the existing screen is already localized.
 - The release Docker image builds this UI and embeds `build/client` into the API `wwwroot`; keep production builds compatible with same-origin `/api` delivery.
 - Follow `STYLEGUIDE.md`: one file per component, feature-first nesting, library-first implementations, and Prettier formatting.
+- Update `docs/` when route structure, feature conventions, shared UI patterns, or frontend architecture changes.
 
 ## Validation
 
