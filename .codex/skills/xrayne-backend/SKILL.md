@@ -1,6 +1,6 @@
 ---
 name: xrayne-backend
-description: Backend development guidance for XRayne.Node. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, config files, or backend tests in XRayne.Api, XRayne.Cli, XRayne.Infrastructure, XRayne.Repositories, XRayne.Contracts, or XRayne.Test.
+description: Backend development guidance for XRayne. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, config files, or backend tests in XRayne.Api, XRayne.Cli, XRayne.Infrastructure, XRayne.Repositories, XRayne.Contracts, or XRayne.Test.
 ---
 
 # XRayne Backend

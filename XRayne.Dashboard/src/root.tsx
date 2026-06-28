@@ -87,7 +87,7 @@ export const links: Route.LinksFunction = () => [];
 export function HydrateFallback() {
   return (
     <main className="fixed inset-0 flex flex-col gap-y-3 justify-center items-center">
-      <h1 className="text-3xl font-medium">XRayne.Node</h1>
+      <h1 className="text-3xl font-medium">XRayne</h1>
     </main>
   );
 }

@@ -1,6 +1,6 @@
 ---
 name: xrayne-project
-description: Project-specific orientation for XRayne.Node. Use when Codex needs to understand repository layout, current product goals, cross-cutting conventions, local commands, infrastructure boundaries, or before making broad changes that touch multiple XRayne projects, README, CI, Docker/compose, or repo organization.
+description: Project-specific orientation for XRayne. Use when Codex needs to understand repository layout, current product goals, cross-cutting conventions, local commands, infrastructure boundaries, or before making broad changes that touch multiple XRayne projects, README, CI, Docker/compose, or repo organization.
 ---
 
 # XRayne Project

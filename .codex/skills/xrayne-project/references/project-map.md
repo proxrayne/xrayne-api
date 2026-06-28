@@ -1,8 +1,8 @@
-# XRayne.Node Project Map
+# XRayne Project Map
 
 ## Product
 
-XRayne.Node is a node and admin panel for managing `xray-core`. The intended surface includes CLI commands, a REST API, and a React web UI for local standalone administration and eventual remote-node scenarios.
+XRayne is an admin panel for managing `xray-core`. The intended surface includes CLI commands, a REST API, and a React web UI for standalone server administration.
 
 ## Repository Layout
 
