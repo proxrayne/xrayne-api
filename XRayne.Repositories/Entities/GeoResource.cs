@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace XRayne.Repositories.Entities;
 
-[Table("geo_resources")]
+[Table("GeoResources")]
 [Index(nameof(NextRunAt))]
 public class GeoResourceEntity : CreateUpdateEntity
 {

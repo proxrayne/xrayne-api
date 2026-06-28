@@ -6,7 +6,7 @@ using XRayne.Contracts.Enums;
 
 namespace XRayne.Repositories.Entities;
 
-[Table("users")]
+[Table("Users")]
 [Index(nameof(Username), IsUnique = true)]
 public sealed class User : CreateUpdateEntity
 {

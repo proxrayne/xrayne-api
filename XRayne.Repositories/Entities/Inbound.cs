@@ -5,7 +5,7 @@ using Xray.Config.Models;
 
 namespace XRayne.Repositories.Entities;
 
-[Table("inbounds")]
+[Table("Inbounds")]
 public sealed class InboundEntity : CreateUpdateEntity
 {
     [Key]

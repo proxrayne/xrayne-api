@@ -4,7 +4,7 @@ using XRayne.Contracts.Enums;
 
 namespace XRayne.Repositories.Entities;
 
-[Table("nodes")]
+[Table("Nodes")]
 public class NodeEntity : CreateUpdateEntity
 {
     [Key]

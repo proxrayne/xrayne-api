@@ -5,7 +5,7 @@ using XRayne.Contracts.Enums;
 
 namespace XRayne.Repositories.Entities;
 
-[Table("admin_accounts")]
+[Table("Admins")]
 [Index(nameof(Username), IsUnique = true)]
 public sealed class AdminAccount : CreatedEntity
 {

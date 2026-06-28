@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace XRayne.Repositories.Entities;
 
-[Table("certificates")]
+[Table("Certificates")]
 public class CertificateEntity : CreateUpdateEntity
 {
     [Key]

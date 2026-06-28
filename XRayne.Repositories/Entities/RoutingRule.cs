@@ -4,7 +4,7 @@ using Xray.Config.Models;
 
 namespace XRayne.Repositories.Entities;
 
-[Table("routing_rules")]
+[Table("RoutingRules")]
 public class RoutingRuleEntity : CreateUpdateEntity
 {
     [Key]
