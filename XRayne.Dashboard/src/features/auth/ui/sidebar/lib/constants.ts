@@ -1,8 +1,8 @@
 import {
-  ArrowDownToDotIcon,
-  ArrowRightLeftIcon,
-  ArrowUpFromDotIcon,
+  CpuIcon,
   FileChartPieIcon,
+  NetworkIcon,
+  ServerIcon,
   Settings2Icon,
   UsersIcon,
 } from "lucide-react";
@@ -21,19 +21,19 @@ export const TOP_NAV = [
     icon: UsersIcon,
   },
   {
-    path: urls.inbounds(),
-    title: "Inbounds",
-    icon: ArrowDownToDotIcon,
+    path: urls.nodes(),
+    title: "Nodes",
+    icon: NetworkIcon,
   },
   {
-    path: urls.outbounds(),
-    title: "Outbounds",
-    icon: ArrowUpFromDotIcon,
+    path: urls.hosts(),
+    title: "Hosts",
+    icon: ServerIcon,
   },
   {
-    path: urls.routing(),
-    title: "Routing",
-    icon: ArrowRightLeftIcon,
+    path: urls.core(),
+    title: "Core",
+    icon: CpuIcon,
   },
   {
     path: urls.settings(),

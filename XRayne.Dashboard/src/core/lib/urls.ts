@@ -9,16 +9,16 @@ export const urls = new (class Urls {
     return new Path({ pathname: "/users" });
   }
 
-  inbounds() {
-    return new Path({ pathname: "/inbounds" });
+  nodes() {
+    return new Path({ pathname: "/nodes" });
   }
 
-  outbounds() {
-    return new Path({ pathname: "/outbounds" });
+  hosts() {
+    return new Path({ pathname: "/hosts" });
   }
 
-  routing() {
-    return new Path({ pathname: "/routing" });
+  core() {
+    return new Path({ pathname: "/core" });
   }
 
   settings() {
