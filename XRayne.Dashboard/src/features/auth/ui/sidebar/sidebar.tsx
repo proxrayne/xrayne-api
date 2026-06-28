@@ -1,10 +1,8 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect } from "react";
 import { Link, useLocation } from "react-router";
-import { ExternalLinkIcon, LogOutIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 
 import GithubIcon from "assets/icons/github.svg?react";
-
-import { clearAuthorizationToken } from "@core/api/instance";
 
 import {
   Sidebar,
@@ -15,16 +13,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
   useSidebar,
 } from "@core/ui/sidebar";
-import { Spinner } from "@core/ui/spinner";
+import Logo from "@core/ui/logo";
 
 import { TOP_NAV } from "./lib/constants";
 import Profile from "./ui/profile";
 
 function AppSidebar() {
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
   const { pathname } = useLocation();
   const { setOpenMobile } = useSidebar();
 
@@ -32,8 +29,9 @@ function AppSidebar() {
 
   return (
     <Sidebar variant="floating" className="sticky top-0">
-      <SidebarHeader className="p-4">
-        <Profile />
+      <SidebarHeader className="p-4 flex-row items-center gap-x-2">
+        <Logo className="size-8" />
+        <span className="font-semibold text-lg">XRayne</span>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -62,20 +60,9 @@ function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              disabled={isSigningOut}
-              className="cursor-pointer"
-              onClick={() => {
-                setIsSigningOut(true);
-                clearAuthorizationToken();
-              }}
-            >
-              {isSigningOut ? <Spinner /> : <LogOutIcon />}
-              Sign out
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         </SidebarMenu>
+        <SidebarSeparator className="mx-auto" />
+        <Profile />
       </SidebarFooter>
     </Sidebar>
   );

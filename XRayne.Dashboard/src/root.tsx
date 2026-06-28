@@ -10,6 +10,9 @@ import {
 } from "react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 
+import LogoIconDark from "assets/icons/logo-x64-dark.svg?react";
+import LogoIconLight from "assets/icons/logo-x64-light.svg?react";
+
 import { Route } from "./+types/root";
 
 import { query } from "@core/lib/query";
@@ -87,6 +90,8 @@ export const links: Route.LinksFunction = () => [];
 export function HydrateFallback() {
   return (
     <main className="fixed inset-0 flex flex-col gap-y-3 justify-center items-center">
+      <LogoIconDark className="not-dark:hidden animate-bounce" />
+      <LogoIconLight className="dark:hidden animate-bounce" />
       <h1 className="text-3xl font-medium">XRayne</h1>
     </main>
   );

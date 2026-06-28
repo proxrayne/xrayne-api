@@ -16,6 +16,7 @@ env:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   publish-cli:
@@ -153,3 +154,51 @@ jobs:
           files: artifacts/${{ steps.image.outputs.archive }}
           prerelease: ${{ startsWith(env.RELEASE_VERSION, 'v') && (contains(env.RELEASE_VERSION, '-alpha') || contains(env.RELEASE_VERSION, '-beta')) }}
           token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+
+  publish-node-image:
+    name: Publish Node image to GHCR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image metadata
+        id: image
+        shell: bash
+        run: |
+          raw_version="${RELEASE_VERSION:-manual}"
+          version="$(echo "$raw_version" | tr '/+' '--' | tr -c 'A-Za-z0-9_.-' '-')"
+          version="${version#-}"
+          version="${version%-}"
+          if [ -z "$version" ]; then
+            version="manual"
+          fi
+
+          echo "tag=${version}" >> "$GITHUB_OUTPUT"
+          {
+            echo "tags<<EOF"
+            echo "ghcr.io/vanyakrotov/xrayne-node:${version}"
+            if [ "${GITHUB_REF#refs/tags/}" != "$GITHUB_REF" ]; then
+              echo "ghcr.io/vanyakrotov/xrayne-node:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Node image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: XRayne.Node/Dockerfile
+          push: true
+          tags: ${{ steps.image.outputs.tags }}
