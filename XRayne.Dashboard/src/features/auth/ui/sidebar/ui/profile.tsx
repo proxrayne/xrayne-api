@@ -35,7 +35,7 @@ function Profile({ className }: Props) {
         </p>
       </div>
       <Button
-        className="ml-auto"
+        className="ml-auto -mr-1.5"
         variant="ghost"
         size="icon"
         title="Sign out"

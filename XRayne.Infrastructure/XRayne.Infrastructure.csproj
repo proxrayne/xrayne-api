@@ -7,8 +7,10 @@
     <ProjectReference Include="../XRayne.Repositories/XRayne.Repositories.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.*" />
     <PackageReference Include="Dotenv.Extensions.Microsoft.Configuration" Version="3.1.0" />
     <PackageReference Include="Quartz.Extensions.Hosting" Version="3.18.1" />
+    <PackageReference Include="SSH.NET" Version="2025.1.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.*" />
     <PackageReference Include="Xray.Sdk" Version="0.0.8-beta" />
   </ItemGroup>

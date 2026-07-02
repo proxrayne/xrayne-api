@@ -31,6 +31,7 @@ public static class DependencyInjection
                     dataSourceBuilder.MapEnum<AdminPermission>();
                     dataSourceBuilder.MapEnum<SSHAuthType>();
                     dataSourceBuilder.MapEnum<NodeStatus>();
+                    dataSourceBuilder.MapEnum<CertificateMode>();
 
                     dataSourceBuilder
                         .EnableDynamicJson()
@@ -54,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<IGeoResourceRepository, GeoResourceRepository>();
         services.AddScoped<IRoutingRuleRepository, RoutingRuleRepository>();
+        services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
 
         return services;
     }

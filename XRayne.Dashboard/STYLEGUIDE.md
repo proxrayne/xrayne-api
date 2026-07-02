@@ -33,7 +33,9 @@ Prefer existing libraries and shared wrappers over handwritten implementations:
 - Use TanStack Query for server-state queries, mutations, cache reads, cache writes, and invalidation.
 - Use the shared Axios instance from `@core/api/instance` for HTTP calls.
 - Keep feature query helpers near the feature in `src/features/<feature>/lib/query.ts`.
-- Use React Hook Form and `zod` for forms that need validation.
+- Use React Hook Form for every form, including small modal forms and settings cards.
+- Use `zod` and `zodResolver` for every form validation schema. Required fields, optional URL fields, numeric bounds, and array/string parsing rules must live in the schema instead of ad hoc submit handlers.
+- Add placeholders to input fields. When the expected format is known, use a concrete format/example placeholder; otherwise use `Enter the ...`.
 - Use existing project utilities before creating new utility functions.
 
 ## Imports

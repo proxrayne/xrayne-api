@@ -13,7 +13,21 @@ public abstract class ApiControllerBase : ControllerBase
 
     protected string? Username => User.Identity?.Name;
 
-    protected Guid? AdminId
+    protected Guid AdminId
+    {
+        get
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (value is null || !Guid.TryParse(value, out var adminId))
+            {
+                throw new UnauthorizedAccessException("Administrator id is missing from the access token.");
+            }
+
+            return adminId;
+        }
+    }
+
+    protected Guid? AdminIdOrNull
     {
         get
         {
@@ -25,9 +39,10 @@ public abstract class ApiControllerBase : ControllerBase
         }
     }
 
+
     protected bool TryGetAdminId(out Guid adminId)
     {
-        var value = AdminId;
+        var value = AdminIdOrNull;
         if (value.HasValue)
         {
             adminId = value.Value;

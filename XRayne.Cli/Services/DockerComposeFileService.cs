@@ -39,8 +39,7 @@ public sealed class DockerComposeFileService : IDockerComposeFileService
                     ["env_file"] = new[] { ".env" },
                     ["environment"] = new Dictionary<string, object?>
                     {
-                        ["API_PORT"] = "${API_PORT:-5000}",
-                        ["ASPNETCORE_URLS"] = "http://+:${API_PORT:-5000}",
+                        ["PORT"] = "${PORT:-5000}",
                         ["PROJECT_PATH"] = "/app/shared",
                         ["ConnectionStrings__Default"] = "Host=${POSTGRES_HOST_API:-localhost};Port=${POSTGRES_PORT:-5432};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}"
                     },

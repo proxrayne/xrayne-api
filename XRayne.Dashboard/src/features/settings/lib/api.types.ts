@@ -1,31 +1,50 @@
-export type RestartImpact = "None" | "HotReload" | "FullRestart";
+export type WebhookEvent =
+  | "userCreated"
+  | "userUpdated"
+  | "userDeleted"
+  | "deviceConnected"
+  | "deviceRevoked"
+  | "userStatusChanged"
+  | "trafficReset"
+  | "trafficPercentThresholdReached"
+  | "subscriptionHoursThresholdReached";
 
-export interface PanelSettingsDto {
-  bindIp: string | null;
-  domain: string | null;
-  port: number;
-  pathBase: string;
-  sessionLifetimeMinutes: number;
-  panelCertPublicKeyPath: string | null;
-  panelCertPrivateKeyPath: string | null;
+export interface SubscriptionAnnounce {
+  message?: string | null;
+  url?: string | null;
 }
 
-export interface PanelSettingsResponse {
-  settings: PanelSettingsDto;
-  pendingRestart: boolean;
+export interface AppSubscriptionSettingsDto {
+  subscriptionProfileTitle: string;
+  subscriptionSupportUrl?: string | null;
+  subscriptionWebsiteUrl?: string | null;
+  subscriptionUpdateIntervalHours: number;
+  announce?: SubscriptionAnnounce | null;
 }
 
-export interface UpdatePanelSettingsRequest {
-  bindIp: string | null;
-  domain: string | null;
-  port: number | null;
-  pathBase?: string | null;
-  sessionLifetimeMinutes: number | null;
-  certPublicKeyPath: string | null;
-  certPrivateKeyPath: string | null;
+export interface AppWebhookDto {
+  id: string;
+  url: string;
+  events: WebhookEvent[];
+  hasSecret: boolean;
+  retryAttempts: number;
+  retryIntervalSeconds: number;
+  subscriptionExpirationThresholdHours: number[];
+  trafficThresholdPercents: number[];
 }
 
-export interface UpdatePanelSettingsResponse {
-  requiresRestart: boolean;
-  changedFields: string[];
+export interface CreateAppWebhookRequest {
+  url: string;
+  events: WebhookEvent[];
+  secret?: string | null;
+  retryAttempts: number;
+  retryIntervalSeconds: number;
+  subscriptionExpirationThresholdHours: number[];
+  trafficThresholdPercents: number[];
+}
+
+export type UpdateAppWebhookRequest = Omit<CreateAppWebhookRequest, "secret">;
+
+export interface AppSettingsResponse extends AppSubscriptionSettingsDto {
+  webhooks: AppWebhookDto[];
 }

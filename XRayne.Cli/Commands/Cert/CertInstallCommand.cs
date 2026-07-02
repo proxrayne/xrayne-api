@@ -88,7 +88,7 @@ public sealed class CertInstallCommand : Command
             Directory.CreateDirectory(PathProvider.Paths.CertificatesDirectory);
             Directory.CreateDirectory(PathProvider.Paths.LetsEncryptDirectory);
 
-            var apiPort = GetApiPort(configuration);
+            var apiPort = GetPanelPort(configuration);
 
             console.Header("XRayne certificate installation");
             console.Value("Mode", target.Mode);
@@ -161,35 +161,37 @@ public sealed class CertInstallCommand : Command
         var fullChainPath = CertificateCommandHelper.GetContainerFullChainPath(certName);
         var privateKeyPath = CertificateCommandHelper.GetContainerPrivateKeyPath(certName);
 
-        await JsonConfig.UpdateAsync(
-            PathProvider.Paths.JsonConfig,
-            config =>
+        await EnvConfig.UpdateAsync(
+            env =>
             {
-                JsonConfig.Remove(config, "Kestrel:Endpoints:Http");
-                JsonConfig.Set(config, "Kestrel:Endpoints:Https:Url", $"https://+:{apiPort}");
-                JsonConfig.Set(config, "Kestrel:Endpoints:Https:Certificate:Path", fullChainPath);
-                JsonConfig.Set(config, "Kestrel:Endpoints:Https:Certificate:KeyPath", privateKeyPath);
-                JsonConfig.Set(config, "Certificate:Mode", mode);
-                JsonConfig.Set(config, "Certificate:Identifier", identifier);
-                JsonConfig.Set(config, "Certificate:Email", email);
-                JsonConfig.Set(config, "Certificate:Staging", staging);
-                JsonConfig.Set(config, "Certificate:AcmeClient", "acme.sh");
-                JsonConfig.Set(config, "Certificate:Issuer", "letsencrypt");
-                JsonConfig.Set(config, "Certificate:CertProfile", mode == "ip" ? "shortlived" : string.Empty);
-                JsonConfig.Set(config, "Certificate:AutoRenew", true);
-                JsonConfig.Set(config, "Certificate:CertName", certName);
-                JsonConfig.Set(config, "Certificate:FullChainPath", fullChainPath);
-                JsonConfig.Set(config, "Certificate:PrivateKeyPath", privateKeyPath);
-                JsonConfig.Set(config, "Certificate:HostFullChainPath", CertificateCommandHelper.GetHostFullChainPath(certName));
-                JsonConfig.Set(config, "Certificate:HostPrivateKeyPath", CertificateCommandHelper.GetHostPrivateKeyPath(certName));
-                JsonConfig.Set(config, "Certificate:UpdatedAtUtc", DateTimeOffset.UtcNow);
+                EnvConfig.Set(env, "CERT_PUBLIC_KEY_PATH", fullChainPath);
+                EnvConfig.Set(env, "CERT_PRIVATE_KEY_PATH", privateKeyPath);
+                EnvConfig.Set(env, "CERTIFICATE_MODE", mode);
+                EnvConfig.Set(env, "CERTIFICATE_IDENTIFIER", identifier);
+                EnvConfig.Set(env, "CERTIFICATE_EMAIL", email);
+                EnvConfig.Set(env, "CERTIFICATE_STAGING", staging.ToString());
+                EnvConfig.Set(env, "CERTIFICATE_ACME_CLIENT", "acme.sh");
+                EnvConfig.Set(env, "CERTIFICATE_ISSUER", "letsencrypt");
+                EnvConfig.Set(env, "CERTIFICATE_CERT_PROFILE", mode == "ip" ? "shortlived" : string.Empty);
+                EnvConfig.Set(env, "CERTIFICATE_AUTO_RENEW", true.ToString());
+                EnvConfig.Set(env, "CERTIFICATE_CERT_NAME", certName);
+                EnvConfig.Set(env, "CERTIFICATE_FULL_CHAIN_PATH", fullChainPath);
+                EnvConfig.Set(env, "CERTIFICATE_PRIVATE_KEY_PATH", privateKeyPath);
+                EnvConfig.Set(env, "CERTIFICATE_HOST_FULL_CHAIN_PATH", CertificateCommandHelper.GetHostFullChainPath(certName));
+                EnvConfig.Set(env, "CERTIFICATE_HOST_PRIVATE_KEY_PATH", CertificateCommandHelper.GetHostPrivateKeyPath(certName));
+                EnvConfig.Set(env, "CERTIFICATE_UPDATED_AT_UTC", DateTimeOffset.UtcNow.ToString("O"));
+
+                if (mode == "domain")
+                {
+                    EnvConfig.Set(env, "DOMAIN", identifier);
+                }
             },
             cancellationToken);
     }
 
-    private static string GetApiPort(IConfiguration configuration)
+    private static string GetPanelPort(IConfiguration configuration)
     {
-        var apiPort = configuration["API_PORT"];
+        var apiPort = configuration["PORT"];
         if (string.IsNullOrWhiteSpace(apiPort))
         {
             return CliDefaults.DefaultApiPort.ToString();
@@ -197,7 +199,7 @@ public sealed class CertInstallCommand : Command
 
         if (!int.TryParse(apiPort, out var port) || port is < 1 or > 65535)
         {
-            throw new InvalidOperationException($"API_PORT '{apiPort}' is not a valid TCP port.");
+            throw new InvalidOperationException($"PORT '{apiPort}' is not a valid TCP port.");
         }
 
         return apiPort;

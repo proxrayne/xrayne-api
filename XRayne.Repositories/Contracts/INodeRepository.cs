@@ -14,6 +14,8 @@ public interface INodeRepository
 
     Task<NodeEntity> AddAsync(NodeEntity node, CancellationToken cancellationToken = default);
 
+    Task<NodeEntity> AddAsync(Guid adminId, NodeEntity node, CancellationToken cancellationToken = default);
+
     Task<NodeEntity?> UpdateAsync(NodeEntity node, CancellationToken cancellationToken = default);
 
     Task<NodeEntity?> UpdateAsync(Guid adminId, NodeEntity node, CancellationToken cancellationToken = default);

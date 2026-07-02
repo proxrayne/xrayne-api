@@ -58,8 +58,13 @@ public sealed class AuthController(
 
         var updatedAccount = await adminAccounts.SetLastLoginAsync(account.Id, DateTimeOffset.UtcNow, ct);
 
-        var accessToken = jwtTokenService.CreateAccessToken(account.Id, account.Username, account.Permissions);
-        var expireAt = DateTime.UtcNow.AddMinutes(jwtOptions.Value.AccessTokenLifetimeMinutes);
+        var lifetimeMinutes = jwtOptions.Value.AccessTokenLifetimeMinutes;
+        var accessToken = jwtTokenService.CreateAccessToken(
+            account.Id,
+            account.Username,
+            account.Permissions,
+            lifetimeMinutes);
+        var expireAt = DateTime.UtcNow.AddMinutes(lifetimeMinutes);
 
         return Ok(new LoginResponse(
             accessToken,

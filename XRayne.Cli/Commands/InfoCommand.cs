@@ -39,8 +39,7 @@ public sealed class InfoCommand : Command
         try
         {
             var apiStatus = await GetApiStatusAsync(apiInstallationService, cancellationToken);
-            var apiPort = GetConfigurationValue(configuration, "API_PORT", CliDefaults.DefaultApiPort.ToString());
-            var pathBase = NormalizePathBase(configuration["PathBase"]);
+            var apiPort = GetConfigurationValue(configuration, "PORT", CliDefaults.DefaultApiPort.ToString());
             var serverIp = NetworkAddress.GetLocalServerIpAddress();
             var apiEndpoint = GetApiEndpoint(configuration, serverIp, apiPort);
             var cliVersion = GetVersion();
@@ -59,8 +58,8 @@ public sealed class InfoCommand : Command
             console.Section("API");
             console.Value("Status", apiStatus);
             console.Value("Server IP", serverIp);
-            console.Value("Panel URL", $"{apiEndpoint}{pathBase}/");
-            console.Value("API URL", $"{apiEndpoint}{pathBase}/api");
+            console.Value("Panel URL", $"{apiEndpoint}/");
+            console.Value("API URL", $"{apiEndpoint}/api");
             console.Value("Docker image", GetConfigurationValue(configuration, CliDefaults.ApiImageVariable, "(unknown)"));
 
             console.Section("Updates");
@@ -163,28 +162,15 @@ public sealed class InfoCommand : Command
         return string.IsNullOrWhiteSpace(value) ? fallback : value;
     }
 
-    private static string NormalizePathBase(string? pathBase)
-    {
-        if (string.IsNullOrWhiteSpace(pathBase))
-        {
-            return string.Empty;
-        }
-
-        return pathBase.StartsWith("/", StringComparison.Ordinal)
-            ? pathBase.TrimEnd('/')
-            : $"/{pathBase.TrimEnd('/')}";
-    }
-
     private static string GetApiEndpoint(
         IConfiguration configuration,
         string serverIp,
         string apiPort)
     {
-        var certificateMode = configuration["Certificate:Mode"];
-        var certificateIdentifier = configuration["Certificate:Identifier"];
-        var httpsUrl = configuration["Kestrel:Endpoints:Https:Url"];
-        var isHttps = !string.IsNullOrWhiteSpace(httpsUrl)
-            || !string.IsNullOrWhiteSpace(certificateMode);
+        var certificateMode = configuration["CERTIFICATE_MODE"];
+        var certificateIdentifier = configuration["CERTIFICATE_IDENTIFIER"];
+        var isHttps = !string.IsNullOrWhiteSpace(configuration["CERT_PUBLIC_KEY_PATH"])
+            && !string.IsNullOrWhiteSpace(configuration["CERT_PRIVATE_KEY_PATH"]);
         var host = string.Equals(certificateMode, "domain", StringComparison.OrdinalIgnoreCase)
             && !string.IsNullOrWhiteSpace(certificateIdentifier)
                 ? certificateIdentifier

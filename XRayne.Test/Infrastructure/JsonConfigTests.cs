@@ -42,13 +42,13 @@ public sealed class JsonConfigTests
             config =>
             {
                 JsonConfig.Remove(config, "Kestrel:Endpoints:Http");
-                JsonConfig.Set(config, "PathBase", "/panel");
+                JsonConfig.Set(config, "Panel:Sample", "/panel");
             });
 
         var root = await ReadJsonAsync(configPath);
         Assert.Null(root["Kestrel"]?["Endpoints"]?["Http"]);
         Assert.Equal("https://+:8443", root["Kestrel"]?["Endpoints"]?["Https"]?["Url"]?.GetValue<string>());
-        Assert.Equal("/panel", root["PathBase"]?.GetValue<string>());
+        Assert.Equal("/panel", root["Panel"]?["Sample"]?.GetValue<string>());
     }
 
     [Fact]

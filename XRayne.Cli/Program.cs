@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using XRayne.Cli.Commands;
 using XRayne.Contracts;
+using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
 using XRayne.Infrastructure;
 using XRayne.Repositories;
@@ -46,6 +47,7 @@ try
 
     host.ConfigureServices((context, services) =>
     {
+        services.AddSingleton(PanelSettings.Parse(BuildPanelBootstrapConfiguration()));
         services.AddInfrastructure(context.Configuration);
         services.AddRepositories(GetEnvConnectionString(context.Configuration) ?? context.Configuration.GetConnectionString("Default"));
         services.AddContracts(context.Configuration);
@@ -94,4 +96,12 @@ string? GetEnvConnectionString(IConfiguration configuration)
     }
 
     return $"Host=localhost;Port={port};Username={user};Password={password};Database={database}";
+}
+
+IConfiguration BuildPanelBootstrapConfiguration()
+{
+    return new ConfigurationBuilder()
+        .AddEnvFile(PathProvider.Paths.EnvConfig, optional: true)
+        .AddEnvironmentVariables()
+        .Build();
 }

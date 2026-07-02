@@ -34,6 +34,7 @@ public sealed class AdminsController(
         var account = new AdminAccount
         {
             Username = request.Username,
+            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             PasswordHash = IdentityPasswordHasher.HashPassword(request.Password),
             Permissions = AdminPermissionNames.ParseMany(request.Permissions)
         };

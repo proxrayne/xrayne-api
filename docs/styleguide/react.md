@@ -99,9 +99,13 @@ Use `import type` for type-only imports.
 
 ## Forms
 
-- Use React Hook Form.
-- Use `zod` and `zodResolver` when form validation has more than simple required
-  fields.
+- Use React Hook Form for every form, including small modal forms and settings
+  cards.
+- Use `zod` and `zodResolver` for every form validation schema. Required fields,
+  optional URL fields, numeric bounds, and array/string parsing rules must live in
+  the schema instead of ad hoc submit handlers.
+- Add placeholders to input fields. When the expected format is known, use a
+  concrete format/example placeholder; otherwise use `Enter the ...`.
 - Keep route-specific form providers under the owning route.
 - Surface mutation errors through `sonner` toasts or inline form errors depending
   on whether the error is global or field-specific.

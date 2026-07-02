@@ -196,7 +196,7 @@ The project path is derived from the installed CLI directory. For the default `/
 
 The web panel is served by the API container on the same host and port.
 
-The API container runs with Docker host networking so it can work with host-level Xray core networking. `API_PORT` is the actual port the API listens on; Docker does not publish a separate API container port mapping.
+The API container runs with Docker host networking so it can work with host-level Xray core networking. `PORT` is the actual port the API listens on; Docker does not publish a separate API container port mapping.
 
 ## API Service Commands
 
@@ -224,7 +224,7 @@ During update, the CLI migrates runtime files (`.env`, `config.json`, and `docke
 
 ## HTTPS Certificates
 
-`xrayne cert install` issues a Let's Encrypt certificate through `acme.sh` and installs it for the ASP.NET Core API container. The command stores `acme.sh` under `<project-path>/certificates/acme-sh`, stores installed certificate files under `<project-path>/certificates/letsencrypt`, writes Kestrel HTTPS settings to `<project-path>/config.json`, keeps the API listening on the configured `API_PORT`, enables automatic renewal through `acme.sh`, and recreates the API container.
+`xrayne cert install` issues a Let's Encrypt certificate through `acme.sh` and installs it for the ASP.NET Core API container. The command stores `acme.sh` under `<project-path>/certificates/acme-sh`, stores installed certificate files under `<project-path>/certificates/letsencrypt`, writes certificate paths to `<project-path>/.env`, keeps the API listening on the configured `PORT`, enables automatic renewal through `acme.sh`, and recreates the API container.
 
 For a domain certificate, point the domain at the server first, then run:
 
@@ -238,7 +238,7 @@ For an IP address certificate, pass a public IPv4 address:
 xrayne cert install --ip-address 203.0.113.10 --email admin@example.com
 ```
 
-If neither `--domain` nor `--ip-address` is passed, the CLI resolves the server public IPv4 address and issues an IP certificate for it. IP address certificates use the Let's Encrypt `shortlived` profile, so they are valid for about six days and must be renewed frequently. The command uses standalone HTTP-01 validation, so port `80` must be reachable from the Internet while the certificate is being issued or renewed. Private, loopback, and reserved IP addresses are rejected. HTTPS uses the same `API_PORT` that was selected during API installation.
+If neither `--domain` nor `--ip-address` is passed, the CLI resolves the server public IPv4 address and issues an IP certificate for it. IP address certificates use the Let's Encrypt `shortlived` profile, so they are valid for about six days and must be renewed frequently. The command uses standalone HTTP-01 validation, so port `80` must be reachable from the Internet while the certificate is being issued or renewed. Private, loopback, and reserved IP addresses are rejected. HTTPS uses the same `PORT` that was selected during API installation.
 
 ```bash
 xrayne cert renew

@@ -27,27 +27,16 @@ internal sealed class V1UseHostNetworkForApiMigration : IRuntimeMigration
         CancellationToken cancellationToken)
     {
         var apiPort = await RuntimeMigrationFileHelpers.GetApiPortAsync(context.Paths, cancellationToken);
-        var hasCertificate = RuntimeMigrationFileHelpers.HasCertificate(context.Paths);
-
         await MigrateComposeUpAsync(context, cancellationToken);
         await RuntimeMigrationFileHelpers.SetEnvValueAsync(context.Paths.EnvConfig, "POSTGRES_HOST_API", "localhost", cancellationToken);
         await RuntimeMigrationFileHelpers.SetEnvValueAsync(context.Paths.EnvConfig, "POSTGRES_CONTAINER_PORT", "5432", cancellationToken);
+        await RuntimeMigrationFileHelpers.SetEnvValueAsync(context.Paths.EnvConfig, "PORT", apiPort, cancellationToken);
 
         await JsonConfig.UpdateAsync(
             context.Paths.JsonConfig,
             config =>
             {
-                if (hasCertificate)
-                {
-                    JsonConfig.Remove(config, "Kestrel:Endpoints:Http");
-                    JsonConfig.Set(config, "Kestrel:Endpoints:Https:Url", $"https://+:{apiPort}");
-                }
-                else
-                {
-                    JsonConfig.Remove(config, "Kestrel:Endpoints:Https");
-                    JsonConfig.Set(config, "Kestrel:Endpoints:Http:Url", $"http://+:{apiPort}");
-                }
-
+                JsonConfig.Remove(config, "Kestrel");
                 JsonConfig.Set(config, "Runtime:SchemaVersion", ToVersion);
             },
             cancellationToken);
@@ -67,17 +56,7 @@ internal sealed class V1UseHostNetworkForApiMigration : IRuntimeMigration
             context.Paths.JsonConfig,
             config =>
             {
-                if (hasCertificate)
-                {
-                    JsonConfig.Remove(config, "Kestrel:Endpoints:Http");
-                    JsonConfig.Set(config, "Kestrel:Endpoints:Https:Url", "https://+:8443");
-                }
-                else
-                {
-                    JsonConfig.Remove(config, "Kestrel:Endpoints:Https");
-                    JsonConfig.Set(config, "Kestrel:Endpoints:Http:Url", "http://+:8080");
-                }
-
+                JsonConfig.Remove(config, "Kestrel");
                 JsonConfig.Set(config, "Runtime:SchemaVersion", FromVersion);
             },
             cancellationToken);
@@ -98,8 +77,9 @@ internal sealed class V1UseHostNetworkForApiMigration : IRuntimeMigration
 
         api["network_mode"] = "host";
         api.Remove("ports");
-        environment["API_PORT"] = "${API_PORT:-5000}";
-        environment["ASPNETCORE_URLS"] = "http://+:${API_PORT:-5000}";
+        environment.Remove("API_PORT");
+        environment.Remove("ASPNETCORE_URLS");
+        environment["PORT"] = "${PORT:-5000}";
         environment["ConnectionStrings__Default"] = "Host=${POSTGRES_HOST_API:-localhost};Port=${POSTGRES_PORT:-5432};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB}";
 
         await SaveComposeAsync(context.Paths.DockerCompose, compose, cancellationToken);
@@ -123,10 +103,11 @@ internal sealed class V1UseHostNetworkForApiMigration : IRuntimeMigration
         api["ports"] = new[]
         {
             hasCertificate
-                ? "${API_PORT:-5000}:8443"
-                : "${API_PORT:-5000}:8080"
+                ? "${PORT:-5000}:8443"
+                : "${PORT:-5000}:8080"
         };
         environment.Remove("API_PORT");
+        environment.Remove("PORT");
         environment["ASPNETCORE_URLS"] = hasCertificate
             ? "https://+:8443"
             : "http://+:8080";

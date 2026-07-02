@@ -7,15 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Contracts", "XRayne.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Infrastructure", "XRayne.Infrastructure\XRayne.Infrastructure.csproj", "{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Api", "XRayne.Api\XRayne.Api.csproj", "{9AD635D6-6146-4C19-8A5E-A2F753BD1188}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Cli", "XRayne.Cli\XRayne.Cli.csproj", "{E28A3424-249E-4B0F-B55D-624A3CB07A72}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Repositories", "XRayne.Repositories\XRayne.Repositories.csproj", "{6B6D02D5-CEC1-41BD-9BF8-84C7F3F35C3F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Test", "XRayne.Test\XRayne.Test.csproj", "{D4970A67-40F4-4728-91C8-258B8E608147}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Node", "XRayne.Node\XRayne.Node.csproj", "{3116970C-377C-4F15-9090-D4EBF069A12F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,14 +25,6 @@ Global
 		{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9AD635D6-6146-4C19-8A5E-A2F753BD1188}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9AD635D6-6146-4C19-8A5E-A2F753BD1188}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9AD635D6-6146-4C19-8A5E-A2F753BD1188}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9AD635D6-6146-4C19-8A5E-A2F753BD1188}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E28A3424-249E-4B0F-B55D-624A3CB07A72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E28A3424-249E-4B0F-B55D-624A3CB07A72}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E28A3424-249E-4B0F-B55D-624A3CB07A72}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E28A3424-249E-4B0F-B55D-624A3CB07A72}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6B6D02D5-CEC1-41BD-9BF8-84C7F3F35C3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6B6D02D5-CEC1-41BD-9BF8-84C7F3F35C3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6B6D02D5-CEC1-41BD-9BF8-84C7F3F35C3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -47,10 +33,6 @@ Global
 		{D4970A67-40F4-4728-91C8-258B8E608147}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4970A67-40F4-4728-91C8-258B8E608147}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4970A67-40F4-4728-91C8-258B8E608147}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3116970C-377C-4F15-9090-D4EBF069A12F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3116970C-377C-4F15-9090-D4EBF069A12F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3116970C-377C-4F15-9090-D4EBF069A12F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3116970C-377C-4F15-9090-D4EBF069A12F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,9 +9,16 @@ using XRayne.Contracts.Values;
 
 namespace XRayne.Infrastructure.Services;
 
+/// <summary>
+/// Creates JWT access tokens for panel administrators.
+/// </summary>
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
-    public string CreateAccessToken(Guid adminId, string username, AdminPermission permissions)
+    public string CreateAccessToken(
+        Guid adminId,
+        string username,
+        AdminPermission permissions,
+        int? lifetimeMinutes = null)
     {
         var jwtOptions = options.Value;
         if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
@@ -34,7 +41,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret));
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
-        var expiresAt = DateTime.UtcNow.AddMinutes(jwtOptions.AccessTokenLifetimeMinutes);
+        var expiresAt = DateTime.UtcNow.AddMinutes(lifetimeMinutes ?? jwtOptions.AccessTokenLifetimeMinutes);
 
         var token = new JwtSecurityToken(
             issuer: jwtOptions.Issuer,

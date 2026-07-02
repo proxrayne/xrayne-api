@@ -13,6 +13,10 @@ export const urls = new (class Urls {
     return new Path({ pathname: "/nodes" });
   }
 
+  node(id: string | number) {
+    return new Path({ pathname: `/nodes/${id}` });
+  }
+
   hosts() {
     return new Path({ pathname: "/hosts" });
   }

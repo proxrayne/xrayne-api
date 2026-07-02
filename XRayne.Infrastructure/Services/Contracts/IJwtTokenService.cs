@@ -4,5 +4,9 @@ namespace XRayne.Infrastructure.Services;
 
 public interface IJwtTokenService
 {
-    string CreateAccessToken(Guid adminId, string username, AdminPermission permissions);
+    string CreateAccessToken(
+        Guid adminId,
+        string username,
+        AdminPermission permissions,
+        int? lifetimeMinutes = null);
 }

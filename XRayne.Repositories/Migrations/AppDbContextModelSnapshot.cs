@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using XRayne.Contracts.Models;
 using XRayne.Repositories;
 using XRayne.Repositories.Entities;
 using Xray.Config.Enums;
@@ -25,6 +26,7 @@ namespace XRayne.Repositories.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "admin_permission", new[] { "none", "create_users", "edit_users", "delete_users", "reset_traffic", "change_xray_settings", "view_logs", "manage_admins", "super_admin" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "certificate_mode", new[] { "domain", "ip" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "limit_reset_strategy", new[] { "day", "week", "month", "year" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "node_status", new[] { "connected", "connecting", "error", "disabled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "ssh_auth_type", new[] { "password", "private_key" });
@@ -57,6 +59,10 @@ namespace XRayne.Repositories.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -80,6 +86,101 @@ namespace XRayne.Repositories.Migrations
                         .IsUnique();
 
                     b.ToTable("Admins");
+                });
+
+            modelBuilder.Entity("XRayne.Repositories.Entities.AppSettingsEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<SubscriptionAnnounce>("Announce")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("SubscriptionProfileTitle")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasDefaultValue("XRayne");
+
+                    b.Property<string>("SubscriptionSupportUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<int>("SubscriptionUpdateIntervalHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(24);
+
+                    b.Property<string>("SubscriptionWebsiteUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppSettings");
+                });
+
+            modelBuilder.Entity("XRayne.Repositories.Entities.AppWebhookSettingsEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AppSettingsId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<decimal>("Events")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<int>("RetryAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(3);
+
+                    b.Property<int>("RetryIntervalSeconds")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(60);
+
+                    b.Property<string>("Secret")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<List<int>>("SubscriptionExpirationThresholdHours")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<List<int>>("TrafficThresholdPercents")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppSettingsId");
+
+                    b.ToTable("AppWebhooks");
                 });
 
             modelBuilder.Entity("XRayne.Repositories.Entities.CertificateEntity", b =>
@@ -275,6 +376,11 @@ namespace XRayne.Repositories.Migrations
                     b.Property<Guid>("AdminId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ApiKeyFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<int>("ApiPort")
                         .HasColumnType("integer");
 
@@ -282,10 +388,32 @@ namespace XRayne.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("CertificateMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Domain");
+
+                    b.Property<DateTimeOffset?>("ConnectedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("EncryptedApiKey")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("InstallationMessage")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTimeOffset?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("LastStatusChange")
                         .HasColumnType("timestamp with time zone");
@@ -310,9 +438,17 @@ namespace XRayne.Repositories.Migrations
                     b.Property<int>("Port")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ReconnectAttemptCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("SSHKey")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
+
+                    b.Property<string>("SSHUsername")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -516,6 +652,17 @@ namespace XRayne.Repositories.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("XRayne.Repositories.Entities.AppWebhookSettingsEntity", b =>
+                {
+                    b.HasOne("XRayne.Repositories.Entities.AppSettingsEntity", "AppSettings")
+                        .WithMany("Webhooks")
+                        .HasForeignKey("AppSettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppSettings");
+                });
+
             modelBuilder.Entity("XRayne.Repositories.Entities.CertificateEntity", b =>
                 {
                     b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
@@ -643,6 +790,11 @@ namespace XRayne.Repositories.Migrations
                         .HasForeignKey("OutboundEntityId");
 
                     b.Navigation("Admin");
+                });
+
+            modelBuilder.Entity("XRayne.Repositories.Entities.AppSettingsEntity", b =>
+                {
+                    b.Navigation("Webhooks");
                 });
 
             modelBuilder.Entity("XRayne.Repositories.Entities.NodeEntity", b =>

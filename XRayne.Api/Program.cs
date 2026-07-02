@@ -32,7 +32,7 @@ try
     var IsDocsEnabled = builder.Configuration.GetValue("Docs", false);
     var devSpaOrigins = builder.Configuration.GetSection("Cors:SpaOrigins").Get<string[]>() ?? [];
 
-    PanelSettings settings = PanelSettings.Parse(builder.Configuration);
+    PanelSettings settings = PanelSettings.Parse(BuildPanelBootstrapConfiguration());
     if (!builder.Environment.IsDevelopment() && PanelStartupReader.ShouldOverrideKestrel(settings))
     {
         using var bootstrapLoggerFactory = LoggerFactory.Create(b => b.AddSerilog());
@@ -86,7 +86,6 @@ try
         options.KnownNetworks.Clear();
         options.KnownProxies.Clear();
 
-        // ApplyTrustedProxyCidrs(options, settings.TrustedProxyCidrs);
     });
 
     if (IsDocsEnabled)
@@ -161,16 +160,11 @@ try
         options.AddAdminPermissionPolicies();
     });
 
+    builder.Services.AddSingleton(settings);
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddRepositories(builder.Configuration.GetConnectionString("Default"));
     builder.Services.AddContracts(builder.Configuration);
     builder.Services.AddSingleton<IPanelRestartService, PanelRestartService>();
-
-    if (settings.SessionLifetimeMinutes > 0)
-    {
-        builder.Services.Configure<JwtOptions>(o =>
-            o.AccessTokenLifetimeMinutes = settings.SessionLifetimeMinutes);
-    }
 
     builder.Services.AddQuartz(options =>
     {
@@ -194,12 +188,6 @@ try
 
     app.UseSerilogRequestLogging();
     app.UseForwardedHeaders();
-
-    // TODO: need implement after add frontend logic
-    // if (!string.IsNullOrWhiteSpace(settings.PathBase))
-    // {
-    //     app.UsePathBase(settings.PathBase);
-    // }
 
     if (IsDocsEnabled)
     {
@@ -268,26 +256,12 @@ static string[] BuildAllowedOrigins(string[] devOrigins, string? domain)
     return [.. devOrigins, normalized];
 }
 
-/* static void ApplyTrustedProxyCidrs(ForwardedHeadersOptions options, string? cidrs)
+static IConfiguration BuildPanelBootstrapConfiguration()
 {
-    if (string.IsNullOrWhiteSpace(cidrs))
-    {
-        return;
-    }
-
-    foreach (var entry in cidrs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-    {
-        if (System.Net.IPNetwork.TryParse(entry, out var parsed))
-        {
-            options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(parsed.BaseAddress, parsed.PrefixLength));
-            continue;
-        }
-
-        if (IPAddress.TryParse(entry, out var ip))
-        {
-            options.KnownProxies.Add(ip);
-        }
-    }
-} */
+    return new ConfigurationBuilder()
+        .AddEnvFile(PathProvider.Paths.EnvConfig, optional: true)
+        .AddEnvironmentVariables()
+        .Build();
+}
 
 public partial class Program;

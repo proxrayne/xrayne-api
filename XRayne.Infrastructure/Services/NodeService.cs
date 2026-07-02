@@ -20,6 +20,9 @@ public sealed class NodeService(INodeRepository repository) : INodeService
     public Task<NodeEntity> AddAsync(NodeEntity node, CancellationToken cancellationToken = default)
         => repository.AddAsync(node, cancellationToken);
 
+    public Task<NodeEntity> AddAsync(Guid adminId, NodeEntity node, CancellationToken cancellationToken = default)
+        => repository.AddAsync(adminId, node, cancellationToken);
+
     public Task<NodeEntity?> UpdateAsync(NodeEntity node, CancellationToken cancellationToken = default)
         => repository.UpdateAsync(node, cancellationToken);
 

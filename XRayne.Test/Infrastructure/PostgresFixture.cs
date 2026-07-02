@@ -30,8 +30,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
         await context.Database.ExecuteSqlRawAsync(
             """
-            TRUNCATE TABLE "panel_settings" RESTART IDENTITY CASCADE;
-            TRUNCATE TABLE "admin_accounts" RESTART IDENTITY CASCADE;
+            TRUNCATE TABLE "AdminAccounts" RESTART IDENTITY CASCADE;
             """);
     }
 

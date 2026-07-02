@@ -28,7 +28,7 @@ public sealed class CertStatusCommand : Command
 
         try
         {
-            var certName = configuration["Certificate:CertName"];
+            var certName = configuration["CERTIFICATE_CERT_NAME"];
             if (string.IsNullOrWhiteSpace(certName))
             {
                 console.Header("XRayne certificate status");
@@ -37,23 +37,26 @@ public sealed class CertStatusCommand : Command
                 return 0;
             }
 
-            var fullChainPath = configuration["Certificate:HostFullChainPath"]
+            var fullChainPath = configuration["CERTIFICATE_HOST_FULL_CHAIN_PATH"]
                 ?? CertificateCommandHelper.GetHostFullChainPath(certName);
-            var privateKeyPath = configuration["Certificate:HostPrivateKeyPath"]
+            var privateKeyPath = configuration["CERTIFICATE_HOST_PRIVATE_KEY_PATH"]
                 ?? CertificateCommandHelper.GetHostPrivateKeyPath(certName);
 
             console.Header("XRayne certificate status");
             console.Value("Status", File.Exists(fullChainPath) && File.Exists(privateKeyPath) ? "installed" : "missing files");
-            console.Value("Mode", configuration["Certificate:Mode"] ?? "(unknown)");
-            console.Value("Identifier", configuration["Certificate:Identifier"] ?? "(unknown)");
-            console.Value("ACME client", configuration["Certificate:AcmeClient"] ?? "(unknown)");
-            console.Value("Issuer", configuration["Certificate:Issuer"] ?? "(unknown)");
-            console.Value("Cert profile", configuration["Certificate:CertProfile"] ?? "(default)");
-            console.Value("Auto renew", configuration.GetValue("Certificate:AutoRenew", false) ? "enabled" : "disabled");
+            console.Value("Mode", configuration["CERTIFICATE_MODE"] ?? "(unknown)");
+            console.Value("Identifier", configuration["CERTIFICATE_IDENTIFIER"] ?? "(unknown)");
+            console.Value("ACME client", configuration["CERTIFICATE_ACME_CLIENT"] ?? "(unknown)");
+            console.Value("Issuer", configuration["CERTIFICATE_ISSUER"] ?? "(unknown)");
+            console.Value("Cert profile", configuration["CERTIFICATE_CERT_PROFILE"] ?? "(default)");
+            console.Value("Auto renew", configuration.GetValue("CERTIFICATE_AUTO_RENEW", false) ? "enabled" : "disabled");
             console.Value("Certificate name", certName);
             console.Value("Certificate", FormatPathState(fullChainPath));
             console.Value("Private key", FormatPathState(privateKeyPath));
-            console.Value("HTTPS endpoint", configuration["Kestrel:Endpoints:Https:Url"] ?? "(not configured)");
+            console.Value("HTTPS endpoint", !string.IsNullOrWhiteSpace(configuration["CERT_PUBLIC_KEY_PATH"])
+                && !string.IsNullOrWhiteSpace(configuration["CERT_PRIVATE_KEY_PATH"])
+                    ? $"https://+:{configuration["PORT"] ?? "(unknown)"}"
+                    : "(not configured)");
 
             return 0;
         }

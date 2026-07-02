@@ -1,6 +1,5 @@
 using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.Services;
 
 namespace XRayne.Test.Infrastructure;
 
@@ -84,23 +83,19 @@ public sealed class SystemInfoServiceTests
 
     private static ISystemInfoService CreateService()
     {
-        var accessor = Substitute.For<IPanelSettingsAccessor>();
-        accessor.Current.Returns(new XRayne.Contracts.Configurations.PanelSettings());
-        var paths = new ProjectPathResolver(accessor);
-
         if (OperatingSystem.IsWindows())
         {
-            return new WindowsSystemInfoService(paths);
+            return new WindowsSystemInfoService();
         }
 
         if (OperatingSystem.IsLinux())
         {
-            return new LinuxSystemInfoService(paths);
+            return new LinuxSystemInfoService();
         }
 
         if (OperatingSystem.IsMacOS())
         {
-            return new MacOsSystemInfoService(paths);
+            return new MacOsSystemInfoService();
         }
 
         throw new PlatformNotSupportedException();

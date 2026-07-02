@@ -9,7 +9,7 @@ using XRayne.Contracts.Enums;
 using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.Utilities;
 using XRayne.Repositories;
-using XRayne.Repositories.Admins;
+using XRayne.Repositories.Contracts;
 using XRayne.Repositories.Entities;
 
 namespace XRayne.Test.Infrastructure;

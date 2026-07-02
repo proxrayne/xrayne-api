@@ -2,41 +2,27 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { query } from "@core/lib/query";
 
-import { fetchPanelSettings } from "./api";
-import type { PanelSettingsDto } from "./api.types";
+import { fetchAppSettings } from "./api";
 
-export const panelSettingsQuery = queryOptions({
-  queryKey: ["panel", "settings"],
-  queryFn: ({ signal }) => fetchPanelSettings(signal),
+export const appSettingsQuery = queryOptions({
+  queryKey: ["app", "settings"],
+  queryFn: ({ signal }) => fetchAppSettings(signal),
   refetchOnWindowFocus: false,
-  staleTime: 0,
   retry: 1,
 });
 
-export function usePanelSettings() {
-  const { data, isFetched, error, refetch } = useQuery(panelSettingsQuery);
-
-  const settings = data?.settings;
-  const pendingRestart = data?.pendingRestart ?? false;
+export function useAppSettings() {
+  const { data, isFetched, error, refetch } = useQuery(appSettingsQuery);
 
   return {
-    settings,
-    pendingRestart,
+    settings: data,
     isLoaded: isFetched,
     error,
     refetch,
   };
 }
 
-usePanelSettings.getOrFetch = () => query.fetchQuery(panelSettingsQuery);
+useAppSettings.invalidate = () => query.invalidateQueries({ queryKey: appSettingsQuery.queryKey });
 
-usePanelSettings.setData = (settings: PanelSettingsDto) =>
-  query.setQueryData(panelSettingsQuery.queryKey, (prev) => ({
-    pendingRestart: prev?.pendingRestart ?? false,
-    settings,
-  }));
-
-usePanelSettings.invalidate = () =>
-  query.invalidateQueries({ queryKey: panelSettingsQuery.queryKey });
-
-usePanelSettings.fetch = () => query.fetchQuery(panelSettingsQuery);
+useAppSettings.setData = (settings: Awaited<ReturnType<typeof fetchAppSettings>>) =>
+  query.setQueryData(appSettingsQuery.queryKey, settings);

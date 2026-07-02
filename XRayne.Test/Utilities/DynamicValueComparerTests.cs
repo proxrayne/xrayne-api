@@ -24,11 +24,11 @@ public sealed class DynamicValueComparerTests
         var left = new Dictionary<string, object?>
         {
             ["port"] = 5097,
-            ["pathBase"] = "/panel/"
+            ["sessionLifetimeMinutes"] = 7200
         };
         var right = new Dictionary<string, object?>
         {
-            ["pathBase"] = "/panel/",
+            ["sessionLifetimeMinutes"] = 7200,
             ["port"] = 5097L
         };
 

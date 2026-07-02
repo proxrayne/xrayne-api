@@ -45,11 +45,11 @@ public sealed class CertRenewCommand : Command
         {
             apiInstallationService.EnsureInstalled();
 
-            var certName = configuration["Certificate:CertName"];
-            var mode = configuration["Certificate:Mode"];
-            var identifier = configuration["Certificate:Identifier"];
-            var email = configuration["Certificate:Email"];
-            var staging = configuration.GetValue("Certificate:Staging", false);
+            var certName = configuration["CERTIFICATE_CERT_NAME"];
+            var mode = configuration["CERTIFICATE_MODE"];
+            var identifier = configuration["CERTIFICATE_IDENTIFIER"];
+            var email = configuration["CERTIFICATE_EMAIL"];
+            var staging = configuration.GetValue("CERTIFICATE_STAGING", false);
             if (string.IsNullOrWhiteSpace(certName))
             {
                 throw new InvalidOperationException("No installed XRayne certificate was found. Run 'xrayne cert install' first.");

@@ -47,8 +47,13 @@ internal static class RuntimeMigrationFileHelpers
         CancellationToken cancellationToken)
     {
         var apiPort = File.Exists(paths.EnvConfig)
-            ? await EnvConfig.GetAsync("API_PORT", paths.EnvConfig, cancellationToken)
+            ? await EnvConfig.GetAsync("PORT", paths.EnvConfig, cancellationToken)
             : null;
+
+        if (string.IsNullOrWhiteSpace(apiPort) && File.Exists(paths.EnvConfig))
+        {
+            apiPort = await EnvConfig.GetAsync("API_PORT", paths.EnvConfig, cancellationToken);
+        }
 
         return !string.IsNullOrWhiteSpace(apiPort)
             ? apiPort
@@ -67,7 +72,13 @@ internal static class RuntimeMigrationFileHelpers
             var json = File.ReadAllText(paths.JsonConfig);
             var root = JsonNode.Parse(json);
 
-            return !string.IsNullOrWhiteSpace(root?["Certificate"]?["CertName"]?.GetValue<string>())
+            var envLines = File.Exists(paths.EnvConfig)
+                ? File.ReadAllLines(paths.EnvConfig)
+                : [];
+
+            return !string.IsNullOrWhiteSpace(EnvConfig.Get(envLines, "CERTIFICATE_CERT_NAME"))
+                || !string.IsNullOrWhiteSpace(EnvConfig.Get(envLines, "CERT_PUBLIC_KEY_PATH"))
+                || !string.IsNullOrWhiteSpace(root?["Certificate"]?["CertName"]?.GetValue<string>())
                 || !string.IsNullOrWhiteSpace(root?["Kestrel"]?["Endpoints"]?["Https"]?["Url"]?.GetValue<string>());
         }
         catch

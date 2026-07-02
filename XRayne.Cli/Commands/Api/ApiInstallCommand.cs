@@ -84,8 +84,6 @@ public sealed class ApiInstallCommand : Command
             await shellService.RunAsync("docker", $"load -i \"{imageTarPath}\"", options.Paths.Root, cancellationToken);
 
             await WriteEnvFileAsync(imageTag, options, cancellationToken);
-            await WriteConfigFileAsync(options, cancellationToken);
-
             await dockerComposeFileService.WriteApiComposeAsync(options.Paths, imageTag, cancellationToken);
 
             console.Success($"API installation files are ready in '{options.Paths.Root}'.");
@@ -121,13 +119,9 @@ public sealed class ApiInstallCommand : Command
             postgresPassword = PasswordGenerator.Generate(length: 16);
         }
 
-        Console.Write("API prefix, for example 'hidden-panel' (empty for no prefix): ");
-        var apiPrefix = NormalizePrefix(Console.ReadLine());
-
         return new InstallOptions(PathProvider.GetProjectDirectory())
         {
             ApiPort = apiPort,
-            ApiPrefix = apiPrefix,
             PostgresPassword = postgresPassword
         };
     }
@@ -156,27 +150,6 @@ public sealed class ApiInstallCommand : Command
         }
     }
 
-    private static string NormalizePrefix(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
-
-        var prefix = value.Trim().Trim('/');
-        if (prefix.Length == 0)
-        {
-            return string.Empty;
-        }
-
-        if (prefix.Any(character => !(char.IsAsciiLetterOrDigit(character) || character is '-' or '_' or '.')))
-        {
-            throw new InvalidOperationException("API prefix can contain only letters, digits, '-', '_' and '.'.");
-        }
-
-        return $"/{prefix}";
-    }
-
     private static async Task DecompressGzipAsync(
         string archivePath,
         string destinationPath,
@@ -196,7 +169,7 @@ public sealed class ApiInstallCommand : Command
     {
         var values = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["API_PORT"] = options.ApiPort.ToString(),
+            ["PORT"] = options.ApiPort.ToString(),
             ["PROJECT_PATH"] = options.Paths.Root,
             ["API_IMAGE"] = $"{CliDefaults.ImageName}:{imageTag}",
             ["POSTGRES_DB"] = CliDefaults.PostgresDatabase,
@@ -219,41 +192,25 @@ public sealed class ApiInstallCommand : Command
             cancellationToken);
     }
 
-    private static async Task WriteConfigFileAsync(
-        InstallOptions options,
-        CancellationToken cancellationToken)
-    {
-        await JsonConfig.UpdateAsync(
-            options.Paths.JsonConfig,
-            config =>
-            {
-                JsonConfig.Set(config, "PathBase", options.ApiPrefix);
-                JsonConfig.Set(config, "Kestrel:Endpoints:Http:Url", $"http://+:{options.ApiPort}");
-            },
-            cancellationToken);
-    }
-
     private static void PrintInstallSummary(
         ICliConsole console,
         string releaseTag,
         string imageTag,
         InstallOptions options)
     {
-        var panelUrl = $"http://0.0.0.0:{options.ApiPort}{options.ApiPrefix}/";
-        var apiUrl = $"http://0.0.0.0:{options.ApiPort}{options.ApiPrefix}/api";
+        var panelUrl = $"http://0.0.0.0:{options.ApiPort}/";
+        var apiUrl = $"http://0.0.0.0:{options.ApiPort}/api";
 
         console.Header("XRayne API installation completed");
         console.Value("Release", releaseTag);
         console.Value("Docker image", $"{CliDefaults.ImageName}:{imageTag}");
         console.Value("Project path", options.Paths.Root);
         console.Value("Environment file", options.Paths.EnvConfig);
-        console.Value("Config file", options.Paths.JsonConfig);
         console.Value("Compose file", options.Paths.DockerCompose);
 
         console.Section("Panel");
         console.Value("URL", panelUrl);
         console.Value("API URL", apiUrl);
-        console.Value("Prefix", string.IsNullOrWhiteSpace(options.ApiPrefix) ? "(none)" : options.ApiPrefix);
 
         console.Section("PostgreSQL");
         console.Value("API host", "localhost:5432");
@@ -291,7 +248,6 @@ public sealed class ApiInstallCommand : Command
     {
         public int ApiPort { get; set; }
         public string PostgresPassword { get; set; } = string.Empty;
-        public string ApiPrefix { get; set; } = string.Empty;
         public ProjectPaths Paths { get; }
 
         public InstallOptions(string projectPath)

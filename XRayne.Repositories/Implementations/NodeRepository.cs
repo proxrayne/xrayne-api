@@ -7,6 +7,7 @@ namespace XRayne.Repositories.Implementations;
 public sealed class NodeRepository(AppDbContext dbContext) : INodeRepository
 {
     private IQueryable<NodeEntity> NodesWithRelations => dbContext.Nodes
+        .Include(node => node.Admin)
         .Include(node => node.Inbounds)
         .Include(node => node.Outbounds)
         .Include(node => node.RoutingRules);
@@ -43,6 +44,16 @@ public sealed class NodeRepository(AppDbContext dbContext) : INodeRepository
     public async Task<NodeEntity> AddAsync(NodeEntity node, CancellationToken ct = default)
     {
         await dbContext.Nodes.AddAsync(node, ct);
+        await dbContext.SaveChangesAsync(ct);
+        await dbContext.Entry(node).ReloadAsync(ct);
+
+        return node;
+    }
+
+    public async Task<NodeEntity> AddAsync(Guid adminId, NodeEntity node, CancellationToken ct = default)
+    {
+        await dbContext.Nodes.AddAsync(node, ct);
+        dbContext.Entry(node).Property("AdminId").CurrentValue = adminId;
         await dbContext.SaveChangesAsync(ct);
         await dbContext.Entry(node).ReloadAsync(ct);
 
