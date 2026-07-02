@@ -5,7 +5,6 @@
 The backend is a .NET 9 solution with a layered architecture:
 
 - `XRayne.Api`: panel REST API and dashboard static host.
-- `XRayne.Node`: standalone remote-node REST API skeleton.
 - `XRayne.Cli`: administrator command-line tool.
 - `XRayne.Contracts`: shared contracts and configuration values.
 - `XRayne.Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
@@ -30,17 +29,20 @@ The backend is a .NET 9 solution with a layered architecture:
 Controllers use `[Route("api/...")]`, inherit from `ApiControllerBase`, and use
 `EndpointSummary`, `EndpointDescription`, and `ProducesResponseType`.
 
-## Node Host
+## Managed Nodes
 
-`XRayne.Node` is an independent ASP.NET Core REST API service:
+Node management is part of the panel backend, not a separate local project.
+Panel-owned node behavior includes:
 
-- no `ProjectReference` to panel projects;
-- API key middleware using `X-Node-Api-Key`;
-- Serilog console and daily file logging;
-- OpenAPI/Scalar docs when `Docs` is enabled;
-- controller stubs for core, system, and version APIs.
+- HTTP endpoints in `XRayne.Api`;
+- provisioning, reconnect, status streaming, and connection verification services
+  in `XRayne.Infrastructure`;
+- node entities, encrypted connection data, and repository access in
+  `XRayne.Repositories`;
+- shared node DTOs, enums, and configuration values in `XRayne.Contracts`.
 
-Keep it standalone until a dedicated shared contract package is introduced.
+Do not add or reference a local standalone node-service project when
+implementing node management features in this repository.
 
 ## Contracts Layer
 

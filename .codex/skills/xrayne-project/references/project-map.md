@@ -2,7 +2,10 @@
 
 ## Product
 
-XRayne is an admin panel for managing `xray-core`. The intended surface includes CLI commands, a REST API, and a React web UI for standalone server administration. `XRayne.Node` is a separate infrastructure REST API service for remote node hosts.
+XRayne Panel is an admin panel for managing `xray-core` and remote nodes. The
+`xrayne-panel` repository contains panel code only: CLI commands, a REST API,
+and a React web UI. Managed nodes are a panel feature, not a local standalone
+node-service project.
 
 Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for project-wide rules and `docs/conventions/inconsistencies.md` before broad cleanup work.
 
@@ -13,21 +16,21 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 - `global.json`: SDK `9.0.100` with `latestFeature` roll-forward.
 - `XRayne.Api`: ASP.NET Core web API and static web host.
 - `XRayne.Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
-- `XRayne.Node`: standalone ASP.NET Core REST API service for remote node hosts. It must not reference panel projects directly.
 - `XRayne.Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
 - `XRayne.Infrastructure`: JWT/core service implementations plus infrastructure utilities such as `NetworkAddress` and password hashing/generation.
 - `XRayne.Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, runtime config file utilities such as `JsonConfig`/`EnvConfig`, and external clients under `External` such as `GitHubRepository`.
 - `XRayne.Contracts`: shared contracts, configuration DTOs, shared API/query models, permission enums, and permission names.
 - `XRayne.Test`: backend test project.
 - `XRayne.Dashboard`: React Router app.
-- `.github/workflows/build.yml`: publishes single-file CLI artifacts for `win-x64`, `osx-arm64`, and `linux-x64`, publishes the API+UI Docker image archive on tags or manual dispatch, and pushes the `XRayne.Node` image to GHCR.
+- `.github/workflows/build.yml`: publishes single-file CLI artifacts for `win-x64`, `osx-arm64`, and `linux-x64`, and publishes the API+UI Docker image archive on tags or manual dispatch.
 - `.codex/skills`: project-local Codex skills.
 - `docs`: canonical architecture, styleguide, conventions, and project skill documentation.
 
 ## Important Current State
 
 - API/UI Docker image build is a release artifact: GitHub Actions builds the API image with UI files in `wwwroot`, saves it as `tar.gz`, and attaches it to releases.
-- `XRayne.Node` image is pushed to `ghcr.io/vanyakrotov/xrayne-node` on release workflow runs.
+- Public release/install assets intentionally use the `VanyaKrotov/xrayne` GitHub repository; source-level documentation refers to this repository as `xrayne-panel`.
+- Node management remains in the panel through API endpoints, infrastructure services, repositories, and dashboard routes.
 - `docker-compose.yml` may be absent; if restored for installation, it should run the prebuilt image instead of using `build:`.
 - `.env.example` contains PostgreSQL, JWT, CORS, docs, and Xray config keys, not API container settings.
 - `XRayne.Api/Dockerfile` builds dashboard first, copies `XRayne.Dashboard/build/client` into `XRayne.Api/wwwroot`, publishes API, and produces the runtime image.
@@ -41,7 +44,6 @@ dotnet restore XRayne.sln
 dotnet build XRayne.sln
 dotnet test XRayne.sln
 dotnet run --project XRayne.Api
-dotnet run --project XRayne.Node
 dotnet run --project XRayne.Cli -- admin create admin --password password --permissions super_admin
 .\add-migration.ps1 MigrationName
 ```
@@ -74,5 +76,4 @@ npm run build
 
 - Release artifact workflow restores and publishes `XRayne.Cli/XRayne.Cli.csproj` for each RID.
 - The same workflow builds the API+UI Docker image, saves it as `xrayne-api-image-<version>.tar.gz`, uploads it as a build artifact, and attaches it to tagged releases.
-- The workflow builds and pushes `ghcr.io/vanyakrotov/xrayne-node:<version>` for `XRayne.Node`; tag releases also push `latest`.
 - Release upload happens only for tag refs.

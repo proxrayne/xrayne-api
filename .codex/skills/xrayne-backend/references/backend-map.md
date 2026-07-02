@@ -5,7 +5,6 @@
 Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md`.
 
 - `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
-- `XRayne.Node`: standalone ASP.NET Core API-key protected remote-node API skeleton. It must not reference panel projects directly.
 - `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
 - `XRayne.Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
@@ -42,6 +41,8 @@ Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/s
 - Core endpoints live under `api/core`, require `change_xray_settings`, and currently expose:
   - `GET api/core/status`: installation/running/version state.
   - `GET api/core/releases`: paged xray-core release lookup with optional cache bypass.
+- Node endpoints live under `api/nodes`; they are part of the panel API and use
+  the panel JWT/admin permission model.
 
 ## Errors
 
@@ -76,7 +77,8 @@ String policy names live in `XRayne.Contracts.Values.AdminPermissionNames`:
 
 ## Persistence
 
-`AppDbContext` currently exposes `AdminAccounts`, `Users`, `Inbounds`, and `Outbounds`.
+`AppDbContext` currently exposes `AdminAccounts`, `Users`, `Inbounds`,
+`Outbounds`, and `Nodes`.
 
 Common entity base classes live in `XRayne.Repositories/Entities/BaseEntities.cs`:
 
@@ -100,6 +102,11 @@ Common entity base classes live in `XRayne.Repositories/Entities/BaseEntities.cs
 
 `OutboundEntity` maps to `outbounds`, stores the native Xray `Outbound` model as `jsonb`, belongs to an `AdminAccount`, and has not-mapped computed accessors such as `Tag`, `Protocol`, `Network`, and `Security`.
 
+`Node` maps managed remote-node records for the panel. Node provisioning,
+reconnect policy, connection verification, protected API secrets, and SSE
+installation/connection state live in `XRayne.Infrastructure`; do not plan these
+features in a local standalone node-service project.
+
 PostgreSQL enum mapping is configured for `UserStatus`, `LimitResetStrategy`, and `AdminPermission` both in `AppDbContext.OnModelCreating` through `HasPostgresEnum<T>()` and in repository DI through `ConfigureDataSource(...).MapEnum<T>()`. EF conventions also convert enum properties to strings.
 
 Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.Json` options configured in `XRayne.Repositories.DependencyInjection`.
@@ -114,7 +121,7 @@ Repository pattern:
 - Implement repository classes under `XRayne.Repositories/Implementations`.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `SaveChangesAsync`, and pass cancellation tokens.
 - Repositories for admin-owned entities filter by `AdminId`. Current entities expose `Admin` navigation but not explicit `AdminId`, so repository queries use `EF.Property<Guid>(entity, "AdminId")`.
-- Current repositories registered by `AddRepositories`: `IAdminAccountRepository`, `IUserRepository`, `IInboundRepository`, and `IOutboundRepository`.
+- Current repositories registered by `AddRepositories`: `IAdminAccountRepository`, `IUserRepository`, `IInboundRepository`, `IOutboundRepository`, and node-related repositories.
 - `AddAsync` methods return the saved entity after `SaveChangesAsync` and `ReloadAsync`, so database-generated values are available to callers.
 - Shared query/pagination models live in `XRayne.Contracts/Models`: `CursorQuery`, `CursorPage<T>`, `SortOrder`, plus one filter file per searchable entity such as `UserFilter` and `InboundFilter`. The static cursor helper lives in `XRayne.Contracts/Utilities/CursorPagination`. Outbound repositories intentionally expose only direct list/CRUD methods, without filtering or cursor pagination.
 - New entity repositories expose both admin-scoped methods and unscoped variants for service/internal use.
@@ -162,7 +169,7 @@ Database-dependent commands should call `MigrateDatabaseAsync()` inside their ac
 
 `admin create` prompts interactively for username, password confirmation, and permissions instead of accepting credentials through command-line arguments. Leaving password empty generates one and the command prints the created account details.
 
-`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. It must not require the database to be running before installation. The API compose service uses `network_mode: host` for host-level xray-core networking, so `API_PORT` is the real host port Kestrel listens on; do not add API `ports:` mappings.
+`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. The source repository is `xrayne-panel`, but public install/update artifacts intentionally remain under `VanyaKrotov/xrayne`. Installation must not require the database to be running before installation. The API compose service uses `network_mode: host` for host-level xray-core networking, so `API_PORT` is the real host port Kestrel listens on; do not add API `ports:` mappings.
 
 Use `EnvConfig` for reading, writing, setting, or removing `.env` values. Do not hand-edit `.env` with command-local line parsing.
 

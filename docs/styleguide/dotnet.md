@@ -40,7 +40,8 @@ non-obvious behavior. Do not document private implementation details as public A
 - Repository layer owns EF queries and persistence.
 - Contracts layer owns shared values and data contracts.
 - CLI layer owns command-line orchestration.
-- `XRayne.Node` remains standalone.
+- Managed-node behavior belongs to the panel layers above; do not introduce a
+  local standalone node-service project in this repository.
 
 Do not add cross-layer shortcuts to make one feature easier. If a dependency feels
 awkward, update the owning layer rather than bypassing it.

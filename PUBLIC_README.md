@@ -1,6 +1,12 @@
 # XRayne
 
-XRayne is a CLI-managed API and web panel distribution. The public repository provides ready-to-use release artifacts only: prebuilt CLI binaries and a Docker image archive that contains the API with the built web UI.
+XRayne is a CLI-managed API and web panel distribution for managing `xray-core`
+and panel-managed nodes. The source repository is `xrayne-panel` and contains
+the panel only; it does not contain a standalone remote-node service project.
+
+Public install and update assets are intentionally published from
+`VanyaKrotov/xrayne`: prebuilt CLI binaries and a Docker image archive that
+contains the API with the built web UI.
 
 ## Basic Features
 

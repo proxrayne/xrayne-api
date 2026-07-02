@@ -1,8 +1,7 @@
 # Skill: .NET Core Backend
 
-Use this skill when working on `XRayne.Api`, `XRayne.Node`, `XRayne.Cli`,
-`XRayne.Contracts`, `XRayne.Infrastructure`, `XRayne.Repositories`, or
-`XRayne.Test`.
+Use this skill when working on `XRayne.Api`, `XRayne.Cli`, `XRayne.Contracts`,
+`XRayne.Infrastructure`, `XRayne.Repositories`, or `XRayne.Test`.
 
 ## Start Here
 
@@ -15,8 +14,8 @@ Use this skill when working on `XRayne.Api`, `XRayne.Node`, `XRayne.Cli`,
 
 - Put API controllers, request/response models, filters, auth policies, and mapping
   profiles in `XRayne.Api`.
-- Put standalone remote-node API code in `XRayne.Node`; do not reference panel
-  projects there.
+- Put managed-node API endpoints in `XRayne.Api` and node provisioning,
+  reconnect, status, and verification behavior in `XRayne.Infrastructure`.
 - Put shared options, enums, permission names, pagination/filter models, and
   path values in `XRayne.Contracts`.
 - Put xray-core lifecycle, background jobs, state machines, system info, JWT,
@@ -50,7 +49,6 @@ dotnet restore XRayne.sln
 dotnet build XRayne.sln
 dotnet test XRayne.sln
 dotnet run --project XRayne.Api
-dotnet run --project XRayne.Node
 dotnet run --project XRayne.Cli -- --help
 ```
 

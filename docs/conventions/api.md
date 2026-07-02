@@ -54,7 +54,8 @@ When API behavior changes, update:
 - Admin-only endpoints use policies from `AdminPermissionNames`.
 - `SuperAdmin` satisfies every admin permission policy.
 - Event streams may receive JWT through `access_token` query string for SSE.
-- `XRayne.Node` uses `X-Node-Api-Key` for its current standalone skeleton.
+- Node-management endpoints are panel API endpoints and use the same JWT and
+  admin permission policy model as the rest of the panel.
 
 ## Middleware And Filters
 

@@ -2,15 +2,16 @@
 
 ## Product Boundaries
 
-XRayne is an admin panel for managing `xray-core`. The panel surface is:
+XRayne Panel is an admin panel for managing `xray-core` and remote nodes. The
+`xrayne-panel` repository contains only panel code. The panel surface is:
 
 - `XRayne.Api`: ASP.NET Core REST API and static web host.
 - `XRayne.Dashboard`: React Router dashboard built into the API image.
 - `XRayne.Cli`: administrator CLI for installation and runtime operations.
-- `XRayne.Node`: standalone infrastructure REST API service for remote node hosts.
 
-`XRayne.Node` is intentionally independent and must not reference panel projects
-directly unless a future architecture decision changes that boundary.
+Managed nodes are a panel domain feature handled through API controllers,
+infrastructure services, repositories, and dashboard routes. This repository no
+longer contains a standalone node-service project or node-service source code.
 
 ## Repository Layout
 
@@ -34,16 +35,21 @@ directly unless a future architecture decision changes that boundary.
 - Keep HTTP behavior in `XRayne.Api`; delegate work to repositories/services.
 - Keep EF persistence in `XRayne.Repositories`.
 - Keep xray-core lifecycle and runtime behavior in `XRayne.Infrastructure`.
+- Keep managed-node provisioning, reconnect, and status orchestration in
+  panel-owned services; do not plan work in a local standalone node-service
+  project.
 - Keep CLI orchestration in `XRayne.Cli`; do not move CLI install flows into API.
-- Keep `XRayne.Node` standalone until an explicit contract package is introduced.
 
 ## Packaging
 
 - Release workflow publishes CLI archives for Windows, macOS, and Linux.
 - Release workflow builds API + UI image as a `tar.gz` release asset.
-- Release workflow pushes `XRayne.Node` to `ghcr.io/vanyakrotov/xrayne-node`.
 - Docker Compose, when present, is installer/runtime orchestration and should run
   prebuilt artifacts instead of local `build:`.
+
+Public release/install assets are intentionally resolved from
+`VanyaKrotov/xrayne`; source-level project documentation should refer to this
+repository as `xrayne-panel`.
 
 ## Configuration
 

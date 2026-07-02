@@ -36,7 +36,7 @@ function CommonTemplate({ children }: Props) {
           </Link>
           <span className="mx-1">&bull;</span>
           <Link
-            to="https://github.com/VanyaKrotov/xrayne"
+            to="https://github.com/VanyaKrotov/xrayne-panel"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-x-1"
