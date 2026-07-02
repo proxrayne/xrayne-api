@@ -34,7 +34,7 @@ Recommended follow-up: replace raw placeholders during route UI work.
 ## Existing Documentation Outside `/docs`
 
 `README.md`, `PUBLIC_README.md`, `.codex/skills`, and
-`XRayne.Dashboard/STYLEGUIDE.md` existed before this documentation structure.
+`Dashboard/STYLEGUIDE.md` existed before this documentation structure.
 They should remain, but `/docs` is now the canonical source for architecture and
 styleguide details.
 
@@ -43,7 +43,7 @@ Recommended follow-up: keep external docs short and link to `/docs` where possib
 ## Test Project Build Drift
 
 At the time of this documentation pass, full solution build can fail in
-`XRayne.Test` due to stale references around settings/repository types. This is
+`Test` due to stale references around settings/repository types. This is
 separate from the documentation structure.
 
 Recommended follow-up: repair test project references and add CI coverage for the

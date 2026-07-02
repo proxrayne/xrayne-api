@@ -33,7 +33,7 @@ public sealed class DockerComposeFileService : IDockerComposeFileService
             {
                 ["api"] = new Dictionary<string, object?>
                 {
-                    ["image"] = $"${{API_IMAGE:-{CliDefaults.ImageName}:{imageTag}}}",
+                    ["image"] = $"${{API_IMAGE:-{CliDefaults.GetApiImageName(imageTag)}}}",
                     ["container_name"] = "xrayne-api",
                     ["network_mode"] = "host",
                     ["env_file"] = new[] { ".env" },

@@ -11,6 +11,6 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../XRayne.Contracts/XRayne.Contracts.csproj" />
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -1,13 +1,13 @@
 ---
 name: xrayne-dashboard
-description: Frontend development guidance for XRayne. Use when Codex works on XRayne.Dashboard React Router routes, layouts, auth middleware, TanStack Query data hooks, Axios API clients, shadcn components, Tailwind styles, Vite config, TypeScript types, forms, navigation, or frontend build/typecheck/lint issues.
+description: Frontend development guidance for XRayne. Use when Codex works on Dashboard React Router routes, layouts, auth middleware, TanStack Query data hooks, Axios API clients, shadcn components, Tailwind styles, Vite config, TypeScript types, forms, navigation, or frontend build/typecheck/lint issues.
 ---
 
 # XRayne UI
 
 ## Quick Start
 
-Read `references/ui-map.md`, `docs/architecture/frontend.md`, and `docs/styleguide/react.md` before UI edits. `XRayne.Dashboard/STYLEGUIDE.md` is legacy supporting context; `/docs` is canonical.
+Read `references/ui-map.md`, `docs/architecture/frontend.md`, and `docs/styleguide/react.md` before UI edits. `Dashboard/STYLEGUIDE.md` is legacy supporting context; `/docs` is canonical.
 
 ## Implementation Rules
 
@@ -29,7 +29,7 @@ Read `references/ui-map.md`, `docs/architecture/frontend.md`, and `docs/stylegui
 
 ## Validation
 
-Run from `XRayne.Dashboard`:
+Run from `Dashboard`:
 
 ```powershell
 npm run typecheck

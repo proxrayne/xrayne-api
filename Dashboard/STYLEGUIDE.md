@@ -1,6 +1,6 @@
-# XRayne.Dashboard Styleguide
+# Dashboard Styleguide
 
-This document is the source of truth for frontend code in `XRayne.Dashboard`.
+This document is the source of truth for frontend code in `Dashboard`.
 Keep new code consistent with the existing feature-sliced structure and React Router conventions.
 
 ## Code Structure

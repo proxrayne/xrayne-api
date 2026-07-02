@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../XRayne.Infrastructure/XRayne.Infrastructure.csproj" />
-    <ProjectReference Include="../XRayne.Repositories/XRayne.Repositories.csproj" />
+    <ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
+    <ProjectReference Include="../Repositories/Repositories.csproj" />
   </ItemGroup>
 
   <ItemGroup>

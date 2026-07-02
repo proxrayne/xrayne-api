@@ -52,11 +52,11 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore XRayne.Cli/XRayne.Cli.csproj -r ${{ matrix.rid }}
+        run: dotnet restore Cli/Cli.csproj -r ${{ matrix.rid }}
 
       - name: Publish
         run: >
-          dotnet publish XRayne.Cli/XRayne.Cli.csproj
+          dotnet publish Cli/Cli.csproj
           -c Release
           -r ${{ matrix.rid }}
           --self-contained true
@@ -116,7 +116,7 @@ jobs:
           if [ -z "$version" ]; then
             version="manual"
           fi
-          echo "tag=${version}" >> "$GITHUB_OUTPUT"
+          echo "image=xrayne-api-image-${version}" >> "$GITHUB_OUTPUT"
           echo "archive=xrayne-api-image-${version}.tar.gz" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
@@ -126,9 +126,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: XRayne.Api/Dockerfile
-          tags: xrayne-api:${{ steps.image.outputs.tag }}
-          outputs: type=docker,dest=/tmp/xrayne-api-image.tar
+          file: Api/Dockerfile
+          tags: ${{ steps.image.outputs.image }}
+          outputs: type=docker,dest=/tmp/${{ steps.image.outputs.image }}.tar
           build-args: |
             VITE_API_DOMAIN=
 
@@ -136,7 +136,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts
-          gzip -c /tmp/xrayne-api-image.tar > artifacts/${{ steps.image.outputs.archive }}
+          gzip -c /tmp/${{ steps.image.outputs.image }}.tar > artifacts/${{ steps.image.outputs.archive }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

@@ -4,16 +4,16 @@
 
 The backend is a .NET 9 solution with a layered architecture:
 
-- `XRayne.Api`: panel REST API and dashboard static host.
-- `XRayne.Cli`: administrator command-line tool.
-- `XRayne.Contracts`: shared contracts and configuration values.
-- `XRayne.Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
-- `XRayne.Repositories`: EF Core persistence and external clients.
-- `XRayne.Test`: test project.
+- `Api`: panel REST API and dashboard static host.
+- `Cli`: administrator command-line tool.
+- `Contracts`: shared contracts and configuration values.
+- `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
+- `Repositories`: EF Core persistence and external clients.
+- `Test`: test project.
 
 ## API Host
 
-`XRayne.Api/Program.cs` is the composition root:
+`Api/Program.cs` is the composition root:
 
 - builds Serilog bootstrap and runtime loggers;
 - loads runtime `config.json` and `.env` through project utilities;
@@ -34,19 +34,19 @@ Controllers use `[Route("api/...")]`, inherit from `ApiControllerBase`, and use
 Node management is part of the panel backend, not a separate local project.
 Panel-owned node behavior includes:
 
-- HTTP endpoints in `XRayne.Api`;
+- HTTP endpoints in `Api`;
 - provisioning, reconnect, status streaming, and connection verification services
-  in `XRayne.Infrastructure`;
+  in `Infrastructure`;
 - node entities, encrypted connection data, and repository access in
-  `XRayne.Repositories`;
-- shared node DTOs, enums, and configuration values in `XRayne.Contracts`.
+  `Repositories`;
+- shared node DTOs, enums, and configuration values in `Contracts`.
 
 Do not add or reference a local standalone node-service project when
 implementing node management features in this repository.
 
 ## Contracts Layer
 
-`XRayne.Contracts` owns shared types used across backend projects:
+`Contracts` owns shared types used across backend projects:
 
 - configuration options such as `JwtOptions`, `PanelSettings`, and `XrayOptions`;
 - enums such as admin permissions, user status, node status, and update target;
@@ -59,7 +59,7 @@ or dashboard.
 
 ## Infrastructure Layer
 
-`XRayne.Infrastructure` owns runtime behavior:
+`Infrastructure` owns runtime behavior:
 
 - `CoreService`, `CoreStateMachine`, `BackgroundTaskScheduler`;
 - Quartz jobs for installing and operating xray-core;
@@ -68,11 +68,11 @@ or dashboard.
 - OS-specific system info implementations.
 
 Service interfaces live near implementations under `Services/Contracts`. Register
-new services in `XRayne.Infrastructure/DependencyInjection.cs`.
+new services in `Infrastructure/DependencyInjection.cs`.
 
 ## Repository Layer
 
-`XRayne.Repositories` owns persistence:
+`Repositories` owns persistence:
 
 - `AppDbContext` and migrations;
 - EF entities under `Entities`;
@@ -86,7 +86,7 @@ overloads when data belongs to an administrator.
 
 ## CLI
 
-`XRayne.Cli` uses `System.CommandLine` with feature commands under
+`Cli` uses `System.CommandLine` with feature commands under
 `Commands/<feature>`. Commands create async scopes, resolve services, write through
 `ICliConsole`, and return integer exit codes.
 

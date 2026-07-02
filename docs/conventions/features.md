@@ -2,12 +2,12 @@
 
 ## Adding Backend Features
 
-1. Define shared options/enums/filter models in `XRayne.Contracts` only when they
+1. Define shared options/enums/filter models in `Contracts` only when they
    are reused across projects.
-2. Add or update EF entities and repositories in `XRayne.Repositories`.
+2. Add or update EF entities and repositories in `Repositories`.
 3. Add migrations through `add-migration.ps1`.
-4. Add runtime/business services in `XRayne.Infrastructure`.
-5. Add controller endpoints and request/response models in `XRayne.Api`.
+4. Add runtime/business services in `Infrastructure`.
+5. Add controller endpoints and request/response models in `Api`.
 6. Add AutoMapper profiles only when mapping is non-trivial or reused.
 7. Add focused tests for repository/service/API behavior.
 8. Update `/docs` and frontend API types when the API changes.

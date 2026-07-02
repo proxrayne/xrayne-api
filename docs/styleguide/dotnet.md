@@ -48,7 +48,7 @@ awkward, update the owning layer rather than bypassing it.
 
 ## Controllers And Endpoints
 
-- Inherit from `ApiControllerBase` in `XRayne.Api`.
+- Inherit from `ApiControllerBase` in `Api`.
 - Use `[Route("api/...")]`.
 - Use authorization policies from `AdminPermissionNames`.
 - Add `EndpointSummary`, `EndpointDescription`, and complete
@@ -84,8 +84,8 @@ awkward, update the owning layer rather than bypassing it.
 
 ## Repositories
 
-- Define interfaces in `XRayne.Repositories/Contracts`.
-- Implement in `XRayne.Repositories/Implementations`.
+- Define interfaces in `Repositories/Contracts`.
+- Implement in `Repositories/Implementations`.
 - Use EF Core async methods with cancellation tokens.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `ToListAsync`, `SaveChangesAsync`.
 - Admin-owned data should expose both unscoped and admin-scoped methods when

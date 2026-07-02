@@ -5,9 +5,9 @@
 XRayne Panel is an admin panel for managing `xray-core` and remote nodes. The
 `xrayne-panel` repository contains only panel code. The panel surface is:
 
-- `XRayne.Api`: ASP.NET Core REST API and static web host.
-- `XRayne.Dashboard`: React Router dashboard built into the API image.
-- `XRayne.Cli`: administrator CLI for installation and runtime operations.
+- `Api`: ASP.NET Core REST API and static web host.
+- `Dashboard`: React Router dashboard built into the API image.
+- `Cli`: administrator CLI for installation and runtime operations.
 
 Managed nodes are a panel domain feature handled through API controllers,
 infrastructure services, repositories, and dashboard routes. This repository no
@@ -15,16 +15,16 @@ longer contains a standalone node-service project or node-service source code.
 
 ## Repository Layout
 
-- `XRayne.Contracts`: shared options, enums, DTO-like models, values, and utilities.
-- `XRayne.Infrastructure`: xray-core runtime services, jobs, state machines, and
+- `Contracts`: shared options, enums, DTO-like models, values, and utilities.
+- `Infrastructure`: xray-core runtime services, jobs, state machines, and
   cross-cutting infrastructure services.
-- `XRayne.Repositories`: EF Core DbContext, entities, migrations, repository
+- `Repositories`: EF Core DbContext, entities, migrations, repository
   interfaces/implementations, config-file utilities, and external release clients.
-- `XRayne.Api`: HTTP controllers, auth, API filters, AutoMapper profiles,
+- `Api`: HTTP controllers, auth, API filters, AutoMapper profiles,
   request/response models, static dashboard hosting.
-- `XRayne.Cli`: System.CommandLine commands, installation services, runtime
+- `Cli`: System.CommandLine commands, installation services, runtime
   migrations, Docker Compose generation, shell integration.
-- `XRayne.Dashboard`: React Router application with `src/core`, `src/features`,
+- `Dashboard`: React Router application with `src/core`, `src/features`,
   `src/routes`, and `src/libs`.
 - `.codex/skills`: Codex skill entrypoints that point to this documentation.
 - `.github/workflows/build.yml`: release artifact and image publishing workflow.
@@ -32,13 +32,13 @@ longer contains a standalone node-service project or node-service source code.
 ## Dependency Direction
 
 - Keep shared contracts free of API/UI/EF dependencies.
-- Keep HTTP behavior in `XRayne.Api`; delegate work to repositories/services.
-- Keep EF persistence in `XRayne.Repositories`.
-- Keep xray-core lifecycle and runtime behavior in `XRayne.Infrastructure`.
+- Keep HTTP behavior in `Api`; delegate work to repositories/services.
+- Keep EF persistence in `Repositories`.
+- Keep xray-core lifecycle and runtime behavior in `Infrastructure`.
 - Keep managed-node provisioning, reconnect, and status orchestration in
   panel-owned services; do not plan work in a local standalone node-service
   project.
-- Keep CLI orchestration in `XRayne.Cli`; do not move CLI install flows into API.
+- Keep CLI orchestration in `Cli`; do not move CLI install flows into API.
 
 ## Packaging
 

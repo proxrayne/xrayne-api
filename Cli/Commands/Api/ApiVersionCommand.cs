@@ -32,7 +32,7 @@ public sealed class ApiVersionCommand : Command
 
         try
         {
-            var installedVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
+            var installedVersion = CliDefaults.ExtractApiImageVersion(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
             var release = await repository.GetReleaseAsync(CliDefaults.LatestVersion, cancellationToken);
             var latestVersion = SanitizeDockerTag(release.TagName);
 
@@ -58,22 +58,6 @@ public sealed class ApiVersionCommand : Command
 
             return 1;
         }
-    }
-
-    private static string? ExtractImageTag(string image)
-    {
-        const string imagePrefix = CliDefaults.ImageName + ":";
-
-        if (image.StartsWith(imagePrefix, StringComparison.Ordinal))
-        {
-            return image[imagePrefix.Length..];
-        }
-
-        var tagSeparatorIndex = image.LastIndexOf(':');
-
-        return tagSeparatorIndex >= 0 && tagSeparatorIndex < image.Length - 1
-            ? image[(tagSeparatorIndex + 1)..]
-            : null;
     }
 
     private static string SanitizeDockerTag(string value)

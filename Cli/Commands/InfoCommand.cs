@@ -43,7 +43,7 @@ public sealed class InfoCommand : Command
             var serverIp = NetworkAddress.GetLocalServerIpAddress();
             var apiEndpoint = GetApiEndpoint(configuration, serverIp, apiPort);
             var cliVersion = GetVersion();
-            var apiVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
+            var apiVersion = CliDefaults.ExtractApiImageVersion(configuration[CliDefaults.ApiImageVariable] ?? string.Empty);
             var updateStatus = await GetUpdateStatusAsync(
                 repository,
                 cliVersion,
@@ -178,22 +178,6 @@ public sealed class InfoCommand : Command
         var scheme = isHttps ? "https" : "http";
 
         return $"{scheme}://{host}:{apiPort}";
-    }
-
-    private static string? ExtractImageTag(string image)
-    {
-        const string imagePrefix = CliDefaults.ImageName + ":";
-
-        if (image.StartsWith(imagePrefix, StringComparison.Ordinal))
-        {
-            return image[imagePrefix.Length..];
-        }
-
-        var tagSeparatorIndex = image.LastIndexOf(':');
-
-        return tagSeparatorIndex >= 0 && tagSeparatorIndex < image.Length - 1
-            ? image[(tagSeparatorIndex + 1)..]
-            : null;
     }
 
     private static string SanitizeDockerTag(string value)

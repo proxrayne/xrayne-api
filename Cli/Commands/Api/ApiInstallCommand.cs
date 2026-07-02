@@ -59,7 +59,7 @@ public sealed class ApiInstallCommand : Command
             }
 
             var imageTag = SanitizeDockerTag(release.TagName);
-            var assetName = $"xrayne-api-image-{imageTag}.tar.gz";
+            var assetName = CliDefaults.GetApiImageArchiveName(imageTag);
             var asset = release.Assets.SingleOrDefault(item => string.Equals(item.Name, assetName, StringComparison.Ordinal));
             if (asset is null)
             {
@@ -77,7 +77,7 @@ public sealed class ApiInstallCommand : Command
                 options.Paths.DownloadsDirectory,
                 cancellationToken);
 
-            var imageTarPath = Path.Combine(options.Paths.Root, $"{CliDefaults.ImageName}-{imageTag}.tar");
+            var imageTarPath = Path.Combine(options.Paths.Root, CliDefaults.GetApiImageTarName(imageTag));
             await DecompressGzipAsync(imageArchivePath, imageTarPath, cancellationToken);
 
             console.Success("Loading Docker image.");
@@ -171,7 +171,7 @@ public sealed class ApiInstallCommand : Command
         {
             ["PORT"] = options.ApiPort.ToString(),
             ["PROJECT_PATH"] = options.Paths.Root,
-            ["API_IMAGE"] = $"{CliDefaults.ImageName}:{imageTag}",
+            ["API_IMAGE"] = CliDefaults.GetApiImageName(imageTag),
             ["POSTGRES_DB"] = CliDefaults.PostgresDatabase,
             ["POSTGRES_HOST_API"] = "localhost",
             ["POSTGRES_USER"] = CliDefaults.PostgresUser,
@@ -203,7 +203,7 @@ public sealed class ApiInstallCommand : Command
 
         console.Header("XRayne API installation completed");
         console.Value("Release", releaseTag);
-        console.Value("Docker image", $"{CliDefaults.ImageName}:{imageTag}");
+        console.Value("Docker image", CliDefaults.GetApiImageName(imageTag));
         console.Value("Project path", options.Paths.Root);
         console.Value("Environment file", options.Paths.EnvConfig);
         console.Value("Compose file", options.Paths.DockerCompose);

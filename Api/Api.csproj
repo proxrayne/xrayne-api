@@ -4,9 +4,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../XRayne.Contracts/XRayne.Contracts.csproj" />
-    <ProjectReference Include="../XRayne.Infrastructure/XRayne.Infrastructure.csproj" />
-    <ProjectReference Include="../XRayne.Repositories/XRayne.Repositories.csproj" />
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
+    <ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
+    <ProjectReference Include="../Repositories/Repositories.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.*" />

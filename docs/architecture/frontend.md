@@ -2,11 +2,11 @@
 
 ## Overview
 
-`XRayne.Dashboard` is a React 19 + React Router 7 framework-mode application.
+`Dashboard` is a React 19 + React Router 7 framework-mode application.
 `react-router.config.ts` sets `ssr: false`, so route code may rely on browser-only
 behavior when guarded appropriately.
 
-The dashboard is built by `XRayne.Api/Dockerfile` and copied into API `wwwroot`.
+The dashboard is built by `Api/Dockerfile` and copied into API `wwwroot`.
 Production API calls should therefore work with same-origin `/api`.
 
 ## Top-Level Structure

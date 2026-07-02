@@ -14,26 +14,26 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 - `XRayne.sln`: .NET solution.
 - `Directory.Build.props`: shared .NET settings, currently `net9.0`, nullable enabled, implicit usings enabled.
 - `global.json`: SDK `9.0.100` with `latestFeature` roll-forward.
-- `XRayne.Api`: ASP.NET Core web API and static web host.
-- `XRayne.Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
-- `XRayne.Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
-- `XRayne.Infrastructure`: JWT/core service implementations plus infrastructure utilities such as `NetworkAddress` and password hashing/generation.
-- `XRayne.Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, runtime config file utilities such as `JsonConfig`/`EnvConfig`, and external clients under `External` such as `GitHubRepository`.
-- `XRayne.Contracts`: shared contracts, configuration DTOs, shared API/query models, permission enums, and permission names.
-- `XRayne.Test`: backend test project.
-- `XRayne.Dashboard`: React Router app.
+- `Api`: ASP.NET Core web API and static web host.
+- `Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
+- `Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
+- `Infrastructure`: JWT/core service implementations plus infrastructure utilities such as `NetworkAddress` and password hashing/generation.
+- `Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, runtime config file utilities such as `JsonConfig`/`EnvConfig`, and external clients under `External` such as `GitHubRepository`.
+- `Contracts`: shared contracts, configuration DTOs, shared API/query models, permission enums, and permission names.
+- `Test`: backend test project.
+- `Dashboard`: React Router app.
 - `.github/workflows/build.yml`: publishes single-file CLI artifacts for `win-x64`, `osx-arm64`, and `linux-x64`, and publishes the API+UI Docker image archive on tags or manual dispatch.
 - `.codex/skills`: project-local Codex skills.
 - `docs`: canonical architecture, styleguide, conventions, and project skill documentation.
 
 ## Important Current State
 
-- API/UI Docker image build is a release artifact: GitHub Actions builds the API image with UI files in `wwwroot`, saves it as `tar.gz`, and attaches it to releases.
+- API/UI Docker image build is a release artifact: GitHub Actions builds the API image as `xrayne-api-image-<version>` with UI files in `wwwroot`, saves it as `xrayne-api-image-<version>.tar.gz`, and attaches it to releases.
 - Public release/install assets intentionally use the `VanyaKrotov/xrayne` GitHub repository; source-level documentation refers to this repository as `xrayne-panel`.
 - Node management remains in the panel through API endpoints, infrastructure services, repositories, and dashboard routes.
 - `docker-compose.yml` may be absent; if restored for installation, it should run the prebuilt image instead of using `build:`.
 - `.env.example` contains PostgreSQL, JWT, CORS, docs, and Xray config keys, not API container settings.
-- `XRayne.Api/Dockerfile` builds dashboard first, copies `XRayne.Dashboard/build/client` into `XRayne.Api/wwwroot`, publishes API, and produces the runtime image.
+- `Api/Dockerfile` builds dashboard first, copies `Dashboard/build/client` into `Api/wwwroot`, publishes API, and produces the runtime image.
 
 ## Common Commands
 
@@ -43,15 +43,15 @@ Run from repo root unless noted.
 dotnet restore XRayne.sln
 dotnet build XRayne.sln
 dotnet test XRayne.sln
-dotnet run --project XRayne.Api
-dotnet run --project XRayne.Cli -- admin create admin --password password --permissions super_admin
+dotnet run --project Api
+dotnet run --project Cli -- admin create admin --password password --permissions super_admin
 .\add-migration.ps1 MigrationName
 ```
 
 For UI:
 
 ```powershell
-Set-Location XRayne.Dashboard
+Set-Location Dashboard
 npm run dev
 npm run typecheck
 npm run lint
@@ -70,10 +70,10 @@ npm run build
 - `XrayOptions` is registered from `Xray` through `XRayne.Contracts.DependencyInjection`; current options include `CorePath`.
 - Database connection key is `ConnectionStrings:Default`.
 - Repository entities currently include admin accounts, users, inbounds, and outbounds. Xray native inbound/outbound payloads are stored as `jsonb`; PostgreSQL enum mapping is configured for user status, traffic limit reset strategy, and admin permissions.
-- Shared query models such as cursor pagination and repository filters live under `XRayne.Contracts/Models`.
+- Shared query models such as cursor pagination and repository filters live under `Contracts/Models`.
 
 ## CI And Packaging
 
-- Release artifact workflow restores and publishes `XRayne.Cli/XRayne.Cli.csproj` for each RID.
-- The same workflow builds the API+UI Docker image, saves it as `xrayne-api-image-<version>.tar.gz`, uploads it as a build artifact, and attaches it to tagged releases.
+- Release artifact workflow restores and publishes `Cli/Cli.csproj` for each RID.
+- The same workflow builds the API+UI Docker image as `xrayne-api-image-<version>`, saves it as `xrayne-api-image-<version>.tar.gz`, uploads it as a build artifact, and attaches it to tagged releases.
 - Release upload happens only for tag refs.

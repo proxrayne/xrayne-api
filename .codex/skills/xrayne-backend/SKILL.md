@@ -1,6 +1,6 @@
 ---
 name: xrayne-backend
-description: Backend development guidance for XRayne Panel. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, config files, or backend tests in XRayne.Api, XRayne.Cli, XRayne.Infrastructure, XRayne.Repositories, XRayne.Contracts, or XRayne.Test.
+description: Backend development guidance for XRayne Panel. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, config files, or backend tests in Api, Cli, Infrastructure, Repositories, Contracts, or Test.
 ---
 
 # XRayne Panel Backend
@@ -11,14 +11,14 @@ Read `references/backend-map.md`, `docs/architecture/backend.md`, `docs/stylegui
 
 ## Implementation Rules
 
-- Keep shared DTOs, configuration contracts, permissions, and API-facing constants in `XRayne.Contracts`.
+- Keep shared DTOs, configuration contracts, permissions, and API-facing constants in `Contracts`.
 - Add English XML `<summary>` documentation to public classes, methods, services, DTOs, handlers, controllers, and endpoints.
 - Keep Scalar/OpenAPI metadata complete with endpoint summary, description, request/response models, and status codes.
-- Keep xray-core setup, runtime services, and background jobs in `XRayne.Infrastructure`.
-- Keep managed-node provisioning, reconnect, status, and verification services in `XRayne.Infrastructure`; node HTTP endpoints stay in `XRayne.Api`.
-- Keep EF entity models, base entity classes, migrations, and repository implementations in `XRayne.Repositories`.
+- Keep xray-core setup, runtime services, and background jobs in `Infrastructure`.
+- Keep managed-node provisioning, reconnect, status, and verification services in `Infrastructure`; node HTTP endpoints stay in `Api`.
+- Keep EF entity models, base entity classes, migrations, and repository implementations in `Repositories`.
 - Register services through the nearest `DependencyInjection.cs` extension.
-- Put HTTP behavior in controllers under `XRayne.Api/Controllers`; keep controllers thin and delegate work to repositories/services.
+- Put HTTP behavior in controllers under `Api/Controllers`; keep controllers thin and delegate work to repositories/services.
 - Throw `ApiException` subclasses for intended API errors so `ApiExceptionFilter` can format them.
 - Use `AdminPermissionNames` from `XRayne.Contracts.Values` for authorization policies and permission parsing.
 - Use EF Core async methods with cancellation tokens in repositories.
@@ -35,12 +35,12 @@ Prefer focused validation:
 ```powershell
 dotnet build XRayne.sln
 dotnet test XRayne.sln
-dotnet run --project XRayne.Api
-dotnet run --project XRayne.Cli -- --help
+dotnet run --project Api
+dotnet run --project Cli -- --help
 ```
 
 If touching EF:
 
 ```powershell
-dotnet ef database update --project XRayne.Repositories --startup-project XRayne.Api --context AppDbContext
+dotnet ef database update --project Repositories --startup-project Api --context AppDbContext
 ```

@@ -3,8 +3,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../XRayne.Contracts/XRayne.Contracts.csproj" />
-    <ProjectReference Include="../XRayne.Repositories/XRayne.Repositories.csproj" />
+    <ProjectReference Include="../Contracts/Contracts.csproj" />
+    <ProjectReference Include="../Repositories/Repositories.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.*" />

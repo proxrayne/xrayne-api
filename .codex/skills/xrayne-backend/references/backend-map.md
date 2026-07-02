@@ -4,18 +4,18 @@
 
 Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md`.
 
-- `XRayne.Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
-- `XRayne.Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
-- `XRayne.Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
-- `XRayne.Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
-- Shared random password generation lives in `XRayne.Infrastructure/Utilities/PasswordGenerator.cs`.
-- `XRayne.Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, entity models, repositories, runtime config file utilities, and external repository clients under `External`.
-- `XRayne.Contracts`: shared contracts, configuration DTOs/options, permission enums, permission names, runtime path helpers, and contract-level DI registration.
-- `XRayne.Test`: tests.
+- `Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
+- `Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
+- `Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
+- `Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
+- Shared random password generation lives in `Infrastructure/Utilities/PasswordGenerator.cs`.
+- `Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, entity models, repositories, runtime config file utilities, and external repository clients under `External`.
+- `Contracts`: shared contracts, configuration DTOs/options, permission enums, permission names, runtime path helpers, and contract-level DI registration.
+- `Test`: tests.
 
 ## API Startup Pattern
 
-`XRayne.Api/Program.cs`:
+`Api/Program.cs`:
 
 - Creates bootstrap Serilog logger.
 - Reads `Docs` to decide OpenAPI/Scalar registration.
@@ -80,7 +80,7 @@ String policy names live in `XRayne.Contracts.Values.AdminPermissionNames`:
 `AppDbContext` currently exposes `AdminAccounts`, `Users`, `Inbounds`,
 `Outbounds`, and `Nodes`.
 
-Common entity base classes live in `XRayne.Repositories/Entities/BaseEntities.cs`:
+Common entity base classes live in `Repositories/Entities/BaseEntities.cs`:
 
 - `CreatedEntity`: provides `CreatedAt`.
 - `CreateUpdateEntity`: extends `CreatedEntity` with nullable `UpdatedAt`.
@@ -104,7 +104,7 @@ Common entity base classes live in `XRayne.Repositories/Entities/BaseEntities.cs
 
 `Node` maps managed remote-node records for the panel. Node provisioning,
 reconnect policy, connection verification, protected API secrets, and SSE
-installation/connection state live in `XRayne.Infrastructure`; do not plan these
+installation/connection state live in `Infrastructure`; do not plan these
 features in a local standalone node-service project.
 
 PostgreSQL enum mapping is configured for `UserStatus`, `LimitResetStrategy`, and `AdminPermission` both in `AppDbContext.OnModelCreating` through `HasPostgresEnum<T>()` and in repository DI through `ConfigureDataSource(...).MapEnum<T>()`. EF conventions also convert enum properties to strings.
@@ -113,22 +113,22 @@ Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.
 
 `AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`; CLI resolves flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values first, then falls back to `ConnectionStrings:Default`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
-External clients that represent remote repositories or APIs live under `XRayne.Repositories/External`. `GitHubRepository` is the release/asset client used by CLI update and install flows.
+External clients that represent remote repositories or APIs live under `Repositories/External`. `GitHubRepository` is the release/asset client used by CLI update and install flows.
 
 Repository pattern:
 
-- Define repository interfaces under `XRayne.Repositories/Contracts`.
-- Implement repository classes under `XRayne.Repositories/Implementations`.
+- Define repository interfaces under `Repositories/Contracts`.
+- Implement repository classes under `Repositories/Implementations`.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `SaveChangesAsync`, and pass cancellation tokens.
 - Repositories for admin-owned entities filter by `AdminId`. Current entities expose `Admin` navigation but not explicit `AdminId`, so repository queries use `EF.Property<Guid>(entity, "AdminId")`.
 - Current repositories registered by `AddRepositories`: `IAdminAccountRepository`, `IUserRepository`, `IInboundRepository`, `IOutboundRepository`, and node-related repositories.
 - `AddAsync` methods return the saved entity after `SaveChangesAsync` and `ReloadAsync`, so database-generated values are available to callers.
-- Shared query/pagination models live in `XRayne.Contracts/Models`: `CursorQuery`, `CursorPage<T>`, `SortOrder`, plus one filter file per searchable entity such as `UserFilter` and `InboundFilter`. The static cursor helper lives in `XRayne.Contracts/Utilities/CursorPagination`. Outbound repositories intentionally expose only direct list/CRUD methods, without filtering or cursor pagination.
+- Shared query/pagination models live in `Contracts/Models`: `CursorQuery`, `CursorPage<T>`, `SortOrder`, plus one filter file per searchable entity such as `UserFilter` and `InboundFilter`. The static cursor helper lives in `Contracts/Utilities/CursorPagination`. Outbound repositories intentionally expose only direct list/CRUD methods, without filtering or cursor pagination.
 - New entity repositories expose both admin-scoped methods and unscoped variants for service/internal use.
 
 ## CLI Pattern
 
-`XRayne.Cli/Program.cs`:
+`Cli/Program.cs`:
 
 - Builds a generic host.
 - Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.Paths.JsonConfig`.
@@ -175,11 +175,11 @@ Use `EnvConfig` for reading, writing, setting, or removing `.env` values. Do not
 
 `update` resolves the target runtime schema from the selected release through `RuntimeSchemaCatalog`, runs `IRuntimeMigrationService.MigrateToAsync(...)` before replacing the CLI, and supports both `UpAsync` and `DownAsync` migrations so explicit downgrades can roll runtime files back. Runtime migration backups go under `<project>/backups/runtime-migrations`.
 
-CLI service interfaces live under `XRayne.Cli/Services/Contracts`, with implementations under `XRayne.Cli/Services`.
+CLI service interfaces live under `Cli/Services/Contracts`, with implementations under `Cli/Services`.
 
-Shared CLI helpers live under `XRayne.Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
+Shared CLI helpers live under `Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
 
-GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing uses a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `XRayne.Cli/Services`.
+GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing uses a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `Cli/Services`.
 
 Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
 
@@ -206,11 +206,11 @@ Use:
 Equivalent command:
 
 ```powershell
-dotnet ef migrations add MigrationName --project XRayne.Repositories --startup-project XRayne.Api --context AppDbContext --output-dir Migrations
+dotnet ef migrations add MigrationName --project Repositories --startup-project Api --context AppDbContext --output-dir Migrations
 ```
 
 Apply migrations:
 
 ```powershell
-dotnet ef database update --project XRayne.Repositories --startup-project XRayne.Api --context AppDbContext
+dotnet ef database update --project Repositories --startup-project Api --context AppDbContext
 ```

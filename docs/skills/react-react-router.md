@@ -1,6 +1,6 @@
 # Skill: React + React Router
 
-Use this skill when working on `XRayne.Dashboard`, including routes, layouts,
+Use this skill when working on `Dashboard`, including routes, layouts,
 auth middleware, TanStack Query hooks, Axios API clients, shadcn components,
 Tailwind styles, forms, or frontend build/typecheck/lint issues.
 
@@ -34,7 +34,7 @@ Tailwind styles, forms, or frontend build/typecheck/lint issues.
 
 ## Validation
 
-Run from `XRayne.Dashboard`:
+Run from `Dashboard`:
 
 ```powershell
 npm.cmd run typecheck

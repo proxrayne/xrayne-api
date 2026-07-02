@@ -1,6 +1,6 @@
 ---
 name: xrayne-dialogs
-description: XRayne dialog implementation guidance. Use when Codex creates, reviews, or refactors Dialog, AlertDialog, modal, confirmation, create/edit/delete dialog, or any dialog-triggered UI in XRayne.Dashboard.
+description: XRayne dialog implementation guidance. Use when Codex creates, reviews, or refactors Dialog, AlertDialog, modal, confirmation, create/edit/delete dialog, or any dialog-triggered UI in Dashboard.
 ---
 
 # XRayne Dialogs

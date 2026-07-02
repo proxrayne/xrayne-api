@@ -1,7 +1,7 @@
 # Skill: .NET Core Backend
 
-Use this skill when working on `XRayne.Api`, `XRayne.Cli`, `XRayne.Contracts`,
-`XRayne.Infrastructure`, `XRayne.Repositories`, or `XRayne.Test`.
+Use this skill when working on `Api`, `Cli`, `Contracts`,
+`Infrastructure`, `Repositories`, or `Test`.
 
 ## Start Here
 
@@ -13,17 +13,17 @@ Use this skill when working on `XRayne.Api`, `XRayne.Cli`, `XRayne.Contracts`,
 ## Placement Rules
 
 - Put API controllers, request/response models, filters, auth policies, and mapping
-  profiles in `XRayne.Api`.
-- Put managed-node API endpoints in `XRayne.Api` and node provisioning,
-  reconnect, status, and verification behavior in `XRayne.Infrastructure`.
+  profiles in `Api`.
+- Put managed-node API endpoints in `Api` and node provisioning,
+  reconnect, status, and verification behavior in `Infrastructure`.
 - Put shared options, enums, permission names, pagination/filter models, and
-  path values in `XRayne.Contracts`.
+  path values in `Contracts`.
 - Put xray-core lifecycle, background jobs, state machines, system info, JWT,
-  certificate, settings, and runtime services in `XRayne.Infrastructure`.
+  certificate, settings, and runtime services in `Infrastructure`.
 - Put EF entities, DbContext, migrations, repositories, config-file utilities, and
-  external release/API clients in `XRayne.Repositories`.
-- Put CLI commands in `XRayne.Cli/Commands`; put CLI orchestration services in
-  `XRayne.Cli/Services`.
+  external release/API clients in `Repositories`.
+- Put CLI commands in `Cli/Commands`; put CLI orchestration services in
+  `Cli/Services`.
 
 ## Required Backend Rules
 
@@ -48,13 +48,13 @@ Prefer focused checks for the touched area:
 dotnet restore XRayne.sln
 dotnet build XRayne.sln
 dotnet test XRayne.sln
-dotnet run --project XRayne.Api
-dotnet run --project XRayne.Cli -- --help
+dotnet run --project Api
+dotnet run --project Cli -- --help
 ```
 
 For EF changes:
 
 ```powershell
 .\add-migration.ps1 MigrationName
-dotnet ef database update --project XRayne.Repositories --startup-project XRayne.Api --context AppDbContext
+dotnet ef database update --project Repositories --startup-project Api --context AppDbContext
 ```

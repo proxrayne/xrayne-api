@@ -18,7 +18,7 @@ Canonical frontend documentation lives in `docs/architecture/frontend.md` and `d
 
 ## Scripts
 
-From `XRayne.Dashboard`:
+From `Dashboard`:
 
 ```powershell
 npm run dev
@@ -101,7 +101,7 @@ Feature query example: `src/features/admin/lib/query.ts`.
 - Use shadcn components from `@core/ui` as the primary UI source.
 - Add missing shadcn components with `npx shadcn@latest add <component name>`.
 - Create custom UI primitives only when shadcn does not cover the need.
-- Follow `XRayne.Dashboard/STYLEGUIDE.md` for one-file-one-component, feature nesting, library usage, and Prettier rules.
+- Follow `Dashboard/STYLEGUIDE.md` for one-file-one-component, feature nesting, library usage, and Prettier rules.
 
 ## Environment
 

@@ -1,15 +1,19 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Contracts", "XRayne.Contracts\XRayne.Contracts.csproj", "{7364763E-E360-4F7E-92ED-00124C7B3BE0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts", "Contracts\Contracts.csproj", "{7364763E-E360-4F7E-92ED-00124C7B3BE0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Infrastructure", "XRayne.Infrastructure\XRayne.Infrastructure.csproj", "{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{C5672B9E-527F-4BA5-9FE0-90E9BB1A2207}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Repositories", "XRayne.Repositories\XRayne.Repositories.csproj", "{6B6D02D5-CEC1-41BD-9BF8-84C7F3F35C3F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repositories", "Repositories\Repositories.csproj", "{6B6D02D5-CEC1-41BD-9BF8-84C7F3F35C3F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XRayne.Test", "XRayne.Test\XRayne.Test.csproj", "{D4970A67-40F4-4728-91C8-258B8E608147}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{D4970A67-40F4-4728-91C8-258B8E608147}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{66529905-9D23-44E4-9505-F4189CBCCBFE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cli", "Cli\Cli.csproj", "{2550B7B4-7FC7-4DE0-B77C-773D84CE75FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +37,14 @@ Global
 		{D4970A67-40F4-4728-91C8-258B8E608147}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4970A67-40F4-4728-91C8-258B8E608147}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4970A67-40F4-4728-91C8-258B8E608147}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66529905-9D23-44E4-9505-F4189CBCCBFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66529905-9D23-44E4-9505-F4189CBCCBFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66529905-9D23-44E4-9505-F4189CBCCBFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66529905-9D23-44E4-9505-F4189CBCCBFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2550B7B4-7FC7-4DE0-B77C-773D84CE75FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2550B7B4-7FC7-4DE0-B77C-773D84CE75FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2550B7B4-7FC7-4DE0-B77C-773D84CE75FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2550B7B4-7FC7-4DE0-B77C-773D84CE75FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

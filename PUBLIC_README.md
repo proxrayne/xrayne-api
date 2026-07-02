@@ -26,9 +26,9 @@ Each release can contain these files:
 | `xrayne-cli-linux-x64.tar.gz` | XRayne CLI for Linux x64. |
 | `xrayne-cli-osx-arm64.tar.gz` | XRayne CLI for macOS Apple Silicon. |
 | `xrayne-cli-win-x64.zip` | XRayne CLI for Windows x64. |
-| `xrayne-api-image-<version>.tar.gz` | Docker image archive for the API with the built web UI. |
+| `xrayne-api-image-<version>.tar.gz` | Docker image archive containing `xrayne-api-image-<version>` for the API with the built web UI. |
 
-The API image is downloaded and loaded by the CLI during `xrayne api install` and `xrayne update`.
+The API image is downloaded and loaded by the CLI during `xrayne api install` and `xrayne update`. Docker Compose uses the loaded image name `xrayne-api-image-<version>` through `API_IMAGE`.
 
 ## Install CLI With Scripts
 

@@ -157,7 +157,7 @@ public sealed class UpdateCommand : Command
         console.Section("API");
         apiInstallationService.EnsureInstalled();
 
-        var installedVersion = ExtractImageTag(configuration[CliDefaults.ApiImageVariable] ?? string.Empty)
+        var installedVersion = CliDefaults.ExtractApiImageVersion(configuration[CliDefaults.ApiImageVariable] ?? string.Empty)
             ?? throw new InvalidOperationException($"'{CliDefaults.ApiImageVariable}' was not found in '{PathProvider.Paths.EnvConfig}'. Run 'xrayne api install' first.");
 
         console.Value("Installed version", installedVersion);
@@ -169,7 +169,7 @@ public sealed class UpdateCommand : Command
             return false;
         }
 
-        var assetName = $"xrayne-api-image-{targetVersion}.tar.gz";
+        var assetName = CliDefaults.GetApiImageArchiveName(targetVersion);
         var asset = release.Assets.SingleOrDefault(item => string.Equals(item.Name, assetName, StringComparison.Ordinal));
         if (asset is null)
         {
@@ -184,7 +184,7 @@ public sealed class UpdateCommand : Command
             PathProvider.Paths.DownloadsDirectory,
             cancellationToken);
 
-        var imageTarPath = Path.Combine(PathProvider.Paths.Root, $"{CliDefaults.ImageName}-{targetVersion}.tar");
+        var imageTarPath = Path.Combine(PathProvider.Paths.Root, CliDefaults.GetApiImageTarName(targetVersion));
         await DecompressGzipAsync(imageArchivePath, imageTarPath, cancellationToken);
 
         console.Success("Loading Docker image.");
@@ -197,7 +197,7 @@ public sealed class UpdateCommand : Command
 
         console.Value("Previous API version", installedVersion);
         console.Value("Current API version", targetVersion);
-        console.Value("Docker image", $"{CliDefaults.ImageName}:{targetVersion}");
+        console.Value("Docker image", CliDefaults.GetApiImageName(targetVersion));
 
         return true;
     }
@@ -414,29 +414,13 @@ public sealed class UpdateCommand : Command
         return assembly.GetName().Version?.ToString() ?? "unknown";
     }
 
-    private static string? ExtractImageTag(string image)
-    {
-        const string imagePrefix = CliDefaults.ImageName + ":";
-
-        if (image.StartsWith(imagePrefix, StringComparison.Ordinal))
-        {
-            return image[imagePrefix.Length..];
-        }
-
-        var tagSeparatorIndex = image.LastIndexOf(':');
-
-        return tagSeparatorIndex >= 0 && tagSeparatorIndex < image.Length - 1
-            ? image[(tagSeparatorIndex + 1)..]
-            : null;
-    }
-
     private static async Task UpdateEnvImageAsync(
         string imageTag,
         CancellationToken cancellationToken)
     {
         await EnvConfig.SetAsync(
             CliDefaults.ApiImageVariable,
-            $"{CliDefaults.ImageName}:{imageTag}",
+            CliDefaults.GetApiImageName(imageTag),
             PathProvider.Paths.EnvConfig,
             cancellationToken);
     }

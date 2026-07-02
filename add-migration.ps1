@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 dotnet ef migrations add $Name `
-    --project "$root/XRayne.Repositories" `
-    --startup-project "$root/XRayne.Api" `
+    --project "$root/Repositories" `
+    --startup-project "$root/Api" `
     --context AppDbContext `
     --output-dir Migrations
