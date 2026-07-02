@@ -8,6 +8,7 @@
     <ProjectReference Include="../Github/Github.csproj" />
     <ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
     <ProjectReference Include="../Repositories/Repositories.csproj" />
+    <ProjectReference Include="../System/System.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.*" />

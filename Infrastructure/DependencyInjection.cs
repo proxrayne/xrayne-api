@@ -1,8 +1,7 @@
-using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SystemInfo;
 using XRayne.Contracts.Configurations;
 using XRayne.Contracts.Values;
 using XRayne.Infrastructure.Services;
@@ -19,7 +18,12 @@ public static class DependencyInjection
         services.TryAddSingleton(_ => PanelSettings.Parse(configuration));
         services.AddDataProtection();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddSingleton<ISystemInfoService>(sp => CreateSystemInfoService());
+        services.AddSingleton(_ =>
+            SystemInfoService.Create(new SystemInfoOptions(
+                PathProvider.Paths.Root,
+                PathProvider.Paths.DownloadsDirectory
+            ))
+        );
 
         services.AddSingleton<IEventStreamManager, EventStreamManager>();
         services.AddSingleton<INodeSecretService, NodeSecretService>();
@@ -45,26 +49,5 @@ public static class DependencyInjection
         services.AddScoped<IRoutingRuleService, RoutingRuleService>();
 
         return services;
-    }
-
-    private static SystemInfoService CreateSystemInfoService()
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            return new WindowsSystemInfoService();
-        }
-
-        if (OperatingSystem.IsLinux())
-        {
-            return new LinuxSystemInfoService();
-        }
-
-        if (OperatingSystem.IsMacOS())
-        {
-            return new MacOsSystemInfoService();
-        }
-
-        throw new PlatformNotSupportedException(
-            $"System information service is not supported on {RuntimeInformation.OSDescription}.");
     }
 }

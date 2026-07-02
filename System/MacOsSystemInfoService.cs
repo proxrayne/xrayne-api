@@ -1,12 +1,22 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Models;
 
-namespace XRayne.Infrastructure.Services;
+namespace SystemInfo;
 
+/// <summary>
+/// Reads system information from macOS command-line system tools.
+/// </summary>
 public sealed partial class MacOsSystemInfoService : SystemInfoService
 {
+    /// <summary>
+    /// Initializes a macOS system information service.
+    /// </summary>
+    public MacOsSystemInfoService(SystemInfoOptions options)
+        : base(options)
+    {
+    }
+
+    /// <inheritdoc />
     public override async Task<CpuInfo> GetCpuInfoAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -36,6 +46,7 @@ public sealed partial class MacOsSystemInfoService : SystemInfoService
         return CreateCpuInfoWithoutUsage();
     }
 
+    /// <inheritdoc />
     public override async Task<MemoryInfo> GetMemoryInfoAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -61,6 +72,7 @@ public sealed partial class MacOsSystemInfoService : SystemInfoService
         }
     }
 
+    /// <inheritdoc />
     public override async Task<SwapInfo> GetSwapInfoAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -84,6 +96,7 @@ public sealed partial class MacOsSystemInfoService : SystemInfoService
         }
     }
 
+    /// <inheritdoc />
     public override async Task<long?> GetSystemThreadCountAsync(CancellationToken cancellationToken = default)
     {
         try

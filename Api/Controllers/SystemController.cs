@@ -1,8 +1,7 @@
+using SystemInfo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Models;
-using XRayne.Infrastructure.Services;
 
 namespace XRayne.Api.Controllers;
 

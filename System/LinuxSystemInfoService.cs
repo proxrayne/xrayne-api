@@ -1,14 +1,24 @@
 using System.Globalization;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Models;
 
-namespace XRayne.Infrastructure.Services;
+namespace SystemInfo;
 
+/// <summary>
+/// Reads system information from Linux procfs.
+/// </summary>
 public sealed class LinuxSystemInfoService : SystemInfoService
 {
     private const string MemInfoPath = "/proc/meminfo";
     private const string StatPath = "/proc/stat";
 
+    /// <summary>
+    /// Initializes a Linux system information service.
+    /// </summary>
+    public LinuxSystemInfoService(SystemInfoOptions options)
+        : base(options)
+    {
+    }
+
+    /// <inheritdoc />
     public override async Task<CpuInfo> GetCpuInfoAsync(CancellationToken cancellationToken = default)
     {
         var first = await ReadCpuStatsAsync(cancellationToken);
@@ -41,6 +51,7 @@ public sealed class LinuxSystemInfoService : SystemInfoService
             : CreateCpuInfo(usages);
     }
 
+    /// <inheritdoc />
     public override async Task<MemoryInfo> GetMemoryInfoAsync(CancellationToken cancellationToken = default)
     {
         var values = await ReadMemInfoAsync(cancellationToken);
@@ -51,6 +62,7 @@ public sealed class LinuxSystemInfoService : SystemInfoService
         return new MemoryInfo(total, Math.Max(0, total - available), available);
     }
 
+    /// <inheritdoc />
     public override async Task<SwapInfo> GetSwapInfoAsync(CancellationToken cancellationToken = default)
     {
         var values = await ReadMemInfoAsync(cancellationToken);
@@ -61,6 +73,7 @@ public sealed class LinuxSystemInfoService : SystemInfoService
         return new SwapInfo(total, Math.Max(0, total - free), free);
     }
 
+    /// <inheritdoc />
     public override Task<long?> GetSystemThreadCountAsync(CancellationToken cancellationToken = default)
     {
         long count = 0;

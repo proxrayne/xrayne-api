@@ -1,5 +1,4 @@
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services;
+using SystemInfo;
 
 namespace XRayne.Test.Infrastructure;
 
@@ -83,21 +82,8 @@ public sealed class SystemInfoServiceTests
 
     private static ISystemInfoService CreateService()
     {
-        if (OperatingSystem.IsWindows())
-        {
-            return new WindowsSystemInfoService();
-        }
-
-        if (OperatingSystem.IsLinux())
-        {
-            return new LinuxSystemInfoService();
-        }
-
-        if (OperatingSystem.IsMacOS())
-        {
-            return new MacOsSystemInfoService();
-        }
-
-        throw new PlatformNotSupportedException();
+        return SystemInfoService.Create(new SystemInfoOptions(
+            AppContext.BaseDirectory,
+            Path.GetTempPath()));
     }
 }

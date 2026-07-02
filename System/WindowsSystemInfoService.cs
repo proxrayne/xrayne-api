@@ -1,11 +1,21 @@
 using System.Runtime.InteropServices;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Models;
 
-namespace XRayne.Infrastructure.Services;
+namespace SystemInfo;
 
+/// <summary>
+/// Reads system information from Windows system APIs and PowerShell.
+/// </summary>
 public sealed class WindowsSystemInfoService : SystemInfoService
 {
+    /// <summary>
+    /// Initializes a Windows system information service.
+    /// </summary>
+    public WindowsSystemInfoService(SystemInfoOptions options)
+        : base(options)
+    {
+    }
+
+    /// <inheritdoc />
     public override async Task<CpuInfo> GetCpuInfoAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -44,6 +54,7 @@ public sealed class WindowsSystemInfoService : SystemInfoService
         }
     }
 
+    /// <inheritdoc />
     public override async Task<MemoryInfo> GetMemoryInfoAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -70,6 +81,7 @@ public sealed class WindowsSystemInfoService : SystemInfoService
         return new MemoryInfo(0, 0, 0);
     }
 
+    /// <inheritdoc />
     public override async Task<SwapInfo> GetSwapInfoAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -96,6 +108,7 @@ public sealed class WindowsSystemInfoService : SystemInfoService
         return new SwapInfo(0, 0, 0);
     }
 
+    /// <inheritdoc />
     public override async Task<long?> GetSystemThreadCountAsync(CancellationToken cancellationToken = default)
     {
         try

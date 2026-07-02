@@ -7,8 +7,10 @@ The backend is a .NET 9 solution with a layered architecture:
 - `Api`: panel REST API and dashboard static host.
 - `Cli`: administrator command-line tool.
 - `Contracts`: shared contracts and configuration values.
+- `Github`: reusable GitHub.com releases/assets client.
+- `System`: reusable host system information client.
 - `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
-- `Repositories`: EF Core persistence and external clients.
+- `Repositories`: EF Core persistence.
 - `Test`: test project.
 
 ## API Host
@@ -64,8 +66,8 @@ or dashboard.
 - `CoreService`, `CoreStateMachine`, `BackgroundTaskScheduler`;
 - Quartz jobs for installing and operating xray-core;
 - JWT token creation, settings application, restart scheduling;
-- certificate, geo resource, routing rule, node, and system info services;
-- OS-specific system info implementations.
+- certificate, geo resource, routing rule, and node services;
+- registration of `SystemInfo.ISystemInfoService` with panel runtime paths.
 
 Service interfaces live near implementations under `Services/Contracts`. Register
 new services in `Infrastructure/DependencyInjection.cs`.
@@ -78,7 +80,6 @@ new services in `Infrastructure/DependencyInjection.cs`.
 - EF entities under `Entities`;
 - repository interfaces under `Contracts`;
 - repository implementations under `Implementations`;
-- external clients under `External`;
 - runtime config-file utilities under `Utilities`.
 
 Repositories expose async APIs, accept `CancellationToken`, and use admin-scoped

@@ -7,6 +7,7 @@ Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/s
 - `Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
 - `Github`: reusable GitHub.com releases/assets client used by CLI, API, and infrastructure code.
+- `System`: reusable host system information client used by the API through infrastructure DI.
 - `Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
 - Shared random password generation lives in `Infrastructure/Utilities/PasswordGenerator.cs`.
@@ -116,6 +117,8 @@ Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.
 
 GitHub.com release and asset access lives in the root `Github` class library. Keep persistence-specific code in `Repositories`; do not add external API clients there.
 
+Host system information access lives in the root `System` class library under namespace `SystemInfo`. `Infrastructure` registers `ISystemInfoService` with panel runtime paths from `PathProvider`; do not put OS-specific system-info implementations back under `Infrastructure`.
+
 Repository pattern:
 
 - Define repository interfaces under `Repositories/Contracts`.
@@ -192,6 +195,7 @@ Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerC
 
 - `ICoreService` -> `CoreService`
 - `ICoreStateMachine` -> `CoreStateMachine`
+- `SystemInfo.ISystemInfoService` from the root `System` project
 - `InstallCoreJob`
 
 `CoreService` currently tracks an optional `IXrayProcessCore` instance and exposes installed/running/version checks. Core installation runs through Quartz `InstallCoreJob` and `IBackgroundTaskScheduler`.

@@ -1,7 +1,7 @@
 # Skill: .NET Core Backend
 
 Use this skill when working on `Api`, `Cli`, `Contracts`,
-`Infrastructure`, `Repositories`, or `Test`.
+`Github`, `Infrastructure`, `Repositories`, `System`, or `Test`.
 
 ## Start Here
 
@@ -18,10 +18,12 @@ Use this skill when working on `Api`, `Cli`, `Contracts`,
   reconnect, status, and verification behavior in `Infrastructure`.
 - Put shared options, enums, permission names, pagination/filter models, and
   path values in `Contracts`.
-- Put xray-core lifecycle, background jobs, state machines, system info, JWT,
+- Put xray-core lifecycle, background jobs, state machines, JWT,
   certificate, settings, and runtime services in `Infrastructure`.
+- Put reusable host system information code in the root `System` project under
+  namespace `SystemInfo`.
 - Put EF entities, DbContext, migrations, repositories, config-file utilities, and
-  external release/API clients in `Repositories`.
+  persistence utilities in `Repositories`.
 - Put CLI commands in `Cli/Commands`; put CLI orchestration services in
   `Cli/Services`.
 

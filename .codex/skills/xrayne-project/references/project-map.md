@@ -17,6 +17,7 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 - `Api`: ASP.NET Core web API and static web host.
 - `Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
 - `Github`: reusable GitHub.com releases/assets client for any public repository.
+- `System`: reusable host system information client with no XRayne project dependencies.
 - `Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
 - `Infrastructure`: JWT/core service implementations plus infrastructure utilities such as `NetworkAddress` and password hashing/generation.
 - `Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, and runtime config file utilities such as `JsonConfig`/`EnvConfig`.
