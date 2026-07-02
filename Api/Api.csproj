@@ -5,6 +5,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Contracts/Contracts.csproj" />
+    <ProjectReference Include="../Github/Github.csproj" />
     <ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
     <ProjectReference Include="../Repositories/Repositories.csproj" />
   </ItemGroup>

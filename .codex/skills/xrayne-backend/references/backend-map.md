@@ -6,10 +6,11 @@ Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/s
 
 - `Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
 - `Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
+- `Github`: reusable GitHub.com releases/assets client used by CLI, API, and infrastructure code.
 - `Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
 - Shared random password generation lives in `Infrastructure/Utilities/PasswordGenerator.cs`.
-- `Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, entity models, repositories, runtime config file utilities, and external repository clients under `External`.
+- `Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, entity models, repositories, and runtime config file utilities.
 - `Contracts`: shared contracts, configuration DTOs/options, permission enums, permission names, runtime path helpers, and contract-level DI registration.
 - `Test`: tests.
 
@@ -113,7 +114,7 @@ Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.
 
 `AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`; CLI resolves flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values first, then falls back to `ConnectionStrings:Default`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
-External clients that represent remote repositories or APIs live under `Repositories/External`. `GitHubRepository` is the release/asset client used by CLI update and install flows.
+GitHub.com release and asset access lives in the root `Github` class library. Keep persistence-specific code in `Repositories`; do not add external API clients there.
 
 Repository pattern:
 
@@ -179,7 +180,7 @@ CLI service interfaces live under `Cli/Services/Contracts`, with implementations
 
 Shared CLI helpers live under `Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
 
-GitHub release and asset access is implemented by `GitHubRepository` in `XRayne.Repositories.External`. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing uses a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `Cli/Services`.
+GitHub release and asset access is implemented by `GitHubRepository` in the `Github` project. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing uses a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `Cli/Services`.
 
 Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
 

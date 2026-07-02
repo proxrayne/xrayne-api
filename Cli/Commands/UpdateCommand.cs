@@ -1,3 +1,4 @@
+using Github;
 using System.CommandLine;
 using System.Diagnostics;
 using System.Formats.Tar;
@@ -13,7 +14,6 @@ using XRayne.Cli.Services;
 using XRayne.Cli.Services.Contracts;
 using XRayne.Cli.Values;
 using XRayne.Contracts.Values;
-using XRayne.Repositories.External;
 using XRayne.Repositories.Utilities;
 
 namespace XRayne.Cli.Commands;

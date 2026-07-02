@@ -1,3 +1,4 @@
+using Github;
 using System.IO.Compression;
 using Microsoft.Extensions.Logging;
 using Quartz;
@@ -6,7 +7,6 @@ using XRayne.Infrastructure.Services;
 using XRayne.Infrastructure.States;
 using XRayne.Infrastructure.Utilities;
 using XRayne.Infrastructure.Values;
-using XRayne.Repositories.External;
 
 namespace XRayne.Infrastructure.Tasks;
 

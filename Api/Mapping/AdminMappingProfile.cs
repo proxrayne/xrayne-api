@@ -1,8 +1,8 @@
 using AutoMapper;
+using Github;
 using XRayne.Api.Responses;
 using XRayne.Contracts.Values;
 using XRayne.Repositories.Entities;
-using XRayne.Repositories.External;
 
 namespace XRayne.Api.Mapping;
 

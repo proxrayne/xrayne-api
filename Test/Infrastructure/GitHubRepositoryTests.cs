@@ -1,6 +1,6 @@
+using Github;
 using System.Net;
 using System.Text;
-using XRayne.Repositories.External;
 
 namespace XRayne.Test.Infrastructure;
 
@@ -70,6 +70,23 @@ public sealed class GitHubRepositoryTests
         var release = Assert.Single(releases);
         Assert.Equal("0.0.1", release.TagName);
         Assert.False(release.PreRelease);
+    }
+
+    [Fact]
+    public async Task GetReleasesAsync_WithFilter_AppendsPagingQuery()
+    {
+        var handler = new FakeHandler(
+            request =>
+            {
+                Assert.Equal("https://api.github.com/repos/VanyaKrotov/xrayne/releases?per_page=100&page=2", request.RequestUri?.ToString());
+
+                return JsonResponse("[]");
+            });
+        using var repository = new GitHubRepository("VanyaKrotov/xrayne", new HttpClient(handler));
+
+        var releases = await repository.GetReleasesAsync(new GitHubReleasesFilter(100, 2));
+
+        Assert.Empty(releases);
     }
 
     [Theory]

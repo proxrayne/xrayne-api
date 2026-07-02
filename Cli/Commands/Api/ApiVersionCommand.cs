@@ -1,10 +1,10 @@
+using Github;
 using System.CommandLine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XRayne.Cli.Output;
 using XRayne.Cli.Values;
-using XRayne.Repositories.External;
 
 namespace XRayne.Cli.Commands.Api;
 

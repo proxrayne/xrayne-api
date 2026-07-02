@@ -16,9 +16,10 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 - `global.json`: SDK `9.0.100` with `latestFeature` roll-forward.
 - `Api`: ASP.NET Core web API and static web host.
 - `Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
+- `Github`: reusable GitHub.com releases/assets client for any public repository.
 - `Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
 - `Infrastructure`: JWT/core service implementations plus infrastructure utilities such as `NetworkAddress` and password hashing/generation.
-- `Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, runtime config file utilities such as `JsonConfig`/`EnvConfig`, and external clients under `External` such as `GitHubRepository`.
+- `Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, and runtime config file utilities such as `JsonConfig`/`EnvConfig`.
 - `Contracts`: shared contracts, configuration DTOs, shared API/query models, permission enums, and permission names.
 - `Test`: backend test project.
 - `Dashboard`: React Router app.

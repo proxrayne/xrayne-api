@@ -1,10 +1,13 @@
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.WebUtilities;
 
-namespace XRayne.Repositories.External;
+namespace Github;
 
+/// <summary>
+/// Provides release and release asset access for public GitHub repositories.
+/// </summary>
 public sealed class GitHubRepository : IDisposable
 {
     private const string LatestVersion = "latest";
@@ -13,6 +16,9 @@ public sealed class GitHubRepository : IDisposable
     private readonly HttpClient _httpClient;
     private readonly bool _disposeHttpClient;
 
+    /// <summary>
+    /// Initializes a new GitHub repository client.
+    /// </summary>
     public GitHubRepository(
         string repositoryUrl,
         HttpClient? httpClient = null)
@@ -24,10 +30,19 @@ public sealed class GitHubRepository : IDisposable
         ConfigureHeaders(_httpClient);
     }
 
+    /// <summary>
+    /// Gets the normalized repository full name in owner/repository format.
+    /// </summary>
     public string FullName { get; }
 
+    /// <summary>
+    /// Gets the public GitHub repository URL.
+    /// </summary>
     public string Url => $"https://github.com/{FullName}";
 
+    /// <summary>
+    /// Gets repository releases from the GitHub API.
+    /// </summary>
     public async Task<ICollection<GitHubRelease>> GetReleasesAsync(
         CancellationToken cancellationToken = default)
     {
@@ -36,26 +51,29 @@ public sealed class GitHubRepository : IDisposable
             cancellationToken) ?? [];
     }
 
+    /// <summary>
+    /// Gets repository releases from the GitHub API with paging options.
+    /// </summary>
     public async Task<ICollection<GitHubRelease>> GetReleasesAsync(
-        GithubRepositoriesFilter filter,
+        GitHubReleasesFilter filter,
         CancellationToken cancellationToken = default)
     {
-        var url = $"https://api.github.com/repos/{FullName}/releases";
-        if (filter.PerPage != null)
-        {
-            url = QueryHelpers.AddQueryString(url, "per_page", filter.PerPage.ToString()!);
-        }
-
-        if (filter.Page != null)
-        {
-            url = QueryHelpers.AddQueryString(url, "page", filter.Page.ToString()!);
-        }
+        var url = AddQueryString(
+            $"https://api.github.com/repos/{FullName}/releases",
+            new Dictionary<string, string?>
+            {
+                ["per_page"] = filter.PerPage?.ToString(),
+                ["page"] = filter.Page?.ToString()
+            });
 
         return await GetJsonAsync<GitHubRelease[]>(
             url,
             cancellationToken) ?? [];
     }
 
+    /// <summary>
+    /// Gets a release by tag or the latest stable release when version is latest.
+    /// </summary>
     public async Task<GitHubRelease> GetReleaseAsync(
         string version = LatestVersion,
         CancellationToken cancellationToken = default)
@@ -68,17 +86,23 @@ public sealed class GitHubRepository : IDisposable
             ?? throw new InvalidOperationException($"GitHub release '{version}' response was empty.");
     }
 
+    /// <summary>
+    /// Downloads a release asset into the destination directory using the asset name.
+    /// </summary>
     public Task<string> DownloadAssetAsync(
         GitHubAsset asset,
         string destinationDirectory,
-        CancellationToken ct = default)
-    => DownloadAssetAsync(asset, destinationDirectory, asset.Name, ct);
+        CancellationToken cancellationToken = default)
+    => DownloadAssetAsync(asset, destinationDirectory, asset.Name, cancellationToken);
 
+    /// <summary>
+    /// Downloads a release asset into the destination directory using a custom file name.
+    /// </summary>
     public async Task<string> DownloadAssetAsync(
         GitHubAsset asset,
         string destinationDirectory,
         string assetName,
-        CancellationToken ct = default)
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(asset.Name))
         {
@@ -95,16 +119,17 @@ public sealed class GitHubRepository : IDisposable
         using var response = await _httpClient.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
-            ct);
+            cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        await using var input = await response.Content.ReadAsStreamAsync(ct);
+        await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
         await using var output = File.Create(destinationPath);
-        await input.CopyToAsync(output, ct);
+        await input.CopyToAsync(output, cancellationToken);
 
         return destinationPath;
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_disposeHttpClient)
@@ -141,6 +166,30 @@ public sealed class GitHubRepository : IDisposable
         {
             client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
         }
+    }
+
+    private static string AddQueryString(
+        string url,
+        IReadOnlyDictionary<string, string?> query)
+    {
+        var builder = new StringBuilder(url);
+        var hasQuery = url.Contains('?', StringComparison.Ordinal);
+
+        foreach (var (key, value) in query)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            builder.Append(hasQuery ? '&' : '?');
+            builder.Append(Uri.EscapeDataString(key));
+            builder.Append('=');
+            builder.Append(Uri.EscapeDataString(value));
+            hasQuery = true;
+        }
+
+        return builder.ToString();
     }
 
     private static string NormalizeRepositoryName(string repositoryUrl)
@@ -185,8 +234,14 @@ public sealed class GitHubRepository : IDisposable
     }
 }
 
-public sealed record GithubRepositoriesFilter(int? PerPage, int? Page);
+/// <summary>
+/// Paging options for GitHub release list requests.
+/// </summary>
+public sealed record GitHubReleasesFilter(int? PerPage, int? Page);
 
+/// <summary>
+/// GitHub release asset metadata.
+/// </summary>
 public sealed record GitHubAsset(
     [property: JsonPropertyName("url")] string Url,
     [property: JsonPropertyName("id")] long Id,
@@ -202,6 +257,9 @@ public sealed record GitHubAsset(
     [property: JsonPropertyName("updated_at")] DateTimeOffset UpdatedAt,
     [property: JsonPropertyName("browser_download_url")] string BrowserDownloadUrl);
 
+/// <summary>
+/// GitHub user metadata included in release responses.
+/// </summary>
 public sealed record GitHubUser(
     [property: JsonPropertyName("login")] string Login,
     [property: JsonPropertyName("id")] long Id,
@@ -222,6 +280,9 @@ public sealed record GitHubUser(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("site_admin")] bool SiteAdmin);
 
+/// <summary>
+/// GitHub release metadata returned by the releases API.
+/// </summary>
 public sealed record GitHubRelease(
     [property: JsonPropertyName("url")] string Url,
     [property: JsonPropertyName("assets_url")] string AssetsUrl,

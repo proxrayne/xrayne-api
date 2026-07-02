@@ -1,5 +1,5 @@
+using Github;
 using System.Reflection;
-using XRayne.Repositories.External;
 
 namespace XRayne.Infrastructure.Services;
 
@@ -52,7 +52,7 @@ public sealed class NodeImageReleaseResolver : INodeImageReleaseResolver
             return latest;
         }
 
-        var releases = await repository.GetReleasesAsync(new GithubRepositoriesFilter(100, 1), cancellationToken);
+        var releases = await repository.GetReleasesAsync(new GitHubReleasesFilter(100, 1), cancellationToken);
         var supported = releases
             .Where(release => !release.Draft && !release.PreRelease)
             .Select(release => new
