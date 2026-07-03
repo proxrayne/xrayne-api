@@ -1,4 +1,4 @@
-namespace XRayne.Api.Exceptions;
+namespace Api.Exceptions;
 
 public sealed class BadRequestException : ApiException
 {

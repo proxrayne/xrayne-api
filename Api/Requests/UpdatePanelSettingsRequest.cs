@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 
-namespace XRayne.Api.Requests;
+namespace Api.Requests;
 
 public sealed class UpdatePanelSettingsRequest : IValidatableObject
 {

@@ -1,14 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
-using XRayne.Cli.Commands;
-using XRayne.Cli.Commands.Api;
-using XRayne.Cli.Commands.Admin;
-using XRayne.Cli.Commands.Cert;
-using XRayne.Cli.Commands.Xray;
-using XRayne.Cli.Output;
-using XRayne.Cli.Services;
-using XRayne.Cli.Services.Contracts;
+using Cli.Commands;
+using Cli.Commands.Api;
+using Cli.Commands.Admin;
+using Cli.Commands.Cert;
+using Cli.Commands.Xray;
+using Cli.Output;
+using Cli.Services;
+using Cli.Services.Contracts;
 
-namespace XRayne.Infrastructure;
+namespace Infrastructure;
 
 public static class DependencyInjection
 {

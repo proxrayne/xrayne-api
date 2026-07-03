@@ -3,17 +3,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using XRayne.Contracts.Configurations;
-using XRayne.Api.Exceptions;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Enums;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.States;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Api.Exceptions;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Enums;
+using Contracts.Values;
+using Infrastructure.Services;
+using Infrastructure.States;
+using Repositories.Entities;
 
-namespace XRayne.Api.Controllers;
+namespace Api.Controllers;
 
 /// <summary>
 /// Manages remote XRayne nodes.

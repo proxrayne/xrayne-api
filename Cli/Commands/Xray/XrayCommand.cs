@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace XRayne.Cli.Commands.Xray;
+namespace Cli.Commands.Xray;
 
 public sealed class XrayCommand : Command
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace XRayne.Api.Requests;
+namespace Api.Requests;
 
 public sealed class ChangeAdminPermissionsRequest
 {

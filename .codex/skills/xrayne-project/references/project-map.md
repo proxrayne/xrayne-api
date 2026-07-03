@@ -64,12 +64,12 @@ npm run build
 
 - API reads normal ASP.NET Core configuration from packaged `appsettings*.json`, then runtime `PathProvider.Paths.JsonConfig` (`config.json` in the shared project directory) and `PathProvider.Paths.EnvConfig`.
 - CLI sets base path to `AppContext.BaseDirectory`, reads packaged `appsettings.json`, environment-specific `appsettings.{Environment}.json`, runtime `PathProvider.Paths.JsonConfig`, `PathProvider.Paths.EnvConfig`, and environment variables through the shared configuration pipeline.
-- `PathProvider` in `XRayne.Contracts.Values` centralizes runtime paths: project root, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, `downloads`, `certificates`, `certificates/letsencrypt`, and `xray`.
+- `PathProvider` in `Contracts.Values` centralizes runtime paths: project root, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, `downloads`, `certificates`, `certificates/letsencrypt`, and `xray`.
 - `PathProvider.SystemProjectDirectory` defaults to `C:\Program Files\xrayne` on Windows, `/opt/xrayne` on Linux, and a temp `xrayne` directory elsewhere. `PROJECT_PATH` overrides the runtime root used by `PathProvider.Paths`.
 - When CLI is installed under a `cli` folder, `PathProvider.GetProjectDirectory()` returns the parent directory of `AppContext.BaseDirectory`; for example `/opt/xrayne/cli` resolves to `/opt/xrayne`.
-- `JsonConfig` and `EnvConfig` in `XRayne.Repositories.Utilities` are static helpers for safe runtime file mutations. Reading is done through standard `IConfiguration`.
+- `JsonConfig` and `EnvConfig` in `Repositories.Utilities` are static helpers for safe runtime file mutations. Reading is done through standard `IConfiguration`.
 - `.env` is static after install and reserved for Docker Compose/bootstrap variables such as `PROJECT_PATH`, `API_IMAGE`, `API_PORT`, and PostgreSQL values. More complex application configuration belongs in runtime `config.json`. Docker Compose runs from the project directory and reads the `.env` file beside `docker-compose.yml`; services should use `env_file: .env` when they need the same values inside containers.
-- `XrayOptions` is registered from `Xray` through `XRayne.Contracts.DependencyInjection`; current options include `CorePath`.
+- `XrayOptions` is registered from `Xray` through `Contracts.DependencyInjection`; current options include `CorePath`.
 - Database connection key is `ConnectionStrings:Default`.
 - Repository entities currently include admin accounts, users, inbounds, and outbounds. Xray native inbound/outbound payloads are stored as `jsonb`; PostgreSQL enum mapping is configured for user status, traffic limit reset strategy, and admin permissions.
 - Shared query models such as cursor pagination and repository filters live under `Contracts/Models`.

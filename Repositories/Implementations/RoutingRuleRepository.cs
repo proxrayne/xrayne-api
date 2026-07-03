@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Entities;
+using Repositories.Contracts;
+using Repositories.Entities;
 
-namespace XRayne.Repositories.Implementations;
+namespace Repositories.Implementations;
 
 public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRuleRepository
 {

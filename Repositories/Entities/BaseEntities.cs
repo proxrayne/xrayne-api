@@ -1,4 +1,4 @@
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 public abstract class CreatedEntity
 {

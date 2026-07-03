@@ -1,10 +1,10 @@
 using Github;
 using System.Reflection;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
-/// Resolves XRayne.Node Docker image archives from the public GitHub release assets.
+/// Resolves Node Docker image archives from the public GitHub release assets.
 /// </summary>
 public sealed class NodeImageReleaseResolver : INodeImageReleaseResolver
 {
@@ -66,7 +66,7 @@ public sealed class NodeImageReleaseResolver : INodeImageReleaseResolver
 
         return supported?.Release
             ?? throw new InvalidOperationException(
-                $"No XRayne.Node release compatible with panel version '{panelVersion}' was found.");
+                $"No Node release compatible with panel version '{panelVersion}' was found.");
     }
 
     private static Version? GetPanelVersion()

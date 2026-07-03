@@ -1,9 +1,9 @@
 using System.Text.Json.Nodes;
-using XRayne.Cli.Values;
-using XRayne.Contracts.Values;
-using XRayne.Repositories.Utilities;
+using Cli.Values;
+using Contracts.Values;
+using Repositories.Utilities;
 
-namespace XRayne.Cli.Services.RuntimeMigrations;
+namespace Cli.Services.RuntimeMigrations;
 
 internal static class RuntimeMigrationFileHelpers
 {

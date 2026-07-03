@@ -9,14 +9,14 @@ using Microsoft.OpenApi.Models;
 using Quartz;
 using Scalar.AspNetCore;
 using Serilog;
-using XRayne.Api.Auth;
-using XRayne.Api.Filters;
-using XRayne.Contracts;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure;
-using XRayne.Infrastructure.Services;
-using XRayne.Repositories;
+using Api.Auth;
+using Api.Filters;
+using Contracts;
+using Contracts.Configurations;
+using Contracts.Values;
+using Infrastructure;
+using Infrastructure.Services;
+using Repositories;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()

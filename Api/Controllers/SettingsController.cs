@@ -1,14 +1,14 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using XRayne.Api.Exceptions;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services;
+using Api.Exceptions;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Configurations;
+using Contracts.Values;
+using Infrastructure.Services;
 
-namespace XRayne.Api.Controllers;
+namespace Api.Controllers;
 
 [Route("api/settings")]
 [Authorize(Policy = AdminPermissionNames.SuperAdmin)]

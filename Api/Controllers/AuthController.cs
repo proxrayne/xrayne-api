@@ -2,15 +2,15 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using XRayne.Api.Exceptions;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Configurations;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.Utilities;
-using XRayne.Repositories.Contracts;
+using Api.Exceptions;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Configurations;
+using Infrastructure.Services;
+using Infrastructure.Utilities;
+using Repositories.Contracts;
 
-namespace XRayne.Api.Controllers;
+namespace Api.Controllers;
 
 [Route("api/auth")]
 public sealed class AuthController(

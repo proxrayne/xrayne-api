@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 [Table("Nodes")]
 public class NodeEntity : CreateUpdateEntity

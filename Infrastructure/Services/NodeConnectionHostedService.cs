@@ -5,11 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Enums;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Contracts.Enums;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
 /// Maintains live SSE connections to enabled remote nodes while the panel is running.

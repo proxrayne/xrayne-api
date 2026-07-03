@@ -1,4 +1,4 @@
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 internal sealed class TestWorkspace : IDisposable
 {

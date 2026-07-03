@@ -1,4 +1,4 @@
-namespace XRayne.Contracts.Enums;
+namespace Contracts.Enums;
 
 /// <summary>
 /// Defines webhook notification events.

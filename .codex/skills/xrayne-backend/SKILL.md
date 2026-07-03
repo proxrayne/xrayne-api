@@ -20,7 +20,7 @@ Read `references/backend-map.md`, `docs/architecture/backend.md`, `docs/stylegui
 - Register services through the nearest `DependencyInjection.cs` extension.
 - Put HTTP behavior in controllers under `Api/Controllers`; keep controllers thin and delegate work to repositories/services.
 - Throw `ApiException` subclasses for intended API errors so `ApiExceptionFilter` can format them.
-- Use `AdminPermissionNames` from `XRayne.Contracts.Values` for authorization policies and permission parsing.
+- Use `AdminPermissionNames` from `Contracts.Values` for authorization policies and permission parsing.
 - Use EF Core async methods with cancellation tokens in repositories.
 - Add migrations through `add-migration.ps1` or equivalent `dotnet ef migrations add` command targeting `AppDbContext`.
 - For CLI commands, derive from `System.CommandLine.Command`, inject `IServiceProvider`, create an async scope in `SetAction`, and return integer exit codes.

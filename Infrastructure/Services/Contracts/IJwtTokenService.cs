@@ -1,6 +1,6 @@
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public interface IJwtTokenService
 {

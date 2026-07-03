@@ -1,4 +1,4 @@
-namespace XRayne.Contracts.Configurations;
+namespace Contracts.Configurations;
 
 public class XrayOptions
 {

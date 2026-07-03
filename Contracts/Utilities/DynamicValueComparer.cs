@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace XRayne.Contracts.Utilities;
+namespace Contracts.Utilities;
 
 public static class DynamicValueComparer
 {

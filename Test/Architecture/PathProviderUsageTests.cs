@@ -1,10 +1,10 @@
 using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services;
+using Contracts.Values;
+using Infrastructure.Services;
 
-namespace XRayne.Test.Architecture;
+namespace Test.Architecture;
 
 public sealed class PathProviderUsageTests
 {

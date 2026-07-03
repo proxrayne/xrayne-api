@@ -2,17 +2,17 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
-using XRayne.Api.Controllers;
-using XRayne.Api.Exceptions;
-using XRayne.Api.Mapping;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Enums;
-using XRayne.Contracts.Models;
-using XRayne.Infrastructure.Services;
+using Api.Controllers;
+using Api.Exceptions;
+using Api.Mapping;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Configurations;
+using Contracts.Enums;
+using Contracts.Models;
+using Infrastructure.Services;
 
-namespace XRayne.Test.Controllers;
+namespace Test.Controllers;
 
 public sealed class SettingsControllerTests
 {

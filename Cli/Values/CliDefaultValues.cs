@@ -1,4 +1,4 @@
-namespace XRayne.Cli.Values;
+namespace Cli.Values;
 
 public static class CliDefaults
 {

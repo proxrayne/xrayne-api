@@ -1,8 +1,8 @@
-using XRayne.Cli.Services.Contracts;
-using XRayne.Cli.Services.RuntimeMigrations;
-using XRayne.Contracts.Values;
+using Cli.Services.Contracts;
+using Cli.Services.RuntimeMigrations;
+using Contracts.Values;
 
-namespace XRayne.Cli.Services;
+namespace Cli.Services;
 
 public sealed class RuntimeMigrationService : IRuntimeMigrationService
 {

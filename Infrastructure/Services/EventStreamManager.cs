@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public sealed class EventStreamManager : IEventStreamManager
 {

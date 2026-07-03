@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.Json;
-using XRayne.Contracts.Models;
+using Contracts.Models;
 
-namespace XRayne.Contracts.Utilities;
+namespace Contracts.Utilities;
 
 public static class CursorPagination
 {

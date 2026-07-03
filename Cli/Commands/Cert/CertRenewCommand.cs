@@ -2,10 +2,10 @@ using System.CommandLine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using XRayne.Cli.Output;
-using XRayne.Cli.Services.Contracts;
+using Cli.Output;
+using Cli.Services.Contracts;
 
-namespace XRayne.Cli.Commands.Cert;
+namespace Cli.Commands.Cert;
 
 public sealed class CertRenewCommand : Command
 {

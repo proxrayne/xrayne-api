@@ -1,7 +1,7 @@
-using XRayne.Contracts.Enums;
-using XRayne.Contracts.Models;
+using Contracts.Enums;
+using Contracts.Models;
 
-namespace XRayne.Contracts.Configurations;
+namespace Contracts.Configurations;
 
 /// <summary>
 /// Contains mutable application settings stored in the database.

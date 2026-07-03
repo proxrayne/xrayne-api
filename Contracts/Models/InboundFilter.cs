@@ -1,6 +1,6 @@
 using Xray.Config.Enums;
 
-namespace XRayne.Contracts.Models;
+namespace Contracts.Models;
 
 public sealed record InboundFilter : CursorQuery
 {

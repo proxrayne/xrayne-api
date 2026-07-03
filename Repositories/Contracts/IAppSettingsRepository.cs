@@ -1,6 +1,6 @@
-using XRayne.Repositories.Entities;
+using Repositories.Entities;
 
-namespace XRayne.Repositories.Contracts;
+namespace Repositories.Contracts;
 
 /// <summary>
 /// Provides persistence for singleton application settings.

@@ -3,10 +3,10 @@ using System.CommandLine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using XRayne.Cli.Output;
-using XRayne.Cli.Values;
+using Cli.Output;
+using Cli.Values;
 
-namespace XRayne.Cli.Commands.Api;
+namespace Cli.Commands.Api;
 
 public sealed class ApiVersionCommand : Command
 {

@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Xray.Config.Enums;
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 [Table("Users")]
 [Index(nameof(Username), IsUnique = true)]

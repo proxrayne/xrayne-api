@@ -1,6 +1,6 @@
-using XRayne.Contracts.Values;
+using Contracts.Values;
 
-namespace XRayne.Cli.Helpers;
+namespace Cli.Helpers;
 
 internal static class CertificateCommandHelper
 {

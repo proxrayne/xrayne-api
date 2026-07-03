@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Logging.Abstractions;
-using XRayne.Api.Auth;
-using XRayne.Contracts.Configurations;
+using Api.Auth;
+using Contracts.Configurations;
 
-namespace XRayne.Test.Startup;
+namespace Test.Startup;
 
 public sealed class PanelStartupReaderTests
 {

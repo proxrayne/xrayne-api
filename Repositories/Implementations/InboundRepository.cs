@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using XRayne.Contracts.Models;
-using XRayne.Contracts.Utilities;
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Entities;
+using Contracts.Models;
+using Contracts.Utilities;
+using Repositories.Contracts;
+using Repositories.Entities;
 
-namespace XRayne.Repositories.Implementations;
+namespace Repositories.Implementations;
 
 public sealed class InboundRepository(AppDbContext dbContext) : IInboundRepository
 {

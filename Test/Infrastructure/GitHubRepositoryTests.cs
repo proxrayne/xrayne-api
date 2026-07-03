@@ -2,7 +2,7 @@ using Github;
 using System.Net;
 using System.Text;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 public sealed class GitHubRepositoryTests
 {

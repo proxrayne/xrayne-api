@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
-using XRayne.Infrastructure.States;
+using Infrastructure.States;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public class CoreStateMachine(
     IMemoryCache cache,

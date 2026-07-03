@@ -1,4 +1,4 @@
-namespace XRayne.Contracts.Models;
+namespace Contracts.Models;
 
 public enum SortOrder
 {

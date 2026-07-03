@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
-using XRayne.Contracts.Models;
+using Contracts.Models;
 
 #nullable disable
 
-namespace XRayne.Repositories.Migrations
+namespace Repositories.Migrations
 {
     /// <inheritdoc />
     public partial class AddRuntimeSettings : Migration

@@ -2,15 +2,15 @@ using System.CommandLine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using XRayne.Cli.Helpers;
-using XRayne.Cli.Output;
-using XRayne.Cli.Services.Contracts;
-using XRayne.Cli.Values;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Utilities;
-using XRayne.Repositories.Utilities;
+using Cli.Helpers;
+using Cli.Output;
+using Cli.Services.Contracts;
+using Cli.Values;
+using Contracts.Values;
+using Infrastructure.Utilities;
+using Repositories.Utilities;
 
-namespace XRayne.Cli.Commands.Cert;
+namespace Cli.Commands.Cert;
 
 public sealed class CertInstallCommand : Command
 {

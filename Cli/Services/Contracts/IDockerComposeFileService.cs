@@ -1,6 +1,6 @@
-using XRayne.Contracts.Values;
+using Contracts.Values;
 
-namespace XRayne.Cli.Services.Contracts;
+namespace Cli.Services.Contracts;
 
 public interface IDockerComposeFileService
 {

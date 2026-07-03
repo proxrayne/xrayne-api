@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Quartz;
-using XRayne.Contracts.Enums;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.States;
+using Contracts.Enums;
+using Infrastructure.Services;
+using Infrastructure.States;
 
-namespace XRayne.Infrastructure.Tasks;
+namespace Infrastructure.Tasks;
 
 /// <summary>
 /// Runs remote node provisioning in the background.

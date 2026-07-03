@@ -4,14 +4,14 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using XRayne.Cli.Output;
-using XRayne.Cli.Services;
-using XRayne.Cli.Services.Contracts;
-using XRayne.Cli.Values;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Utilities;
+using Cli.Output;
+using Cli.Services;
+using Cli.Services.Contracts;
+using Cli.Values;
+using Contracts.Values;
+using Infrastructure.Utilities;
 
-namespace XRayne.Cli.Commands;
+namespace Cli.Commands;
 
 public sealed class InfoCommand : Command
 {

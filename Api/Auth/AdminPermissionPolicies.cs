@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
-using XRayne.Contracts.Values;
+using Contracts.Values;
 
-namespace XRayne.Api.Auth;
+namespace Api.Auth;
 
 public static class AdminPermissionPolicies
 {

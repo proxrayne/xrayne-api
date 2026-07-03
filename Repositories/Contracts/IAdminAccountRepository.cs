@@ -1,7 +1,7 @@
-using XRayne.Contracts.Enums;
-using XRayne.Repositories.Entities;
+using Contracts.Enums;
+using Repositories.Entities;
 
-namespace XRayne.Repositories.Contracts;
+namespace Repositories.Contracts;
 
 public interface IAdminAccountRepository
 {

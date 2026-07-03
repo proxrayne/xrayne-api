@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
-using XRayne.Infrastructure.Utilities;
+using Infrastructure.Utilities;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 public sealed class NetworkAddressTests
 {

@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using XRayne.Contracts.Configurations;
+using Contracts.Configurations;
 
-namespace XRayne.Contracts;
+namespace Contracts;
 
 public static class DependencyInjection
 {

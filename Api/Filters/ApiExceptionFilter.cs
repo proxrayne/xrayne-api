@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using XRayne.Api.Exceptions;
-using XRayne.Api.Responses;
+using Api.Exceptions;
+using Api.Responses;
 
-namespace XRayne.Api.Filters;
+namespace Api.Filters;
 
 public sealed class ApiExceptionFilter(ILogger<ApiExceptionFilter> logger) : IExceptionFilter
 {

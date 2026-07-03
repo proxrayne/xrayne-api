@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using XRayne.Contracts.Models;
+using Contracts.Models;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 /// <summary>
 /// Stores singleton application settings.

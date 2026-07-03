@@ -53,7 +53,7 @@ repository as `xrayne-panel`.
 
 ## Configuration
 
-- Runtime paths are centralized through `PathProvider` in `XRayne.Contracts.Values`.
+- Runtime paths are centralized through `PathProvider` in `Contracts.Values`.
 - API and CLI read normal `IConfiguration`; use `JsonConfig`/`EnvConfig` only when
   mutating runtime config files.
 - `.env` is reserved for bootstrap/container values. Complex app configuration

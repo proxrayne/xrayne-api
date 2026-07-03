@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Options;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Enums;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Contracts.Enums;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
 /// Applies configured remote node reconnect limits.

@@ -1,4 +1,4 @@
-namespace XRayne.Infrastructure.States;
+namespace Infrastructure.States;
 
 public enum NodeProvisionStep
 {

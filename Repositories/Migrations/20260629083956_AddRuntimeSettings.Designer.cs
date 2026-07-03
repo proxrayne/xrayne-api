@@ -6,15 +6,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using XRayne.Contracts.Models;
-using XRayne.Repositories;
-using XRayne.Repositories.Entities;
+using Contracts.Models;
+using Repositories;
+using Repositories.Entities;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 
 #nullable disable
 
-namespace XRayne.Repositories.Migrations
+namespace Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260629083956_AddRuntimeSettings")]
@@ -49,7 +49,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("InboundEntityUser");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.AdminAccount", b =>
+            modelBuilder.Entity("Repositories.Entities.AdminAccount", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -85,7 +85,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("Admins");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.AppSettingsEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.AppSettingsEntity", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("integer");
@@ -126,7 +126,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("AppSettings");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.AppWebhookSettingsEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.AppWebhookSettingsEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -180,7 +180,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("AppWebhooks");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.CertificateEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.CertificateEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -245,7 +245,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("Certificates");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.GeoResourceEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.GeoResourceEntity", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -305,7 +305,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("GeoResources");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.InboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.InboundEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -357,7 +357,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("Inbounds");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.NodeEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.NodeEntity", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -435,7 +435,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("Nodes");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.OutboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.OutboundEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -482,7 +482,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("Outbounds");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.RoutingRuleEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.RoutingRuleEntity", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -531,7 +531,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("RoutingRules");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.User", b =>
+            modelBuilder.Entity("Repositories.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -601,22 +601,22 @@ namespace XRayne.Repositories.Migrations
 
             modelBuilder.Entity("InboundEntityUser", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.InboundEntity", null)
+                    b.HasOne("Repositories.Entities.InboundEntity", null)
                         .WithMany()
                         .HasForeignKey("InboundsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.User", null)
+                    b.HasOne("Repositories.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.AppWebhookSettingsEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.AppWebhookSettingsEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AppSettingsEntity", "AppSettings")
+                    b.HasOne("Repositories.Entities.AppSettingsEntity", "AppSettings")
                         .WithMany("Webhooks")
                         .HasForeignKey("AppSettingsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -625,19 +625,19 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("AppSettings");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.CertificateEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.CertificateEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", null)
+                    b.HasOne("Repositories.Entities.NodeEntity", null)
                         .WithMany("Certificates")
                         .HasForeignKey("NodeEntityId");
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", "Node")
+                    b.HasOne("Repositories.Entities.NodeEntity", "Node")
                         .WithMany()
                         .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -648,19 +648,19 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Node");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.GeoResourceEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.GeoResourceEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", null)
+                    b.HasOne("Repositories.Entities.NodeEntity", null)
                         .WithMany("GeoResources")
                         .HasForeignKey("NodeEntityId");
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", "Node")
+                    b.HasOne("Repositories.Entities.NodeEntity", "Node")
                         .WithMany()
                         .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -671,15 +671,15 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Node");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.InboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.InboundEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", "Node")
+                    b.HasOne("Repositories.Entities.NodeEntity", "Node")
                         .WithMany("Inbounds")
                         .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -690,9 +690,9 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Node");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.NodeEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.NodeEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -701,15 +701,15 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Admin");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.OutboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.OutboundEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", "Node")
+                    b.HasOne("Repositories.Entities.NodeEntity", "Node")
                         .WithMany("Outbounds")
                         .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -720,15 +720,15 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Node");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.RoutingRuleEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.RoutingRuleEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.NodeEntity", "Node")
+                    b.HasOne("Repositories.Entities.NodeEntity", "Node")
                         .WithMany("RoutingRules")
                         .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -739,27 +739,27 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Node");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.User", b =>
+            modelBuilder.Entity("Repositories.Entities.User", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.OutboundEntity", null)
+                    b.HasOne("Repositories.Entities.OutboundEntity", null)
                         .WithMany("Users")
                         .HasForeignKey("OutboundEntityId");
 
                     b.Navigation("Admin");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.AppSettingsEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.AppSettingsEntity", b =>
                 {
                     b.Navigation("Webhooks");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.NodeEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.NodeEntity", b =>
                 {
                     b.Navigation("Certificates");
 
@@ -772,7 +772,7 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("RoutingRules");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.OutboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.OutboundEntity", b =>
                 {
                     b.Navigation("Users");
                 });

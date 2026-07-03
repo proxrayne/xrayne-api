@@ -3,15 +3,15 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Renci.SshNet;
 using Renci.SshNet.Common;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Enums;
-using XRayne.Infrastructure.States;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Contracts.Enums;
+using Infrastructure.States;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
-/// Provisions a remote Linux host over SSH and starts the XRayne.Node container.
+/// Provisions a remote Linux host over SSH and starts the Node container.
 /// </summary>
 public sealed class RemoteNodeProvisioner(
     INodeProvisionStateMachine stateMachine,

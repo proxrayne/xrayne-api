@@ -1,4 +1,4 @@
-namespace XRayne.Contracts.Enums;
+namespace Contracts.Enums;
 
 [Flags]
 public enum AdminPermission : long

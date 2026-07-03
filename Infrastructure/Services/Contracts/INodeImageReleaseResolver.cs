@@ -1,7 +1,7 @@
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
-/// Resolves public release assets for XRayne.Node Docker image archives.
+/// Resolves public release assets for Node Docker image archives.
 /// </summary>
 public interface INodeImageReleaseResolver
 {
@@ -9,7 +9,7 @@ public interface INodeImageReleaseResolver
 }
 
 /// <summary>
-/// Describes a public XRayne.Node Docker image release asset.
+/// Describes a public Node Docker image release asset.
 /// </summary>
 public sealed record NodeImageReleaseAsset(
     string Version,

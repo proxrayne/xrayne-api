@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 [Table("Inbounds")]
 public sealed class InboundEntity : CreateUpdateEntity

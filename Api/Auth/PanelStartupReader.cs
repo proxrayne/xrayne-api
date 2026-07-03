@@ -1,8 +1,8 @@
 using System.Net;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using XRayne.Contracts.Configurations;
+using Contracts.Configurations;
 
-namespace XRayne.Api.Auth;
+namespace Api.Auth;
 
 public static class PanelStartupReader
 {

@@ -1,9 +1,9 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using XRayne.Api.Responses;
+using Api.Responses;
 
-namespace XRayne.Api.Controllers;
+namespace Api.Controllers;
 
 [Route("api/version")]
 public sealed class VersionController : ApiControllerBase

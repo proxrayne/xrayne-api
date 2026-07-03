@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace XRayne.Cli.Commands.Cert;
+namespace Cli.Commands.Cert;
 
 public sealed class CertCommand : Command
 {

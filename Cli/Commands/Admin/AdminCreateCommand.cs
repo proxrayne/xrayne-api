@@ -1,14 +1,14 @@
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using XRayne.Cli.Output;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Utilities;
-using XRayne.Repositories;
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Entities;
+using Cli.Output;
+using Contracts.Values;
+using Infrastructure.Utilities;
+using Repositories;
+using Repositories.Contracts;
+using Repositories.Entities;
 
-namespace XRayne.Cli.Commands.Admin;
+namespace Cli.Commands.Admin;
 
 public sealed class AdminCreateCommand : Command
 {

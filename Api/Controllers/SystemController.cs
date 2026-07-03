@@ -1,9 +1,9 @@
 using SystemInfo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using XRayne.Contracts.Values;
+using Contracts.Values;
 
-namespace XRayne.Api.Controllers;
+namespace Api.Controllers;
 
 [Route("api/system")]
 [Authorize(Policy = AdminPermissionNames.ViewLogs)]

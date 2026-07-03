@@ -1,6 +1,6 @@
-using XRayne.Repositories.Entities;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public interface INodeService
 {

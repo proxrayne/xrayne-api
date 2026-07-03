@@ -4,12 +4,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using XRayne.Cli.Commands;
-using XRayne.Contracts;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure;
-using XRayne.Repositories;
+using Cli.Commands;
+using Contracts;
+using Contracts.Configurations;
+using Contracts.Values;
+using Infrastructure;
+using Repositories;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()

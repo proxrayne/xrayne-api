@@ -90,7 +90,7 @@ awkward, update the owning layer rather than bypassing it.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `ToListAsync`, `SaveChangesAsync`.
 - Admin-owned data should expose both unscoped and admin-scoped methods when
   internal services need unscoped access.
-- Use cursor pagination helpers from `XRayne.Contracts.Utilities` for searchable
+- Use cursor pagination helpers from `Contracts.Utilities` for searchable
   lists.
 
 ## Errors

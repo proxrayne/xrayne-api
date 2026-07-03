@@ -1,4 +1,4 @@
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public interface IEventStreamManager
 {

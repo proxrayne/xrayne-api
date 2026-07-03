@@ -1,9 +1,9 @@
 using AutoMapper;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Configurations;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Configurations;
 
-namespace XRayne.Api.Mapping;
+namespace Api.Mapping;
 
 public sealed class PanelSettingsProfile : Profile
 {

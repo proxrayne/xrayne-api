@@ -24,7 +24,7 @@ Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/s
 - Reads `Cors:SpaOrigins` and registers `SpaClient`.
 - Adds controllers with `ApiExceptionFilter`.
 - Adds AutoMapper from API assembly.
-- Configures JWT Bearer with `JwtOptions` from `XRayne.Contracts.Configurations`.
+- Configures JWT Bearer with `JwtOptions` from `Contracts.Configurations`.
 - Adds authorization policies via `AddAdminPermissionPolicies`.
 - Calls `AddInfrastructure`, `AddRepositories`, and `AddContracts`.
 - Calls `MigrateDatabaseAsync()` on startup.
@@ -62,9 +62,9 @@ Prefer existing exception classes:
 
 ## Permissions
 
-`AdminPermission` is a `[Flags]` enum using `long` and lives in `XRayne.Contracts.Enums`.
+`AdminPermission` is a `[Flags]` enum using `long` and lives in `Contracts.Enums`.
 
-String policy names live in `XRayne.Contracts.Values.AdminPermissionNames`:
+String policy names live in `Contracts.Values.AdminPermissionNames`:
 
 - `create_users`
 - `edit_users`
@@ -111,7 +111,7 @@ features in a local standalone node-service project.
 
 PostgreSQL enum mapping is configured for `UserStatus`, `LimitResetStrategy`, and `AdminPermission` both in `AppDbContext.OnModelCreating` through `HasPostgresEnum<T>()` and in repository DI through `ConfigureDataSource(...).MapEnum<T>()`. EF conventions also convert enum properties to strings.
 
-Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.Json` options configured in `XRayne.Repositories.DependencyInjection`.
+Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.Json` options configured in `Repositories.DependencyInjection`.
 
 `AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`; CLI resolves flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values first, then falls back to `ConnectionStrings:Default`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
@@ -136,8 +136,8 @@ Repository pattern:
 
 - Builds a generic host.
 - Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.Paths.JsonConfig`.
-- Reads `PathProvider.Paths.EnvConfig` through `AddEnvFile(...)` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `XRayne.Repositories.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
-- `PathProvider` lives in `XRayne.Contracts.Values`. `PathProvider.Paths` uses `PROJECT_PATH` when present, otherwise the OS-specific system project directory. `PathProvider.GetProjectDirectory()` can derive the parent project path from an installed `cli` folder, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
+- Reads `PathProvider.Paths.EnvConfig` through `AddEnvFile(...)` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `Repositories.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
+- `PathProvider` lives in `Contracts.Values`. `PathProvider.Paths` uses `PROJECT_PATH` when present, otherwise the OS-specific system project directory. `PathProvider.GetProjectDirectory()` can derive the parent project path from an installed `cli` folder, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
 - Adds environment variables without a custom prefix.
 - Registers core, infrastructure, repositories, contracts, and CLI actions.
 - Does not migrate database on startup, so non-database commands can run before PostgreSQL is available.

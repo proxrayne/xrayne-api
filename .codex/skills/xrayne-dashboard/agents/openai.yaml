@@ -1,4 +1,4 @@
 interface:
   display_name: "XRayne UI"
   short_description: "React Router UI conventions for XRayne"
-  default_prompt: "Use $xrayne-dashboard to implement or review frontend changes in XRayne."
+  default_prompt: "Use $xrayne-dashboard to implement or review frontend changes in "

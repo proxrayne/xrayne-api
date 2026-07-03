@@ -1,6 +1,6 @@
 using SystemInfo;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 public sealed class SystemInfoServiceTests
 {

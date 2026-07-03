@@ -1,10 +1,10 @@
 using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using XRayne.Cli.Output;
-using XRayne.Infrastructure.Services;
+using Cli.Output;
+using Infrastructure.Services;
 
-namespace XRayne.Cli.Commands.Xray;
+namespace Cli.Commands.Xray;
 
 public sealed class XrayStartCommand : Command
 {

@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace XRayne.Cli.Commands.Api;
+namespace Cli.Commands.Api;
 
 public sealed class ApiCommand : Command
 {

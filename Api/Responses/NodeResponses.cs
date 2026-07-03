@@ -1,7 +1,7 @@
-using XRayne.Contracts.Enums;
-using XRayne.Infrastructure.States;
+using Contracts.Enums;
+using Infrastructure.States;
 
-namespace XRayne.Api.Responses;
+namespace Api.Responses;
 
 /// <summary>
 /// Remote node response model.

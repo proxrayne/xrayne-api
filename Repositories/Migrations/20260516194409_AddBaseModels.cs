@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using XRayne.Repositories.Entities;
+using Repositories.Entities;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 
 #nullable disable
 
-namespace XRayne.Repositories.Migrations
+namespace Repositories.Migrations
 {
     /// <inheritdoc />
     public partial class AddBaseModels : Migration

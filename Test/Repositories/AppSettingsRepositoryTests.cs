@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using XRayne.Repositories;
-using XRayne.Repositories.Entities;
-using XRayne.Repositories.Implementations;
+using Repositories;
+using Repositories.Entities;
+using Repositories.Implementations;
 
-namespace XRayne.Test.Repositories;
+namespace Test.Repositories;
 
 /// <summary>
 /// Tests application settings persistence.

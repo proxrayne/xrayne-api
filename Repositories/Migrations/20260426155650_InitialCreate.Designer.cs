@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using XRayne.Repositories;
+using Repositories;
 
 #nullable disable
 
-namespace XRayne.Repositories.Migrations
+namespace Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260426155650_InitialCreate")]
@@ -25,7 +25,7 @@ namespace XRayne.Repositories.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.AdminAccount", b =>
+            modelBuilder.Entity("Repositories.Entities.AdminAccount", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()

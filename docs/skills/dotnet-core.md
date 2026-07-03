@@ -47,9 +47,9 @@ Use this skill when working on `Api`, `Cli`, `Contracts`,
 Prefer focused checks for the touched area:
 
 ```powershell
-dotnet restore XRayne.sln
-dotnet build XRayne.sln
-dotnet test XRayne.sln
+dotnet restore sln
+dotnet build sln
+dotnet test sln
 dotnet run --project Api
 dotnet run --project Cli -- --help
 ```

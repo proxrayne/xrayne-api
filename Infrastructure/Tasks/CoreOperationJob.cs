@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Quartz;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.States;
+using Infrastructure.Services;
+using Infrastructure.States;
 
-namespace XRayne.Infrastructure.Tasks;
+namespace Infrastructure.Tasks;
 
 [DisallowConcurrentExecution]
 public sealed class CoreOperationJob(

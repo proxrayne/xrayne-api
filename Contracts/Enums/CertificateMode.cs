@@ -1,4 +1,4 @@
-namespace XRayne.Contracts.Enums;
+namespace Contracts.Enums;
 
 /// <summary>
 /// Defines the certificate target type used for remote node HTTPS setup.

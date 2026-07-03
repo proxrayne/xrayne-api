@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
-using XRayne.Repositories;
+using Repositories;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 public sealed class PostgresFixture : IAsyncLifetime
 {

@@ -1,3 +1,3 @@
-namespace XRayne.Api.Requests;
+namespace Api.Requests;
 
 public sealed record InstallCoreRequest(string Version = "latest");

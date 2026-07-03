@@ -1,4 +1,4 @@
-namespace XRayne.Cli.Output;
+namespace Cli.Output;
 
 public sealed class CliConsole : ICliConsole
 {

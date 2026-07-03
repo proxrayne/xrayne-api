@@ -1,11 +1,11 @@
 using AutoMapper;
 using Microsoft.Extensions.Caching.Memory;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Models;
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Contracts.Models;
+using Repositories.Contracts;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
 /// Provides memoized access to database-backed application settings.

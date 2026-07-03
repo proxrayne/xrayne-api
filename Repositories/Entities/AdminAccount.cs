@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 [Table("Admins")]
 [Index(nameof(Username), IsUnique = true)]

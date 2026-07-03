@@ -1,11 +1,11 @@
 using AutoMapper;
-using XRayne.Api.Mapping;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Configurations;
-using PanelSettingsEntity = XRayne.Repositories.Entities;
+using Api.Mapping;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Configurations;
+using PanelSettingsEntity = Repositories.Entities;
 
-namespace XRayne.Test.Mapping;
+namespace Test.Mapping;
 
 public sealed class PanelSettingsProfileTests
 {

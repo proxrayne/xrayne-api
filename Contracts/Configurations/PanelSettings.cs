@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 
-namespace XRayne.Contracts.Configurations;
+namespace Contracts.Configurations;
 
 /// <summary>
 /// Contains panel bootstrap settings loaded from environment configuration.

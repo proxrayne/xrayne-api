@@ -1,4 +1,4 @@
-namespace XRayne.Cli.Services.Contracts;
+namespace Cli.Services.Contracts;
 
 public interface IRuntimeMigrationService
 {

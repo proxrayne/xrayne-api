@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 [Table("GeoResources")]
 [Index(nameof(NextRunAt))]

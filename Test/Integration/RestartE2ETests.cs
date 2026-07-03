@@ -1,8 +1,8 @@
 using System.Net;
-using XRayne.Contracts.Enums;
-using XRayne.Test.Infrastructure;
+using Contracts.Enums;
+using Test.Infrastructure;
 
-namespace XRayne.Test.Integration;
+namespace Test.Integration;
 
 [Collection(PostgresCollection.Name)]
 public sealed class RestartE2ETests

@@ -1,7 +1,7 @@
-using XRayne.Cli.Services.Contracts;
-using XRayne.Contracts.Values;
+using Cli.Services.Contracts;
+using Contracts.Values;
 
-namespace XRayne.Cli.Services;
+namespace Cli.Services;
 
 public sealed class ApiInstallationService : IApiInstallationService
 {

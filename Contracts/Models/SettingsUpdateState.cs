@@ -1,4 +1,4 @@
-namespace XRayne.Contracts.Models;
+namespace Contracts.Models;
 
 public sealed class SettingsUpdateState
 {

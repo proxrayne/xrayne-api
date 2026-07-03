@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Xray.Config.Models;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 [Table("RoutingRules")]
 public class RoutingRuleEntity : CreateUpdateEntity

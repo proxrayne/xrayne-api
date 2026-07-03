@@ -1,6 +1,6 @@
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Contracts.Models;
+namespace Contracts.Models;
 
 public sealed class UpdateCommit
 {

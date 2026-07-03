@@ -1,10 +1,10 @@
 using AutoMapper;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Enums;
-using XRayne.Contracts.Models;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Contracts.Enums;
+using Contracts.Models;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Mapping;
+namespace Infrastructure.Mapping;
 
 /// <summary>
 /// Maps database-backed application settings models.

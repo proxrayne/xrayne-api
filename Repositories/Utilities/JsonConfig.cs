@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using XRayne.Contracts.Values;
+using Contracts.Values;
 
-namespace XRayne.Repositories.Utilities;
+namespace Repositories.Utilities;
 
 /// <summary>
 /// Provides thread-safe helpers for reading and mutating the runtime JSON configuration file.

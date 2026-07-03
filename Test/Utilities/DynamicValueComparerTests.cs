@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using XRayne.Contracts.Utilities;
+using Contracts.Utilities;
 
-namespace XRayne.Test.Utilities;
+namespace Test.Utilities;
 
 public sealed class DynamicValueComparerTests
 {

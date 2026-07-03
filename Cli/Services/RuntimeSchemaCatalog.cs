@@ -1,4 +1,4 @@
-namespace XRayne.Cli.Services;
+namespace Cli.Services;
 
 public static class RuntimeSchemaCatalog
 {

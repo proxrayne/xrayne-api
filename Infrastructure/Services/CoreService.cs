@@ -4,11 +4,11 @@ using Xray.Config.Enums;
 using Xray.Config.Models;
 using Xray.Core;
 using Xray.Core.Models;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Values;
-using XRayne.Repositories.Utilities;
+using Contracts.Configurations;
+using Contracts.Values;
+using Repositories.Utilities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public sealed class CoreService(ILogger<CoreService> logger, IOptionsMonitor<XrayOptions> options) : ICoreService
 {

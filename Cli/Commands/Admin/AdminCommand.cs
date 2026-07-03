@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace XRayne.Cli.Commands.Admin;
+namespace Cli.Commands.Admin;
 
 public sealed class AdminCommand : Command
 {

@@ -5,7 +5,7 @@ using Xray.Config.Models;
 
 #nullable disable
 
-namespace XRayne.Repositories.Migrations
+namespace Repositories.Migrations
 {
     /// <inheritdoc />
     public partial class AddConfigModels : Migration

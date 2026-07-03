@@ -1,4 +1,4 @@
-namespace XRayne.Api.Responses;
+namespace Api.Responses;
 
 public sealed class UpdatePanelSettingsResponse
 {

@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
-namespace XRayne.Api.Controllers;
+namespace Api.Controllers;
 
 [ApiController]
 public abstract class ApiControllerBase : ControllerBase

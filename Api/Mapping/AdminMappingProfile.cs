@@ -1,10 +1,10 @@
 using AutoMapper;
 using Github;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Values;
-using XRayne.Repositories.Entities;
+using Api.Responses;
+using Contracts.Values;
+using Repositories.Entities;
 
-namespace XRayne.Api.Mapping;
+namespace Api.Mapping;
 
 public sealed class AdminMappingProfile : Profile
 {

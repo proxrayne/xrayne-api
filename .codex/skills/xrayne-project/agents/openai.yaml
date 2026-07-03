@@ -1,4 +1,4 @@
 interface:
   display_name: "XRayne Project"
   short_description: "Project map and operating rules for XRayne"
-  default_prompt: "Use $xrayne-project to orient yourself before changing XRayne."
+  default_prompt: "Use $xrayne-project to orient yourself before changing "

@@ -1,7 +1,7 @@
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Entities;
+using Repositories.Contracts;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public sealed class NodeService(INodeRepository repository) : INodeService
 {

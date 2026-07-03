@@ -1,6 +1,6 @@
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Contracts.Values;
+namespace Contracts.Values;
 
 public static class AdminPermissionNames
 {

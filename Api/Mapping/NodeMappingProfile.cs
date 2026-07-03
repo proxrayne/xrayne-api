@@ -1,8 +1,8 @@
 using AutoMapper;
-using XRayne.Api.Responses;
-using XRayne.Repositories.Entities;
+using Api.Responses;
+using Repositories.Entities;
 
-namespace XRayne.Api.Mapping;
+namespace Api.Mapping;
 
 /// <summary>
 /// Maps remote node API models.

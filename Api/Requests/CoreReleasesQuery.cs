@@ -1,4 +1,4 @@
-namespace XRayne.Api.Responses;
+namespace Api.Responses;
 
 public sealed record CoreReleasesQuery(
     int PerPage = 10,

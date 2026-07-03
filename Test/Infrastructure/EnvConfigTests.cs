@@ -1,6 +1,6 @@
-using XRayne.Repositories.Utilities;
+using Repositories.Utilities;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 public sealed class EnvConfigTests
 {

@@ -1,4 +1,4 @@
-namespace XRayne.Cli.Services.RuntimeMigrations;
+namespace Cli.Services.RuntimeMigrations;
 
 internal interface IRuntimeMigration
 {

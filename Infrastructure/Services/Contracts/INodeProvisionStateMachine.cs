@@ -1,6 +1,6 @@
-using XRayne.Infrastructure.States;
+using Infrastructure.States;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
 /// Tracks remote node provisioning states and dispatches installation stream events.

@@ -1,10 +1,10 @@
 using AutoMapper;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Enums;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Configurations;
+using Contracts.Enums;
 
-namespace XRayne.Api.Mapping;
+namespace Api.Mapping;
 
 /// <summary>
 /// Maps application settings API models.

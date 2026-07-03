@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace XRayne.Repositories.Entities;
+namespace Repositories.Entities;
 
 [Table("Certificates")]
 public class CertificateEntity : CreateUpdateEntity

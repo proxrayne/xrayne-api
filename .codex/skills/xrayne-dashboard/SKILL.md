@@ -1,6 +1,6 @@
 ---
 name: xrayne-dashboard
-description: Frontend development guidance for XRayne. Use when Codex works on Dashboard React Router routes, layouts, auth middleware, TanStack Query data hooks, Axios API clients, shadcn components, Tailwind styles, Vite config, TypeScript types, forms, navigation, or frontend build/typecheck/lint issues.
+description: Frontend development guidance for  Use when Codex works on Dashboard React Router routes, layouts, auth middleware, TanStack Query data hooks, Axios API clients, shadcn components, Tailwind styles, Vite config, TypeScript types, forms, navigation, or frontend build/typecheck/lint issues.
 ---
 
 # XRayne UI

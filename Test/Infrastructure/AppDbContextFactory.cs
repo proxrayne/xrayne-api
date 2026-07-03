@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using XRayne.Repositories;
+using Repositories;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 internal static class AppDbContextFactory
 {

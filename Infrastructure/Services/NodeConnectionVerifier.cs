@@ -1,10 +1,10 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using XRayne.Contracts.Configurations;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Repositories.Entities;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
 /// Verifies a node connection by calling its authenticated ping endpoint.

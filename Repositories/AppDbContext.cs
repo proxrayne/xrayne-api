@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using XRayne.Contracts.Enums;
-using XRayne.Repositories.Entities;
+using Contracts.Enums;
+using Repositories.Entities;
 
-namespace XRayne.Repositories;
+namespace Repositories;
 
 public sealed class AppDbContext : DbContext
 {

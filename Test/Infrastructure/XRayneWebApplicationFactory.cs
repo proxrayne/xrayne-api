@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
-using XRayne.Contracts.Enums;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.Utilities;
-using XRayne.Repositories;
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Entities;
+using Contracts.Enums;
+using Infrastructure.Services;
+using Infrastructure.Utilities;
+using Repositories;
+using Repositories.Contracts;
+using Repositories.Entities;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 public sealed class XRayneWebApplicationFactory : WebApplicationFactory<Program>
 {

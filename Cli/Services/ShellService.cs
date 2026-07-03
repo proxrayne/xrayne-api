@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using XRayne.Cli.Services.Contracts;
+using Cli.Services.Contracts;
 
-namespace XRayne.Cli.Services;
+namespace Cli.Services;
 
 public sealed class ShellService : IShellService
 {

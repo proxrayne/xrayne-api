@@ -3,15 +3,15 @@ using Github;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
-using XRayne.Api.Exceptions;
-using XRayne.Api.Requests;
-using XRayne.Api.Responses;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.States;
-using XRayne.Infrastructure.Values;
+using Api.Exceptions;
+using Api.Requests;
+using Api.Responses;
+using Contracts.Values;
+using Infrastructure.Services;
+using Infrastructure.States;
+using Infrastructure.Values;
 
-namespace XRayne.Api.Controllers;
+namespace Api.Controllers;
 
 [Route("api/core")]
 [Authorize(Policy = AdminPermissionNames.SuperAdmin)]

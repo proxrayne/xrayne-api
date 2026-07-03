@@ -1,4 +1,4 @@
-namespace XRayne.Contracts.Configurations;
+namespace Contracts.Configurations;
 
 /// <summary>
 /// Configures remote node connection and reconnect behavior.

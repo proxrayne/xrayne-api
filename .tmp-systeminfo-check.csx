@@ -1,4 +1,4 @@
-using XRayne.Infrastructure.Services;
+using Infrastructure.Services;
 
 var service = new WindowsSystemInfoService();
 var cpu = await service.GetCpuInfoAsync();

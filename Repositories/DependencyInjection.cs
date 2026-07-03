@@ -3,11 +3,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using XRayne.Contracts.Enums;
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Implementations;
+using Contracts.Enums;
+using Repositories.Contracts;
+using Repositories.Implementations;
 
-namespace XRayne.Repositories;
+namespace Repositories;
 
 public static class DependencyInjection
 {

@@ -1,7 +1,7 @@
 using System.Reflection;
-using XRayne.Contracts.Configurations;
+using Contracts.Configurations;
 
-namespace XRayne.Test.Configurations;
+namespace Test.Configurations;
 
 public sealed class RestartImpactAttributeTests
 {

@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace XRayne.Infrastructure.Utilities;
+namespace Infrastructure.Utilities;
 
 public static class PasswordGenerator
 {

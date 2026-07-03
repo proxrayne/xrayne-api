@@ -1,9 +1,9 @@
 using System.Text;
-using XRayne.Repositories.Utilities;
+using Repositories.Utilities;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace XRayne.Cli.Services.RuntimeMigrations;
+namespace Cli.Services.RuntimeMigrations;
 
 internal sealed class V1UseHostNetworkForApiMigration : IRuntimeMigration
 {

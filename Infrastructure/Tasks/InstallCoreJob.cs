@@ -2,13 +2,13 @@ using Github;
 using System.IO.Compression;
 using Microsoft.Extensions.Logging;
 using Quartz;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.States;
-using XRayne.Infrastructure.Utilities;
-using XRayne.Infrastructure.Values;
+using Contracts.Values;
+using Infrastructure.Services;
+using Infrastructure.States;
+using Infrastructure.Utilities;
+using Infrastructure.Values;
 
-namespace XRayne.Infrastructure.Tasks;
+namespace Infrastructure.Tasks;
 
 [DisallowConcurrentExecution]
 public sealed class InstallCoreJob(

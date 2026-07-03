@@ -6,14 +6,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using XRayne.Repositories;
-using XRayne.Repositories.Entities;
+using Repositories;
+using Repositories.Entities;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 
 #nullable disable
 
-namespace XRayne.Repositories.Migrations
+namespace Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260516212839_FixInboundEnabledDefault")]
@@ -47,7 +47,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("InboundEntityUser");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.AdminAccount", b =>
+            modelBuilder.Entity("Repositories.Entities.AdminAccount", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -83,7 +83,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("admin_accounts");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.InboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.InboundEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -127,7 +127,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("inbounds");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.OutboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.OutboundEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -160,7 +160,7 @@ namespace XRayne.Repositories.Migrations
                     b.ToTable("outbounds");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.User", b =>
+            modelBuilder.Entity("Repositories.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -225,22 +225,22 @@ namespace XRayne.Repositories.Migrations
 
             modelBuilder.Entity("InboundEntityUser", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.InboundEntity", null)
+                    b.HasOne("Repositories.Entities.InboundEntity", null)
                         .WithMany()
                         .HasForeignKey("InboundsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XRayne.Repositories.Entities.User", null)
+                    b.HasOne("Repositories.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.InboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.InboundEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -249,9 +249,9 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Admin");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.OutboundEntity", b =>
+            modelBuilder.Entity("Repositories.Entities.OutboundEntity", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -260,9 +260,9 @@ namespace XRayne.Repositories.Migrations
                     b.Navigation("Admin");
                 });
 
-            modelBuilder.Entity("XRayne.Repositories.Entities.User", b =>
+            modelBuilder.Entity("Repositories.Entities.User", b =>
                 {
-                    b.HasOne("XRayne.Repositories.Entities.AdminAccount", "Admin")
+                    b.HasOne("Repositories.Entities.AdminAccount", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)

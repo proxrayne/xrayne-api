@@ -1,6 +1,6 @@
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Api.Requests;
+namespace Api.Requests;
 
 /// <summary>
 /// Contains webhook creation values.

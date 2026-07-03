@@ -1,14 +1,14 @@
 using AutoMapper;
 using Microsoft.Extensions.Caching.Memory;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Enums;
-using XRayne.Contracts.Models;
-using XRayne.Infrastructure.Mapping;
-using XRayne.Infrastructure.Services;
-using XRayne.Repositories.Contracts;
-using XRayne.Repositories.Entities;
+using Contracts.Configurations;
+using Contracts.Enums;
+using Contracts.Models;
+using Infrastructure.Mapping;
+using Infrastructure.Services;
+using Repositories.Contracts;
+using Repositories.Entities;
 
-namespace XRayne.Test.Infrastructure;
+namespace Test.Infrastructure;
 
 public sealed class AppSettingsServiceTests
 {

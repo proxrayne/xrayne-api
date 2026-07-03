@@ -1,3 +1,3 @@
-namespace XRayne.Api.Responses;
+namespace Api.Responses;
 
 public sealed record ApiVersionResponse(string Version);

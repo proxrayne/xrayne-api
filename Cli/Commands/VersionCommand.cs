@@ -1,7 +1,7 @@
 using System.CommandLine;
 using System.Reflection;
 
-namespace XRayne.Cli.Commands;
+namespace Cli.Commands;
 
 public sealed class VersionCommand : Command
 {

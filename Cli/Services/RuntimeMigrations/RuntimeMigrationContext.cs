@@ -1,6 +1,6 @@
-using XRayne.Contracts.Values;
+using Contracts.Values;
 
-namespace XRayne.Cli.Services.RuntimeMigrations;
+namespace Cli.Services.RuntimeMigrations;
 
 internal sealed class RuntimeMigrationContext
 {

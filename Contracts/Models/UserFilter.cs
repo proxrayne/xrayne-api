@@ -1,7 +1,7 @@
 using Xray.Config.Enums;
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Contracts.Models;
+namespace Contracts.Models;
 
 public sealed record UserFilter : CursorQuery
 {

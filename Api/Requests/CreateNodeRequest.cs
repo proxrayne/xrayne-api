@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using XRayne.Contracts.Enums;
+using Contracts.Enums;
 
-namespace XRayne.Api.Requests;
+namespace Api.Requests;
 
 /// <summary>
 /// Request for creating and provisioning a remote node.

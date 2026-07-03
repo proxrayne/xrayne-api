@@ -1,7 +1,7 @@
-using XRayne.Contracts.Enums;
-using XRayne.Contracts.Models;
+using Contracts.Enums;
+using Contracts.Models;
 
-namespace XRayne.Api.Responses;
+namespace Api.Responses;
 
 /// <summary>
 /// Contains application settings exposed by the settings API.

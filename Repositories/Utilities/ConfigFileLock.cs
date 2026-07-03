@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text;
 
-namespace XRayne.Repositories.Utilities;
+namespace Repositories.Utilities;
 
 internal static class ConfigFileLock
 {

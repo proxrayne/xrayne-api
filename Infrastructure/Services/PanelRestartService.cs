@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public sealed class PanelRestartService(
     IHostApplicationLifetime lifetime,

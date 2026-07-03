@@ -1,8 +1,8 @@
 using Quartz;
-using XRayne.Infrastructure.States;
-using XRayne.Infrastructure.Tasks;
+using Infrastructure.States;
+using Infrastructure.Tasks;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public sealed class BackgroundTaskScheduler(ISchedulerFactory schedulerFactory, ICoreStateMachine coreState) : IBackgroundTaskScheduler
 {

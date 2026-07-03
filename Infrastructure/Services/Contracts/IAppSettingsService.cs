@@ -1,6 +1,6 @@
-using XRayne.Contracts.Configurations;
+using Contracts.Configurations;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 /// <summary>
 /// Provides cached access to mutable application settings.

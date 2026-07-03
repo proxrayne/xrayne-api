@@ -1,6 +1,6 @@
-using XRayne.Infrastructure.States;
+using Infrastructure.States;
 
-namespace XRayne.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public interface ICoreStateMachine
 {

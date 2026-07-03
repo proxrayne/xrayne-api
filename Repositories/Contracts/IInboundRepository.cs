@@ -1,7 +1,7 @@
-using XRayne.Contracts.Models;
-using XRayne.Repositories.Entities;
+using Contracts.Models;
+using Repositories.Entities;
 
-namespace XRayne.Repositories.Contracts;
+namespace Repositories.Contracts;
 
 public interface IInboundRepository
 {

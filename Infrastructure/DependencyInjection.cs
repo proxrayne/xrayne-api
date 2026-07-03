@@ -2,12 +2,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SystemInfo;
-using XRayne.Contracts.Configurations;
-using XRayne.Contracts.Values;
-using XRayne.Infrastructure.Services;
-using XRayne.Infrastructure.Tasks;
+using Contracts.Configurations;
+using Contracts.Values;
+using Infrastructure.Services;
+using Infrastructure.Tasks;
 
-namespace XRayne.Infrastructure;
+namespace Infrastructure;
 
 public static class DependencyInjection
 {

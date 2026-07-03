@@ -1,10 +1,10 @@
 using System.CommandLine;
-using XRayne.Cli.Commands.Api;
-using XRayne.Cli.Commands.Admin;
-using XRayne.Cli.Commands.Cert;
-using XRayne.Cli.Commands.Xray;
+using Cli.Commands.Api;
+using Cli.Commands.Admin;
+using Cli.Commands.Cert;
+using Cli.Commands.Xray;
 
-namespace XRayne.Cli.Commands;
+namespace Cli.Commands;
 
 public sealed class RootCommandFactory(
     XrayCommand xrayCommand,

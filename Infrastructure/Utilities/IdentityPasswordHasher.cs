@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace XRayne.Infrastructure.Utilities;
+namespace Infrastructure.Utilities;
 
 public static class IdentityPasswordHasher
 {
