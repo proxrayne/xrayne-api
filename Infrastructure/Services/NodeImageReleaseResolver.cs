@@ -1,4 +1,4 @@
-using Github;
+using Octokit;
 using System.Reflection;
 
 namespace Infrastructure.Services;
@@ -14,7 +14,7 @@ public sealed class NodeImageReleaseResolver : INodeImageReleaseResolver
 
     public async Task<NodeImageReleaseAsset> ResolveAsync(CancellationToken cancellationToken)
     {
-        using var repository = new GitHubRepository(RepositoryUrl);
+        using var repository = new GitHubReleaseClient(RepositoryUrl);
 
         var release = await ResolveLatestSupportedReleaseAsync(repository, cancellationToken);
         var imageTag = SanitizeDockerTag(release.TagName);
@@ -35,8 +35,8 @@ public sealed class NodeImageReleaseResolver : INodeImageReleaseResolver
             asset.BrowserDownloadUrl);
     }
 
-    private static async Task<GitHubRelease> ResolveLatestSupportedReleaseAsync(
-        GitHubRepository repository,
+    private static async Task<Release> ResolveLatestSupportedReleaseAsync(
+        GitHubReleaseClient repository,
         CancellationToken cancellationToken)
     {
         var panelVersion = GetPanelVersion();
@@ -52,9 +52,9 @@ public sealed class NodeImageReleaseResolver : INodeImageReleaseResolver
             return latest;
         }
 
-        var releases = await repository.GetReleasesAsync(new GitHubReleasesFilter(100, 1), cancellationToken);
+        var releases = await repository.GetReleasesAsync(100, 1, cancellationToken);
         var supported = releases
-            .Where(release => !release.Draft && !release.PreRelease)
+            .Where(release => !release.Draft && !release.Prerelease)
             .Select(release => new
             {
                 Release = release,

@@ -1,7 +1,7 @@
 # Skill: .NET Core Backend
 
 Use this skill when working on `Api`, `Contracts`,
-`Github`, `Infrastructure`, `Repositories`, `System`, or `Test`.
+`Infrastructure`, `Repositories`, `System`, or `Test`.
 
 ## Start Here
 

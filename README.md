@@ -11,7 +11,6 @@ The administrator CLI lives in `xrayne-cli`, and the standalone web UI lives in
 - `Infrastructure`: xray-core runtime services, background jobs, managed-node orchestration, and cross-cutting services.
 - `Repositories`: EF Core DbContext, migrations, entities, repositories, and runtime config-file utilities.
 - `System`: host system information services.
-- `Github`: GitHub release/assets client.
 - `Test`: backend unit and integration tests.
 
 ## Build

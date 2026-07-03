@@ -6,7 +6,6 @@ The backend is a .NET 9 solution with a layered architecture:
 
 - `Api`: panel REST API.
 - `Contracts`: shared contracts and configuration values.
-- `Github`: reusable GitHub.com releases/assets client.
 - `System`: reusable host system information client.
 - `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
 - `Repositories`: EF Core persistence.
@@ -62,6 +61,7 @@ infrastructure.
 
 - `CoreService`, `CoreStateMachine`, `BackgroundTaskScheduler`;
 - Quartz jobs for installing and operating xray-core;
+- Octokit-backed GitHub release lookup and release asset download helpers;
 - JWT token creation, settings application, restart scheduling;
 - certificate, geo resource, routing rule, and node services;
 - registration of `SystemInfo.ISystemInfoService` with panel runtime paths.

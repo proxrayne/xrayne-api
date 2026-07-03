@@ -1,7 +1,7 @@
 using AutoMapper;
-using Github;
 using Api.Responses;
 using Contracts.Values;
+using Octokit;
 using Repositories.Entities;
 
 namespace Api.Mapping;
@@ -24,6 +24,9 @@ public sealed class AdminMappingProfile : Profile
 
     private void MapGithub()
     {
-        CreateMap<GitHubRelease, GitHubReleaseDto>();
+        CreateMap<Release, GitHubReleaseDto>()
+            .ForMember(
+                destination => destination.PublishedAt,
+                options => options.MapFrom(source => source.PublishedAt.GetValueOrDefault()));
     }
 }

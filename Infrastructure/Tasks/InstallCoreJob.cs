@@ -1,4 +1,3 @@
-using Github;
 using System.IO.Compression;
 using Microsoft.Extensions.Logging;
 using Quartz;
@@ -22,7 +21,7 @@ public sealed class InstallCoreJob(
     public static readonly JobKey JobKey = new(nameof(InstallCoreJob), "core-install");
     public static readonly TriggerKey TriggerKey = new(nameof(InstallCoreJob), "core-install");
 
-    private readonly GitHubRepository xrayRepository = new(CoreDefaults.XrayRepositoryUrl);
+    private readonly GitHubReleaseClient xrayRepository = new(CoreDefaults.XrayRepositoryUrl);
 
     public async Task Execute(IJobExecutionContext context)
     {

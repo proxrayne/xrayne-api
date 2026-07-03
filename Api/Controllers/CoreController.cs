@@ -1,5 +1,4 @@
 using AutoMapper;
-using Github;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -23,7 +22,7 @@ public sealed class CoreController(
     IEventStreamManager eventStreams,
     IMemoryCache cache) : ApiControllerBase
 {
-    private readonly GitHubRepository xrayRepository = new GitHubRepository(CoreDefaults.XrayRepositoryUrl);
+    private readonly GitHubReleaseClient xrayRepository = new(CoreDefaults.XrayRepositoryUrl);
 
     [HttpGet("status")]
     [EndpointSummary("Core status")]
@@ -68,12 +67,11 @@ public sealed class CoreController(
     [ProducesResponseType(typeof(List<ApiErrorResponse>), StatusCodes.Status400BadRequest)]
     public async Task<List<GitHubReleaseDto>> GetReleases([FromQuery] CoreReleasesQuery query, CancellationToken ct)
     {
-        var filter = new GitHubReleasesFilter(query.PerPage, query.Page);
-        var releases = await cache.GetOrCreateAsync($"core_releases_{filter.PerPage}_{filter.Page}", entry =>
+        var releases = await cache.GetOrCreateAsync($"core_releases_{query.PerPage}_{query.Page}", entry =>
          {
              entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
 
-             return xrayRepository.GetReleasesAsync(filter, ct);
+             return xrayRepository.GetReleasesAsync(query.PerPage, query.Page, ct);
          });
 
         if (releases is null)
