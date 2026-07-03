@@ -49,7 +49,7 @@ public sealed class PanelSettings
     /// </summary>
     public static PanelSettings Parse(IConfiguration configuration)
     {
-        var port = configuration.GetValue<int>("PORT", 5097);
+        var port = configuration.GetValue("PORT", 5097);
         var bindIp = configuration.GetValue<string>("IP");
         var domain = configuration.GetValue<string>("DOMAIN");
         var panelCertPublicKeyPath = configuration.GetValue<string>("CERT_PUBLIC_KEY_PATH");

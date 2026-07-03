@@ -1,7 +1,7 @@
 # Skill: .NET Core Backend
 
 Use this skill when working on `Api`, `Contracts`,
-`Infrastructure`, `Repositories`, `System`, or `Test`.
+`Infrastructure`, `Repositories`, or `Test`.
 
 ## Start Here
 
@@ -20,8 +20,8 @@ Use this skill when working on `Api`, `Contracts`,
   path values in `Contracts`.
 - Put xray-core lifecycle, background jobs, state machines, JWT,
   certificate, settings, and runtime services in `Infrastructure`.
-- Put reusable host system information code in the root `System` project under
-  namespace `SystemInfo`.
+- Put reusable host system information DTOs in `Contracts` and runtime
+  collection services in `Infrastructure`.
 - Put EF entities, DbContext, migrations, repositories, config-file utilities, and
   persistence utilities in `Repositories`.
 

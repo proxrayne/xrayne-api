@@ -22,6 +22,5 @@
     <ProjectReference Include="..\Api\Api.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\Repositories\Repositories.csproj" />
-    <ProjectReference Include="..\System\System.csproj" />
   </ItemGroup>
 </Project>

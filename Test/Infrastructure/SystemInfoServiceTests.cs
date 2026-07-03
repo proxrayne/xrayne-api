@@ -1,4 +1,4 @@
-using SystemInfo;
+using Infrastructure.Services;
 
 namespace Test.Infrastructure;
 
@@ -82,7 +82,7 @@ public sealed class SystemInfoServiceTests
 
     private static ISystemInfoService CreateService()
     {
-        return SystemInfoService.Create(new SystemInfoOptions(
+        return new SystemInfoService(new SystemInfoOptions(
             AppContext.BaseDirectory,
             Path.GetTempPath()));
     }

@@ -1,4 +1,6 @@
-namespace SystemInfo;
+using Contracts.Models;
+
+namespace Infrastructure.Services;
 
 /// <summary>
 /// Reads host CPU, memory, storage, uptime, thread, and network information.

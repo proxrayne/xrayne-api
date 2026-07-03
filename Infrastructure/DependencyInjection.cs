@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using SystemInfo;
 using Contracts.Configurations;
 using Contracts.Values;
 using Infrastructure.Services;
@@ -18,8 +17,8 @@ public static class DependencyInjection
         services.TryAddSingleton(_ => PanelSettings.Parse(configuration));
         services.AddDataProtection();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddSingleton(_ =>
-            SystemInfoService.Create(new SystemInfoOptions(
+        services.AddSingleton<ISystemInfoService>(_ =>
+            new SystemInfoService(new SystemInfoOptions(
                 PathProvider.Paths.Root,
                 PathProvider.Paths.DownloadsDirectory
             ))

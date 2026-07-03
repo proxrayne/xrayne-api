@@ -6,7 +6,6 @@ The backend is a .NET 9 solution with a layered architecture:
 
 - `Api`: panel REST API.
 - `Contracts`: shared contracts and configuration values.
-- `System`: reusable host system information client.
 - `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
 - `Repositories`: EF Core persistence.
 - `Test`: test project.
@@ -64,7 +63,7 @@ infrastructure.
 - Octokit-backed GitHub release lookup and release asset download helpers;
 - JWT token creation, settings application, restart scheduling;
 - certificate, geo resource, routing rule, and node services;
-- registration of `SystemInfo.ISystemInfoService` with panel runtime paths.
+- `Hardware.Info`-backed host system information through `ISystemInfoService`.
 
 Service interfaces live near implementations under `Services/Contracts`. Register
 new services in `Infrastructure/DependencyInjection.cs`.

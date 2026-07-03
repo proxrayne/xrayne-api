@@ -408,5 +408,41 @@ public sealed class NodeConnectionHostedService(
         string OSDescription,
         int ProcessorCount,
         long WorkingSetBytes,
-        long GcTotalMemoryBytes);
+        long GcTotalMemoryBytes,
+        int CurrentProcessThreadCount,
+        long? SystemThreadCount,
+        DateTimeOffset StartedAt,
+        DateTimeOffset Timestamp,
+        TimeSpan Uptime,
+        NodeCpuStats Cpu,
+        NodeMemoryStats Memory,
+        NodeMemoryStats Swap,
+        IReadOnlyCollection<NodeVolumeStats> Volumes,
+        NodeNetworkStats Network);
+
+    private sealed record NodeCpuStats(
+        int LogicalCoreCount,
+        double? AverageUsagePercent,
+        IReadOnlyCollection<NodeCpuCoreUsage> Cores);
+
+    private sealed record NodeCpuCoreUsage(
+        int Index,
+        double? UsagePercent);
+
+    private sealed record NodeMemoryStats(
+        long TotalBytes,
+        long UsedBytes,
+        long AvailableBytes);
+
+    private sealed record NodeVolumeStats(
+        string Name,
+        string FileSystem,
+        long TotalBytes,
+        long FreeBytes,
+        long UsedBytes,
+        double UsedPercent);
+
+    private sealed record NodeNetworkStats(
+        IReadOnlyCollection<string> IPv4Addresses,
+        IReadOnlyCollection<string> IPv6Addresses);
 }

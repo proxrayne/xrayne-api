@@ -1,4 +1,4 @@
-namespace SystemInfo;
+namespace Contracts.Models;
 
 /// <summary>
 /// Contains a point-in-time host system information snapshot.
