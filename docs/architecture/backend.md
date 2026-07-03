@@ -6,6 +6,7 @@ The backend is a .NET 9 solution with a layered architecture:
 
 - `Api`: panel REST API.
 - `Contracts`: shared contracts and configuration values.
+- `RemoteNode`: typed HTTP/SSE protocol client for standalone remote nodes.
 - `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
 - `Repositories`: EF Core persistence.
 - `Test`: test project.
@@ -32,14 +33,29 @@ Node management is part of the panel backend, not a separate local project.
 Panel-owned node behavior includes:
 
 - HTTP endpoints in `Api`;
+- remote node HTTP/SSE protocol clients, DTOs, and typed protocol errors in
+  `RemoteNode`;
 - provisioning, reconnect, status streaming, and connection verification services
   in `Infrastructure`;
 - node entities, encrypted connection data, and repository access in
   `Repositories`;
 - shared node DTOs, enums, and configuration values in `Contracts`.
 
+`RemoteNode` must not depend on `Contracts`, `Infrastructure`, `Repositories`,
+or `Api`.
+It is the only panel project that should know the remote node API wire shape.
 Do not add or reference a local standalone node-service project when
 implementing node management features in this repository.
+
+`Infrastructure` owns the live connection lifecycle through
+`IRemoteNodeConnectionManager`. The manager starts saved active node streams at
+panel startup, exposes immediate connect/reconnect/disconnect operations for
+controllers and services, keeps one worker per node, and persists heartbeat data
+on a throttled interval instead of writing every SSE heartbeat to the database.
+
+The standalone remote node `/api/ping` response and `/api/connect` SSE payloads
+must include `Service`, `NodeVersion`, `Environment`, `StartedAt`, `Timestamp`,
+`Uptime`, `Core`, and `System`.
 
 ## Contracts Layer
 

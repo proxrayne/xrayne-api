@@ -2,13 +2,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using Quartz;
-using Scalar.AspNetCore;
-using Serilog;
 using Api.Auth;
 using Api.Filters;
 using Contracts;
@@ -16,7 +9,16 @@ using Contracts.Configurations;
 using Contracts.Values;
 using Infrastructure;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Quartz;
+using RemoteNode;
+using RemoteNode.Configurations;
 using Repositories;
+using Scalar.AspNetCore;
+using Serilog;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -161,6 +163,10 @@ try
     });
 
     builder.Services.AddSingleton(settings);
+    builder.Services.AddRemoteNodes(new RemoteNodeOptions
+    {
+        PingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:PingTimeoutSeconds", 15)
+    });
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddRepositories(builder.Configuration.GetConnectionString("Default"));
     builder.Services.AddContracts(builder.Configuration);

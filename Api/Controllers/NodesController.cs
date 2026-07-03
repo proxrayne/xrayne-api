@@ -26,6 +26,7 @@ public sealed class NodesController(
     INodeService nodes,
     INodeSecretService secrets,
     INodeConnectionVerifier connectionVerifier,
+    IRemoteNodeConnectionManager connectionManager,
     IBackgroundTaskScheduler scheduler,
     INodeProvisionStateMachine provisionStates,
     IEventStreamManager eventStreams,
@@ -110,6 +111,7 @@ public sealed class NodesController(
         {
             var devJobId = $"dev-{Guid.NewGuid():N}";
             await ConnectDevelopmentNodeAsync(node, apiKey, devJobId, cancellationToken);
+            await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
 
             return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(mapper.Map<NodeDto>(node), devJobId));
         }
@@ -175,6 +177,7 @@ public sealed class NodesController(
         node.LastStatusChange = DateTime.UtcNow;
 
         await nodes.UpdateAsync(node, cancellationToken);
+        await connectionManager.ReconnectAsync(node.Id, cancellationToken);
 
         return Accepted(new NodeOperationResponse(mapper.Map<NodeDto>(node), "reconnect_queued"));
     }
@@ -194,6 +197,7 @@ public sealed class NodesController(
         node.Message = "Node disabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
         await nodes.UpdateAsync(node, cancellationToken);
+        await connectionManager.DisconnectAsync(node.Id, cancellationToken);
 
         return new NodeOperationResponse(mapper.Map<NodeDto>(node), "disabled");
     }
@@ -213,6 +217,7 @@ public sealed class NodesController(
         node.Message = "Node enabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
         await nodes.UpdateAsync(node, cancellationToken);
+        await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
 
         return new NodeOperationResponse(mapper.Map<NodeDto>(node), "enabled");
     }
@@ -232,6 +237,8 @@ public sealed class NodesController(
         {
             throw new NotFoundException($"Node '{id}' was not found.");
         }
+
+        await connectionManager.DisconnectAsync(id, cancellationToken);
 
         return NoContent();
     }

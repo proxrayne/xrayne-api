@@ -6,6 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="../Contracts/Contracts.csproj" />
     <ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
+    <ProjectReference Include="../RemoteNode/RemoteNode.csproj" />
     <ProjectReference Include="../Repositories/Repositories.csproj" />
   </ItemGroup>
   <ItemGroup>

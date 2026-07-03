@@ -1,7 +1,5 @@
-using System.Net.Http.Headers;
-using System.Text.Json;
-using Microsoft.Extensions.Options;
-using Contracts.Configurations;
+using RemoteNode.Models;
+using RemoteNode.Services;
 using Repositories.Entities;
 
 namespace Infrastructure.Services;
@@ -9,37 +7,17 @@ namespace Infrastructure.Services;
 /// <summary>
 /// Verifies a node connection by calling its authenticated ping endpoint.
 /// </summary>
-public sealed class NodeConnectionVerifier(IOptions<NodeConnectionOptions> connectionOptions) : INodeConnectionVerifier
+public sealed class NodeConnectionVerifier(IRemoteNodeApiClientFactory apiClientFactory) : INodeConnectionVerifier
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
+    /// <inheritdoc />
     public async Task<NodeConnectionVerificationResult> VerifyAsync(
         NodeEntity node,
         string apiKey,
         CancellationToken cancellationToken)
     {
-        using var httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(Math.Max(1, connectionOptions.Value.PingTimeoutSeconds)),
-        };
-
-        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        httpClient.DefaultRequestHeaders.Add("X-Node-Api-Key", apiKey);
-
-        var uri = new UriBuilder("https", node.Address, node.ApiPort, "api/ping").Uri;
-        using var response = await httpClient.GetAsync(uri, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        var ping = await JsonSerializer.DeserializeAsync<NodePingResponse>(stream, JsonOptions, cancellationToken)
-            ?? throw new InvalidOperationException("Remote node ping response was empty.");
+        var endpoint = new RemoteNodeEndpoint(node.Id, node.Address, node.ApiPort, apiKey);
+        var ping = await apiClientFactory.Create(endpoint).PingAsync(cancellationToken);
 
         return new NodeConnectionVerificationResult(ping.Core.Version, ping.Timestamp);
     }
-
-    private sealed record NodePingResponse(
-        DateTimeOffset Timestamp,
-        NodeCoreStatus Core);
-
-    private sealed record NodeCoreStatus(string? Version);
 }

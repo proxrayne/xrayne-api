@@ -13,6 +13,7 @@ public sealed class NodeProvisionJob(
     INodeService nodeService,
     INodeSecretService secretService,
     INodeProvisionStateMachine stateMachine,
+    IRemoteNodeConnectionManager connectionManager,
     IRemoteNodeProvisioner provisioner,
     ILogger<NodeProvisionJob> logger) : IJob
 {
@@ -60,6 +61,7 @@ public sealed class NodeProvisionJob(
             await nodeService.UpdateAsync(node, ct);
 
             stateMachine.Dispatch(jobId, NodeProvisionState.Completed(nodeId, jobId));
+            await connectionManager.EnsureConnectedAsync(nodeId, ct);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {

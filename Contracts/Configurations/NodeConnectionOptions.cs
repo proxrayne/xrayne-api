@@ -12,9 +12,15 @@ public sealed class NodeConnectionOptions
 
     public int ReconnectAttempts { get; set; } = 3;
 
+    public int InitialReconnectDelaySeconds { get; set; } = 1;
+
     public int ReconnectDelaySeconds { get; set; } = 30;
 
     public int PingTimeoutSeconds { get; set; } = 10;
 
     public int StreamHeartbeatSeconds { get; set; } = 15;
+
+    public int HeartbeatPersistIntervalSeconds { get; set; } = 60;
+
+    public int SupervisorIntervalSeconds { get; set; } = 60;
 }
