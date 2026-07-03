@@ -19,8 +19,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Github", "Github\Github.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System", "System\System.csproj", "{0C712BB9-9207-497B-8D50-5BA136CCAEBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Node", "Node\Node.csproj", "{AE1D71B2-316E-45AD-BB13-B014BD8998EF}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,18 +125,6 @@ Global
 		{0C712BB9-9207-497B-8D50-5BA136CCAEBC}.Release|x64.Build.0 = Release|Any CPU
 		{0C712BB9-9207-497B-8D50-5BA136CCAEBC}.Release|x86.ActiveCfg = Release|Any CPU
 		{0C712BB9-9207-497B-8D50-5BA136CCAEBC}.Release|x86.Build.0 = Release|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Debug|x64.Build.0 = Debug|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Debug|x86.Build.0 = Debug|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Release|x64.ActiveCfg = Release|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Release|x64.Build.0 = Release|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Release|x86.ActiveCfg = Release|Any CPU
-		{AE1D71B2-316E-45AD-BB13-B014BD8998EF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
