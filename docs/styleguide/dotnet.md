@@ -39,7 +39,8 @@ non-obvious behavior. Do not document private implementation details as public A
 - Infrastructure layer owns runtime/business behavior and background jobs.
 - Repository layer owns EF queries and persistence.
 - Contracts layer owns shared values and data contracts.
-- CLI layer owns command-line orchestration.
+- CLI command-line orchestration belongs to the standalone `xrayne-cli`
+  repository.
 - Managed-node behavior belongs to the panel layers above; do not introduce a
   local standalone node-service project in this repository.
 

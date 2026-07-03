@@ -5,8 +5,7 @@
 Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md`.
 
 - `Api`: ASP.NET Core API, OpenAPI/Scalar, JWT auth, CORS, static files, SPA fallback, exception filtering.
-- `Cli`: System.CommandLine executable named `xrayne`, single-file publish support.
-- `Github`: reusable GitHub.com releases/assets client used by CLI, API, and infrastructure code.
+- `Github`: reusable GitHub.com releases/assets client used by API and infrastructure code.
 - `System`: reusable host system information client used by the API through infrastructure DI.
 - `Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
@@ -113,7 +112,7 @@ PostgreSQL enum mapping is configured for `UserStatus`, `LimitResetStrategy`, an
 
 Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.Json` options configured in `Repositories.DependencyInjection`.
 
-`AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`; CLI resolves flat `.env`/environment keys such as `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` or `POSTGRES_HOST_API`, and port values first, then falls back to `ConnectionStrings:Default`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
+`AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
 GitHub.com release and asset access lives in the root `Github` class library. Keep persistence-specific code in `Repositories`; do not add external API clients there.
 
@@ -130,65 +129,11 @@ Repository pattern:
 - Shared query/pagination models live in `Contracts/Models`: `CursorQuery`, `CursorPage<T>`, `SortOrder`, plus one filter file per searchable entity such as `UserFilter` and `InboundFilter`. The static cursor helper lives in `Contracts/Utilities/CursorPagination`. Outbound repositories intentionally expose only direct list/CRUD methods, without filtering or cursor pagination.
 - New entity repositories expose both admin-scoped methods and unscoped variants for service/internal use.
 
-## CLI Pattern
+## CLI Split
 
-`Cli/Program.cs`:
-
-- Builds a generic host.
-- Uses packaged `appsettings.json` and `appsettings.{Environment}.json` from `AppContext.BaseDirectory` plus runtime `PathProvider.Paths.JsonConfig`.
-- Reads `PathProvider.Paths.EnvConfig` through `AddEnvFile(...)` when the runtime API is installed. Reading is done through standard `IConfiguration`; `JsonConfig` and `EnvConfig` in `Repositories.Utilities` are only for safe runtime file mutations. Docker Compose runs from the project directory, reads the `.env` beside `docker-compose.yml`, and services use `env_file: .env` when container runtime values are needed.
-- `PathProvider` lives in `Contracts.Values`. `PathProvider.Paths` uses `PROJECT_PATH` when present, otherwise the OS-specific system project directory. `PathProvider.GetProjectDirectory()` can derive the parent project path from an installed `cli` folder, so `/opt/xrayne/cli` maps to `/opt/xrayne`.
-- Adds environment variables without a custom prefix.
-- Registers core, infrastructure, repositories, contracts, and CLI actions.
-- Does not migrate database on startup, so non-database commands can run before PostgreSQL is available.
-- Resolves `RootCommandFactory`, creates `CommandLineConfiguration`, and invokes args.
-
-Command pattern:
-
-- Root command composes feature commands.
-- Feature command derives from `Command` and adds subcommands.
-- Action command injects `IServiceProvider`, creates `CreateAsyncScope()`, resolves services, writes through `ICliConsole`, logs failures, returns `0` or `1`.
-
-Current command tree:
-
-```text
-xrayne
-  version
-  update [--version latest|tag] [--component all|api|cli] [--force]
-  info
-  api install [--version latest|tag]
-  api version
-  api status
-  api stop
-  api start
-  api restart
-  cert install [--domain domain | --ip-address ipv4] --email email [--staging] [--force]
-  cert status
-  cert renew [--force]
-  admin create
-  xray start
-```
-
-Database-dependent commands should call `MigrateDatabaseAsync()` inside their action before using repositories. This keeps commands such as `--help`, Docker/compose management, and xray-core lifecycle commands usable when the database container is not running yet.
-
-`admin create` prompts interactively for username, password confirmation, and permissions instead of accepting credentials through command-line arguments. Leaving password empty generates one and the command prints the created account details.
-
-`api install` downloads API image release assets from the public `VanyaKrotov/xrayne` GitHub repository, loads the image with Docker, writes `.env`, runtime `config.json`, and `docker-compose.yml`, then starts `docker compose up -d`. The source repository is `xrayne-panel`, but public install/update artifacts intentionally remain under `VanyaKrotov/xrayne`. Installation must not require the database to be running before installation. The API compose service uses `network_mode: host` for host-level xray-core networking, so `API_PORT` is the real host port Kestrel listens on; do not add API `ports:` mappings.
-
-Use `EnvConfig` for reading, writing, setting, or removing `.env` values. Do not hand-edit `.env` with command-local line parsing.
-
-`update` resolves the target runtime schema from the selected release through `RuntimeSchemaCatalog`, runs `IRuntimeMigrationService.MigrateToAsync(...)` before replacing the CLI, and supports both `UpAsync` and `DownAsync` migrations so explicit downgrades can roll runtime files back. Runtime migration backups go under `<project>/backups/runtime-migrations`.
-
-CLI service interfaces live under `Cli/Services/Contracts`, with implementations under `Cli/Services`.
-
-Shared CLI helpers live under `Cli/Helpers`; certificate path/config helpers are in `CertificateCommandHelper`.
-
-GitHub release and asset access is implemented by `GitHubRepository` in the `Github` project. CLI commands currently create it with `CliDefaults.XRayneRepositoryUrl`; xray-core release listing uses a `GitHubRepository` targeting `https://github.com/xtls/xray-core`. Do not reintroduce `GitHubReleaseService` under `Cli/Services`.
-
-Docker Compose generation and edits live in `IDockerComposeFileService`/`DockerComposeFileService` and use YamlDotNet; do not build or mutate compose YAML with raw multiline strings or ad hoc text replacement.
-
-`cert install` uses project-local `acme.sh` under `<project>/certificates/acme-sh`, installs API certificate files under `<project>/certificates/letsencrypt`, writes Kestrel HTTPS certificate paths to runtime `config.json`, keeps the API on configured `API_PORT`, enables `acme.sh` cron renewal, and recreates the API container. Domain certificates use normal Let's Encrypt issuance. IP address certificates use public IPv4 only and require the Let's Encrypt `shortlived` certificate profile.
-
+The administrator CLI is owned by the standalone `xrayne-cli` repository. Keep
+command definitions, runtime migrations, Docker Compose generation, certificate
+installation, and CLI release/update behavior there.
 ## Xray Core
 
 `AddInfrastructure` registers:

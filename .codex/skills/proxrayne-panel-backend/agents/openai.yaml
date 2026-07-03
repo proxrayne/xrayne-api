@@ -1,4 +1,4 @@
 interface:
   display_name: "Proxrayne Panel Backend"
-  short_description: "API, CLI, EF, auth, and core service patterns for xrayne-panel"
+  short_description: "API, EF, auth, and core service patterns for xrayne-panel"
   default_prompt: "Use $proxrayne-panel-backend to implement or review backend changes in xrayne-panel."

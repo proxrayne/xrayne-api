@@ -1,6 +1,6 @@
 ---
 name: proxrayne-panel-backend
-description: Backend development guidance for the Proxrayne xrayne-panel repository. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, system information, config files, or backend tests in Api, Cli, Infrastructure, Repositories, Contracts, System, or Test.
+description: Backend development guidance for the Proxrayne xrayne-panel repository. Use when Codex works on C#/.NET API controllers, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, system information, config files, or backend tests in Api, Infrastructure, Repositories, Contracts, System, or Test.
 ---
 
 # XRayne Panel Backend
@@ -23,7 +23,6 @@ Read `references/backend-map.md`, `docs/architecture/backend.md`, `docs/stylegui
 - Use `AdminPermissionNames` from `Contracts.Values` for authorization policies and permission parsing.
 - Use EF Core async methods with cancellation tokens in repositories.
 - Add migrations through `add-migration.ps1` or equivalent `dotnet ef migrations add` command targeting `AppDbContext`.
-- For CLI commands, derive from `System.CommandLine.Command`, inject `IServiceProvider`, create an async scope in `SetAction`, and return integer exit codes.
 - Read configuration through standard `IConfiguration`; use `JsonConfig` only when mutating runtime `config.json`, and `EnvConfig` only when mutating `.env`.
 - API/UI Docker image artifacts are produced by release GitHub Actions; backend code should keep the image build reproducible and avoid local-only assumptions.
 - Update `docs/` when API behavior, backend architecture, configuration, or packaging changes.
@@ -36,7 +35,6 @@ Prefer focused validation:
 dotnet build XRayne.sln
 dotnet test XRayne.sln
 dotnet run --project Api
-dotnet run --project Cli -- --help
 ```
 
 If touching EF:

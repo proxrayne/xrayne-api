@@ -1,6 +1,6 @@
 # Skill: .NET Core Backend
 
-Use this skill when working on `Api`, `Cli`, `Contracts`,
+Use this skill when working on `Api`, `Contracts`,
 `Github`, `Infrastructure`, `Repositories`, `System`, or `Test`.
 
 ## Start Here
@@ -24,8 +24,6 @@ Use this skill when working on `Api`, `Cli`, `Contracts`,
   namespace `SystemInfo`.
 - Put EF entities, DbContext, migrations, repositories, config-file utilities, and
   persistence utilities in `Repositories`.
-- Put CLI commands in `Cli/Commands`; put CLI orchestration services in
-  `Cli/Services`.
 
 ## Required Backend Rules
 
@@ -51,7 +49,6 @@ dotnet restore sln
 dotnet build sln
 dotnet test sln
 dotnet run --project Api
-dotnet run --project Cli -- --help
 ```
 
 For EF changes:

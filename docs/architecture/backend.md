@@ -5,7 +5,6 @@
 The backend is a .NET 9 solution with a layered architecture:
 
 - `Api`: panel REST API and dashboard static host.
-- `Cli`: administrator command-line tool.
 - `Contracts`: shared contracts and configuration values.
 - `Github`: reusable GitHub.com releases/assets client.
 - `System`: reusable host system information client.
@@ -56,7 +55,7 @@ implementing node management features in this repository.
 - shared values such as `PathProvider` and `AdminPermissionNames`;
 - contract-level DI registration.
 
-Avoid dependencies from contracts back into API, repositories, infrastructure, CLI,
+Avoid dependencies from contracts back into API, repositories, infrastructure,
 or dashboard.
 
 ## Infrastructure Layer
@@ -85,11 +84,9 @@ new services in `Infrastructure/DependencyInjection.cs`.
 Repositories expose async APIs, accept `CancellationToken`, and use admin-scoped
 overloads when data belongs to an administrator.
 
-## CLI
+## CLI Split
 
-`Cli` uses `System.CommandLine` with feature commands under
-`Commands/<feature>`. Commands create async scopes, resolve services, write through
-`ICliConsole`, and return integer exit codes.
-
-CLI install/update flows own Docker Compose generation, release asset download,
-runtime migrations, certificate installation, and shell command orchestration.
+The administrator CLI is now owned by the standalone `xrayne-cli` repository.
+Keep install/update flows, runtime migrations, Docker Compose generation,
+certificate installation, and shell command orchestration there instead of adding
+new CLI code to `xrayne-panel`.

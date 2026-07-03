@@ -3,8 +3,9 @@
 ## Product
 
 XRayne Panel is an admin panel for managing `xray-core` and remote nodes. The
-`xrayne-panel` repository contains panel code only: CLI commands, a REST API,
-and a React web UI. Managed nodes are a panel feature, not a local standalone
+`xrayne-panel` repository contains the REST API, backend services, and React web
+UI. The administrator CLI source lives in the standalone `xrayne-cli`
+repository. Managed nodes are a panel feature, not a local standalone
 node-service project.
 
 Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for project-wide rules and `docs/conventions/inconsistencies.md` before broad cleanup work.
@@ -15,7 +16,6 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 - `Directory.Build.props`: shared .NET settings, currently `net9.0`, nullable enabled, implicit usings enabled.
 - `global.json`: SDK `9.0.100` with `latestFeature` roll-forward.
 - `Api`: ASP.NET Core web API and static web host.
-- `Cli`: System.CommandLine CLI executable with assembly name `xrayne`.
 - `Github`: reusable GitHub.com releases/assets client for any public repository.
 - `System`: reusable host system information client with no XRayne project dependencies.
 - `Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
@@ -24,7 +24,7 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 - `Contracts`: shared contracts, configuration DTOs, shared API/query models, permission enums, and permission names.
 - `Test`: backend test project.
 - `Dashboard`: React Router app.
-- `.github/workflows/build.yml`: publishes single-file CLI artifacts for `win-x64`, `osx-arm64`, and `linux-x64`, and publishes the API+UI Docker image archive on tags or manual dispatch.
+- `.github/workflows/build.yml`: publishes the API+UI Docker image archive on tags or manual dispatch.
 - `.codex/skills`: project-local Codex skills.
 - `docs`: canonical architecture, styleguide, conventions, and project skill documentation.
 
@@ -46,7 +46,6 @@ dotnet restore XRayne.sln
 dotnet build XRayne.sln
 dotnet test XRayne.sln
 dotnet run --project Api
-dotnet run --project Cli -- admin create admin --password password --permissions super_admin
 .\add-migration.ps1 MigrationName
 ```
 
@@ -63,10 +62,8 @@ npm run build
 ## Configuration
 
 - API reads normal ASP.NET Core configuration from packaged `appsettings*.json`, then runtime `PathProvider.Paths.JsonConfig` (`config.json` in the shared project directory) and `PathProvider.Paths.EnvConfig`.
-- CLI sets base path to `AppContext.BaseDirectory`, reads packaged `appsettings.json`, environment-specific `appsettings.{Environment}.json`, runtime `PathProvider.Paths.JsonConfig`, `PathProvider.Paths.EnvConfig`, and environment variables through the shared configuration pipeline.
 - `PathProvider` in `Contracts.Values` centralizes runtime paths: project root, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, `downloads`, `certificates`, `certificates/letsencrypt`, and `xray`.
 - `PathProvider.SystemProjectDirectory` defaults to `C:\Program Files\xrayne` on Windows, `/opt/xrayne` on Linux, and a temp `xrayne` directory elsewhere. `PROJECT_PATH` overrides the runtime root used by `PathProvider.Paths`.
-- When CLI is installed under a `cli` folder, `PathProvider.GetProjectDirectory()` returns the parent directory of `AppContext.BaseDirectory`; for example `/opt/xrayne/cli` resolves to `/opt/xrayne`.
 - `JsonConfig` and `EnvConfig` in `Repositories.Utilities` are static helpers for safe runtime file mutations. Reading is done through standard `IConfiguration`.
 - `.env` is static after install and reserved for Docker Compose/bootstrap variables such as `PROJECT_PATH`, `API_IMAGE`, `API_PORT`, and PostgreSQL values. More complex application configuration belongs in runtime `config.json`. Docker Compose runs from the project directory and reads the `.env` file beside `docker-compose.yml`; services should use `env_file: .env` when they need the same values inside containers.
 - `XrayOptions` is registered from `Xray` through `Contracts.DependencyInjection`; current options include `CorePath`.
@@ -76,6 +73,5 @@ npm run build
 
 ## CI And Packaging
 
-- Release artifact workflow restores and publishes `Cli/Cli.csproj` for each RID.
-- The same workflow builds the API+UI Docker image as `xrayne-api-image-<version>`, saves it as `xrayne-api-image-<version>.tar.gz`, uploads it as a build artifact, and attaches it to tagged releases.
+- Release artifact workflow builds the API+UI Docker image as `xrayne-api-image-<version>`, saves it as `xrayne-api-image-<version>.tar.gz`, uploads it as a build artifact, and attaches it to tagged releases.
 - Release upload happens only for tag refs.

@@ -3,11 +3,11 @@
 ## Product Boundaries
 
 XRayne Panel is an admin panel for managing `xray-core` and remote nodes. The
-`xrayne-panel` repository contains only panel code. The panel surface is:
+`xrayne-panel` repository contains the panel API, dashboard, and backend
+services. The standalone CLI source lives in `xrayne-cli`.
 
 - `Api`: ASP.NET Core REST API and static web host.
 - `Dashboard`: React Router dashboard built into the API image.
-- `Cli`: administrator CLI for installation and runtime operations.
 
 Managed nodes are a panel domain feature handled through API controllers,
 infrastructure services, repositories, and dashboard routes. This repository no
@@ -22,12 +22,10 @@ longer contains a standalone node-service project or node-service source code.
   interfaces/implementations, config-file utilities, and external release clients.
 - `Api`: HTTP controllers, auth, API filters, AutoMapper profiles,
   request/response models, static dashboard hosting.
-- `Cli`: System.CommandLine commands, installation services, runtime
-  migrations, Docker Compose generation, shell integration.
 - `Dashboard`: React Router application with `src/core`, `src/features`,
   `src/routes`, and `src/libs`.
 - `.codex/skills`: Codex skill entrypoints that point to this documentation.
-- `.github/workflows/build.yml`: release artifact and image publishing workflow.
+- `.github/workflows/build.yml`: API + UI image publishing workflow.
 
 ## Dependency Direction
 
@@ -38,11 +36,11 @@ longer contains a standalone node-service project or node-service source code.
 - Keep managed-node provisioning, reconnect, and status orchestration in
   panel-owned services; do not plan work in a local standalone node-service
   project.
-- Keep CLI orchestration in `Cli`; do not move CLI install flows into API.
+- Keep CLI orchestration in the `xrayne-cli` repository; do not move CLI install
+  flows into the panel API.
 
 ## Packaging
 
-- Release workflow publishes CLI archives for Windows, macOS, and Linux.
 - Release workflow builds API + UI image as a `tar.gz` release asset.
 - Docker Compose, when present, is installer/runtime orchestration and should run
   prebuilt artifacts instead of local `build:`.
@@ -54,8 +52,8 @@ repository as `xrayne-panel`.
 ## Configuration
 
 - Runtime paths are centralized through `PathProvider` in `Contracts.Values`.
-- API and CLI read normal `IConfiguration`; use `JsonConfig`/`EnvConfig` only when
-  mutating runtime config files.
+- API reads normal `IConfiguration`; use `JsonConfig`/`EnvConfig` only when
+  mutating runtime config files shared with the installed runtime.
 - `.env` is reserved for bootstrap/container values. Complex app configuration
   belongs in runtime `config.json`.
 
