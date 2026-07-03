@@ -1,0 +1,4 @@
+interface:
+  display_name: "Proxrayne Panel Project"
+  short_description: "Project map and operating rules for xrayne-panel"
+  default_prompt: "Use $proxrayne-panel-project to orient yourself before changing xrayne-panel."

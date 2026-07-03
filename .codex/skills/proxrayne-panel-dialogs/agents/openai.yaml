@@ -1,0 +1,4 @@
+interface:
+  display_name: "Proxrayne Panel Dialogs"
+  short_description: "Lazy dialog state patterns for xrayne-panel Dashboard"
+  default_prompt: "Use $proxrayne-panel-dialogs when creating or refactoring Dashboard dialogs."

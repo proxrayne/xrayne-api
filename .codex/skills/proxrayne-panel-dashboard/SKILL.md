@@ -1,13 +1,13 @@
 ---
-name: xrayne-dashboard
-description: Frontend development guidance for  Use when Codex works on Dashboard React Router routes, layouts, auth middleware, TanStack Query data hooks, Axios API clients, shadcn components, Tailwind styles, Vite config, TypeScript types, forms, navigation, or frontend build/typecheck/lint issues.
+name: proxrayne-panel-dashboard
+description: Frontend development guidance for the Proxrayne xrayne-panel Dashboard app. Use when Codex works on Dashboard React Router routes, layouts, auth middleware, TanStack Query data hooks, Axios API clients, shadcn components, Tailwind styles, Vite config, TypeScript types, forms, navigation, or frontend build/typecheck/lint issues.
 ---
 
 # XRayne UI
 
 ## Quick Start
 
-Read `references/ui-map.md`, `docs/architecture/frontend.md`, and `docs/styleguide/react.md` before UI edits. `Dashboard/STYLEGUIDE.md` is legacy supporting context; `/docs` is canonical.
+Read `references/ui-map.md`, `docs/architecture/frontend.md`, and `docs/styleguide/react.md` before UI edits. `Dashboard/STYLEGUIDE.md` is legacy supporting context; `/docs` is canonical. Use `$proxrayne-project` first when the task concerns moving dashboard code into `xrayne-ui`.
 
 ## Implementation Rules
 

@@ -1,18 +1,18 @@
 ---
-name: xrayne-project
-description: Project-specific orientation for XRayne Panel. Use when Codex needs to understand the xrayne-panel repository layout, current product goals, cross-cutting conventions, local commands, infrastructure boundaries, or before making broad changes that touch multiple panel projects, README, CI, Docker/compose, or repo organization.
+name: proxrayne-panel-project
+description: Project-specific orientation for the Proxrayne xrayne-panel repository. Use when Codex needs to understand the panel repository layout, current product goals, cross-cutting conventions, local commands, infrastructure boundaries, or before making broad changes that touch multiple panel projects, README, CI, Docker/compose, release packaging, or repo organization.
 ---
 
 # XRayne Panel Project
 
 ## Quick Start
 
-Use this skill first for broad tasks, repo cleanup, planning, or changes spanning backend and UI.
+Use this skill first for broad panel tasks, repo cleanup, planning, or changes spanning backend and UI. Use `$proxrayne-project` first when the task may involve more than one Proxrayne repository.
 
 Read `references/project-map.md` and `docs/project-rules.md` for the current structure, commands, CI, and non-obvious constraints. Then load the narrower skill if needed:
 
-- Use `$xrayne-backend` for .NET API, CLI, EF Core, auth, repositories, or xray-core service work.
-- Use `$xrayne-dashboard` for React Router, TanStack Query, auth layouts, forms, routes, or UI work.
+- Use `$proxrayne-panel-backend` for .NET API, CLI, EF Core, auth, repositories, or xray-core service work.
+- Use `$proxrayne-panel-dashboard` for React Router, TanStack Query, auth layouts, forms, routes, or UI work.
 
 ## Project Rules
 

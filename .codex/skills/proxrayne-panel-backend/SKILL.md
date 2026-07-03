@@ -1,13 +1,13 @@
 ---
-name: xrayne-backend
-description: Backend development guidance for XRayne Panel. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, system information, config files, or backend tests in Api, Cli, Infrastructure, Repositories, Contracts, System, or Test.
+name: proxrayne-panel-backend
+description: Backend development guidance for the Proxrayne xrayne-panel repository. Use when Codex works on C#/.NET API controllers, CLI commands, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, system information, config files, or backend tests in Api, Cli, Infrastructure, Repositories, Contracts, System, or Test.
 ---
 
 # XRayne Panel Backend
 
 ## Quick Start
 
-Read `references/backend-map.md`, `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md` before backend edits. Use them to place code in the right project and choose the existing pattern.
+Read `references/backend-map.md`, `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md` before backend edits. Use `$proxrayne-project` first when the change affects release/install behavior or another Proxrayne repository.
 
 ## Implementation Rules
 
