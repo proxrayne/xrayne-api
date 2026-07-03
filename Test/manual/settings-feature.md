@@ -1,6 +1,6 @@
 # Ручная проверка: настройки панели
 
-Запустить API + UI локально. Залогиниться super-admin'ом.
+Запустить API и standalone UI локально. Залогиниться super-admin'ом.
 
 ## Backend (через Scalar / curl)
 
@@ -18,7 +18,7 @@
 
 ## Frontend (статика)
 
-- [ ] `cd Dashboard && npm run build` собирается без ошибок.
+- [ ] В `xrayne-ui`: `npm run build` собирается без ошибок.
 - [ ] `npm run lint` без ошибок (если настроен).
 
 ## Доступ для CI

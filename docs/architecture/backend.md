@@ -4,7 +4,7 @@
 
 The backend is a .NET 9 solution with a layered architecture:
 
-- `Api`: panel REST API and dashboard static host.
+- `Api`: panel REST API.
 - `Contracts`: shared contracts and configuration values.
 - `Github`: reusable GitHub.com releases/assets client.
 - `System`: reusable host system information client.
@@ -23,9 +23,7 @@ The backend is a .NET 9 solution with a layered architecture:
 - configures OpenAPI/Scalar when `Docs` is enabled;
 - configures JWT bearer auth and admin permission policies;
 - registers infrastructure, repositories, contracts, Quartz, and restart services;
-- migrates the database on startup;
-- serves static dashboard files from `wwwroot` and falls back to `index.html`
-  outside `/api`.
+- migrates the database on startup.
 
 Controllers use `[Route("api/...")]`, inherit from `ApiControllerBase`, and use
 `EndpointSummary`, `EndpointDescription`, and `ProducesResponseType`.
@@ -55,8 +53,8 @@ implementing node management features in this repository.
 - shared values such as `PathProvider` and `AdminPermissionNames`;
 - contract-level DI registration.
 
-Avoid dependencies from contracts back into API, repositories, infrastructure,
-or dashboard.
+Avoid dependencies from contracts back into API, repositories, or
+infrastructure.
 
 ## Infrastructure Layer
 
@@ -90,3 +88,9 @@ The administrator CLI is now owned by the standalone `xrayne-cli` repository.
 Keep install/update flows, runtime migrations, Docker Compose generation,
 certificate installation, and shell command orchestration there instead of adding
 new CLI code to `xrayne-panel`.
+
+## UI Split
+
+The web UI is now owned by the standalone `xrayne-ui` repository. Keep React
+routes, frontend API clients, UI Docker image builds, and frontend release
+artifacts there. The panel API no longer builds or serves static frontend files.

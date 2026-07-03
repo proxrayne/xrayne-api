@@ -5,8 +5,8 @@ and panel-managed nodes. The source repository is `xrayne-panel` and contains
 the panel only; it does not contain a standalone remote-node service project.
 
 Public install and update assets are intentionally published from
-`VanyaKrotov/xrayne`: prebuilt CLI binaries and a Docker image archive that
-contains the API with the built web UI.
+`VanyaKrotov/xrayne`: prebuilt CLI binaries, an API Docker image archive, and a
+standalone UI Docker image archive.
 
 ## Basic Features
 
@@ -26,9 +26,10 @@ Each release can contain these files:
 | `xrayne-cli-linux-x64.tar.gz` | XRayne CLI for Linux x64. |
 | `xrayne-cli-osx-arm64.tar.gz` | XRayne CLI for macOS Apple Silicon. |
 | `xrayne-cli-win-x64.zip` | XRayne CLI for Windows x64. |
-| `xrayne-api-image-<version>.tar.gz` | Docker image archive containing `xrayne-api-image-<version>` for the API with the built web UI. |
+| `xrayne-api-image-<version>.tar.gz` | Docker image archive containing `xrayne-api-image-<version>` for the API. |
+| `xrayne-ui-image-<version>.tar.gz` | Docker image archive containing `xrayne-ui-image-<version>` for the web UI. |
 
-The API image is downloaded and loaded by the CLI during `xrayne api install` and `xrayne update`. Docker Compose uses the loaded image name `xrayne-api-image-<version>` through `API_IMAGE`.
+The API and UI images are downloaded and loaded by the CLI during `xrayne api install` and `xrayne update`. Docker Compose uses the loaded image names through `API_IMAGE` and `UI_IMAGE`.
 
 ## Install CLI With Scripts
 
@@ -184,13 +185,14 @@ After the CLI is installed, run:
 xrayne api install
 ```
 
-The installer downloads the API Docker image from the public release, writes `/opt/xrayne/.env`, creates `/opt/xrayne/docker-compose.yml`, and starts Docker Compose.
+The installer downloads the API and UI Docker images from the public release, writes `/opt/xrayne/.env`, creates `/opt/xrayne/docker-compose.yml`, and starts Docker Compose.
 
 Install the CLI through the script first. The CLI installer prepares Docker and Docker Compose; `xrayne api install` only configures and starts the API runtime.
 
 During installation you will be prompted for:
 
 - API port, default `5000`.
+- UI port, default `8080`.
 - PostgreSQL password for user `postgres`; an empty value generates a password.
 - Optional API prefix for hiding the panel behind a custom path.
 
@@ -200,7 +202,7 @@ The project path is derived from the installed CLI directory. For the default `/
 <project-path>/postgres
 ```
 
-The web panel is served by the API container on the same host and port.
+The web panel is served by the UI container. By default it is available at `http://0.0.0.0:8080`, and it proxies `/api` to the API container listening on `http://0.0.0.0:5000/api`.
 
 The API container runs with Docker host networking so it can work with host-level Xray core networking. `PORT` is the actual port the API listens on; Docker does not publish a separate API container port mapping.
 
@@ -216,13 +218,13 @@ xrayne cert install --domain example.com --email admin@example.com
 xrayne cert install --ip-address 203.0.113.10 --email admin@example.com
 xrayne cert status
 xrayne cert renew
-xrayne update [--version latest|tag] [--component all|api|cli] [--force]
+xrayne update [--version latest|tag] [--component all|api|ui|cli] [--force]
 xrayne info
 ```
 
 `xrayne api version` prints the installed API version, the latest available version, and whether an update is available.
 
-`xrayne update` checks the selected release and updates both CLI and API by default. Use `--component api` or `--component cli` to update only one side. Passing an older release tag through `--version` intentionally downgrades that component.
+`xrayne update` checks the selected release and updates CLI, API, and UI by default. Use `--component api`, `--component ui`, or `--component cli` to update only one side. Passing an older release tag through `--version` intentionally downgrades that component.
 
 During update, the CLI migrates runtime files (`.env`, `config.json`, and `docker-compose.yml`) to the schema required by the target release. Migrations support both upgrade and downgrade paths, create backups under `<project-path>/backups/runtime-migrations`, and run before the CLI binary is replaced so downgrade migrations are still handled by the newer CLI.
 

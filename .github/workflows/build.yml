@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   publish-api-image:
-    name: Publish API image tar.gz
+    name: Publish API-only image tar.gz
     runs-on: ubuntu-latest
 
     steps:
@@ -44,15 +44,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build API image with UI
+      - name: Build API image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Api/Dockerfile
           tags: ${{ steps.image.outputs.image }}
           outputs: type=docker,dest=/tmp/${{ steps.image.outputs.image }}.tar
-          build-args: |
-            VITE_API_DOMAIN=
 
       - name: Compress image
         shell: bash

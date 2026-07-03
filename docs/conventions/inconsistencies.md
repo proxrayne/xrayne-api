@@ -34,7 +34,7 @@ Recommended follow-up: replace raw placeholders during route UI work.
 ## Existing Documentation Outside `/docs`
 
 `README.md`, `PUBLIC_README.md`, `.codex/skills`, and
-`Dashboard/STYLEGUIDE.md` existed before this documentation structure.
+Frontend styleguide ownership moved to the standalone `xrayne-ui` repository.
 They should remain, but `/docs` is now the canonical source for architecture and
 styleguide details.
 

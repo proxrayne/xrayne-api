@@ -1,4 +1,0 @@
-interface:
-  display_name: "Proxrayne Panel Dashboard"
-  short_description: "React Router UI conventions for xrayne-panel"
-  default_prompt: "Use $proxrayne-panel-dashboard to implement or review frontend changes in xrayne-panel."
