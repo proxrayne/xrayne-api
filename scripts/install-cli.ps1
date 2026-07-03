@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Repository = "VanyaKrotov/xrayne"
+$Repository = "proxrayne/xrayne-cli"
 $ExecutableName = "xrayne"
 $ProjectDirectory = if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::Windows)) {
     Join-Path $env:ProgramFiles "xrayne"
@@ -76,8 +76,8 @@ function Get-Release {
             "X-GitHub-Api-Version" = "2022-11-28"
         }
 
-    if ($release.prerelease) {
-        throw "Pre-release versions are not supported by this installer. Use a stable release tag."
+    if ($release.prerelease -and $ReleaseVersion -eq "latest") {
+        throw "Latest installs must use stable releases. Pass an explicit alpha or beta tag to install a pre-release."
     }
 
     return $release

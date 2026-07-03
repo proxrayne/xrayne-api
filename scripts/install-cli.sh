@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-REPOSITORY="VanyaKrotov/xrayne"
+REPOSITORY="proxrayne/xrayne-cli"
 VERSION="latest"
 PROJECT_DIR="/opt/xrayne"
 INSTALL_DIR="$PROJECT_DIR/cli"
@@ -225,20 +225,10 @@ download() {
   fi
 }
 
-ensure_stable_version() {
-  case "$VERSION" in
-    *-*)
-      echo "Pre-release versions are not supported by this installer. Use a stable release tag." >&2
-      exit 1
-      ;;
-  esac
-}
-
 resolve_download_url() {
   if [ "$VERSION" = "latest" ]; then
     printf '%s\n' "https://github.com/$REPOSITORY/releases/latest/download/$ASSET"
   else
-    ensure_stable_version
     printf '%s\n' "https://github.com/$REPOSITORY/releases/download/$VERSION/$ASSET"
   fi
 }

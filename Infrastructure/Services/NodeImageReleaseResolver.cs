@@ -9,7 +9,7 @@ namespace Infrastructure.Services;
 public sealed class NodeImageReleaseResolver : INodeImageReleaseResolver
 {
     private const string LatestVersion = "latest";
-    private const string RepositoryUrl = "https://github.com/VanyaKrotov/xrayne";
+    private const string RepositoryUrl = "https://github.com/proxrayne/xrayne-node";
     private const string AssetPrefix = "xrayne-node-image";
 
     public async Task<NodeImageReleaseAsset> ResolveAsync(CancellationToken cancellationToken)

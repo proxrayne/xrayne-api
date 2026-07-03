@@ -30,7 +30,7 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 ## Important Current State
 
 - API Docker image build is a release artifact: GitHub Actions builds the API image as `xrayne-api-image-<version>`, saves it as `xrayne-api-image-<version>.tar.gz`, and attaches it to releases.
-- Public release/install assets intentionally use the `VanyaKrotov/xrayne` GitHub repository; source-level documentation refers to this repository as `xrayne-panel`.
+- Public release/install assets are split by owning repository: API releases are published from `proxrayne/xrayne-api`, CLI from `proxrayne/xrayne-cli`, UI from `proxrayne/xrayne-ui`, and remote-node images from `proxrayne/xrayne-node`. The local source folder remains `xrayne-panel`.
 - Node management remains in the panel through API endpoints, infrastructure services, and repositories.
 - `docker-compose.yml` may be absent; if restored for installation, it should run the prebuilt image instead of using `build:`.
 - `.env.example` contains PostgreSQL, JWT, CORS, docs, and Xray config keys, not API container settings.

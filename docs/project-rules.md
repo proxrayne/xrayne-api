@@ -45,9 +45,10 @@ longer contains a standalone node-service project or node-service source code.
 - Docker Compose, when present, is installer/runtime orchestration and should run
   prebuilt artifacts instead of local `build:`.
 
-Public release/install assets are intentionally resolved from
-`VanyaKrotov/xrayne`; source-level project documentation should refer to this
-repository as `xrayne-panel`.
+Public release/install assets are resolved from their owning public repositories:
+CLI from `proxrayne/xrayne-cli`, API from `proxrayne/xrayne-api`, UI from
+`proxrayne/xrayne-ui`, and remote-node images from `proxrayne/xrayne-node`.
+This local repository remains named `xrayne-panel`.
 
 ## Configuration
 
