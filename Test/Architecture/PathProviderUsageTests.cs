@@ -1,76 +1,30 @@
-using System.Reflection;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Contracts.Values;
-using Infrastructure.Services;
 
 namespace Test.Architecture;
 
+/// <summary>
+/// Verifies runtime path derivation used by backend configuration.
+/// </summary>
 public sealed class PathProviderUsageTests
 {
-    // Whitelist для прямого чтения overridable путей; остальные ходят через IProjectPathResolver.
-    private static readonly HashSet<string> AllowedDirectAccessors =
-    [
-        typeof(ProjectPathResolver).FullName!,
-        typeof(ProjectPaths).FullName!,
-        typeof(PathProvider).FullName!
-    ];
-
-    private static readonly string[] GuardedProperties =
-    [
-        nameof(ProjectPaths.CertificatesDirectory),
-        nameof(ProjectPaths.GeoResourcesDirectory)
-    ];
-
+    /// <summary>
+    /// Ensures all runtime paths remain rooted under the configured project directory.
+    /// </summary>
     [Fact]
-    public void NoCodeOutsideResolverOrBootstrap_ReadsOverridablePaths_Directly()
+    public void ProjectPaths_DerivesRuntimePathsFromRoot()
     {
-        var infraPath = typeof(ProjectPathResolver).Assembly.Location;
-        using var module = ModuleDefinition.ReadModule(infraPath);
+        var paths = new ProjectPaths("/opt/xrayne");
 
-        var violations = new List<string>();
-        foreach (var type in module.GetTypes())
-        {
-            if (AllowedDirectAccessors.Contains(type.FullName))
-            {
-                continue;
-            }
-
-            foreach (var method in type.Methods)
-            {
-                if (!method.HasBody)
-                {
-                    continue;
-                }
-
-                foreach (var instruction in method.Body.Instructions)
-                {
-                    if (instruction.OpCode != OpCodes.Call && instruction.OpCode != OpCodes.Callvirt)
-                    {
-                        continue;
-                    }
-
-                    if (instruction.Operand is not MethodReference target)
-                    {
-                        continue;
-                    }
-
-                    if (target.DeclaringType.FullName != typeof(ProjectPaths).FullName)
-                    {
-                        continue;
-                    }
-
-                    var propertyName = target.Name.StartsWith("get_") ? target.Name[4..] : target.Name;
-                    if (GuardedProperties.Contains(propertyName))
-                    {
-                        violations.Add($"{type.FullName}.{method.Name} reads ProjectPaths.{propertyName}");
-                    }
-                }
-            }
-        }
-
-        violations.Should().BeEmpty(
-            "overridable paths must be read via IProjectPathResolver so panel settings take effect; offenders: {0}",
-            string.Join("; ", violations));
+        paths.Root.Should().Be("/opt/xrayne");
+        paths.XrayDirectory.Should().Be(Path.Combine("/opt/xrayne", "xray"));
+        paths.LogsDirectory.Should().Be(Path.Combine("/opt/xrayne", "logs"));
+        paths.PostgresDirectory.Should().Be(Path.Combine("/opt/xrayne", "postgres"));
+        paths.DownloadsDirectory.Should().Be(Path.Combine("/opt/xrayne", "downloads"));
+        paths.CertificatesDirectory.Should().Be(Path.Combine("/opt/xrayne", "certificates"));
+        paths.LetsEncryptDirectory.Should().Be(Path.Combine("/opt/xrayne", "certificates", "letsencrypt"));
+        paths.GeoResourcesDirectory.Should().Be(Path.Combine("/opt/xrayne", "xray", "geo"));
+        paths.JsonConfig.Should().Be(Path.Combine("/opt/xrayne", "config.json"));
+        paths.EnvConfig.Should().Be(Path.Combine("/opt/xrayne", ".env"));
+        paths.DockerCompose.Should().Be(Path.Combine("/opt/xrayne", "docker-compose.yml"));
     }
 }

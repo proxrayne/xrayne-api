@@ -28,18 +28,3 @@ public sealed record NodeDto(
     string InstallationMessage,
     DateTimeOffset CreatedAt,
     DateTimeOffset? UpdatedAt);
-
-/// <summary>
-/// Response returned after scheduling remote node creation.
-/// </summary>
-public sealed record CreateNodeResponse(NodeDto Node, string JobId);
-
-/// <summary>
-/// Response returned when scheduling or applying a node operation.
-/// </summary>
-public sealed record NodeOperationResponse(NodeDto Node, string Status);
-
-/// <summary>
-/// Remote node provisioning state response.
-/// </summary>
-public sealed record NodeProvisionStateResponse(NodeProvisionState State);

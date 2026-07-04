@@ -1,21 +1,5 @@
 namespace Infrastructure.States;
 
-public enum NodeProvisionStep
-{
-    Queued,
-    Preparing,
-    Uploading,
-    Installing,
-    InstallingDependencies,
-    DownloadingImage,
-    ConfiguringCertificate,
-    StartingContainer,
-    InstallingCore,
-    Verifying,
-    Completed,
-    Failed
-}
-
 public sealed record NodeProvisionState(
     long NodeId,
     string JobId,

@@ -7,7 +7,11 @@ description: Backend development guidance for the Proxrayne xrayne-panel reposit
 
 ## Quick Start
 
-Read `references/backend-map.md`, `docs/architecture/backend.md`, `docs/styleguide/dotnet.md`, and `docs/conventions/api.md` before backend edits. Use `$proxrayne-project` first when the change affects release/install behavior or another Proxrayne repository.
+Read the shared meta styleguide `xrayne-ai/docs/DOTNET_STYLEGUIDE.md`, then
+read `references/backend-map.md`, `docs/architecture/backend.md`,
+`docs/styleguide/dotnet.md`, and `docs/conventions/api.md` before backend
+edits. Use `$proxrayne-project` first when the change affects release/install
+behavior or another Proxrayne repository.
 
 ## Implementation Rules
 

@@ -3,7 +3,6 @@ using Api.Mapping;
 using Api.Requests;
 using Api.Responses;
 using Contracts.Configurations;
-using PanelSettingsEntity = Repositories.Entities;
 
 namespace Test.Mapping;
 
@@ -19,23 +18,50 @@ public sealed class PanelSettingsProfileTests
     }
 
     [Fact]
-    public void Map_PanelOptions_To_PanelSettingsResponse_FillsFieldImpacts()
+    public void Map_PanelSettings_To_PanelSettingsDto_CopiesBootstrapFields()
     {
-        var source = new PanelSettings { Port = 1234 };
+        var source = new PanelSettings
+        {
+            BindIp = "127.0.0.1",
+            Domain = "panel.example.com",
+            Port = 1234,
+            CertPublicKeyPath = "/certs/fullchain.pem",
+            CertPrivateKeyPath = "/certs/privkey.pem",
+        };
 
-        var response = _mapper.Map<PanelSettingsResponse>(source);
+        var response = _mapper.Map<PanelSettingsDto>(source);
 
+        response.BindIp.Should().Be("127.0.0.1");
+        response.Domain.Should().Be("panel.example.com");
         response.Port.Should().Be(1234);
-        response.FieldImpacts.Should().ContainKey("port").WhoseValue.Should().Be(RestartImpact.FullRestart);
-        response.FieldImpacts.Should().ContainKey("webBasePath").WhoseValue.Should().Be(RestartImpact.FullRestart);
-        response.FieldImpacts.Should().ContainKey("domain").WhoseValue.Should().Be(RestartImpact.FullRestart);
-        response.FieldImpacts.Should().ContainKey("bindIp").WhoseValue.Should().Be(RestartImpact.FullRestart);
-        response.FieldImpacts.Should().ContainKey("certificatesDirectory").WhoseValue.Should().Be(RestartImpact.HotReload);
-        response.FieldImpacts.Should().ContainKey("geoResourcesDirectory").WhoseValue.Should().Be(RestartImpact.HotReload);
+        response.CertPublicKeyPath.Should().Be("/certs/fullchain.pem");
+        response.CertPrivateKeyPath.Should().Be("/certs/privkey.pem");
     }
 
     [Fact]
-    public void Map_UpdateRequest_To_PanelOptions_HandlesNullables()
+    public void Map_PanelSettings_To_PanelSettingsResponse_NestsSettingsDto()
+    {
+        var source = new PanelSettings
+        {
+            BindIp = "127.0.0.1",
+            Domain = "panel.example.com",
+            Port = 1234,
+            CertPublicKeyPath = "/certs/fullchain.pem",
+            CertPrivateKeyPath = "/certs/privkey.pem",
+        };
+
+        var response = _mapper.Map<PanelSettingsResponse>(source);
+
+        response.PendingRestart.Should().BeFalse();
+        response.Settings.BindIp.Should().Be("127.0.0.1");
+        response.Settings.Domain.Should().Be("panel.example.com");
+        response.Settings.Port.Should().Be(1234);
+        response.Settings.CertPublicKeyPath.Should().Be("/certs/fullchain.pem");
+        response.Settings.CertPrivateKeyPath.Should().Be("/certs/privkey.pem");
+    }
+
+    [Fact]
+    public void Map_UpdateRequest_To_PanelSettings_MapsBootstrapFieldsOnly()
     {
         var request = new UpdatePanelSettingsRequest
         {
@@ -43,7 +69,9 @@ public sealed class PanelSettingsProfileTests
             Domain = "example.com",
             Port = 9090,
             PathBase = "/p/",
-            TrustedProxyCidrs = null
+            TrustedProxyCidrs = "10.0.0.0/8",
+            CertPublicKeyPath = "/certs/fullchain.pem",
+            CertPrivateKeyPath = "/certs/privkey.pem",
         };
 
         var options = _mapper.Map<PanelSettings>(request);
@@ -51,38 +79,7 @@ public sealed class PanelSettingsProfileTests
         options.BindIp.Should().BeNull();
         options.Domain.Should().Be("example.com");
         options.Port.Should().Be(9090);
-        options.PathBase.Should().Be("/p/");
-        options.TrustedProxyCidrs.Should().BeNull();
-    }
-
-    [Fact]
-    public void Map_Entity_To_PanelOptions_RoundTrip_PreservesAllFields()
-    {
-        var entity = new PanelSettingsEntity
-        {
-            BindIp = "127.0.0.1",
-            Domain = "panel.local",
-            Port = 5097,
-            WebBasePath = "/admin/",
-            SessionLifetimeMinutes = 60,
-            TrustedProxyCidrs = "10.0.0.0/8",
-            CertificatesDirectory = "/c",
-            GeoResourcesDirectory = "/g",
-            PanelCertPublicKeyPath = "/pub",
-            PanelCertPrivateKeyPath = "/priv"
-        };
-
-        var options = _mapper.Map<PanelSettings>(entity);
-
-        options.BindIp.Should().Be("127.0.0.1");
-        options.Domain.Should().Be("panel.local");
-        options.Port.Should().Be(5097);
-        options.PathBase.Should().Be("/admin/");
-        options.SessionLifetimeMinutes.Should().Be(60);
-        options.TrustedProxyCidrs.Should().Be("10.0.0.0/8");
-        options.CertificatesDirectory.Should().Be("/c");
-        options.GeoResourcesDirectory.Should().Be("/g");
-        options.CertPublicKeyPath.Should().Be("/pub");
-        options.CertPrivateKeyPath.Should().Be("/priv");
+        options.CertPublicKeyPath.Should().Be("/certs/fullchain.pem");
+        options.CertPrivateKeyPath.Should().Be("/certs/privkey.pem");
     }
 }

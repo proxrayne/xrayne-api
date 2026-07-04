@@ -12,6 +12,9 @@ using Infrastructure.Values;
 
 namespace Api.Controllers;
 
+/// <summary>
+/// Handles local xray-core status, installation, release lookup, and operations.
+/// </summary>
 [Route("api/core")]
 [Authorize(Policy = AdminPermissionNames.SuperAdmin)]
 [Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
@@ -24,15 +27,21 @@ public sealed class CoreController(
 {
     private readonly GitHubReleaseClient xrayRepository = new(CoreDefaults.XrayRepositoryUrl);
 
+    /// <summary>
+    /// Returns the current local xray-core state.
+    /// </summary>
     [HttpGet("status")]
     [EndpointSummary("Core status")]
-    [EndpointDescription("Get is actual core status.")]
+    [EndpointDescription("Gets the current local xray-core status.")]
     [ProducesResponseType(typeof(CoreState), StatusCodes.Status200OK)]
     public CoreState GetStatus()
     {
         return coreState.GetCoreState();
     }
 
+    /// <summary>
+    /// Streams local xray-core state changes as server-sent events.
+    /// </summary>
     [HttpGet("status/stream")]
     [EndpointSummary("Core status stream")]
     [EndpointDescription("Subscribe to Xray core status changes.")]
@@ -60,11 +69,14 @@ public sealed class CoreController(
         }
     }
 
+    /// <summary>
+    /// Returns available upstream xray-core releases.
+    /// </summary>
     [HttpGet("releases")]
     [EndpointSummary("Xray releases")]
     [EndpointDescription("Get available Xray releases.")]
     [ProducesResponseType(typeof(List<GitHubReleaseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(List<ApiErrorResponse>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<List<GitHubReleaseDto>> GetReleases([FromQuery] CoreReleasesQuery query, CancellationToken ct)
     {
         var releases = await cache.GetOrCreateAsync($"core_releases_{query.PerPage}_{query.Page}", entry =>
@@ -76,7 +88,7 @@ public sealed class CoreController(
 
         if (releases is null)
         {
-            throw new Exception("Failed to retrieve releases from cache.");
+            throw new BadRequestException("Failed to retrieve releases from cache.");
         }
 
         return releases.Select(mapper.Map<GitHubReleaseDto>).ToList();

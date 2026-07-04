@@ -81,12 +81,12 @@ public sealed class RemoteNodeProvisioner(
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
 
             var state = await client.GetInstallCoreStatusAsync(install.JobId, cancellationToken);
-            if (state.Step is RemoteNode.Models.InstallCoreStep.Installed)
+            if (state.Step is RemoteNode.Enums.InstallCoreStep.Installed)
             {
                 return;
             }
 
-            if (state.Step is RemoteNode.Models.InstallCoreStep.Failure)
+            if (state.Step is RemoteNode.Enums.InstallCoreStep.Failure)
             {
                 throw new InvalidOperationException(state.Message ?? "Remote xray-core installation failed.");
             }
@@ -173,11 +173,6 @@ public sealed class RemoteNodeProvisioner(
     private static string Quote(string value)
         => $"'{value.Replace("'", "'\"'\"'", StringComparison.Ordinal)}'";
 }
-
-/// <summary>
-/// Describes a successful remote node provisioning verification result.
-/// </summary>
-public sealed record RemoteNodeProvisionResult(string? XrayVersion, DateTimeOffset VerifiedAt);
 
 internal static class RemoteNodeInstallerScript
 {

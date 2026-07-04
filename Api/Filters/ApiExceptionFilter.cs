@@ -5,25 +5,42 @@ using Api.Responses;
 
 namespace Api.Filters;
 
+/// <summary>
+/// Converts exceptions thrown by API actions into consistent error responses.
+/// </summary>
 public sealed class ApiExceptionFilter(ILogger<ApiExceptionFilter> logger) : IExceptionFilter
 {
+    /// <inheritdoc />
     public int Order => int.MaxValue - 10;
 
+    /// <inheritdoc />
     public void OnActionExecuting(ActionExecutingContext context) { }
 
+    /// <inheritdoc />
     public void OnException(ExceptionContext context)
     {
         var response = context.Exception switch
         {
             ApiException ext => new ApiErrorResponse(ext.StatusCode, ext.Name, ext.Detail),
-            _ => new ApiErrorResponse(400, "BadRequest", context.Exception.Message)
+            _ => new ApiErrorResponse(
+                StatusCodes.Status500InternalServerError,
+                "Internal Server Error",
+                "An unexpected error occurred.")
         };
 
-        logger.LogWarning(context.Exception, "API exception {StatusCode} {Title}: {Detail}",
-           response.Status,
-           response.Name,
-        response.Detail
-        );
+        if (response.Status >= StatusCodes.Status500InternalServerError)
+        {
+            logger.LogError(context.Exception, "API exception {StatusCode} {Title}", response.Status, response.Name);
+        }
+        else
+        {
+            logger.LogWarning(
+                context.Exception,
+                "API exception {StatusCode} {Title}: {Detail}",
+                response.Status,
+                response.Name,
+                response.Detail);
+        }
 
         context.Result = new ObjectResult(response) { StatusCode = response.Status };
 

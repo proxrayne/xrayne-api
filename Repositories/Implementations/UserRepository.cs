@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
 using Repositories.Contracts;

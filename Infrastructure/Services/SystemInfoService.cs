@@ -43,14 +43,19 @@ public sealed class SystemInfoService : ISystemInfoService
 
         await Task.WhenAll(cpuTask, memoryTask, swapTask, threadTask);
 
+        var cpuInfo = await cpuTask;
+        var memoryInfo = await memoryTask;
+        var swapInfo = await swapTask;
+        var systemThreadCount = await threadTask;
+
         return new SystemInfoSnapshot(
-            cpuTask.Result,
-            memoryTask.Result,
-            swapTask.Result,
+            cpuInfo,
+            memoryInfo,
+            swapInfo,
             GetStorageInfo(),
             GetUptime(),
             GetCurrentProcessThreadCount(),
-            threadTask.Result,
+            systemThreadCount,
             GetNetworkInfo());
     }
 
@@ -412,11 +417,3 @@ public sealed class SystemInfoService : ISystemInfoService
 
     private static double ClampPercent(double value) => Math.Clamp(value, 0, 100);
 }
-
-
-/// <summary>
-/// Defines host directories used by system information storage metrics.
-/// </summary>
-public sealed record SystemInfoOptions(
-    string ApplicationDirectory,
-    string DownloadsDirectory);

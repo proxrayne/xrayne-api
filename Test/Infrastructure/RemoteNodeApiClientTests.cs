@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
+using RemoteNode.Enums;
 using RemoteNode.Exceptions;
 using RemoteNode.Models;
 using RemoteNode.Services;
@@ -143,10 +144,7 @@ public sealed class RemoteNodeApiClientTests
         var client = CreateClient(new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(
-                """
-                data: {"isInstalled":true,"status":"stopped","isInstalling":false,"version":"25.7.1"}
-
-                """,
+                "data: {\"isInstalled\":true,\"status\":\"stopped\",\"isInstalling\":false,\"version\":\"25.7.1\"}\n\n",
                 Encoding.UTF8,
                 "text/event-stream")
         });
@@ -204,7 +202,11 @@ public sealed class RemoteNodeApiClientTests
     }
 
     private static string SampleConnectionEventJson()
-        => $$"""{"type":"heartbeat","timestamp":"2026-07-03T12:00:00+00:00","ping":{{SamplePingJson()}}}""";
+    {
+        return """
+        {"type":"heartbeat","timestamp":"2026-07-03T12:00:00+00:00","ping":{"nodeVersion":"1.2.3","environment":"Development","uptime":"01:00:00","core":{"isInstalled":true,"isRunning":true,"version":"24.9.30","status":"started"}}}
+        """;
+    }
 
     private static string SamplePingJson()
     {

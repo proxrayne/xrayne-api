@@ -12,6 +12,9 @@ using Repositories.Contracts;
 
 namespace Api.Controllers;
 
+/// <summary>
+/// Handles administrator authentication and current-account lookup endpoints.
+/// </summary>
 [Route("api/auth")]
 public sealed class AuthController(
     IAdminAccountRepository adminAccounts,
@@ -19,6 +22,9 @@ public sealed class AuthController(
     IOptions<JwtOptions> jwtOptions,
     IMapper mapper) : ApiControllerBase
 {
+    /// <summary>
+    /// Returns the administrator account represented by the current access token.
+    /// </summary>
     [HttpGet("me")]
     [Authorize]
     [EndpointSummary("Get current administrator account")]
@@ -42,6 +48,9 @@ public sealed class AuthController(
         return Ok(mapper.Map<AdminDto>(account));
     }
 
+    /// <summary>
+    /// Authenticates an administrator and returns an access token.
+    /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
     [EndpointSummary("Authenticate administrator")]
@@ -53,7 +62,7 @@ public sealed class AuthController(
         var account = await adminAccounts.GetByUsernameAsync(request.Username, ct);
         if (account is null || !IdentityPasswordHasher.VerifyPassword(request.Password, account.PasswordHash))
         {
-            throw new Exception("Invalid username or password.");
+            throw new BadRequestException("Invalid username or password.");
         }
 
         var updatedAccount = await adminAccounts.SetLastLoginAsync(account.Id, DateTimeOffset.UtcNow, ct);

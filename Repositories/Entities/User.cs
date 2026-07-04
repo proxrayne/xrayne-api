@@ -41,14 +41,3 @@ public sealed class User : CreateUpdateEntity
 
     public AdminAccount Admin { get; set; } = null!;
 }
-
-public sealed class ClientOption
-{
-    public Guid? Uuid { get; set; }
-
-    public XtlsFlow? Flow { get; set; }
-
-    public string? Password { get; set; }
-
-    public EncryptionMethod? Method { get; set; }
-}

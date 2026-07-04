@@ -98,5 +98,3 @@ public sealed class EventStreamManager : IEventStreamManager
         }
     }
 }
-
-public sealed record EventStreamSubscription<T>(Guid Id, string StreamKey, ChannelReader<T> Reader);
