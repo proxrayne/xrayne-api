@@ -17,10 +17,9 @@ public sealed class RemoteNodeApiClientTests
 
         var ping = await client.PingAsync();
 
-        ping.Service.Should().Be("xrayne-node");
         ping.NodeVersion.Should().Be("1.2.3");
+        ping.Environment.Should().Be("Development");
         ping.Core.Version.Should().Be("24.9.30");
-        ping.System.MachineName.Should().Be("node-a");
     }
 
     [Fact]
@@ -65,7 +64,126 @@ public sealed class RemoteNodeApiClientTests
 
         events.Should().ContainSingle();
         events[0].Type.Should().Be("heartbeat");
-        events[0].Ping?.System.MachineName.Should().Be("node-a");
+        events[0].Timestamp.Should().Be(DateTimeOffset.Parse("2026-07-03T12:00:00+00:00"));
+        events[0].Ping?.NodeVersion.Should().Be("1.2.3");
+    }
+
+    [Fact]
+    public async Task GetSystemStatusAsync_returns_remote_system_status()
+    {
+        var client = CreateClient(JsonResponse(SampleSystemStatusJson()));
+
+        var status = await client.GetSystemStatusAsync();
+
+        status.Timestamp.Should().Be(DateTimeOffset.Parse("2026-07-03T12:00:00+00:00"));
+        status.System.MachineName.Should().Be("node-a");
+        status.System.Cpu.LogicalCoreCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task GetCoreStatusAsync_returns_remote_core_status()
+    {
+        var client = CreateClient(JsonResponse("""
+        {
+          "isInstalled": true,
+          "status": "started",
+          "isInstalling": false,
+          "version": "25.7.1"
+        }
+        """));
+
+        var status = await client.GetCoreStatusAsync();
+
+        status.IsInstalled.Should().BeTrue();
+        status.Status.Should().Be(CoreStatus.Started);
+        status.IsInstalling.Should().BeFalse();
+        status.Version.Should().Be("25.7.1");
+    }
+
+    [Fact]
+    public async Task InstallCoreAsync_returns_remote_install_job()
+    {
+        var client = CreateClient(JsonResponse("""
+        {
+          "jobId": "job-1",
+          "version": "latest",
+          "status": "queued"
+        }
+        """));
+
+        var result = await client.InstallCoreAsync(new InstallCoreRequest("latest"));
+
+        result.JobId.Should().Be("job-1");
+        result.Version.Should().Be("latest");
+        result.Status.Should().Be("queued");
+    }
+
+    [Fact]
+    public async Task GetInstallCoreStatusAsync_returns_remote_install_status()
+    {
+        var client = CreateClient(JsonResponse("""
+        {
+          "jobId": "job-1",
+          "step": "installed",
+          "message": "done",
+          "updatedAt": "2026-07-04T12:00:00+00:00"
+        }
+        """));
+
+        var result = await client.GetInstallCoreStatusAsync("job-1");
+
+        result.JobId.Should().Be("job-1");
+        result.Step.Should().Be(InstallCoreStep.Installed);
+        result.Message.Should().Be("done");
+    }
+
+    [Fact]
+    public async Task CoreStatusStreamAsync_reads_server_sent_events()
+    {
+        var client = CreateClient(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """
+                data: {"isInstalled":true,"status":"stopped","isInstalling":false,"version":"25.7.1"}
+
+                """,
+                Encoding.UTF8,
+                "text/event-stream")
+        });
+
+        var events = new List<CoreStatusResponse>();
+        await foreach (var item in client.CoreStatusStreamAsync())
+        {
+            events.Add(item);
+        }
+
+        events.Should().ContainSingle();
+        events[0].Status.Should().Be(CoreStatus.Stopped);
+    }
+
+    [Theory]
+    [InlineData("start")]
+    [InlineData("stop")]
+    [InlineData("restart")]
+    public async Task Core_operation_methods_return_accepted_operation(string operation)
+    {
+        var client = CreateClient(JsonResponse($$"""
+        {
+          "operation": "{{operation}}",
+          "status": "queued"
+        }
+        """));
+
+        var result = operation switch
+        {
+            "start" => await client.StartCoreAsync(),
+            "stop" => await client.StopCoreAsync(),
+            "restart" => await client.RestartCoreAsync(),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
+
+        result.Operation.Should().Be(operation);
+        result.Status.Should().Be("queued");
     }
 
     private static IRemoteNodeApiClient CreateClient(HttpResponseMessage response)
@@ -92,18 +210,24 @@ public sealed class RemoteNodeApiClientTests
     {
         return """
         {
-          "service": "xrayne-node",
           "nodeVersion": "1.2.3",
           "environment": "Development",
-          "startedAt": "2026-07-03T11:00:00+00:00",
-          "timestamp": "2026-07-03T12:00:00+00:00",
           "uptime": "01:00:00",
           "core": {
             "isInstalled": true,
             "isRunning": true,
             "version": "24.9.30",
-            "status": "running"
-          },
+            "status": "started"
+          }
+        }
+        """;
+    }
+
+    private static string SampleSystemStatusJson()
+    {
+        return """
+        {
+          "timestamp": "2026-07-03T12:00:00+00:00",
           "system": {
             "machineName": "node-a",
             "osDescription": "Linux",

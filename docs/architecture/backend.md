@@ -54,8 +54,16 @@ controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every SSE heartbeat to the database.
 
 The standalone remote node `/api/ping` response and `/api/connect` SSE payloads
-must include `Service`, `NodeVersion`, `Environment`, `StartedAt`, `Timestamp`,
-`Uptime`, `Core`, and `System`.
+must include `NodeVersion`, `Environment`, `Uptime`, and `Core`. The SSE event
+timestamp is the heartbeat time persisted by the panel. Host telemetry is fetched
+separately from the node `/api/system/status` endpoint and proxied by the panel
+through `/api/nodes/{id}/system/status`.
+
+Remote node xray-core management is exposed through panel endpoints under
+`/api/nodes/{id}/core`. The panel resolves the encrypted node API key, calls the
+standalone node API through `RemoteNode`, and streams status/install events back
+to the UI. Provisioning starts the node container, verifies the node API, then
+installs the latest XTLS `xray-core` as the final remote setup step.
 
 ## Contracts Layer
 

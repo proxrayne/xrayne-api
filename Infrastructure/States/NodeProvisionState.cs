@@ -10,6 +10,7 @@ public enum NodeProvisionStep
     DownloadingImage,
     ConfiguringCertificate,
     StartingContainer,
+    InstallingCore,
     Verifying,
     Completed,
     Failed
@@ -45,6 +46,9 @@ public sealed record NodeProvisionState(
 
     public static NodeProvisionState StartingContainer(long nodeId, string jobId)
         => new(nodeId, jobId, NodeProvisionStep.StartingContainer, "Starting remote node container.", DateTimeOffset.UtcNow);
+
+    public static NodeProvisionState InstallingCore(long nodeId, string jobId)
+        => new(nodeId, jobId, NodeProvisionStep.InstallingCore, "Installing remote xray-core.", DateTimeOffset.UtcNow);
 
     public static NodeProvisionState Verifying(long nodeId, string jobId)
         => new(nodeId, jobId, NodeProvisionStep.Verifying, "Verifying remote node connection.", DateTimeOffset.UtcNow);

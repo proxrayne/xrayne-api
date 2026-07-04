@@ -4,14 +4,10 @@ namespace RemoteNode.Models;
 /// Describes the current remote node telemetry returned to the panel.
 /// </summary>
 public sealed record NodePingResponse(
-    string Service,
     string NodeVersion,
     string Environment,
-    DateTimeOffset StartedAt,
-    DateTimeOffset Timestamp,
     TimeSpan Uptime,
-    NodeCoreStatus Core,
-    NodeSystemStats System);
+    NodeCoreStatus Core);
 
 /// <summary>
 /// Describes the current xray-core state on the remote node.

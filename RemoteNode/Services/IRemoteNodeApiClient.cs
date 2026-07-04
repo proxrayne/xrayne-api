@@ -28,6 +28,11 @@ public interface IRemoteNodeApiClient
     Task<CoreStatusResponse> GetCoreStatusAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Opens and reads the remote xray-core status stream.
+    /// </summary>
+    IAsyncEnumerable<CoreStatusResponse> CoreStatusStreamAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Schedules remote xray-core installation.
     /// </summary>
     Task<InstallCoreResponse> InstallCoreAsync(InstallCoreRequest request, CancellationToken cancellationToken = default);
@@ -36,6 +41,13 @@ public interface IRemoteNodeApiClient
     /// Gets remote xray-core installation status.
     /// </summary>
     Task<InstallCoreStatusResponse> GetInstallCoreStatusAsync(string jobId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Opens and reads a remote xray-core installation status stream.
+    /// </summary>
+    IAsyncEnumerable<InstallCoreStatusResponse> InstallCoreStatusStreamAsync(
+        string jobId,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Starts remote xray-core.

@@ -18,6 +18,6 @@ public sealed class NodeConnectionVerifier(IRemoteNodeApiClientFactory apiClient
         var endpoint = new RemoteNodeEndpoint(node.Id, node.Address, node.ApiPort, apiKey);
         var ping = await apiClientFactory.Create(endpoint).PingAsync(cancellationToken);
 
-        return new NodeConnectionVerificationResult(ping.Core.Version, ping.Timestamp);
+        return new NodeConnectionVerificationResult(ping.Core.Version, DateTimeOffset.UtcNow);
     }
 }

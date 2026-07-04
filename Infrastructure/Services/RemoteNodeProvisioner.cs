@@ -6,6 +6,8 @@ using Renci.SshNet.Common;
 using Contracts.Configurations;
 using Contracts.Enums;
 using Infrastructure.States;
+using RemoteNode.Models;
+using RemoteNode.Services;
 using Repositories.Entities;
 
 namespace Infrastructure.Services;
@@ -17,6 +19,7 @@ public sealed class RemoteNodeProvisioner(
     INodeProvisionStateMachine stateMachine,
     INodeImageReleaseResolver imageReleaseResolver,
     INodeConnectionVerifier connectionVerifier,
+    IRemoteNodeApiClientFactory apiClientFactory,
     IOptions<NodeConnectionOptions> connectionOptions) : IRemoteNodeProvisioner
 {
     public async Task<RemoteNodeProvisionResult> ProvisionAsync(
@@ -52,9 +55,44 @@ public sealed class RemoteNodeProvisioner(
 
         stateMachine.Dispatch(jobId, NodeProvisionState.Verifying(node.Id, jobId));
 
+        _ = await connectionVerifier.VerifyAsync(node, apiKey, cancellationToken);
+
+        stateMachine.Dispatch(jobId, NodeProvisionState.InstallingCore(node.Id, jobId));
+        await InstallRemoteCoreAsync(node, apiKey, cancellationToken);
+
+        stateMachine.Dispatch(jobId, NodeProvisionState.Verifying(node.Id, jobId));
         var result = await connectionVerifier.VerifyAsync(node, apiKey, cancellationToken);
 
         return new RemoteNodeProvisionResult(result.XrayVersion, result.VerifiedAt);
+    }
+
+    private async Task InstallRemoteCoreAsync(
+        NodeEntity node,
+        string apiKey,
+        CancellationToken cancellationToken)
+    {
+        var client = apiClientFactory.Create(new RemoteNodeEndpoint(node.Id, node.Address, node.ApiPort, apiKey));
+        var install = await client.InstallCoreAsync(new InstallCoreRequest("latest"), cancellationToken);
+        var deadline = DateTimeOffset.UtcNow.AddMinutes(15);
+
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+
+            var state = await client.GetInstallCoreStatusAsync(install.JobId, cancellationToken);
+            if (state.Step is RemoteNode.Models.InstallCoreStep.Installed)
+            {
+                return;
+            }
+
+            if (state.Step is RemoteNode.Models.InstallCoreStep.Failure)
+            {
+                throw new InvalidOperationException(state.Message ?? "Remote xray-core installation failed.");
+            }
+        }
+
+        throw new TimeoutException("Remote xray-core installation timed out.");
     }
 
     private static SshClient CreateSshClient(NodeEntity node)
@@ -206,7 +244,7 @@ run() {
 }
 
 ensure_working_directory() {
-  run mkdir -p "$WORKING_DIRECTORY/downloads" "$WORKING_DIRECTORY/logs" "$WORKING_DIRECTORY/certificates"
+  run mkdir -p "$WORKING_DIRECTORY/downloads" "$WORKING_DIRECTORY/logs" "$WORKING_DIRECTORY/certificates" "$WORKING_DIRECTORY/xray"
   run chown -R "$(id -u):$(id -g)" "$WORKING_DIRECTORY"
 }
 
@@ -315,6 +353,7 @@ NODE_API_KEY=$NODE_API_KEY
 NODE_API_PORT=$NODE_API_PORT
 NODE_IMAGE=xrayne-node:$NODE_IMAGE_TAG
 NODE_STREAM_HEARTBEAT_SECONDS=$NODE_STREAM_HEARTBEAT_SECONDS
+PROJECT_PATH=$WORKING_DIRECTORY
 CERT_FULLCHAIN_PATH=/app/certificates/letsencrypt/$CERT_NAME/fullchain.pem
 CERT_PRIVATE_KEY_PATH=/app/certificates/letsencrypt/$CERT_NAME/privkey.pem
 EOF_ENV
@@ -331,11 +370,13 @@ services:
       ASPNETCORE_URLS: https://+:${NODE_API_PORT}
       Node__ApiKey: ${NODE_API_KEY}
       Node__StreamHeartbeatSeconds: ${NODE_STREAM_HEARTBEAT_SECONDS}
+      PROJECT_PATH: /app/shared
       Kestrel__Certificates__Default__Path: ${CERT_FULLCHAIN_PATH}
       Kestrel__Certificates__Default__KeyPath: ${CERT_PRIVATE_KEY_PATH}
     ports:
       - "${NODE_API_PORT}:${NODE_API_PORT}"
     volumes:
+      - .:/app/shared
       - ./logs:/app/logs
       - ./certificates:/app/certificates:ro
 EOF_COMPOSE

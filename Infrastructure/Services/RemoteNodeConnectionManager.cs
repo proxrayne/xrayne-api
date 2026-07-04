@@ -322,11 +322,16 @@ public sealed class RemoteNodeConnectionManager(
                 }
 
                 var now = DateTimeOffset.UtcNow;
-                MarkHeartbeat(snapshots, node.Id, connectionEvent.Ping);
+                MarkHeartbeat(snapshots, node.Id, connectionEvent.Timestamp, connectionEvent.Ping);
 
                 if (!hasPersistedConnection)
                 {
-                    await MarkConnectedAsync(scopeFactory, node.Id, connectionEvent.Ping, cancellationToken);
+                    await MarkConnectedAsync(
+                        scopeFactory,
+                        node.Id,
+                        connectionEvent.Timestamp,
+                        connectionEvent.Ping,
+                        cancellationToken);
                     hasPersistedConnection = true;
                     lastPersistedHeartbeat = now;
                     continue;
@@ -336,7 +341,12 @@ public sealed class RemoteNodeConnectionManager(
                 if (lastPersistedHeartbeat == DateTimeOffset.MinValue
                     || now - lastPersistedHeartbeat >= persistInterval)
                 {
-                    await PersistHeartbeatAsync(scopeFactory, node.Id, connectionEvent.Ping, cancellationToken);
+                    await PersistHeartbeatAsync(
+                        scopeFactory,
+                        node.Id,
+                        connectionEvent.Timestamp,
+                        connectionEvent.Ping,
+                        cancellationToken);
                     lastPersistedHeartbeat = now;
                 }
             }
@@ -373,6 +383,7 @@ public sealed class RemoteNodeConnectionManager(
         private static void MarkHeartbeat(
             ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots,
             long nodeId,
+            DateTimeOffset heartbeatAt,
             NodePingResponse ping)
         {
             var connectedAt = DateTimeOffset.UtcNow;
@@ -383,7 +394,7 @@ public sealed class RemoteNodeConnectionManager(
                     RemoteNodeConnectionState.Connected,
                     connectedAt,
                     connectedAt,
-                    ping.Timestamp,
+                    heartbeatAt,
                     0,
                     null,
                     ping),
@@ -392,7 +403,7 @@ public sealed class RemoteNodeConnectionManager(
                     State = RemoteNodeConnectionState.Connected,
                     UpdatedAt = connectedAt,
                     ConnectedAt = current.ConnectedAt ?? connectedAt,
-                    LastHeartbeatAt = ping.Timestamp,
+                    LastHeartbeatAt = heartbeatAt,
                     ReconnectAttemptCount = 0,
                     Message = null,
                     Telemetry = ping
@@ -402,6 +413,7 @@ public sealed class RemoteNodeConnectionManager(
         private static async Task MarkConnectedAsync(
             IServiceScopeFactory scopeFactory,
             long nodeId,
+            DateTimeOffset heartbeatAt,
             NodePingResponse ping,
             CancellationToken cancellationToken)
         {
@@ -410,7 +422,7 @@ public sealed class RemoteNodeConnectionManager(
             {
                 node.Status = NodeStatus.Connected;
                 node.ConnectedAt = connectedAt;
-                node.LastSeenAt = ping.Timestamp;
+                node.LastSeenAt = heartbeatAt;
                 node.XrayVersion = ping.Core.Version;
                 node.ReconnectAttemptCount = 0;
                 node.Message = null;
@@ -421,12 +433,13 @@ public sealed class RemoteNodeConnectionManager(
         private static async Task PersistHeartbeatAsync(
             IServiceScopeFactory scopeFactory,
             long nodeId,
+            DateTimeOffset heartbeatAt,
             NodePingResponse ping,
             CancellationToken cancellationToken)
         {
             await UpdateNodeAsync(scopeFactory, nodeId, node =>
             {
-                node.LastSeenAt = ping.Timestamp;
+                node.LastSeenAt = heartbeatAt;
                 node.XrayVersion = ping.Core.Version;
                 node.Message = null;
             }, cancellationToken);

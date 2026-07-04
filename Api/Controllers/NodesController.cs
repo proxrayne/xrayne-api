@@ -11,6 +11,10 @@ using Contracts.Enums;
 using Contracts.Values;
 using Infrastructure.Services;
 using Infrastructure.States;
+using Infrastructure.Values;
+using RemoteNode.Exceptions;
+using RemoteNode.Models;
+using RemoteNode.Services;
 using Repositories.Entities;
 
 namespace Api.Controllers;
@@ -27,12 +31,15 @@ public sealed class NodesController(
     INodeSecretService secrets,
     INodeConnectionVerifier connectionVerifier,
     IRemoteNodeConnectionManager connectionManager,
+    IRemoteNodeApiClientFactory apiClientFactory,
     IBackgroundTaskScheduler scheduler,
     INodeProvisionStateMachine provisionStates,
     IEventStreamManager eventStreams,
     IHostEnvironment environment,
     IOptions<NodeConnectionOptions> nodeConnectionOptions) : ApiControllerBase
 {
+    private readonly GitHubReleaseClient xrayRepository = new(CoreDefaults.XrayRepositoryUrl);
+
     /// <summary>
     /// Gets all remote nodes available to administrators with node permissions.
     /// </summary>
@@ -60,6 +67,29 @@ public sealed class NodesController(
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
 
         return mapper.Map<NodeDto>(node);
+    }
+
+    /// <summary>
+    /// Gets current remote node system status.
+    /// </summary>
+    [HttpGet("{id:long}/system/status")]
+    [EndpointSummary("Remote node system status")]
+    [EndpointDescription("Get system status and host telemetry from a remote node.")]
+    [ProducesResponseType(typeof(SystemStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<SystemStatusResponse> GetSystemStatus(long id, CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        try
+        {
+            return await CreateRemoteNodeClient(node).GetSystemStatusAsync(cancellationToken);
+        }
+        catch (RemoteNodeException exception)
+        {
+            throw ToApiException(exception);
+        }
     }
 
     /// <summary>
@@ -121,6 +151,207 @@ public sealed class NodesController(
 
         return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(mapper.Map<NodeDto>(node), jobId));
     }
+
+    /// <summary>
+    /// Gets current remote node xray-core status.
+    /// </summary>
+    [HttpGet("{id:long}/core/status")]
+    [EndpointSummary("Remote node core status")]
+    [EndpointDescription("Get the current xray-core status from a remote node.")]
+    [ProducesResponseType(typeof(CoreStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<CoreStatusResponse> GetCoreStatus(long id, CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        try
+        {
+            return await CreateRemoteNodeClient(node).GetCoreStatusAsync(cancellationToken);
+        }
+        catch (RemoteNodeException exception)
+        {
+            throw ToApiException(exception);
+        }
+    }
+
+    /// <summary>
+    /// Streams current remote node xray-core status.
+    /// </summary>
+    [HttpGet("{id:long}/core/status/stream")]
+    [EndpointSummary("Remote node core status stream")]
+    [EndpointDescription("Subscribe to remote node xray-core status changes.")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task StreamCoreStatus(long id, CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var client = CreateRemoteNodeClient(node);
+
+        SetupStreamHeaders();
+
+        try
+        {
+            await Response.StartAsync(cancellationToken);
+            await foreach (var state in client.CoreStatusStreamAsync(cancellationToken))
+            {
+                await WriteServerSentEventAsync(state, cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (RemoteNodeException exception)
+        {
+            if (!Response.HasStarted)
+            {
+                throw ToApiException(exception);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets available xray-core releases for remote node installation.
+    /// </summary>
+    [HttpGet("{id:long}/core/releases")]
+    [EndpointSummary("Remote node Xray releases")]
+    [EndpointDescription("Get available xray-core releases for remote node installation.")]
+    [ProducesResponseType(typeof(List<GitHubReleaseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<List<GitHubReleaseDto>> GetCoreReleases(
+        long id,
+        [FromQuery] CoreReleasesQuery query,
+        CancellationToken cancellationToken)
+    {
+        _ = await GetAccessibleNodeAsync(id, cancellationToken);
+        var releases = await xrayRepository.GetReleasesAsync(query.PerPage, query.Page, cancellationToken);
+
+        return releases.Select(mapper.Map<GitHubReleaseDto>).ToList();
+    }
+
+    /// <summary>
+    /// Schedules remote node xray-core installation or reinstallation.
+    /// </summary>
+    [HttpPost("{id:long}/core/install")]
+    [EndpointSummary("Install remote node Xray")]
+    [EndpointDescription("Install or reinstall xray-core on a remote node.")]
+    [ProducesResponseType(typeof(InstallCoreResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<InstallCoreResponse>> InstallCore(
+        long id,
+        [FromBody] RemoteNode.Models.InstallCoreRequest request,
+        CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        try
+        {
+            return Accepted(await CreateRemoteNodeClient(node).InstallCoreAsync(request, cancellationToken));
+        }
+        catch (RemoteNodeException exception)
+        {
+            throw ToApiException(exception);
+        }
+    }
+
+    /// <summary>
+    /// Gets remote node xray-core installation status.
+    /// </summary>
+    [HttpGet("{id:long}/core/install/{jobId}/status")]
+    [EndpointSummary("Remote node Xray install status")]
+    [EndpointDescription("Get xray-core installation status from a remote node.")]
+    [ProducesResponseType(typeof(InstallCoreStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<InstallCoreStatusResponse> GetInstallCoreStatus(
+        long id,
+        string jobId,
+        CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        try
+        {
+            return await CreateRemoteNodeClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
+        }
+        catch (RemoteNodeException exception)
+        {
+            throw ToApiException(exception);
+        }
+    }
+
+    /// <summary>
+    /// Streams remote node xray-core installation status.
+    /// </summary>
+    [HttpGet("{id:long}/core/install/{jobId}/stream")]
+    [EndpointSummary("Remote node Xray install stream")]
+    [EndpointDescription("Subscribe to xray-core installation status from a remote node.")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task StreamInstallCoreStatus(
+        long id,
+        string jobId,
+        CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var client = CreateRemoteNodeClient(node);
+
+        SetupStreamHeaders();
+
+        try
+        {
+            await Response.StartAsync(cancellationToken);
+            await foreach (var state in client.InstallCoreStatusStreamAsync(jobId, cancellationToken))
+            {
+                await WriteServerSentEventAsync(state, cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (RemoteNodeException exception)
+        {
+            if (!Response.HasStarted)
+            {
+                throw ToApiException(exception);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Schedules remote node xray-core start.
+    /// </summary>
+    [HttpPost("{id:long}/core/start")]
+    [EndpointSummary("Start remote node Xray")]
+    [EndpointDescription("Start xray-core on a remote node.")]
+    [ProducesResponseType(typeof(OperationAcceptedResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public Task<ActionResult<OperationAcceptedResponse>> StartCore(long id, CancellationToken cancellationToken)
+        => ScheduleCoreOperation(id, client => client.StartCoreAsync(cancellationToken), cancellationToken);
+
+    /// <summary>
+    /// Schedules remote node xray-core stop.
+    /// </summary>
+    [HttpPost("{id:long}/core/stop")]
+    [EndpointSummary("Stop remote node Xray")]
+    [EndpointDescription("Stop xray-core on a remote node.")]
+    [ProducesResponseType(typeof(OperationAcceptedResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public Task<ActionResult<OperationAcceptedResponse>> StopCore(long id, CancellationToken cancellationToken)
+        => ScheduleCoreOperation(id, client => client.StopCoreAsync(cancellationToken), cancellationToken);
+
+    /// <summary>
+    /// Schedules remote node xray-core restart.
+    /// </summary>
+    [HttpPost("{id:long}/core/restart")]
+    [EndpointSummary("Restart remote node Xray")]
+    [EndpointDescription("Restart xray-core on a remote node.")]
+    [ProducesResponseType(typeof(OperationAcceptedResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public Task<ActionResult<OperationAcceptedResponse>> RestartCore(long id, CancellationToken cancellationToken)
+        => ScheduleCoreOperation(id, client => client.RestartCoreAsync(cancellationToken), cancellationToken);
 
     /// <summary>
     /// Streams remote node provisioning state.
@@ -283,6 +514,44 @@ public sealed class NodesController(
         }
 
         return secrets.GenerateApiKey();
+    }
+
+    private IRemoteNodeApiClient CreateRemoteNodeClient(NodeEntity node)
+    {
+        var endpoint = new RemoteNodeEndpoint(
+            node.Id,
+            node.Address,
+            node.ApiPort,
+            secrets.UnprotectApiKey(node.EncryptedApiKey));
+
+        return apiClientFactory.Create(endpoint);
+    }
+
+    private async Task<ActionResult<OperationAcceptedResponse>> ScheduleCoreOperation(
+        long id,
+        Func<IRemoteNodeApiClient, Task<OperationAcceptedResponse>> operation,
+        CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        try
+        {
+            return Accepted(await operation(CreateRemoteNodeClient(node)));
+        }
+        catch (RemoteNodeException exception)
+        {
+            throw ToApiException(exception);
+        }
+    }
+
+    private static ApiException ToApiException(RemoteNodeException exception)
+    {
+        return exception switch
+        {
+            RemoteNodeHttpException httpException when httpException.ResponseBody is not null
+                => new BadRequestException($"{httpException.Message} {httpException.ResponseBody}"),
+            _ => new BadRequestException(exception.Message)
+        };
     }
 
     private async Task ConnectDevelopmentNodeAsync(

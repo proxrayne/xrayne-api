@@ -31,7 +31,43 @@ public sealed class RemoteNodeApiClient(
     public async IAsyncEnumerable<NodeConnectionEvent> ConnectStreamAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        const string path = "api/connect";
+        await foreach (var connectionEvent in ReadServerSentEventsAsync<NodeConnectionEvent>(
+                           "api/connect",
+                           cancellationToken))
+        {
+            yield return connectionEvent;
+        }
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<CoreStatusResponse> CoreStatusStreamAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var state in ReadServerSentEventsAsync<CoreStatusResponse>(
+                           "api/core/status/stream",
+                           cancellationToken))
+        {
+            yield return state;
+        }
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<InstallCoreStatusResponse> InstallCoreStatusStreamAsync(
+        string jobId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var state in ReadServerSentEventsAsync<InstallCoreStatusResponse>(
+                           $"api/core/install/{Uri.EscapeDataString(jobId)}/stream",
+                           cancellationToken))
+        {
+            yield return state;
+        }
+    }
+
+    private async IAsyncEnumerable<T> ReadServerSentEventsAsync<T>(
+        string path,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
         using var httpClient = CreateStreamClient();
         using var request = CreateRequest(HttpMethod.Get, path);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
@@ -49,22 +85,22 @@ public sealed class RemoteNodeApiClient(
 
         await foreach (var payload in ServerSentEventParser.ReadDataAsync(reader, cancellationToken))
         {
-            NodeConnectionEvent? connectionEvent;
+            T? value;
             try
             {
-                connectionEvent = JsonSerializer.Deserialize<NodeConnectionEvent>(payload, JsonOptions);
+                value = JsonSerializer.Deserialize<T>(payload, JsonOptions);
             }
             catch (JsonException exception)
             {
                 throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Invalid SSE JSON payload.", exception);
             }
 
-            if (connectionEvent is null)
+            if (value is null)
             {
                 throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Empty SSE JSON payload.");
             }
 
-            yield return connectionEvent;
+            yield return value;
         }
     }
 
