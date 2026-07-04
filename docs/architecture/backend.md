@@ -52,18 +52,30 @@ implementing node management features in this repository.
 panel startup, exposes immediate connect/reconnect/disconnect operations for
 controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every SSE heartbeat to the database.
+Live node telemetry is kept in process memory through
+`IRemoteNodeTelemetryCache`. The cache stores connection state, heartbeat
+timestamps, reconnect attempts, messages, and the latest remote node ping
+payload for each node. The panel exposes that process-local snapshot through
+`GET /api/nodes/{id}/connection` so profile reads can show node version and
+xray-core running state without calling remote `ping`.
 
 The standalone remote node `/api/ping` response and `/api/connect` SSE payloads
 must include `NodeVersion`, `Environment`, `Uptime`, and `Core`. The SSE event
 timestamp is the heartbeat time persisted by the panel. Host telemetry is fetched
 separately from the node `/api/system/status` endpoint and proxied by the panel
 through `/api/nodes/{id}/system/status`.
+Remote node and xray-core versions are not persisted on `NodeEntity`; they are
+runtime telemetry values and are repopulated after panel restart when node
+streams reconnect.
 
 Remote node xray-core management is exposed through panel endpoints under
 `/api/nodes/{id}/core`. The panel resolves the encrypted node API key, calls the
 standalone node API through `RemoteNode`, and streams status/install events back
 to the UI. Provisioning starts the node container, verifies the node API, then
 installs the latest XTLS `xray-core` as the final remote setup step.
+Saved node connection and provisioning parameters are updated through
+`PUT /api/nodes/{id}`. Updates that change live connection parameters reset the
+node to `Connecting` and schedule a reconnect through the connection manager.
 
 ## Contracts Layer
 

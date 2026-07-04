@@ -53,7 +53,6 @@ public sealed class NodeProvisionJob(
             node.Status = NodeStatus.Connected;
             node.ConnectedAt = result.VerifiedAt;
             node.LastSeenAt = result.VerifiedAt;
-            node.XrayVersion = result.XrayVersion;
             node.ReconnectAttemptCount = 0;
             node.InstallationMessage = "Remote node is connected.";
             node.Message = null;

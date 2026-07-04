@@ -17,7 +17,6 @@ public sealed record NodeDto(
     string Note,
     CertificateMode CertificateMode,
     string ApiKeyFingerprint,
-    string? XrayVersion,
     DateTime LastStatusChange,
     DateTimeOffset? LastSeenAt,
     DateTimeOffset? ConnectedAt,

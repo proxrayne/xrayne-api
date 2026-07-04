@@ -22,6 +22,7 @@ public sealed class RemoteNodeProvisioner(
     IRemoteNodeApiClientFactory apiClientFactory,
     IOptions<NodeConnectionOptions> connectionOptions) : IRemoteNodeProvisioner
 {
+    /// <inheritdoc />
     public async Task<RemoteNodeProvisionResult> ProvisionAsync(
         NodeEntity node,
         string apiKey,
@@ -63,7 +64,7 @@ public sealed class RemoteNodeProvisioner(
         stateMachine.Dispatch(jobId, NodeProvisionState.Verifying(node.Id, jobId));
         var result = await connectionVerifier.VerifyAsync(node, apiKey, cancellationToken);
 
-        return new RemoteNodeProvisionResult(result.XrayVersion, result.VerifiedAt);
+        return new RemoteNodeProvisionResult(result.VerifiedAt);
     }
 
     private async Task InstallRemoteCoreAsync(

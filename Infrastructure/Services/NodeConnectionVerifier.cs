@@ -7,7 +7,9 @@ namespace Infrastructure.Services;
 /// <summary>
 /// Verifies a node connection by calling its authenticated ping endpoint.
 /// </summary>
-public sealed class NodeConnectionVerifier(IRemoteNodeApiClientFactory apiClientFactory) : INodeConnectionVerifier
+public sealed class NodeConnectionVerifier(
+    IRemoteNodeApiClientFactory apiClientFactory,
+    IRemoteNodeTelemetryCache telemetryCache) : INodeConnectionVerifier
 {
     /// <inheritdoc />
     public async Task<NodeConnectionVerificationResult> VerifyAsync(
@@ -17,7 +19,18 @@ public sealed class NodeConnectionVerifier(IRemoteNodeApiClientFactory apiClient
     {
         var endpoint = new RemoteNodeEndpoint(node.Id, node.Address, node.ApiPort, apiKey);
         var ping = await apiClientFactory.Create(endpoint).PingAsync(cancellationToken);
+        var verifiedAt = DateTimeOffset.UtcNow;
 
-        return new NodeConnectionVerificationResult(ping.Core.Version, DateTimeOffset.UtcNow);
+        telemetryCache.Set(new RemoteNodeConnectionSnapshot(
+            node.Id,
+            RemoteNodeConnectionState.Connected,
+            verifiedAt,
+            verifiedAt,
+            verifiedAt,
+            0,
+            null,
+            ping));
+
+        return new NodeConnectionVerificationResult(verifiedAt);
     }
 }

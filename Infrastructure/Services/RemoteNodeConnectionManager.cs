@@ -16,12 +16,12 @@ namespace Infrastructure.Services;
 public sealed class RemoteNodeConnectionManager(
     IServiceScopeFactory scopeFactory,
     IRemoteNodeApiClientFactory apiClientFactory,
+    IRemoteNodeTelemetryCache telemetryCache,
     INodeReconnectPolicy reconnectPolicy,
     IOptions<NodeConnectionOptions> options,
     ILogger<RemoteNodeConnectionManager> logger) : IRemoteNodeConnectionManager, IAsyncDisposable
 {
     private readonly ConcurrentDictionary<long, NodeConnectionWorker> workers = new();
-    private readonly ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots = new();
     private readonly CancellationTokenSource lifetimeCancellation = new();
 
     /// <inheritdoc />
@@ -77,7 +77,7 @@ public sealed class RemoteNodeConnectionManager(
             await worker.DisposeAsync();
         }
 
-        snapshots[nodeId] = new RemoteNodeConnectionSnapshot(
+        telemetryCache.Set(new RemoteNodeConnectionSnapshot(
             nodeId,
             RemoteNodeConnectionState.Disconnected,
             DateTimeOffset.UtcNow,
@@ -85,13 +85,13 @@ public sealed class RemoteNodeConnectionManager(
             null,
             0,
             "Remote node stream is stopped.",
-            null);
+            null));
     }
 
     /// <inheritdoc />
     public RemoteNodeConnectionSnapshot? GetSnapshot(long nodeId)
     {
-        return snapshots.TryGetValue(nodeId, out var snapshot) ? snapshot : null;
+        return telemetryCache.Get(nodeId);
     }
 
     /// <inheritdoc />
@@ -116,9 +116,9 @@ public sealed class RemoteNodeConnectionManager(
                 nodeId,
                 scopeFactory,
                 apiClientFactory,
+                telemetryCache,
                 reconnectPolicy,
                 options.Value,
-                snapshots,
                 logger,
                 lifetimeCancellation.Token),
             (existingNodeId, existingWorker) =>
@@ -133,9 +133,9 @@ public sealed class RemoteNodeConnectionManager(
                     existingNodeId,
                     scopeFactory,
                     apiClientFactory,
+                    telemetryCache,
                     reconnectPolicy,
                     options.Value,
-                    snapshots,
                     logger,
                     lifetimeCancellation.Token);
             });
@@ -181,9 +181,9 @@ public sealed class RemoteNodeConnectionManager(
             long nodeId,
             IServiceScopeFactory scopeFactory,
             IRemoteNodeApiClientFactory apiClientFactory,
+            IRemoteNodeTelemetryCache telemetryCache,
             INodeReconnectPolicy reconnectPolicy,
             NodeConnectionOptions options,
-            ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots,
             ILogger logger,
             CancellationToken cancellationToken)
         {
@@ -192,9 +192,9 @@ public sealed class RemoteNodeConnectionManager(
                 nodeId,
                 scopeFactory,
                 apiClientFactory,
+                telemetryCache,
                 reconnectPolicy,
                 options,
-                snapshots,
                 logger,
                 workerCancellation.Token);
 
@@ -221,9 +221,9 @@ public sealed class RemoteNodeConnectionManager(
             long nodeId,
             IServiceScopeFactory scopeFactory,
             IRemoteNodeApiClientFactory apiClientFactory,
+            IRemoteNodeTelemetryCache telemetryCache,
             INodeReconnectPolicy reconnectPolicy,
             NodeConnectionOptions options,
-            ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots,
             ILogger logger,
             CancellationToken cancellationToken)
         {
@@ -242,10 +242,10 @@ public sealed class RemoteNodeConnectionManager(
 
                 try
                 {
-                    await MarkConnectingAsync(scopeFactory, snapshots, nodeId, "Connecting to remote node stream.", cancellationToken);
+                    await MarkConnectingAsync(scopeFactory, telemetryCache, nodeId, "Connecting to remote node stream.", cancellationToken);
                     var endpoint = await CreateEndpointAsync(scopeFactory, node, cancellationToken);
                     var client = apiClientFactory.Create(endpoint);
-                    await ConnectStreamAsync(scopeFactory, snapshots, node, client, options, cancellationToken);
+                    await ConnectStreamAsync(scopeFactory, telemetryCache, node, client, options, cancellationToken);
                     throw new InvalidOperationException("Remote node stream ended.");
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -258,7 +258,7 @@ public sealed class RemoteNodeConnectionManager(
 
                     var shouldRetry = await MarkConnectionFailureAsync(
                         scopeFactory,
-                        snapshots,
+                        telemetryCache,
                         nodeId,
                         exception.Message,
                         reconnectPolicy,
@@ -305,7 +305,7 @@ public sealed class RemoteNodeConnectionManager(
 
         private static async Task ConnectStreamAsync(
             IServiceScopeFactory scopeFactory,
-            ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots,
+            IRemoteNodeTelemetryCache telemetryCache,
             NodeEntity node,
             IRemoteNodeApiClient client,
             NodeConnectionOptions options,
@@ -322,7 +322,7 @@ public sealed class RemoteNodeConnectionManager(
                 }
 
                 var now = DateTimeOffset.UtcNow;
-                MarkHeartbeat(snapshots, node.Id, connectionEvent.Timestamp, connectionEvent.Ping);
+                MarkHeartbeat(telemetryCache, node.Id, connectionEvent.Timestamp, connectionEvent.Ping);
 
                 if (!hasPersistedConnection)
                 {
@@ -330,7 +330,6 @@ public sealed class RemoteNodeConnectionManager(
                         scopeFactory,
                         node.Id,
                         connectionEvent.Timestamp,
-                        connectionEvent.Ping,
                         cancellationToken);
                     hasPersistedConnection = true;
                     lastPersistedHeartbeat = now;
@@ -345,7 +344,6 @@ public sealed class RemoteNodeConnectionManager(
                         scopeFactory,
                         node.Id,
                         connectionEvent.Timestamp,
-                        connectionEvent.Ping,
                         cancellationToken);
                     lastPersistedHeartbeat = now;
                 }
@@ -354,20 +352,31 @@ public sealed class RemoteNodeConnectionManager(
 
         private static async Task MarkConnectingAsync(
             IServiceScopeFactory scopeFactory,
-            ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots,
+            IRemoteNodeTelemetryCache telemetryCache,
             long nodeId,
             string message,
             CancellationToken cancellationToken)
         {
-            snapshots[nodeId] = new RemoteNodeConnectionSnapshot(
-                nodeId,
-                RemoteNodeConnectionState.Connecting,
-                DateTimeOffset.UtcNow,
-                null,
-                null,
-                0,
-                message,
-                null);
+            var now = DateTimeOffset.UtcNow;
+            var current = telemetryCache.Get(nodeId);
+            var snapshot = current is null
+                ? new RemoteNodeConnectionSnapshot(
+                    nodeId,
+                    RemoteNodeConnectionState.Connecting,
+                    now,
+                    null,
+                    null,
+                    0,
+                    message,
+                    null)
+                : current with
+                {
+                    State = RemoteNodeConnectionState.Connecting,
+                    UpdatedAt = now,
+                    Message = message
+                };
+
+            telemetryCache.Set(snapshot);
 
             await UpdateNodeAsync(scopeFactory, nodeId, node =>
             {
@@ -381,15 +390,15 @@ public sealed class RemoteNodeConnectionManager(
         }
 
         private static void MarkHeartbeat(
-            ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots,
+            IRemoteNodeTelemetryCache telemetryCache,
             long nodeId,
             DateTimeOffset heartbeatAt,
             NodePingResponse ping)
         {
             var connectedAt = DateTimeOffset.UtcNow;
-            snapshots.AddOrUpdate(
-                nodeId,
-                _ => new RemoteNodeConnectionSnapshot(
+            var current = telemetryCache.Get(nodeId);
+            var snapshot = current is null
+                ? new RemoteNodeConnectionSnapshot(
                     nodeId,
                     RemoteNodeConnectionState.Connected,
                     connectedAt,
@@ -397,8 +406,8 @@ public sealed class RemoteNodeConnectionManager(
                     heartbeatAt,
                     0,
                     null,
-                    ping),
-                (_, current) => current with
+                    ping)
+                : current with
                 {
                     State = RemoteNodeConnectionState.Connected,
                     UpdatedAt = connectedAt,
@@ -407,14 +416,15 @@ public sealed class RemoteNodeConnectionManager(
                     ReconnectAttemptCount = 0,
                     Message = null,
                     Telemetry = ping
-                });
+                };
+
+            telemetryCache.Set(snapshot);
         }
 
         private static async Task MarkConnectedAsync(
             IServiceScopeFactory scopeFactory,
             long nodeId,
             DateTimeOffset heartbeatAt,
-            NodePingResponse ping,
             CancellationToken cancellationToken)
         {
             var connectedAt = DateTimeOffset.UtcNow;
@@ -423,7 +433,6 @@ public sealed class RemoteNodeConnectionManager(
                 node.Status = NodeStatus.Connected;
                 node.ConnectedAt = connectedAt;
                 node.LastSeenAt = heartbeatAt;
-                node.XrayVersion = ping.Core.Version;
                 node.ReconnectAttemptCount = 0;
                 node.Message = null;
                 node.LastStatusChange = DateTime.UtcNow;
@@ -434,20 +443,18 @@ public sealed class RemoteNodeConnectionManager(
             IServiceScopeFactory scopeFactory,
             long nodeId,
             DateTimeOffset heartbeatAt,
-            NodePingResponse ping,
             CancellationToken cancellationToken)
         {
             await UpdateNodeAsync(scopeFactory, nodeId, node =>
             {
                 node.LastSeenAt = heartbeatAt;
-                node.XrayVersion = ping.Core.Version;
                 node.Message = null;
             }, cancellationToken);
         }
 
         private static async Task<bool> MarkConnectionFailureAsync(
             IServiceScopeFactory scopeFactory,
-            ConcurrentDictionary<long, RemoteNodeConnectionSnapshot> snapshots,
+            IRemoteNodeTelemetryCache telemetryCache,
             long nodeId,
             string message,
             INodeReconnectPolicy reconnectPolicy,
@@ -465,9 +472,9 @@ public sealed class RemoteNodeConnectionManager(
                 node.LastStatusChange = DateTime.UtcNow;
             }, cancellationToken);
 
-            snapshots.AddOrUpdate(
-                nodeId,
-                _ => new RemoteNodeConnectionSnapshot(
+            var current = telemetryCache.Get(nodeId);
+            var snapshot = current is null
+                ? new RemoteNodeConnectionSnapshot(
                     nodeId,
                     canRetry ? RemoteNodeConnectionState.Connecting : RemoteNodeConnectionState.Error,
                     DateTimeOffset.UtcNow,
@@ -475,14 +482,16 @@ public sealed class RemoteNodeConnectionManager(
                     null,
                     attempts,
                     message,
-                    null),
-                (_, current) => current with
+                    null)
+                : current with
                 {
                     State = canRetry ? RemoteNodeConnectionState.Connecting : RemoteNodeConnectionState.Error,
                     UpdatedAt = DateTimeOffset.UtcNow,
                     ReconnectAttemptCount = attempts,
                     Message = message
-                });
+                };
+
+            telemetryCache.Set(snapshot);
 
             return canRetry;
         }

@@ -70,6 +70,22 @@ public sealed class NodesController(
     }
 
     /// <summary>
+    /// Gets cached remote node connection telemetry.
+    /// </summary>
+    [HttpGet("{id:long}/connection")]
+    [EndpointSummary("Get node connection")]
+    [EndpointDescription("Get the latest cached remote node connection and telemetry snapshot without calling the node.")]
+    [ProducesResponseType(typeof(NodeConnectionSnapshotResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<NodeConnectionSnapshotResponse> GetConnection(long id, CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var snapshot = connectionManager.GetSnapshot(id) ?? CreateFallbackConnectionSnapshot(node);
+
+        return ToConnectionSnapshotResponse(snapshot);
+    }
+
+    /// <summary>
     /// Gets current remote node system status.
     /// </summary>
     [HttpGet("{id:long}/system/status")]
@@ -150,6 +166,68 @@ public sealed class NodesController(
         provisionStates.Dispatch(jobId, NodeProvisionState.Queued(node.Id, jobId));
 
         return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(mapper.Map<NodeDto>(node), jobId));
+    }
+
+    /// <summary>
+    /// Updates remote node connection and provisioning parameters.
+    /// </summary>
+    [HttpPut("{id:long}")]
+    [EndpointSummary("Update node")]
+    [EndpointDescription("Update remote node connection and provisioning parameters.")]
+    [ProducesResponseType(typeof(NodeOperationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<NodeOperationResponse> Update(
+        long id,
+        [FromBody] UpdateNodeRequest request,
+        CancellationToken cancellationToken)
+    {
+        ValidateUpdateRequest(request);
+
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var address = NormalizeAddress(request.Address);
+        var password = request.AuthType == SSHAuthType.Password
+            ? request.Password!.Trim()
+            : null;
+        var sshKey = request.AuthType == SSHAuthType.PrivateKey
+            ? request.SSHKey!.Trim()
+            : null;
+        var certificateMode = System.Net.IPAddress.TryParse(address, out _)
+            ? CertificateMode.Ip
+            : CertificateMode.Domain;
+        var requiresReconnect = HasConnectionParametersChanged(node, address, request.ApiPort, request.AuthType, password, sshKey);
+
+        node.Name = request.Name.Trim();
+        node.Address = address;
+        node.Port = request.Port;
+        node.ApiPort = request.ApiPort;
+        node.SSHUsername = request.SSHUsername.Trim();
+        node.AuthType = request.AuthType;
+        node.Password = password;
+        node.SSHKey = sshKey;
+        node.WorkingDirectory = request.WorkingDirectory.Trim();
+        node.Note = request.Note.Trim();
+        node.CertificateMode = certificateMode;
+
+        if (requiresReconnect)
+        {
+            node.Status = NodeStatus.Connecting;
+            node.ReconnectAttemptCount = 0;
+            node.Message = "Node connection parameters updated. Manual reconnect requested.";
+            node.LastStatusChange = DateTime.UtcNow;
+        }
+
+        var updated = await nodes.UpdateAsync(node, cancellationToken)
+            ?? throw new NotFoundException($"Node '{id}' was not found.");
+
+        if (requiresReconnect)
+        {
+            await connectionManager.ReconnectAsync(updated.Id, cancellationToken);
+        }
+
+        var status = requiresReconnect ? "reconnect_queued" : "updated";
+
+        return new NodeOperationResponse(mapper.Map<NodeDto>(updated), status);
     }
 
     /// <summary>
@@ -494,6 +572,19 @@ public sealed class NodesController(
         }
     }
 
+    private static void ValidateUpdateRequest(UpdateNodeRequest request)
+    {
+        if (request.AuthType == SSHAuthType.Password && string.IsNullOrWhiteSpace(request.Password))
+        {
+            throw new BadRequestException("SSH password is required for password authentication.");
+        }
+
+        if (request.AuthType == SSHAuthType.PrivateKey && string.IsNullOrWhiteSpace(request.SSHKey))
+        {
+            throw new BadRequestException("SSH private key is required for private key authentication.");
+        }
+    }
+
     private static string NormalizeAddress(string value)
     {
         var address = value.Trim().TrimEnd('.').ToLowerInvariant();
@@ -503,6 +594,21 @@ public sealed class NodesController(
         }
 
         return address;
+    }
+
+    private static bool HasConnectionParametersChanged(
+        NodeEntity node,
+        string address,
+        int apiPort,
+        SSHAuthType authType,
+        string? password,
+        string? sshKey)
+    {
+        return !string.Equals(node.Address, address, StringComparison.Ordinal)
+            || node.ApiPort != apiPort
+            || node.AuthType != authType
+            || !string.Equals(node.Password, password, StringComparison.Ordinal)
+            || !string.Equals(node.SSHKey, sshKey, StringComparison.Ordinal);
     }
 
     private string GetCreateApiKey()
@@ -525,6 +631,44 @@ public sealed class NodesController(
             secrets.UnprotectApiKey(node.EncryptedApiKey));
 
         return apiClientFactory.Create(endpoint);
+    }
+
+    private static RemoteNodeConnectionSnapshot CreateFallbackConnectionSnapshot(NodeEntity node)
+    {
+        var state = node.Status switch
+        {
+            NodeStatus.Connecting => RemoteNodeConnectionState.Connecting,
+            NodeStatus.Error => RemoteNodeConnectionState.Error,
+            _ => RemoteNodeConnectionState.Disconnected
+        };
+        var updatedAt = node.UpdatedAt
+            ?? node.LastSeenAt
+            ?? node.ConnectedAt
+            ?? DateTimeOffset.UtcNow;
+
+        return new RemoteNodeConnectionSnapshot(
+            node.Id,
+            state,
+            updatedAt,
+            node.ConnectedAt,
+            node.LastSeenAt,
+            node.ReconnectAttemptCount,
+            node.Message,
+            null);
+    }
+
+    private static NodeConnectionSnapshotResponse ToConnectionSnapshotResponse(
+        RemoteNodeConnectionSnapshot snapshot)
+    {
+        return new NodeConnectionSnapshotResponse(
+            snapshot.NodeId,
+            snapshot.State,
+            snapshot.UpdatedAt,
+            snapshot.ConnectedAt,
+            snapshot.LastHeartbeatAt,
+            snapshot.ReconnectAttemptCount,
+            snapshot.Message,
+            snapshot.Telemetry);
     }
 
     private async Task<ActionResult<OperationAcceptedResponse>> ScheduleCoreOperation(
@@ -571,7 +715,6 @@ public sealed class NodesController(
             node.Status = NodeStatus.Connected;
             node.ConnectedAt = result.VerifiedAt;
             node.LastSeenAt = result.VerifiedAt;
-            node.XrayVersion = result.XrayVersion;
             node.ReconnectAttemptCount = 0;
             node.InstallationMessage = "Development SSH provisioning skipped. Local node is connected.";
             node.Message = null;

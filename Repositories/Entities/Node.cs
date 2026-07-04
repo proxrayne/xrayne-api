@@ -83,12 +83,6 @@ public class NodeEntity : CreateUpdateEntity
     public CertificateMode CertificateMode { get; set; } = CertificateMode.Domain;
 
     /// <summary>
-    /// Gets or sets the xray-core version reported by the remote node.
-    /// </summary>
-    [MaxLength(24)]
-    public string? XrayVersion { get; set; }
-
-    /// <summary>
     /// Gets or sets when the node status last changed.
     /// </summary>
     public DateTime LastStatusChange { get; set; }
