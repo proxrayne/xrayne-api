@@ -133,16 +133,24 @@ public sealed class RemoteNodeApiClient(
     }
 
     /// <inheritdoc />
-    public Task<OperationAcceptedResponse> StartCoreAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/start", null, cancellationToken);
+    public Task<OperationAcceptedResponse> StartCoreAsync(
+        StartCoreRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/start", request, cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<OperationAcceptedResponse> StopCoreAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/stop", null, cancellationToken);
 
     /// <inheritdoc />
-    public Task<OperationAcceptedResponse> RestartCoreAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/restart", null, cancellationToken);
+    public Task<OperationAcceptedResponse> RestartCoreAsync(
+        StartCoreRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/restart", request, cancellationToken);
+    }
 
     private async Task<T> SendJsonAsync<T>(
         HttpMethod method,

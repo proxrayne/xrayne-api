@@ -1,4 +1,5 @@
 using AutoMapper;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
@@ -14,30 +15,43 @@ using Infrastructure.States;
 using RemoteNode.Models;
 using RemoteNode.Services;
 using Repositories.Entities;
+using Xray.Config.Models;
 
 namespace Test.Controllers;
 
 public sealed class NodesControllerTests
 {
     private readonly INodeService _nodes;
+    private readonly INodeSecretService _secrets;
+    private readonly IRemoteNodeApiClient _remoteClient;
+    private readonly IRemoteNodeApiClientFactory _apiClientFactory;
+    private readonly INodeCoreConfigBuilder _coreConfigBuilder;
     private readonly IRemoteNodeConnectionManager _connectionManager;
     private readonly NodesController _controller;
 
     public NodesControllerTests()
     {
         _nodes = Substitute.For<INodeService>();
+        _secrets = Substitute.For<INodeSecretService>();
+        _remoteClient = Substitute.For<IRemoteNodeApiClient>();
+        _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
+        _coreConfigBuilder = Substitute.For<INodeCoreConfigBuilder>();
         _connectionManager = Substitute.For<IRemoteNodeConnectionManager>();
         var mapper = new MapperConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
         var environment = Substitute.For<IHostEnvironment>();
         environment.EnvironmentName.Returns(Environments.Production);
+        _secrets.UnprotectApiKey("encrypted").Returns("api-key");
+        _apiClientFactory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(_remoteClient);
+        _coreConfigBuilder.Build(Arg.Any<NodeEntity>()).Returns(CreateCoreConfig());
 
         _controller = new NodesController(
             mapper,
             _nodes,
-            Substitute.For<INodeSecretService>(),
+            _secrets,
             Substitute.For<INodeConnectionVerifier>(),
             _connectionManager,
-            Substitute.For<IRemoteNodeApiClientFactory>(),
+            _apiClientFactory,
+            _coreConfigBuilder,
             Substitute.For<IBackgroundTaskScheduler>(),
             Substitute.For<INodeProvisionStateMachine>(),
             Substitute.For<IEventStreamManager>(),
@@ -172,6 +186,69 @@ public sealed class NodesControllerTests
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
+    [Fact]
+    public async Task GetCoreConfigTemplate_ReturnsTemplate()
+    {
+        var node = CreateNode();
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+
+        var result = await _controller.GetCoreConfigTemplate(node.Id, CancellationToken.None);
+
+        ToJsonObject(result.ConfigTemplate)["log"]!["loglevel"]!.GetValue<string>().Should().Be("warning");
+    }
+
+    [Fact]
+    public async Task UpdateCoreConfigTemplate_SavesTemplate()
+    {
+        var node = CreateNode();
+        var request = new UpdateNodeConfigTemplateRequest
+        {
+            ConfigTemplate = """{"log":{"loglevel":"error"},"stats":{}}"""
+        };
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+        _nodes.UpdateAsync(Arg.Any<NodeEntity>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<NodeEntity>());
+
+        var result = await _controller.UpdateCoreConfigTemplate(node.Id, request, CancellationToken.None);
+
+        ToJsonObject(result.ConfigTemplate)["log"]!["loglevel"]!.GetValue<string>().Should().Be("error");
+        await _nodes.Received(1).UpdateAsync(
+            Arg.Is<NodeEntity>(item => ToJsonObject(item.ConfigTemplate).ContainsKey("stats")),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task StartCore_SendsBuiltConfigToRemoteNode()
+    {
+        var node = CreateNode();
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+        _remoteClient.StartCoreAsync(Arg.Any<StartCoreRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationAcceptedResponse("start", "queued"));
+
+        var result = await _controller.StartCore(node.Id, CancellationToken.None);
+
+        result.Result.Should().BeOfType<AcceptedResult>();
+        await _remoteClient.Received(1).StartCoreAsync(
+            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RestartCore_SendsBuiltConfigToRemoteNode()
+    {
+        var node = CreateNode();
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+        _remoteClient.RestartCoreAsync(Arg.Any<StartCoreRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationAcceptedResponse("restart", "queued"));
+
+        var result = await _controller.RestartCore(node.Id, CancellationToken.None);
+
+        result.Result.Should().BeOfType<AcceptedResult>();
+        await _remoteClient.Received(1).RestartCoreAsync(
+            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
+            Arg.Any<CancellationToken>());
+    }
+
     private static NodeEntity CreateNode()
     {
         return new NodeEntity
@@ -187,6 +264,7 @@ public sealed class NodesControllerTests
             SSHKey = null,
             WorkingDirectory = "/opt/xrayne",
             Note = "",
+            ConfigTemplate = CreateCoreConfig(),
             EncryptedApiKey = "encrypted",
             ApiKeyFingerprint = "fingerprint",
             CertificateMode = CertificateMode.Domain,
@@ -194,6 +272,19 @@ public sealed class NodesControllerTests
             LastStatusChange = DateTime.UtcNow,
             InstallationMessage = "Connected.",
         };
+    }
+
+    private static XrayConfig CreateCoreConfig()
+        => XrayConfig.FromJson("""{"log":{"loglevel":"warning"}}""");
+
+    private static JsonObject ToJsonObject(XrayConfig config)
+    {
+        return JsonNode.Parse(config.ToJson())!.AsObject();
+    }
+
+    private static JsonObject ToJsonObject(string config)
+    {
+        return JsonNode.Parse(config)!.AsObject();
     }
 
     private static UpdateNodeRequest CreateUpdateRequest(

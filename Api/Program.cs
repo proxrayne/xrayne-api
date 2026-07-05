@@ -34,7 +34,7 @@ try
     var IsDocsEnabled = builder.Configuration.GetValue("Docs", false);
     var devSpaOrigins = builder.Configuration.GetSection("Cors:SpaOrigins").Get<string[]>() ?? [];
 
-    PanelSettings settings = PanelSettings.Parse(BuildPanelBootstrapConfiguration());
+    var settings = PanelSettings.Parse(BuildPanelBootstrapConfiguration());
     if (!builder.Environment.IsDevelopment() && PanelStartupReader.ShouldOverrideKestrel(settings))
     {
         using var bootstrapLoggerFactory = LoggerFactory.Create(b => b.AddSerilog());

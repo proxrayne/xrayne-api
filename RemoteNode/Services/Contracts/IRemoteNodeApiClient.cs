@@ -52,7 +52,9 @@ public interface IRemoteNodeApiClient
     /// <summary>
     /// Starts remote xray-core.
     /// </summary>
-    Task<OperationAcceptedResponse> StartCoreAsync(CancellationToken cancellationToken = default);
+    Task<OperationAcceptedResponse> StartCoreAsync(
+        StartCoreRequest request,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Stops remote xray-core.
@@ -62,5 +64,7 @@ public interface IRemoteNodeApiClient
     /// <summary>
     /// Restarts remote xray-core.
     /// </summary>
-    Task<OperationAcceptedResponse> RestartCoreAsync(CancellationToken cancellationToken = default);
+    Task<OperationAcceptedResponse> RestartCoreAsync(
+        StartCoreRequest request,
+        CancellationToken cancellationToken = default);
 }

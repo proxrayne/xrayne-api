@@ -69,6 +69,9 @@ public sealed class AppDbContext : DbContext
 
             builder.Property(x => x.CertificateMode)
                 .HasDefaultValue(CertificateMode.Domain);
+
+            builder.Property(x => x.ConfigTemplate)
+                .HasColumnType("jsonb");
         });
 
         modelBuilder.Entity<CertificateEntity>(builder =>

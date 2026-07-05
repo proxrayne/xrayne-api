@@ -66,6 +66,19 @@ public sealed class AppSettingsRepositoryTests
             .Be(DeleteBehavior.Cascade);
     }
 
+    [Fact]
+    public void Model_ConfiguresNodeConfigTemplateAsJsonb()
+    {
+        using var context = CreateNpgsqlModelContext();
+        var entity = context.Model.FindEntityType(typeof(NodeEntity));
+
+        entity.Should().NotBeNull();
+        entity!.FindProperty(nameof(NodeEntity.ConfigTemplate))!
+            .GetColumnType()
+            .Should()
+            .Be("jsonb");
+    }
+
     private static AppDbContext CreateNpgsqlModelContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()

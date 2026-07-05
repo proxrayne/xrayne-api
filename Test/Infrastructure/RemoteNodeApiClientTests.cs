@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
 using RemoteNode.Enums;
@@ -174,9 +175,9 @@ public sealed class RemoteNodeApiClientTests
 
         var result = operation switch
         {
-            "start" => await client.StartCoreAsync(),
+            "start" => await client.StartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
             "stop" => await client.StopCoreAsync(),
-            "restart" => await client.RestartCoreAsync(),
+            "restart" => await client.RestartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
 
@@ -184,9 +185,39 @@ public sealed class RemoteNodeApiClientTests
         result.Status.Should().Be("queued");
     }
 
-    private static IRemoteNodeApiClient CreateClient(HttpResponseMessage response)
+    [Theory]
+    [InlineData("start")]
+    [InlineData("restart")]
+    public async Task Core_config_operations_send_config_body(string operation)
     {
-        var factory = new StubHttpClientFactory(response);
+        var response = JsonResponse($$"""
+        {
+          "operation": "{{operation}}",
+          "status": "queued"
+        }
+        """);
+        var handler = new StubHandler(response);
+        var client = CreateClient(handler);
+
+        _ = operation switch
+        {
+            "start" => await client.StartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
+            "restart" => await client.RestartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
+
+        var body = JsonNode.Parse(handler.RequestBody!)!.AsObject();
+        var config = JsonNode.Parse(body["config"]!.GetValue<string>())!.AsObject();
+
+        config["log"]!["loglevel"]!.GetValue<string>().Should().Be("warning");
+    }
+
+    private static IRemoteNodeApiClient CreateClient(HttpResponseMessage response)
+        => CreateClient(new StubHandler(response));
+
+    private static IRemoteNodeApiClient CreateClient(StubHandler handler)
+    {
+        var factory = new StubHttpClientFactory(handler);
         var options = Options.Create(new RemoteNodeOptions { PingTimeoutSeconds = 5 });
         var endpoint = new RemoteNodeEndpoint(42, "node.example.test", 8443, "secret");
 
@@ -269,20 +300,26 @@ public sealed class RemoteNodeApiClientTests
         """;
     }
 
-    private sealed class StubHttpClientFactory(HttpResponseMessage response) : IHttpClientFactory
+    private static string CreateCoreConfig() => """{"log":{"loglevel":"warning"}}""";
+
+    private sealed class StubHttpClientFactory(StubHandler handler) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
         {
-            return new HttpClient(new StubHandler(response));
+            return new HttpClient(handler);
         }
     }
 
     private sealed class StubHandler(HttpResponseMessage response) : HttpMessageHandler
     {
+        public string? RequestBody { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
+            RequestBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+
             return Task.FromResult(response);
         }
     }

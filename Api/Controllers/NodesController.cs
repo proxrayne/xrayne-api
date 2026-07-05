@@ -1,4 +1,5 @@
 using AutoMapper;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
@@ -16,6 +17,7 @@ using RemoteNode.Exceptions;
 using RemoteNode.Models;
 using RemoteNode.Services;
 using Repositories.Entities;
+using Xray.Config.Models;
 
 namespace Api.Controllers;
 
@@ -32,6 +34,7 @@ public sealed class NodesController(
     INodeConnectionVerifier connectionVerifier,
     IRemoteNodeConnectionManager connectionManager,
     IRemoteNodeApiClientFactory apiClientFactory,
+    INodeCoreConfigBuilder coreConfigBuilder,
     IBackgroundTaskScheduler scheduler,
     INodeProvisionStateMachine provisionStates,
     IEventStreamManager eventStreams,
@@ -143,6 +146,7 @@ public sealed class NodesController(
             Password = string.IsNullOrWhiteSpace(request.Password) ? null : request.Password,
             WorkingDirectory = request.WorkingDirectory.Trim(),
             Note = request.Note.Trim(),
+            ConfigTemplate = NodeConfigTemplateDefaults.Create(),
             EncryptedApiKey = secrets.ProtectApiKey(apiKey),
             ApiKeyFingerprint = secrets.GetFingerprint(apiKey),
             CertificateMode = certificateMode,
@@ -228,6 +232,51 @@ public sealed class NodesController(
         var status = requiresReconnect ? "reconnect_queued" : "updated";
 
         return new NodeOperationResponse(mapper.Map<NodeDto>(updated), status);
+    }
+
+    /// <summary>
+    /// Gets a remote node xray-core configuration template.
+    /// </summary>
+    [HttpGet("{id:long}/core/config-template")]
+    [EndpointSummary("Remote node Xray config template")]
+    [EndpointDescription("Get the xray-core configuration template stored for a remote node.")]
+    [ProducesResponseType(typeof(NodeConfigTemplateResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<NodeConfigTemplateResponse> GetCoreConfigTemplate(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        return new NodeConfigTemplateResponse(node.ConfigTemplate.ToJson());
+    }
+
+    /// <summary>
+    /// Updates a remote node xray-core configuration template.
+    /// </summary>
+    [HttpPut("{id:long}/core/config-template")]
+    [EndpointSummary("Update remote node Xray config template")]
+    [EndpointDescription("Update the xray-core configuration template stored for a remote node.")]
+    [ProducesResponseType(typeof(NodeConfigTemplateResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<NodeConfigTemplateResponse> UpdateCoreConfigTemplate(
+        long id,
+        [FromBody] UpdateNodeConfigTemplateRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.ConfigTemplate is null)
+        {
+            throw new BadRequestException("Node config template is required.");
+        }
+
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        node.ConfigTemplate = ParseConfigTemplate(request.ConfigTemplate);
+
+        var updated = await nodes.UpdateAsync(node, cancellationToken)
+            ?? throw new NotFoundException($"Node '{id}' was not found.");
+
+        return new NodeConfigTemplateResponse(updated.ConfigTemplate.ToJson());
     }
 
     /// <summary>
@@ -405,7 +454,12 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public Task<ActionResult<OperationAcceptedResponse>> StartCore(long id, CancellationToken cancellationToken)
-        => ScheduleCoreOperation(id, client => client.StartCoreAsync(cancellationToken), cancellationToken);
+        => ScheduleCoreOperation(
+            id,
+            (node, client) => client.StartCoreAsync(
+                new StartCoreRequest(coreConfigBuilder.Build(node).ToJson()),
+                cancellationToken),
+            cancellationToken);
 
     /// <summary>
     /// Schedules remote node xray-core stop.
@@ -417,7 +471,10 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public Task<ActionResult<OperationAcceptedResponse>> StopCore(long id, CancellationToken cancellationToken)
-        => ScheduleCoreOperation(id, client => client.StopCoreAsync(cancellationToken), cancellationToken);
+        => ScheduleCoreOperation(
+            id,
+            (_, client) => client.StopCoreAsync(cancellationToken),
+            cancellationToken);
 
     /// <summary>
     /// Schedules remote node xray-core restart.
@@ -429,7 +486,12 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public Task<ActionResult<OperationAcceptedResponse>> RestartCore(long id, CancellationToken cancellationToken)
-        => ScheduleCoreOperation(id, client => client.RestartCoreAsync(cancellationToken), cancellationToken);
+        => ScheduleCoreOperation(
+            id,
+            (node, client) => client.RestartCoreAsync(
+                new StartCoreRequest(coreConfigBuilder.Build(node).ToJson()),
+                cancellationToken),
+            cancellationToken);
 
     /// <summary>
     /// Streams remote node provisioning state.
@@ -633,6 +695,23 @@ public sealed class NodesController(
         return apiClientFactory.Create(endpoint);
     }
 
+    private static XrayConfig ParseConfigTemplate(string configTemplate)
+    {
+        if (string.IsNullOrWhiteSpace(configTemplate))
+        {
+            throw new BadRequestException("Node config template is required.");
+        }
+
+        try
+        {
+            return XrayConfig.FromJson(configTemplate);
+        }
+        catch (JsonException exception)
+        {
+            throw new BadRequestException($"Node config template is invalid. {exception.Message}");
+        }
+    }
+
     private static RemoteNodeConnectionSnapshot CreateFallbackConnectionSnapshot(NodeEntity node)
     {
         var state = node.Status switch
@@ -673,14 +752,14 @@ public sealed class NodesController(
 
     private async Task<ActionResult<OperationAcceptedResponse>> ScheduleCoreOperation(
         long id,
-        Func<IRemoteNodeApiClient, Task<OperationAcceptedResponse>> operation,
+        Func<NodeEntity, IRemoteNodeApiClient, Task<OperationAcceptedResponse>> operation,
         CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
 
         try
         {
-            return Accepted(await operation(CreateRemoteNodeClient(node)));
+            return Accepted(await operation(node, CreateRemoteNodeClient(node)));
         }
         catch (RemoteNodeException exception)
         {

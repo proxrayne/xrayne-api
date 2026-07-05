@@ -76,6 +76,14 @@ installs the latest XTLS `xray-core` as the final remote setup step.
 Saved node connection and provisioning parameters are updated through
 `PUT /api/nodes/{id}`. Updates that change live connection parameters reset the
 node to `Connecting` and schedule a reconnect through the connection manager.
+Each node stores a `ConfigTemplate` value as PostgreSQL `jsonb`, while the
+entity model exposes it as `XrayConfig`. The template is editable through
+dedicated node core config-template endpoints where `configTemplate` is JSON
+text in a string field, but it is not the final runtime config by itself. On
+remote core start and restart, the panel merges the template with a managed
+`XrayConfig` using `XrayConfig.Merge`, then replaces the managed inbounds,
+outbounds, and routing rules from the node entities and sends that complete JSON
+config as a string to the standalone node.
 
 ## Contracts Layer
 

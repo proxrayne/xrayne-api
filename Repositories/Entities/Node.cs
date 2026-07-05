@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Contracts.Enums;
+using Contracts.Values;
+using Xray.Config.Models;
 
 namespace Repositories.Entities;
 
@@ -76,6 +78,12 @@ public class NodeEntity : CreateUpdateEntity
     /// </summary>
     [MaxLength(512)]
     public string Note { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the base xray-core configuration template used for remote starts.
+    /// </summary>
+    [Column(TypeName = "jsonb")]
+    public XrayConfig ConfigTemplate { get; set; } = NodeConfigTemplateDefaults.Create();
 
     /// <summary>
     /// Gets or sets the certificate mode, such as domain or IP.
