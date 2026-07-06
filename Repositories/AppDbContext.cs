@@ -27,7 +27,6 @@ public sealed class AppDbContext : DbContext
         modelBuilder.HasPostgresEnum<LimitResetStrategy>();
         modelBuilder.HasPostgresEnum<AdminPermission>();
         modelBuilder.HasPostgresEnum<SSHAuthType>();
-        modelBuilder.HasPostgresEnum<NodeStatus>();
         modelBuilder.HasPostgresEnum<CertificateMode>();
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
@@ -69,6 +68,9 @@ public sealed class AppDbContext : DbContext
 
             builder.Property(x => x.CertificateMode)
                 .HasDefaultValue(CertificateMode.Domain);
+
+            builder.Property(x => x.Enabled)
+                .HasDefaultValue(true);
 
             builder.Property(x => x.ConfigTemplate)
                 .HasColumnType("jsonb");

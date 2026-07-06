@@ -7,6 +7,6 @@ namespace RemoteNode.Models;
 /// </summary>
 public sealed record CoreStatusResponse(
     bool IsInstalled,
-    CoreStatus? Status,
+    RemoteCoreStatus? Status,
     bool IsInstalling,
     string? Version);

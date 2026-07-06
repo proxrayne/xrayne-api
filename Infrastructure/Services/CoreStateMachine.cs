@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Infrastructure.States;
+using Contracts.Enums;
 
 namespace Infrastructure.Services;
 

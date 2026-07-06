@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Api.Controllers;
 using Api.Exceptions;
@@ -10,11 +11,14 @@ using Api.Mapping;
 using Api.Requests;
 using Contracts.Configurations;
 using Contracts.Enums;
+using Contracts.Models;
+using Contracts.Utilities;
 using Infrastructure.Services;
 using Infrastructure.States;
 using RemoteNode.Models;
 using RemoteNode.Services;
 using Repositories.Entities;
+using Repositories.Implementations;
 using Xray.Config.Models;
 
 namespace Test.Controllers;
@@ -27,6 +31,8 @@ public sealed class NodesControllerTests
     private readonly IRemoteNodeApiClientFactory _apiClientFactory;
     private readonly INodeCoreConfigBuilder _coreConfigBuilder;
     private readonly IRemoteNodeConnectionManager _connectionManager;
+    private readonly INodeConnectionStateStore _connectionStateStore;
+    private readonly IRemoteNodeCoreStateStore _coreStateStore;
     private readonly NodesController _controller;
 
     public NodesControllerTests()
@@ -37,6 +43,8 @@ public sealed class NodesControllerTests
         _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
         _coreConfigBuilder = Substitute.For<INodeCoreConfigBuilder>();
         _connectionManager = Substitute.For<IRemoteNodeConnectionManager>();
+        _connectionStateStore = new NodeConnectionStateStore(new MemoryCache(new MemoryCacheOptions()));
+        _coreStateStore = Substitute.For<IRemoteNodeCoreStateStore>();
         var mapper = new MapperConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
         var environment = Substitute.For<IHostEnvironment>();
         environment.EnvironmentName.Returns(Environments.Production);
@@ -52,6 +60,8 @@ public sealed class NodesControllerTests
             _connectionManager,
             _apiClientFactory,
             _coreConfigBuilder,
+            _connectionStateStore,
+            _coreStateStore,
             Substitute.For<IBackgroundTaskScheduler>(),
             Substitute.For<INodeProvisionStateMachine>(),
             Substitute.For<IEventStreamManager>(),
@@ -87,6 +97,11 @@ public sealed class NodesControllerTests
     public async Task Update_ReturnsUpdated_WhenConnectionParametersDoNotChange()
     {
         var node = CreateNode();
+        _connectionStateStore.Set(new NodeConnectionState(
+            node.Id,
+            NodeConnectionStatus.Connected,
+            null,
+            null));
         _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
         _nodes.UpdateAsync(Arg.Any<NodeEntity>(), Arg.Any<CancellationToken>())
             .Returns(call => call.Arg<NodeEntity>());
@@ -100,7 +115,7 @@ public sealed class NodesControllerTests
         result.Node.Name.Should().Be("Updated node");
         result.Node.Note.Should().Be("Updated note");
         result.Node.Port.Should().Be(2222);
-        result.Node.Status.Should().Be(NodeStatus.Connected);
+        result.Node.Status.Should().Be(NodeConnectionStatus.Connected);
         await _connectionManager.DidNotReceive()
             .ReconnectAsync(Arg.Any<long>(), Arg.Any<CancellationToken>());
     }
@@ -122,58 +137,48 @@ public sealed class NodesControllerTests
         result.Status.Should().Be("reconnect_queued");
         result.Node.Address.Should().Be("node.example.com");
         result.Node.ApiPort.Should().Be(9443);
-        result.Node.Status.Should().Be(NodeStatus.Connecting);
+        result.Node.Status.Should().Be(NodeConnectionStatus.Connecting);
         result.Node.ReconnectAttemptCount.Should().Be(0);
         result.Node.Message.Should().Be("Node connection parameters updated. Manual reconnect requested.");
         await _connectionManager.Received(1).ReconnectAsync(node.Id, Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task GetConnection_ReturnsCachedTelemetry()
+    public async Task GetConnection_ReturnsCachedState()
     {
         var node = CreateNode();
-        var telemetry = new NodePingResponse(
-            "1.2.3",
-            "Production",
-            TimeSpan.FromMinutes(5),
-            new NodeCoreStatus(true, true, "25.7.1", "started"));
-        var snapshot = new RemoteNodeConnectionSnapshot(
+        var uptime = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var snapshot = new NodeConnectionState(
             node.Id,
-            RemoteNodeConnectionState.Connected,
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow,
-            0,
-            null,
-            telemetry);
+            NodeConnectionStatus.Connected,
+            "1.2.3",
+            uptime);
         _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
-        _connectionManager.GetSnapshot(node.Id).Returns(snapshot);
+        _connectionStateStore.Set(snapshot);
 
         var result = await _controller.GetConnection(node.Id, CancellationToken.None);
 
-        result.State.Should().Be(RemoteNodeConnectionState.Connected);
-        result.Telemetry.Should().NotBeNull();
-        result.Telemetry!.NodeVersion.Should().Be("1.2.3");
-        result.Telemetry.Core.IsRunning.Should().BeTrue();
-        result.Telemetry.Core.Version.Should().Be("25.7.1");
+        result.State.Should().Be(NodeConnectionStatus.Connected);
+        result.ApiVersion.Should().Be("1.2.3");
+        result.Uptime.Should().Be(uptime);
     }
 
     [Fact]
     public async Task GetConnection_ReturnsFallback_WhenSnapshotIsMissing()
     {
         var node = CreateNode();
-        node.Status = NodeStatus.Error;
+        node.Enabled = false;
         node.ReconnectAttemptCount = 2;
         node.Message = "Connection failed.";
         _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
-        _connectionManager.GetSnapshot(node.Id).Returns((RemoteNodeConnectionSnapshot?)null);
 
         var result = await _controller.GetConnection(node.Id, CancellationToken.None);
 
-        result.State.Should().Be(RemoteNodeConnectionState.Error);
+        result.State.Should().Be(NodeConnectionStatus.Disabled);
         result.ReconnectAttemptCount.Should().Be(2);
         result.Message.Should().Be("Connection failed.");
-        result.Telemetry.Should().BeNull();
+        result.ApiVersion.Should().BeNull();
+        result.Uptime.Should().BeNull();
     }
 
     [Fact]
@@ -268,7 +273,7 @@ public sealed class NodesControllerTests
             EncryptedApiKey = "encrypted",
             ApiKeyFingerprint = "fingerprint",
             CertificateMode = CertificateMode.Domain,
-            Status = NodeStatus.Connected,
+            Enabled = true,
             LastStatusChange = DateTime.UtcNow,
             InstallationMessage = "Connected.",
         };

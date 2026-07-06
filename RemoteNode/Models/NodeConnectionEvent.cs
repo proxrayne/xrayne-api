@@ -6,4 +6,6 @@ namespace RemoteNode.Models;
 public sealed record NodeConnectionEvent(
     string Type,
     DateTimeOffset Timestamp,
-    NodePingResponse? Ping);
+    NodePingResponse? Ping,
+    CoreStatusResponse? Core,
+    InstallCoreStatusResponse? Install);

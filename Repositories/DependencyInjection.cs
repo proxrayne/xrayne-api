@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Contracts.Enums;
+using Contracts.Utilities;
 using Repositories.Contracts;
 using Repositories.Implementations;
 
@@ -30,7 +31,6 @@ public static class DependencyInjection
                     dataSourceBuilder.MapEnum<LimitResetStrategy>();
                     dataSourceBuilder.MapEnum<AdminPermission>();
                     dataSourceBuilder.MapEnum<SSHAuthType>();
-                    dataSourceBuilder.MapEnum<NodeStatus>();
                     dataSourceBuilder.MapEnum<CertificateMode>();
 
                     dataSourceBuilder
@@ -56,6 +56,8 @@ public static class DependencyInjection
         services.AddScoped<IGeoResourceRepository, GeoResourceRepository>();
         services.AddScoped<IRoutingRuleRepository, RoutingRuleRepository>();
         services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
+        services.AddSingleton<INodeConnectionStateStore, NodeConnectionStateStore>();
+        services.AddSingleton<IRemoteNodeCoreStateStore, RemoteNodeCoreStateStore>();
 
         return services;
     }

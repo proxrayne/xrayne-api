@@ -91,7 +91,7 @@ public class NodeEntity : CreateUpdateEntity
     public CertificateMode CertificateMode { get; set; } = CertificateMode.Domain;
 
     /// <summary>
-    /// Gets or sets when the node status last changed.
+    /// Gets or sets when the persisted node lifecycle message last changed.
     /// </summary>
     public DateTime LastStatusChange { get; set; }
 
@@ -111,9 +111,9 @@ public class NodeEntity : CreateUpdateEntity
     public int ReconnectAttemptCount { get; set; }
 
     /// <summary>
-    /// Gets or sets the current user-facing node connection status.
+    /// Gets or sets whether the panel should maintain a live connection to the node.
     /// </summary>
-    public NodeStatus Status { get; set; } = NodeStatus.Connecting;
+    public bool Enabled { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the SSH authentication method used for provisioning.

@@ -71,6 +71,33 @@ public sealed class RemoteNodeApiClientTests
     }
 
     [Fact]
+    public async Task ConnectStreamAsync_reads_runtime_event_payloads()
+    {
+        var client = CreateClient(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "data: {\"type\":\"core_status\",\"timestamp\":\"2026-07-03T12:00:00+00:00\",\"core\":{\"isInstalled\":true,\"status\":\"started\",\"isInstalling\":false,\"version\":\"25.7.1\"}}\n\n"
+                + "data: {\"type\":\"core_install\",\"timestamp\":\"2026-07-03T12:00:01+00:00\",\"install\":{\"jobId\":\"job-1\",\"step\":\"installed\",\"message\":\"done\",\"updatedAt\":\"2026-07-03T12:00:01+00:00\"}}\n\n",
+                Encoding.UTF8,
+                "text/event-stream")
+        });
+
+        var events = new List<NodeConnectionEvent>();
+        await foreach (var item in client.ConnectStreamAsync())
+        {
+            events.Add(item);
+        }
+
+        events.Should().HaveCount(2);
+        events[0].Type.Should().Be("core_status");
+        events[0].Core?.Status.Should().Be(RemoteCoreStatus.Started);
+        events[0].Core?.Version.Should().Be("25.7.1");
+        events[1].Type.Should().Be("core_install");
+        events[1].Install?.JobId.Should().Be("job-1");
+        events[1].Install?.Step.Should().Be(InstallCoreStep.Installed);
+    }
+
+    [Fact]
     public async Task GetSystemStatusAsync_returns_remote_system_status()
     {
         var client = CreateClient(JsonResponse(SampleSystemStatusJson()));
@@ -97,7 +124,7 @@ public sealed class RemoteNodeApiClientTests
         var status = await client.GetCoreStatusAsync();
 
         status.IsInstalled.Should().BeTrue();
-        status.Status.Should().Be(CoreStatus.Started);
+        status.Status.Should().Be(RemoteCoreStatus.Started);
         status.IsInstalling.Should().BeFalse();
         status.Version.Should().Be("25.7.1");
     }
@@ -157,7 +184,7 @@ public sealed class RemoteNodeApiClientTests
         }
 
         events.Should().ContainSingle();
-        events[0].Status.Should().Be(CoreStatus.Stopped);
+        events[0].Status.Should().Be(RemoteCoreStatus.Stopped);
     }
 
     [Theory]

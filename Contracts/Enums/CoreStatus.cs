@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
 
-namespace RemoteNode.Enums;
+namespace Contracts.Enums;
 
 /// <summary>
-/// Describes a high-level remote xray-core runtime state.
+/// Describes a high-level xray-core runtime state.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum CoreStatus

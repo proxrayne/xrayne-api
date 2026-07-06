@@ -52,18 +52,24 @@ implementing node management features in this repository.
 panel startup, exposes immediate connect/reconnect/disconnect operations for
 controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every SSE heartbeat to the database.
-Live node telemetry is kept in process memory through
-`IRemoteNodeTelemetryCache`. The cache stores connection state, heartbeat
-timestamps, reconnect attempts, messages, and the latest remote node ping
-payload for each node. The panel exposes that process-local snapshot through
-`GET /api/nodes/{id}/connection` so profile reads can show node version and
-xray-core running state without calling remote `ping`.
+Live node and remote xray-core state is kept in process memory through
+repository-layer singleton stores. `NodeEntity` does not persist connection
+status; it persists `Enabled` only as the durable operator-controlled flag
+that allows or stops automatic reconnect attempts. `INodeConnectionStateStore`
+is the source of truth for the live connection status, remote node API version,
+and remote node uptime as a `DateTimeOffset` start time. `IRemoteNodeCoreStateStore`
+stores whether remote xray-core is installed and running, plus its version and
+enum status. The panel exposes connection state through
+`GET /api/nodes/{id}/connection` so profile reads can show live node state
+without calling remote `ping`.
 
-The standalone remote node `/api/ping` response and `/api/connect` SSE payloads
-must include `NodeVersion`, `Environment`, `Uptime`, and `Core`. The SSE event
-timestamp is the heartbeat time persisted by the panel. Host telemetry is fetched
-separately from the node `/api/system/status` endpoint and proxied by the panel
-through `/api/nodes/{id}/system/status`.
+The standalone remote node `/api/ping` response and `/api/connect` heartbeat
+SSE payloads must include `NodeVersion`, `Environment`, `Uptime`, and `Core`.
+The `/api/connect` stream also emits `core_status` and `core_install` events
+from the node runtime state machine. The SSE event timestamp is the heartbeat
+time persisted by the panel. Host telemetry is fetched separately from the node
+`/api/system/status` endpoint and proxied by the panel through
+`/api/nodes/{id}/system/status`.
 Remote node and xray-core versions are not persisted on `NodeEntity`; they are
 runtime telemetry values and are repopulated after panel restart when node
 streams reconnect.
@@ -90,7 +96,8 @@ config as a string to the standalone node.
 `Contracts` owns shared types used across backend projects:
 
 - configuration options such as `JwtOptions`, `PanelSettings`, and `XrayOptions`;
-- enums such as admin permissions, user status, node status, and update target;
+- enums such as admin permissions, user status, certificate modes, and update
+  target;
 - query/filter models such as cursor pagination and entity filters;
 - shared values such as `PathProvider` and `AdminPermissionNames`;
 - contract-level DI registration.

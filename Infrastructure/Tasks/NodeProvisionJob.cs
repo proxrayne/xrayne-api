@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Quartz;
 using Contracts.Enums;
+using Contracts.Models;
+using Contracts.Utilities;
 using Infrastructure.Services;
 using Infrastructure.States;
 
@@ -13,6 +15,7 @@ public sealed class NodeProvisionJob(
     INodeService nodeService,
     INodeSecretService secretService,
     INodeProvisionStateMachine stateMachine,
+    INodeConnectionStateStore connectionStates,
     IRemoteNodeConnectionManager connectionManager,
     IRemoteNodeProvisioner provisioner,
     ILogger<NodeProvisionJob> logger) : IJob
@@ -41,7 +44,8 @@ public sealed class NodeProvisionJob(
         {
             stateMachine.Dispatch(jobId, NodeProvisionState.Preparing(nodeId, jobId));
             node.InstallationMessage = "Preparing remote node installation.";
-            node.Status = NodeStatus.Connecting;
+            node.Enabled = true;
+            connectionStates.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
             node.LastStatusChange = DateTime.UtcNow;
             await nodeService.UpdateAsync(node, ct);
 
@@ -50,7 +54,6 @@ public sealed class NodeProvisionJob(
             stateMachine.Dispatch(jobId, NodeProvisionState.Installing(nodeId, jobId));
             var result = await provisioner.ProvisionAsync(node, apiKey, jobId, ct);
 
-            node.Status = NodeStatus.Connected;
             node.ConnectedAt = result.VerifiedAt;
             node.LastSeenAt = result.VerifiedAt;
             node.ReconnectAttemptCount = 0;
@@ -66,7 +69,7 @@ public sealed class NodeProvisionJob(
         {
             logger.LogError(exception, "Remote node provisioning failed for node {NodeId}.", nodeId);
 
-            node.Status = NodeStatus.Error;
+            connectionStates.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Error, null, null));
             node.Message = exception.Message;
             node.InstallationMessage = exception.Message;
             node.LastStatusChange = DateTime.UtcNow;

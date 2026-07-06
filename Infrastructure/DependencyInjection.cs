@@ -30,7 +30,6 @@ public static class DependencyInjection
         services.AddSingleton<INodeReconnectPolicy, NodeReconnectPolicy>();
         services.AddSingleton<INodeImageReleaseResolver, NodeImageReleaseResolver>();
         services.AddSingleton<INodeCoreConfigBuilder, NodeCoreConfigBuilder>();
-        services.AddSingleton<IRemoteNodeTelemetryCache, RemoteNodeTelemetryCache>();
         services.AddSingleton<INodeConnectionVerifier, NodeConnectionVerifier>();
         services.AddSingleton<IRemoteNodeConnectionManager, RemoteNodeConnectionManager>();
         services.AddSingleton<IRemoteNodeProvisioner, RemoteNodeProvisioner>();

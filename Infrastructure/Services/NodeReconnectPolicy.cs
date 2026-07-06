@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Options;
 using Contracts.Configurations;
-using Contracts.Enums;
 using Repositories.Entities;
 
 namespace Infrastructure.Services;
@@ -12,7 +11,7 @@ public sealed class NodeReconnectPolicy(IOptions<NodeConnectionOptions> options)
 {
     public bool CanRetry(NodeEntity node)
     {
-        return node.Status is not NodeStatus.Disabled
+        return node.Enabled
             && node.ReconnectAttemptCount < Math.Max(0, options.Value.ReconnectAttempts);
     }
 

@@ -1,5 +1,4 @@
 using Contracts.Enums;
-using Infrastructure.States;
 
 namespace Api.Responses;
 
@@ -21,7 +20,8 @@ public sealed record NodeDto(
     DateTimeOffset? LastSeenAt,
     DateTimeOffset? ConnectedAt,
     int ReconnectAttemptCount,
-    NodeStatus Status,
+    bool Enabled,
+    NodeConnectionStatus Status,
     SSHAuthType AuthType,
     string? Message,
     string InstallationMessage,

@@ -1,18 +1,21 @@
-using AutoMapper;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using Contracts.Configurations;
 using Api.Exceptions;
+using Api.Mapping;
 using Api.Requests;
 using Api.Responses;
+using AutoMapper;
+using Contracts.Configurations;
 using Contracts.Enums;
+using Contracts.Models;
+using Contracts.Utilities;
 using Contracts.Values;
 using Infrastructure.Services;
 using Infrastructure.States;
 using Infrastructure.Values;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using RemoteNode.Enums;
 using RemoteNode.Exceptions;
 using RemoteNode.Models;
 using RemoteNode.Services;
@@ -35,6 +38,8 @@ public sealed class NodesController(
     IRemoteNodeConnectionManager connectionManager,
     IRemoteNodeApiClientFactory apiClientFactory,
     INodeCoreConfigBuilder coreConfigBuilder,
+    INodeConnectionStateStore connectionStateStore,
+    IRemoteNodeCoreStateStore coreStateStore,
     IBackgroundTaskScheduler scheduler,
     INodeProvisionStateMachine provisionStates,
     IEventStreamManager eventStreams,
@@ -54,7 +59,7 @@ public sealed class NodesController(
     {
         var result = await nodes.GetAllAsync(cancellationToken);
 
-        return mapper.Map<List<NodeDto>>(result);
+        return result.Select(ToNodeDto).ToList();
     }
 
     /// <summary>
@@ -69,7 +74,7 @@ public sealed class NodesController(
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
 
-        return mapper.Map<NodeDto>(node);
+        return ToNodeDto(node);
     }
 
     /// <summary>
@@ -83,9 +88,9 @@ public sealed class NodesController(
     public async Task<NodeConnectionSnapshotResponse> GetConnection(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        var snapshot = connectionManager.GetSnapshot(id) ?? CreateFallbackConnectionSnapshot(node);
+        var snapshot = connectionStateStore.Get(id) ?? CreateFallbackConnectionState(node);
 
-        return ToConnectionSnapshotResponse(snapshot);
+        return ToConnectionSnapshotResponse(snapshot, node);
     }
 
     /// <summary>
@@ -150,12 +155,13 @@ public sealed class NodesController(
             EncryptedApiKey = secrets.ProtectApiKey(apiKey),
             ApiKeyFingerprint = secrets.GetFingerprint(apiKey),
             CertificateMode = certificateMode,
-            Status = NodeStatus.Connecting,
+            Enabled = true,
             LastStatusChange = DateTime.UtcNow,
             InstallationMessage = "Remote node provisioning is queued."
         };
 
         await nodes.AddAsync(AdminId, node, cancellationToken);
+        connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
 
         if (environment.IsDevelopment())
         {
@@ -163,13 +169,13 @@ public sealed class NodesController(
             await ConnectDevelopmentNodeAsync(node, apiKey, devJobId, cancellationToken);
             await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
 
-            return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(mapper.Map<NodeDto>(node), devJobId));
+            return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(ToNodeDto(node), devJobId));
         }
 
         var jobId = await scheduler.ScheduleProvisionNode(node.Id, cancellationToken);
         provisionStates.Dispatch(jobId, NodeProvisionState.Queued(node.Id, jobId));
 
-        return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(mapper.Map<NodeDto>(node), jobId));
+        return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(ToNodeDto(node), jobId));
     }
 
     /// <summary>
@@ -215,10 +221,11 @@ public sealed class NodesController(
 
         if (requiresReconnect)
         {
-            node.Status = NodeStatus.Connecting;
+            node.Enabled = true;
             node.ReconnectAttemptCount = 0;
             node.Message = "Node connection parameters updated. Manual reconnect requested.";
             node.LastStatusChange = DateTime.UtcNow;
+            connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
         }
 
         var updated = await nodes.UpdateAsync(node, cancellationToken)
@@ -231,7 +238,7 @@ public sealed class NodesController(
 
         var status = requiresReconnect ? "reconnect_queued" : "updated";
 
-        return new NodeOperationResponse(mapper.Map<NodeDto>(updated), status);
+        return new NodeOperationResponse(ToNodeDto(updated), status);
     }
 
     /// <summary>
@@ -291,10 +298,17 @@ public sealed class NodesController(
     public async Task<CoreStatusResponse> GetCoreStatus(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        if (coreStateStore.TryGet(id, out var cachedState) && cachedState is not null)
+        {
+            return ToCoreStatusResponse(cachedState);
+        }
 
         try
         {
-            return await CreateRemoteNodeClient(node).GetCoreStatusAsync(cancellationToken);
+            var state = await CreateRemoteNodeClient(node).GetCoreStatusAsync(cancellationToken);
+            StoreCoreState(id, state);
+
+            return state;
         }
         catch (RemoteNodeException exception)
         {
@@ -323,6 +337,7 @@ public sealed class NodesController(
             await Response.StartAsync(cancellationToken);
             await foreach (var state in client.CoreStatusStreamAsync(cancellationToken))
             {
+                StoreCoreState(id, state);
                 await WriteServerSentEventAsync(state, cancellationToken);
             }
         }
@@ -542,15 +557,16 @@ public sealed class NodesController(
     public async Task<IActionResult> Reconnect(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        node.Status = NodeStatus.Connecting;
+        node.Enabled = true;
         node.ReconnectAttemptCount = 0;
         node.Message = "Manual reconnect requested.";
         node.LastStatusChange = DateTime.UtcNow;
+        connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
 
         await nodes.UpdateAsync(node, cancellationToken);
         await connectionManager.ReconnectAsync(node.Id, cancellationToken);
 
-        return Accepted(new NodeOperationResponse(mapper.Map<NodeDto>(node), "reconnect_queued"));
+        return Accepted(new NodeOperationResponse(ToNodeDto(node), "reconnect_queued"));
     }
 
     /// <summary>
@@ -564,13 +580,13 @@ public sealed class NodesController(
     public async Task<NodeOperationResponse> Disable(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        node.Status = NodeStatus.Disabled;
+        node.Enabled = false;
         node.Message = "Node disabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
         await nodes.UpdateAsync(node, cancellationToken);
         await connectionManager.DisconnectAsync(node.Id, cancellationToken);
 
-        return new NodeOperationResponse(mapper.Map<NodeDto>(node), "disabled");
+        return new NodeOperationResponse(ToNodeDto(node), "disabled");
     }
 
     /// <summary>
@@ -584,13 +600,14 @@ public sealed class NodesController(
     public async Task<NodeOperationResponse> Enable(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        node.Status = NodeStatus.Connecting;
+        node.Enabled = true;
         node.Message = "Node enabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
+        connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
         await nodes.UpdateAsync(node, cancellationToken);
         await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
 
-        return new NodeOperationResponse(mapper.Map<NodeDto>(node), "enabled");
+        return new NodeOperationResponse(ToNodeDto(node), "enabled");
     }
 
     /// <summary>
@@ -610,6 +627,8 @@ public sealed class NodesController(
         }
 
         await connectionManager.DisconnectAsync(id, cancellationToken);
+        connectionStateStore.Remove(id);
+        coreStateStore.Remove(id);
 
         return NoContent();
     }
@@ -712,42 +731,80 @@ public sealed class NodesController(
         }
     }
 
-    private static RemoteNodeConnectionSnapshot CreateFallbackConnectionSnapshot(NodeEntity node)
+    private static NodeConnectionState CreateFallbackConnectionState(NodeEntity node)
     {
-        var state = node.Status switch
-        {
-            NodeStatus.Connecting => RemoteNodeConnectionState.Connecting,
-            NodeStatus.Error => RemoteNodeConnectionState.Error,
-            _ => RemoteNodeConnectionState.Disconnected
-        };
+        var state = node.Enabled
+            ? NodeConnectionStatus.Disconnected
+            : NodeConnectionStatus.Disabled;
+
+        return new NodeConnectionState(
+            node.Id,
+            state,
+            null,
+            null);
+    }
+
+    private static NodeConnectionSnapshotResponse ToConnectionSnapshotResponse(
+        NodeConnectionState snapshot,
+        NodeEntity node)
+    {
         var updatedAt = node.UpdatedAt
             ?? node.LastSeenAt
             ?? node.ConnectedAt
             ?? DateTimeOffset.UtcNow;
 
-        return new RemoteNodeConnectionSnapshot(
-            node.Id,
-            state,
+        return new NodeConnectionSnapshotResponse(
+            snapshot.NodeId,
+            snapshot.Status,
             updatedAt,
             node.ConnectedAt,
             node.LastSeenAt,
             node.ReconnectAttemptCount,
             node.Message,
-            null);
+            snapshot.ApiVersion,
+            snapshot.Uptime);
     }
 
-    private static NodeConnectionSnapshotResponse ToConnectionSnapshotResponse(
-        RemoteNodeConnectionSnapshot snapshot)
+    private NodeDto ToNodeDto(NodeEntity node)
     {
-        return new NodeConnectionSnapshotResponse(
-            snapshot.NodeId,
-            snapshot.State,
-            snapshot.UpdatedAt,
-            snapshot.ConnectedAt,
-            snapshot.LastHeartbeatAt,
-            snapshot.ReconnectAttemptCount,
-            snapshot.Message,
-            snapshot.Telemetry);
+        var state = connectionStateStore.Get(node.Id) ?? CreateFallbackConnectionState(node);
+
+        return mapper.Map<NodeDto>(
+            node,
+            options => options.Items[NodeMappingProfile.ConnectionStateItemKey] = state);
+    }
+
+    private void StoreCoreState(long nodeId, CoreStatusResponse state)
+    {
+        coreStateStore.Set(new RemoteNodeCoreState(
+            nodeId,
+            state.IsInstalled,
+            state.Status is RemoteCoreStatus.Started,
+            state.Version,
+            MapCoreStatus(state.Status)));
+    }
+
+    private static CoreStatusResponse ToCoreStatusResponse(RemoteNodeCoreState state)
+    {
+        return new CoreStatusResponse(
+            state.IsInstalled,
+            MapCoreStatus(state.Status),
+            false,
+            state.Version);
+    }
+
+    private static CoreStatus? MapCoreStatus(RemoteCoreStatus? status)
+    {
+        return status is null
+            ? null
+            : Enum.Parse<CoreStatus>(status.Value.ToString());
+    }
+
+    private static RemoteCoreStatus? MapCoreStatus(CoreStatus? status)
+    {
+        return status is null
+            ? null
+            : Enum.Parse<RemoteCoreStatus>(status.Value.ToString());
     }
 
     private async Task<ActionResult<OperationAcceptedResponse>> ScheduleCoreOperation(
@@ -791,7 +848,6 @@ public sealed class NodesController(
         {
             var result = await connectionVerifier.VerifyAsync(node, apiKey, cancellationToken);
 
-            node.Status = NodeStatus.Connected;
             node.ConnectedAt = result.VerifiedAt;
             node.LastSeenAt = result.VerifiedAt;
             node.ReconnectAttemptCount = 0;
@@ -804,7 +860,6 @@ public sealed class NodesController(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            node.Status = NodeStatus.Error;
             node.Message = exception.Message;
             node.InstallationMessage = exception.Message;
             node.LastStatusChange = DateTime.UtcNow;

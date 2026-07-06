@@ -1,5 +1,4 @@
-using Infrastructure.Services;
-using RemoteNode.Models;
+using Contracts.Enums;
 
 namespace Api.Responses;
 
@@ -8,10 +7,11 @@ namespace Api.Responses;
 /// </summary>
 public sealed record NodeConnectionSnapshotResponse(
     long NodeId,
-    RemoteNodeConnectionState State,
+    NodeConnectionStatus State,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? ConnectedAt,
     DateTimeOffset? LastHeartbeatAt,
     int ReconnectAttemptCount,
     string? Message,
-    NodePingResponse? Telemetry);
+    string? ApiVersion,
+    DateTimeOffset? Uptime);

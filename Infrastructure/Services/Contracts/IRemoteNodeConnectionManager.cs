@@ -1,5 +1,3 @@
-using RemoteNode.Models;
-
 namespace Infrastructure.Services;
 
 /// <summary>
@@ -27,8 +25,4 @@ public interface IRemoteNodeConnectionManager
     /// </summary>
     Task DisconnectAsync(long nodeId, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Gets the latest in-memory live connection snapshot for a node.
-    /// </summary>
-    RemoteNodeConnectionSnapshot? GetSnapshot(long nodeId);
 }

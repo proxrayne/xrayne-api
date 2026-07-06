@@ -1,3 +1,5 @@
+using Contracts.Enums;
+
 namespace Infrastructure.States;
 
 public sealed record CoreState(
