@@ -88,7 +88,7 @@ public sealed class NodesController(
     public async Task<NodeConnectionSnapshotResponse> GetConnection(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        var snapshot = connectionStateStore.Get(id) ?? CreateFallbackConnectionState(node);
+        var snapshot = connectionStateStore.Get(id) ?? CreateFallbackConnectionState(node, nodeConnectionOptions.Value);
 
         return ToConnectionSnapshotResponse(snapshot, node);
     }
@@ -731,11 +731,9 @@ public sealed class NodesController(
         }
     }
 
-    private static NodeConnectionState CreateFallbackConnectionState(NodeEntity node)
+    private static NodeConnectionState CreateFallbackConnectionState(NodeEntity node, NodeConnectionOptions options)
     {
-        var state = node.Enabled
-            ? NodeConnectionStatus.Disconnected
-            : NodeConnectionStatus.Disabled;
+        var state = ResolveFallbackConnectionStatus(node, options);
 
         return new NodeConnectionState(
             node.Id,
@@ -767,11 +765,30 @@ public sealed class NodesController(
 
     private NodeDto ToNodeDto(NodeEntity node)
     {
-        var state = connectionStateStore.Get(node.Id) ?? CreateFallbackConnectionState(node);
+        var state = connectionStateStore.Get(node.Id) ?? CreateFallbackConnectionState(node, nodeConnectionOptions.Value);
 
         return mapper.Map<NodeDto>(
             node,
             options => options.Items[NodeMappingProfile.ConnectionStateItemKey] = state);
+    }
+
+    private static NodeConnectionStatus ResolveFallbackConnectionStatus(
+        NodeEntity node,
+        NodeConnectionOptions options)
+    {
+        if (!node.Enabled)
+        {
+            return NodeConnectionStatus.Disconnected;
+        }
+
+        if (node.ReconnectAttemptCount <= 0)
+        {
+            return NodeConnectionStatus.Disconnected;
+        }
+
+        return node.ReconnectAttemptCount >= Math.Max(0, options.ReconnectAttempts)
+            ? NodeConnectionStatus.Error
+            : NodeConnectionStatus.Connecting;
     }
 
     private void StoreCoreState(long nodeId, CoreStatusResponse state)

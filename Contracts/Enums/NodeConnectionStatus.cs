@@ -23,10 +23,5 @@ public enum NodeConnectionStatus
     /// <summary>
     /// The remote node stream is intentionally disconnected.
     /// </summary>
-    Disconnected,
-
-    /// <summary>
-    /// The remote node is disabled by configuration.
-    /// </summary>
-    Disabled
+    Disconnected
 }

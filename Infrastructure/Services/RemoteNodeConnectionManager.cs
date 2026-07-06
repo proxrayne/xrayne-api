@@ -73,7 +73,12 @@ public sealed class RemoteNodeConnectionManager(
     /// <inheritdoc />
     public async Task ReconnectAsync(long nodeId, CancellationToken cancellationToken = default)
     {
-        await DisconnectAsync(nodeId, cancellationToken);
+        await StopWorkerAsync(nodeId, cancellationToken);
+        connectionStates.Set(new NodeConnectionState(
+            nodeId,
+            NodeConnectionStatus.Connecting,
+            null,
+            null));
         await EnsureConnectedAsync(nodeId, cancellationToken);
     }
 
@@ -87,13 +92,9 @@ public sealed class RemoteNodeConnectionManager(
         }
 
         var node = await GetNodeAsync(nodeId, cancellationToken);
-        var status = node?.Enabled == false
-            ? NodeConnectionStatus.Disabled
-            : NodeConnectionStatus.Disconnected;
-
         connectionStates.Set(new NodeConnectionState(
             nodeId,
-            status,
+            ResolveDisconnectedStatus(node),
             null,
             null));
     }
@@ -171,6 +172,29 @@ public sealed class RemoteNodeConnectionManager(
     private static bool CanAttemptConnection(NodeEntity node, INodeReconnectPolicy reconnectPolicy)
     {
         return node.ReconnectAttemptCount == 0 || reconnectPolicy.CanRetry(node);
+    }
+
+    private async Task StopWorkerAsync(long nodeId, CancellationToken cancellationToken)
+    {
+        if (!workers.TryRemove(nodeId, out var worker))
+        {
+            return;
+        }
+
+        await worker.StopAsync(cancellationToken);
+        await worker.DisposeAsync();
+    }
+
+    private static NodeConnectionStatus ResolveDisconnectedStatus(NodeEntity? node)
+    {
+        if (node?.Enabled == false)
+        {
+            return NodeConnectionStatus.Disconnected;
+        }
+
+        return node?.ReconnectAttemptCount > 0 && !string.IsNullOrWhiteSpace(node.Message)
+            ? NodeConnectionStatus.Error
+            : NodeConnectionStatus.Disconnected;
     }
 
     private sealed class NodeConnectionWorker : IAsyncDisposable

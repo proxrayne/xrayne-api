@@ -174,11 +174,26 @@ public sealed class NodesControllerTests
 
         var result = await _controller.GetConnection(node.Id, CancellationToken.None);
 
-        result.State.Should().Be(NodeConnectionStatus.Disabled);
+        result.State.Should().Be(NodeConnectionStatus.Disconnected);
         result.ReconnectAttemptCount.Should().Be(2);
         result.Message.Should().Be("Connection failed.");
         result.ApiVersion.Should().BeNull();
         result.Uptime.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetConnection_ReturnsErrorFallback_WhenReconnectAttemptsAreExhausted()
+    {
+        var node = CreateNode();
+        node.ReconnectAttemptCount = 3;
+        node.Message = "Connection failed.";
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+
+        var result = await _controller.GetConnection(node.Id, CancellationToken.None);
+
+        result.State.Should().Be(NodeConnectionStatus.Error);
+        result.ReconnectAttemptCount.Should().Be(3);
+        result.Message.Should().Be("Connection failed.");
     }
 
     [Fact]
