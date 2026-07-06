@@ -1,7 +1,7 @@
 using Api.Responses;
 using AutoMapper;
 using Contracts.Models;
-using Repositories.Entities;
+using Data.Entities;
 
 namespace Api.Mapping;
 

@@ -4,7 +4,7 @@
 
 1. Define shared options/enums/filter models in `Contracts` only when they
    are reused across projects.
-2. Add or update EF entities and repositories in `Repositories`.
+2. Add or update EF entities and repositories in `Data`.
 3. Add migrations through `add-migration.ps1`.
 4. Add runtime/business services in `Infrastructure`.
 5. Add controller endpoints and request/response models in `Api`.

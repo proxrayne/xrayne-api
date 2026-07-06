@@ -8,7 +8,7 @@ using Contracts.Enums;
 using Infrastructure.States;
 using RemoteNode.Models;
 using RemoteNode.Services;
-using Repositories.Entities;
+using Data.Entities;
 
 namespace Infrastructure.Services;
 

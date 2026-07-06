@@ -3,7 +3,7 @@ using Contracts.Models;
 using Contracts.Utilities;
 using RemoteNode.Models;
 using RemoteNode.Services;
-using Repositories.Entities;
+using Data.Entities;
 
 namespace Infrastructure.Services;
 

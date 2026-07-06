@@ -5,8 +5,8 @@ using Contracts.Enums;
 using Contracts.Models;
 using Infrastructure.Mapping;
 using Infrastructure.Services;
-using Repositories.Contracts;
-using Repositories.Entities;
+using Data.Contracts;
+using Data.Entities;
 
 namespace Test.Infrastructure;
 

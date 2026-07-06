@@ -1,7 +1,7 @@
 using Contracts.Enums;
 using Contracts.Models;
 using Microsoft.Extensions.Caching.Memory;
-using Repositories.Implementations;
+using Data.Implementations;
 
 namespace Test.Infrastructure;
 

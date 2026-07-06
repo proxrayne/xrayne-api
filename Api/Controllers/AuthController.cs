@@ -8,7 +8,7 @@ using Api.Responses;
 using Contracts.Configurations;
 using Infrastructure.Services;
 using Infrastructure.Utilities;
-using Repositories.Contracts;
+using Data.Contracts;
 
 namespace Api.Controllers;
 

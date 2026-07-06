@@ -1,6 +1,6 @@
 ---
 name: proxrayne-panel-backend
-description: Backend development guidance for the Proxrayne xrayne-panel repository. Use when Codex works on C#/.NET API controllers, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, system information, config files, or backend tests in Api, Infrastructure, Repositories, Contracts, System, or Test.
+description: Backend development guidance for the Proxrayne xrayne-panel repository. Use when Codex works on C#/.NET API controllers, dependency injection, auth and permissions, EF Core repositories and migrations, PostgreSQL configuration, xray-core services, managed-node services, system information, config files, or backend tests in Api, Infrastructure, Data, Contracts, System, or Test.
 ---
 
 # XRayne Panel Backend
@@ -20,7 +20,7 @@ behavior or another Proxrayne repository.
 - Keep Scalar/OpenAPI metadata complete with endpoint summary, description, request/response models, and status codes.
 - Keep xray-core setup, runtime services, and background jobs in `Infrastructure`.
 - Keep managed-node provisioning, reconnect, status, and verification services in `Infrastructure`; node HTTP endpoints stay in `Api`.
-- Keep EF entity models, base entity classes, migrations, and repository implementations in `Repositories`.
+- Keep EF entity models, base entity classes, migrations, and repository implementations in `Data`.
 - Register services through the nearest `DependencyInjection.cs` extension.
 - Put HTTP behavior in controllers under `Api/Controllers`; keep controllers thin and delegate work to repositories/services.
 - Throw `ApiException` subclasses for intended API errors so `ApiExceptionFilter` can format them.
@@ -44,5 +44,5 @@ dotnet run --project Api
 If touching EF:
 
 ```powershell
-dotnet ef database update --project Repositories --startup-project Api --context AppDbContext
+dotnet ef database update --project Data --startup-project Api --context AppDbContext
 ```

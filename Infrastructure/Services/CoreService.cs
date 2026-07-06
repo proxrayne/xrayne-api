@@ -6,7 +6,7 @@ using Xray.Core;
 using Xray.Core.Models;
 using Contracts.Configurations;
 using Contracts.Values;
-using Repositories.Utilities;
+using Data.Utilities;
 
 namespace Infrastructure.Services;
 

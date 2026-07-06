@@ -20,7 +20,7 @@ Canonical documentation lives under `docs/`. Read `docs/project-rules.md` for pr
 - `System`: reusable host system information client with no XRayne project dependencies.
 - `Infrastructure`: xray-core setup, core runtime abstractions, infrastructure services, and background jobs.
 - `Infrastructure`: JWT/core service implementations plus infrastructure utilities such as `NetworkAddress` and password hashing/generation.
-- `Repositories`: EF Core, PostgreSQL, migrations, entity models, repositories, and runtime config file utilities such as `JsonConfig`/`EnvConfig`.
+- `Data`: EF Core, PostgreSQL, migrations, entity models, repositories, and runtime config file utilities such as `JsonConfig`/`EnvConfig`.
 - `Contracts`: shared contracts, configuration DTOs, shared API/query models, permission enums, and permission names.
 - `Test`: backend test project.
 - `.github/workflows/build.yml`: publishes the API Docker image archive on tags or manual dispatch.
@@ -53,7 +53,7 @@ dotnet run --project Api
 - API reads normal ASP.NET Core configuration from packaged `appsettings*.json`, then runtime `PathProvider.Paths.JsonConfig` (`config.json` in the shared project directory) and `PathProvider.Paths.EnvConfig`.
 - `PathProvider` in `Contracts.Values` centralizes runtime paths: project root, `.env`, `config.json`, `docker-compose.yml`, `logs`, `postgres`, `downloads`, `certificates`, `certificates/letsencrypt`, and `xray`.
 - `PathProvider.SystemProjectDirectory` defaults to `C:\Program Files\xrayne` on Windows, `/opt/xrayne` on Linux, and a temp `xrayne` directory elsewhere. `PROJECT_PATH` overrides the runtime root used by `PathProvider.Paths`.
-- `JsonConfig` and `EnvConfig` in `Repositories.Utilities` are static helpers for safe runtime file mutations. Reading is done through standard `IConfiguration`.
+- `JsonConfig` and `EnvConfig` in `Data.Utilities` are static helpers for safe runtime file mutations. Reading is done through standard `IConfiguration`.
 - `.env` is static after install and reserved for Docker Compose/bootstrap variables such as `PROJECT_PATH`, `API_IMAGE`, `PORT`, and PostgreSQL values. More complex application configuration belongs in runtime `config.json`. Docker Compose runs from the project directory and reads the `.env` file beside `docker-compose.yml`; services should use `env_file: .env` when they need the same values inside containers.
 - `XrayOptions` is registered from `Xray` through `Contracts.DependencyInjection`; current options include `CorePath`.
 - Database connection key is `ConnectionStrings:Default`.

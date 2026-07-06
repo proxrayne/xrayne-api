@@ -1,4 +1,4 @@
-using Repositories.Entities;
+using Data.Entities;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;

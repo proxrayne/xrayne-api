@@ -8,9 +8,9 @@ using Npgsql;
 using Contracts.Enums;
 using Infrastructure.Services;
 using Infrastructure.Utilities;
-using Repositories;
-using Repositories.Contracts;
-using Repositories.Entities;
+using Data;
+using Data.Contracts;
+using Data.Entities;
 
 namespace Test.Infrastructure;
 

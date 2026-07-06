@@ -16,7 +16,7 @@ using Microsoft.OpenApi.Models;
 using Quartz;
 using RemoteNode;
 using RemoteNode.Configurations;
-using Repositories;
+using Data;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -168,7 +168,7 @@ try
         PingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:PingTimeoutSeconds", 15)
     });
     builder.Services.AddInfrastructure(builder.Configuration);
-    builder.Services.AddRepositories(builder.Configuration.GetConnectionString("Default"));
+    builder.Services.AddData(builder.Configuration.GetConnectionString("Default"));
     builder.Services.AddContracts(builder.Configuration);
     builder.Services.AddSingleton<IPanelRestartService, PanelRestartService>();
 

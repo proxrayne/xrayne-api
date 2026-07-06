@@ -2,7 +2,7 @@ using AutoMapper;
 using Contracts.Configurations;
 using Contracts.Enums;
 using Contracts.Models;
-using Repositories.Entities;
+using Data.Entities;
 
 namespace Infrastructure.Mapping;
 

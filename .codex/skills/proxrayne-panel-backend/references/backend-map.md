@@ -9,7 +9,7 @@ Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/s
 - `Infrastructure`: xray-core services, background jobs, infrastructure services, and runtime abstractions.
 - `Infrastructure`: JWT token creation through `IJwtTokenService` plus infrastructure utilities such as network address helpers and password hashing/generation.
 - Shared random password generation lives in `Infrastructure/Utilities/PasswordGenerator.cs`.
-- `Repositories`: EF Core `AppDbContext`, PostgreSQL connection, migrations, entity models, repositories, and runtime config file utilities.
+- `Data`: EF Core `AppDbContext`, PostgreSQL connection, migrations, entity models, repositories, and runtime config file utilities.
 - `Contracts`: shared contracts, configuration DTOs/options, permission enums, permission names, runtime path helpers, and contract-level DI registration.
 - `Test`: tests.
 
@@ -24,7 +24,7 @@ Canonical backend documentation lives in `docs/architecture/backend.md`, `docs/s
 - Adds AutoMapper from API assembly.
 - Configures JWT Bearer with `JwtOptions` from `Contracts.Configurations`.
 - Adds authorization policies via `AddAdminPermissionPolicies`.
-- Calls `AddInfrastructure`, `AddRepositories`, and `AddContracts`.
+- Calls `AddInfrastructure`, `AddData`, and `AddContracts`.
 - Calls `MigrateDatabaseAsync()` on startup.
 - Serves default/static files and maps SPA fallback for non-API paths.
 
@@ -80,7 +80,7 @@ String policy names live in `Contracts.Values.AdminPermissionNames`:
 `AppDbContext` currently exposes `AdminAccounts`, `Users`, `Inbounds`,
 `Outbounds`, and `Nodes`.
 
-Common entity base classes live in `Repositories/Entities/BaseEntities.cs`:
+Common entity base classes live in `Data/Entities/BaseEntities.cs`:
 
 - `CreatedEntity`: provides `CreatedAt`.
 - `CreateUpdateEntity`: extends `CreatedEntity` with nullable `UpdatedAt`.
@@ -109,21 +109,21 @@ features in a local standalone node-service project.
 
 PostgreSQL enum mapping is configured for `UserStatus`, `LimitResetStrategy`, and `AdminPermission` both in `AppDbContext.OnModelCreating` through `HasPostgresEnum<T>()` and in repository DI through `ConfigureDataSource(...).MapEnum<T>()`. EF conventions also convert enum properties to strings.
 
-Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.Json` options configured in `Repositories.DependencyInjection`.
+Xray native config payloads use Npgsql dynamic JSON with camelCase `System.Text.Json` options configured in `Data.DependencyInjection`.
 
-`AddRepositories` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
+`AddData` accepts a resolved PostgreSQL connection string and throws when it is empty. API passes `ConnectionStrings:Default` from `IConfiguration`. The repository layer creates `NpgsqlDataSource`, configures EF with `UseNpgsql`, and registers `IAdminAccountRepository`.
 
-GitHub.com release and asset access lives in the root `Github` class library. Keep persistence-specific code in `Repositories`; do not add external API clients there.
+GitHub.com release and asset access lives in the root `Github` class library. Keep persistence-specific code in `Data`; do not add external API clients there.
 
 Host system information DTOs live in `Contracts.Models`. `Infrastructure` registers `ISystemInfoService` with panel runtime paths from `PathProvider` and reads host data through the `Hardware.Info` NuGet package.
 
 Repository pattern:
 
-- Define repository interfaces under `Repositories/Contracts`.
-- Implement repository classes under `Repositories/Implementations`.
+- Define repository interfaces under `Data/Contracts`.
+- Implement repository classes under `Data/Implementations`.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `SaveChangesAsync`, and pass cancellation tokens.
-- Repositories for admin-owned entities filter by `AdminId`. Current entities expose `Admin` navigation but not explicit `AdminId`, so repository queries use `EF.Property<Guid>(entity, "AdminId")`.
-- Current repositories registered by `AddRepositories`: `IAdminAccountRepository`, `IUserRepository`, `IInboundRepository`, `IOutboundRepository`, and node-related repositories.
+- Data for admin-owned entities filter by `AdminId`. Current entities expose `Admin` navigation but not explicit `AdminId`, so repository queries use `EF.Property<Guid>(entity, "AdminId")`.
+- Current repositories registered by `AddData`: `IAdminAccountRepository`, `IUserRepository`, `IInboundRepository`, `IOutboundRepository`, and node-related repositories.
 - `AddAsync` methods return the saved entity after `SaveChangesAsync` and `ReloadAsync`, so database-generated values are available to callers.
 - Shared query/pagination models live in `Contracts/Models`: `CursorQuery`, `CursorPage<T>`, `SortOrder`, plus one filter file per searchable entity such as `UserFilter` and `InboundFilter`. The static cursor helper lives in `Contracts/Utilities/CursorPagination`. Outbound repositories intentionally expose only direct list/CRUD methods, without filtering or cursor pagination.
 - New entity repositories expose both admin-scoped methods and unscoped variants for service/internal use.
@@ -155,11 +155,11 @@ Use:
 Equivalent command:
 
 ```powershell
-dotnet ef migrations add MigrationName --project Repositories --startup-project Api --context AppDbContext --output-dir Migrations
+dotnet ef migrations add MigrationName --project Data --startup-project Api --context AppDbContext --output-dir Migrations
 ```
 
 Apply migrations:
 
 ```powershell
-dotnet ef database update --project Repositories --startup-project Api --context AppDbContext
+dotnet ef database update --project Data --startup-project Api --context AppDbContext
 ```

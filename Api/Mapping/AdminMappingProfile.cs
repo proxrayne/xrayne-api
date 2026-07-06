@@ -2,7 +2,7 @@ using AutoMapper;
 using Api.Responses;
 using Contracts.Values;
 using Octokit;
-using Repositories.Entities;
+using Data.Entities;
 
 namespace Api.Mapping;
 

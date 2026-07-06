@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using Contracts.Enums;
 using Infrastructure.Services;
-using Repositories.Entities;
+using Data.Entities;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 

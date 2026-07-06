@@ -1,4 +1,4 @@
-using Repositories.Utilities;
+using Data.Utilities;
 
 namespace Test.Infrastructure;
 

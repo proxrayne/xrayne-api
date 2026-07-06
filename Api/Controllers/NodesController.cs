@@ -19,7 +19,7 @@ using RemoteNode.Enums;
 using RemoteNode.Exceptions;
 using RemoteNode.Models;
 using RemoteNode.Services;
-using Repositories.Entities;
+using Data.Entities;
 using Xray.Config.Models;
 
 namespace Api.Controllers;

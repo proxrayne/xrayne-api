@@ -18,7 +18,7 @@ longer contains a standalone node-service project or node-service source code.
 - `Contracts`: shared options, enums, DTO-like models, values, and utilities.
 - `Infrastructure`: xray-core runtime services, jobs, state machines, and
   cross-cutting infrastructure services.
-- `Repositories`: EF Core DbContext, entities, migrations, repository
+- `Data`: EF Core DbContext, entities, migrations, repository
   interfaces/implementations, config-file utilities, and external release clients.
 - `Api`: HTTP controllers, auth, API filters, AutoMapper profiles, and
   request/response models.
@@ -29,7 +29,7 @@ longer contains a standalone node-service project or node-service source code.
 
 - Keep shared contracts free of API/EF dependencies.
 - Keep HTTP behavior in `Api`; delegate work to repositories/services.
-- Keep EF persistence in `Repositories`.
+- Keep EF persistence in `Data`.
 - Keep xray-core lifecycle and runtime behavior in `Infrastructure`.
 - Keep managed-node provisioning, reconnect, and status orchestration in
   panel-owned services; do not plan work in a local standalone node-service

@@ -2,8 +2,8 @@ using AutoMapper;
 using Microsoft.Extensions.Caching.Memory;
 using Contracts.Configurations;
 using Contracts.Models;
-using Repositories.Contracts;
-using Repositories.Entities;
+using Data.Contracts;
+using Data.Entities;
 
 namespace Infrastructure.Services;
 

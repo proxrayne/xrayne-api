@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using Contracts.Configurations;
-using Repositories.Entities;
+using Data.Entities;
 
 namespace Infrastructure.Services;
 

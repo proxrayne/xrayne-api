@@ -83,10 +83,10 @@ awkward, update the owning layer rather than bypassing it.
 - Public handlers, validators, middleware, and filters must have English XML
   summaries when introduced or modified.
 
-## Repositories
+## Data
 
-- Define interfaces in `Repositories/Contracts`.
-- Implement in `Repositories/Implementations`.
+- Define interfaces in `Data/Contracts`.
+- Implement in `Data/Implementations`.
 - Use EF Core async methods with cancellation tokens.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `ToListAsync`, `SaveChangesAsync`.
 - Admin-owned data should expose both unscoped and admin-scoped methods when

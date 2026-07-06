@@ -1,4 +1,4 @@
-using Repositories.Entities;
+using Data.Entities;
 
 namespace Infrastructure.Services;
 

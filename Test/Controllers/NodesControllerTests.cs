@@ -17,8 +17,8 @@ using Infrastructure.Services;
 using Infrastructure.States;
 using RemoteNode.Models;
 using RemoteNode.Services;
-using Repositories.Entities;
-using Repositories.Implementations;
+using Data.Entities;
+using Data.Implementations;
 using Xray.Config.Models;
 
 namespace Test.Controllers;

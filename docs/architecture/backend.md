@@ -8,7 +8,7 @@ The backend is a .NET 9 solution with a layered architecture:
 - `Contracts`: shared contracts and configuration values.
 - `RemoteNode`: typed HTTP/SSE protocol client for standalone remote nodes.
 - `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
-- `Repositories`: EF Core persistence.
+- `Data`: EF Core persistence.
 - `Test`: test project.
 
 ## API Host
@@ -21,7 +21,7 @@ The backend is a .NET 9 solution with a layered architecture:
 - registers controllers with `ApiExceptionFilter`;
 - configures OpenAPI/Scalar when `Docs` is enabled;
 - configures JWT bearer auth and admin permission policies;
-- registers infrastructure, repositories, contracts, Quartz, and restart services;
+- registers infrastructure, data access, contracts, Quartz, and restart services;
 - migrates the database on startup.
 
 Controllers use `[Route("api/...")]`, inherit from `ApiControllerBase`, and use
@@ -38,10 +38,10 @@ Panel-owned node behavior includes:
 - provisioning, reconnect, status streaming, and connection verification services
   in `Infrastructure`;
 - node entities, encrypted connection data, and repository access in
-  `Repositories`;
+  `Data`;
 - shared node DTOs, enums, and configuration values in `Contracts`.
 
-`RemoteNode` must not depend on `Contracts`, `Infrastructure`, `Repositories`,
+`RemoteNode` must not depend on `Contracts`, `Infrastructure`, `Data`,
 or `Api`.
 It is the only panel project that should know the remote node API wire shape.
 Do not add or reference a local standalone node-service project when
@@ -53,7 +53,7 @@ panel startup, exposes immediate connect/reconnect/disconnect operations for
 controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every SSE heartbeat to the database.
 Live node and remote xray-core state is kept in process memory through
-repository-layer singleton stores. `NodeEntity` does not persist connection
+data-layer singleton stores. `NodeEntity` does not persist connection
 status; it persists `Enabled` only as the durable operator-controlled flag
 that allows or stops automatic reconnect attempts. `INodeConnectionStateStore`
 is the source of truth for the live connection status, remote node API version,
@@ -126,9 +126,9 @@ infrastructure.
 Service interfaces live near implementations under `Services/Contracts`. Register
 new services in `Infrastructure/DependencyInjection.cs`.
 
-## Repository Layer
+## Data Layer
 
-`Repositories` owns persistence:
+`Data` owns persistence:
 
 - `AppDbContext` and migrations;
 - EF entities under `Entities`;
@@ -136,7 +136,7 @@ new services in `Infrastructure/DependencyInjection.cs`.
 - repository implementations under `Implementations`;
 - runtime config-file utilities under `Utilities`.
 
-Repositories expose async APIs, accept `CancellationToken`, and use admin-scoped
+Data repositories expose async APIs, accept `CancellationToken`, and use admin-scoped
 overloads when data belongs to an administrator.
 
 ## CLI Split

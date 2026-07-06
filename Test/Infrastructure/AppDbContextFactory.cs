@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Repositories;
+using Data;
 
 namespace Test.Infrastructure;
 

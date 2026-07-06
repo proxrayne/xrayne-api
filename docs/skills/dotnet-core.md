@@ -1,7 +1,7 @@
 # Skill: .NET Core Backend
 
 Use this skill when working on `Api`, `Contracts`,
-`Infrastructure`, `Repositories`, or `Test`.
+`Infrastructure`, `Data`, or `Test`.
 
 ## Start Here
 
@@ -23,7 +23,7 @@ Use this skill when working on `Api`, `Contracts`,
 - Put reusable host system information DTOs in `Contracts` and runtime
   collection services in `Infrastructure`.
 - Put EF entities, DbContext, migrations, repositories, config-file utilities, and
-  persistence utilities in `Repositories`.
+  persistence utilities in `Data`.
 
 ## Required Backend Rules
 
@@ -55,5 +55,5 @@ For EF changes:
 
 ```powershell
 .\add-migration.ps1 MigrationName
-dotnet ef database update --project Repositories --startup-project Api --context AppDbContext
+dotnet ef database update --project Data --startup-project Api --context AppDbContext
 ```

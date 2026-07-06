@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
-using Repositories;
+using Data;
 
 namespace Test.Infrastructure;
 

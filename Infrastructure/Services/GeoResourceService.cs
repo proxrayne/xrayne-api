@@ -1,5 +1,5 @@
-using Repositories.Contracts;
-using Repositories.Entities;
+using Data.Contracts;
+using Data.Entities;
 
 namespace Infrastructure.Services;
 

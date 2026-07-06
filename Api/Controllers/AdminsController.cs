@@ -6,8 +6,8 @@ using Api.Requests;
 using Api.Responses;
 using Contracts.Values;
 using Infrastructure.Utilities;
-using Repositories.Contracts;
-using Repositories.Entities;
+using Data.Contracts;
+using Data.Entities;
 
 namespace Api.Controllers;
 
