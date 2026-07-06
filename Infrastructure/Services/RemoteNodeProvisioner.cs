@@ -307,8 +307,7 @@ ensure_acme() {
 }
 
 issue_certificate() {
-  CERT_NAME="$CERTIFICATE_MODE-$CERTIFICATE_IDENTIFIER"
-  CERT_DIR="$WORKING_DIRECTORY/certificates/letsencrypt/$CERT_NAME"
+  CERT_DIR="$WORKING_DIRECTORY/certificates/$CERTIFICATE_IDENTIFIER"
   FULLCHAIN_PATH="$CERT_DIR/fullchain.pem"
   PRIVATE_KEY_PATH="$CERT_DIR/privkey.pem"
 
@@ -338,8 +337,6 @@ issue_certificate() {
 write_runtime_files() {
   ENV_PATH="$WORKING_DIRECTORY/.env"
   COMPOSE_PATH="$WORKING_DIRECTORY/docker-compose.yml"
-  CERT_NAME="$CERTIFICATE_MODE-$CERTIFICATE_IDENTIFIER"
-  CERT_DIR="$WORKING_DIRECTORY/certificates/letsencrypt/$CERT_NAME"
 
   ensure_working_directory
 
@@ -350,8 +347,8 @@ NODE_API_PORT=$NODE_API_PORT
 NODE_IMAGE=xrayne-node:$NODE_IMAGE_TAG
 NODE_STREAM_HEARTBEAT_SECONDS=$NODE_STREAM_HEARTBEAT_SECONDS
 PROJECT_PATH=$WORKING_DIRECTORY
-CERT_FULLCHAIN_PATH=/app/certificates/letsencrypt/$CERT_NAME/fullchain.pem
-CERT_PRIVATE_KEY_PATH=/app/certificates/letsencrypt/$CERT_NAME/privkey.pem
+CERT_FULLCHAIN_PATH=/app/shared/certificates/$CERTIFICATE_IDENTIFIER/fullchain.pem
+CERT_PRIVATE_KEY_PATH=/app/shared/certificates/$CERTIFICATE_IDENTIFIER/privkey.pem
 EOF_ENV
 
   cat > "$COMPOSE_PATH" <<'EOF_COMPOSE'
@@ -363,18 +360,18 @@ services:
     env_file:
       - .env
     environment:
-      ASPNETCORE_URLS: https://+:${NODE_API_PORT}
+      ASPNETCORE_URLS: http://+:80;https://+:${NODE_API_PORT}
       Node__ApiKey: ${NODE_API_KEY}
       Node__StreamHeartbeatSeconds: ${NODE_STREAM_HEARTBEAT_SECONDS}
       PROJECT_PATH: /app/shared
       Kestrel__Certificates__Default__Path: ${CERT_FULLCHAIN_PATH}
       Kestrel__Certificates__Default__KeyPath: ${CERT_PRIVATE_KEY_PATH}
     ports:
+      - "80:80"
       - "${NODE_API_PORT}:${NODE_API_PORT}"
     volumes:
       - .:/app/shared
       - ./logs:/app/logs
-      - ./certificates:/app/certificates:ro
 EOF_COMPOSE
 
   run chmod 600 "$ENV_PATH"

@@ -156,6 +156,45 @@ public sealed class RemoteNodeApiClient(
     public Task<OperationAcceptedResponse> RestartRuntimeAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/runtime/restart", null, cancellationToken);
 
+    /// <inheritdoc />
+    public Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default)
+        => SendJsonAsync<List<CertificateDto>>(HttpMethod.Get, "api/certificates", null, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<CertificateDto> IssueCertificateAsync(
+        IssueCertificateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendJsonAsync<CertificateDto>(HttpMethod.Post, "api/certificates/issue", request, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<CertificateDto> UploadCertificateAsync(
+        UploadCertificateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendJsonAsync<CertificateDto>(HttpMethod.Post, "api/certificates/upload", request, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<CertificateDto> RenewCertificateAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        return SendJsonAsync<CertificateDto>(
+            HttpMethod.Post,
+            $"api/certificates/{Uri.EscapeDataString(domain)}/renew",
+            null,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteCertificateAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(
+            HttpMethod.Delete,
+            $"api/certificates/{Uri.EscapeDataString(domain)}",
+            cancellationToken);
+    }
+
     private async Task<T> SendJsonAsync<T>(
         HttpMethod method,
         string path,
@@ -188,6 +227,23 @@ public sealed class RemoteNodeApiClient(
         {
             throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Invalid JSON response.", exception);
         }
+    }
+
+    private async Task SendNoContentAsync(
+        HttpMethod method,
+        string path,
+        CancellationToken cancellationToken)
+    {
+        using var httpClient = CreateStandardClient();
+        using var request = CreateRequest(method, path);
+
+        using var response = await SendAsync(
+            httpClient,
+            request,
+            path,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        await EnsureSuccessAsync(response, path, cancellationToken);
     }
 
     private async Task<HttpResponseMessage> SendAsync(

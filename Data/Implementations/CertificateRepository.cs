@@ -24,6 +24,31 @@ public sealed class CertificateRepository(AppDbContext dbContext) : ICertificate
             .ToListAsync(ct);
     }
 
+    public Task<List<CertificateEntity>> GetAllAsync(Guid adminId, long nodeId, CancellationToken ct = default)
+    {
+        return CertificatesWithRelations
+            .Where(certificate =>
+                EF.Property<Guid>(certificate, "AdminId") == adminId &&
+                EF.Property<long>(certificate, "NodeId") == nodeId)
+            .OrderBy(certificate => certificate.Domain)
+            .ToListAsync(ct);
+    }
+
+    public Task<CertificateEntity?> GetByDomainAsync(
+        Guid adminId,
+        long nodeId,
+        string domain,
+        CancellationToken ct = default)
+    {
+        return CertificatesWithRelations
+            .SingleOrDefaultAsync(
+                certificate =>
+                    EF.Property<Guid>(certificate, "AdminId") == adminId &&
+                    EF.Property<long>(certificate, "NodeId") == nodeId &&
+                    certificate.Domain.ToLower() == domain,
+                ct);
+    }
+
     public Task<CertificateEntity?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         return CertificatesWithRelations
@@ -96,6 +121,20 @@ public sealed class CertificateRepository(AppDbContext dbContext) : ICertificate
     public async Task<bool> DeleteAsync(Guid adminId, int id, CancellationToken ct = default)
     {
         var certificate = await GetByIdAsync(adminId, id, ct);
+        if (certificate is null)
+        {
+            return false;
+        }
+
+        dbContext.Certificates.Remove(certificate);
+        await dbContext.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+    public async Task<bool> DeleteByDomainAsync(Guid adminId, long nodeId, string domain, CancellationToken ct = default)
+    {
+        var certificate = await GetByDomainAsync(adminId, nodeId, domain, ct);
         if (certificate is null)
         {
             return false;
