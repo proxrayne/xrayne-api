@@ -9,4 +9,6 @@ public sealed record CoreStatusResponse(
     bool IsInstalled,
     RemoteCoreStatus? Status,
     bool IsInstalling,
-    string? Version);
+    string? Version,
+    DateTimeOffset? StartedAt,
+    TimeSpan? Uptime);

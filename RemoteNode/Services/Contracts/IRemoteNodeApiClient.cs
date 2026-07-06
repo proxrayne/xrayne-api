@@ -67,4 +67,9 @@ public interface IRemoteNodeApiClient
     Task<OperationAcceptedResponse> RestartCoreAsync(
         StartCoreRequest request,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Restarts the remote node service runtime.
+    /// </summary>
+    Task<OperationAcceptedResponse> RestartRuntimeAsync(CancellationToken cancellationToken = default);
 }

@@ -12,12 +12,16 @@ public sealed class RemoteNodeCoreStateStoreTests
     {
         using var memoryCache = new MemoryCache(new MemoryCacheOptions());
         var store = new RemoteNodeCoreStateStore(memoryCache);
+        var startedAt = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var uptime = TimeSpan.FromMinutes(5);
         var state = new RemoteNodeCoreState(
             42,
             true,
             true,
             "25.7.1",
-            CoreStatus.Started);
+            CoreStatus.Started,
+            startedAt,
+            uptime);
 
         store.Set(state);
 
@@ -27,5 +31,7 @@ public sealed class RemoteNodeCoreStateStoreTests
         cached.IsRunning.Should().BeTrue();
         cached.Version.Should().Be("25.7.1");
         cached.Status.Should().Be(CoreStatus.Started);
+        cached.StartedAt.Should().Be(startedAt);
+        cached.Uptime.Should().Be(uptime);
     }
 }

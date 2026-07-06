@@ -73,11 +73,16 @@ public sealed class NodesControllerTests
     }
 
     [Fact]
-    public async Task Update_ThrowsBadRequest_WhenPasswordIsMissing()
+    public async Task UpdateConnectionParameters_ThrowsBadRequest_WhenPasswordIsMissing()
     {
-        var request = CreateUpdateRequest(password: "");
+        var node = CreateNode();
+        node.AuthType = SSHAuthType.PrivateKey;
+        node.Password = null;
+        node.SSHKey = "saved-key";
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+        var request = CreateConnectionParametersRequest(authType: SSHAuthType.Password, password: "");
 
-        var act = () => _controller.Update(1, request, CancellationToken.None);
+        var act = () => _controller.UpdateConnectionParameters(1, request, CancellationToken.None);
 
         await act.Should().ThrowAsync<BadRequestException>()
             .WithMessage("SSH password is required for password authentication.");
@@ -108,20 +113,20 @@ public sealed class NodesControllerTests
 
         var result = await _controller.Update(
             node.Id,
-            CreateUpdateRequest(name: "Updated node", note: "Updated note", port: 2222),
+            CreateUpdateRequest(name: "Updated node", note: "Updated note"),
             CancellationToken.None);
 
         result.Status.Should().Be("updated");
         result.Node.Name.Should().Be("Updated node");
         result.Node.Note.Should().Be("Updated note");
-        result.Node.Port.Should().Be(2222);
+        result.Node.Port.Should().Be(22);
         result.Node.Status.Should().Be(NodeConnectionStatus.Connected);
         await _connectionManager.DidNotReceive()
             .ReconnectAsync(Arg.Any<long>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Update_QueuesReconnect_WhenConnectionParametersChange()
+    public async Task UpdateConnectionParameters_QueuesReconnect_WhenConnectionParametersChange()
     {
         var node = CreateNode();
         node.ReconnectAttemptCount = 3;
@@ -129,9 +134,9 @@ public sealed class NodesControllerTests
         _nodes.UpdateAsync(Arg.Any<NodeEntity>(), Arg.Any<CancellationToken>())
             .Returns(call => call.Arg<NodeEntity>());
 
-        var result = await _controller.Update(
+        var result = await _controller.UpdateConnectionParameters(
             node.Id,
-            CreateUpdateRequest(address: "NODE.EXAMPLE.COM.", apiPort: 9443, password: "new-secret"),
+            CreateConnectionParametersRequest(address: "NODE.EXAMPLE.COM.", apiPort: 9443, password: "new-secret"),
             CancellationToken.None);
 
         result.Status.Should().Be("reconnect_queued");
@@ -141,6 +146,42 @@ public sealed class NodesControllerTests
         result.Node.ReconnectAttemptCount.Should().Be(0);
         result.Node.Message.Should().Be("Node connection parameters updated. Manual reconnect requested.");
         await _connectionManager.Received(1).ReconnectAsync(node.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateConnectionParameters_KeepsExistingSecret_WhenSecretIsBlankAndAuthTypeIsUnchanged()
+    {
+        var node = CreateNode();
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+        _nodes.UpdateAsync(Arg.Any<NodeEntity>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<NodeEntity>());
+
+        var result = await _controller.UpdateConnectionParameters(
+            node.Id,
+            CreateConnectionParametersRequest(apiPort: node.ApiPort, password: ""),
+            CancellationToken.None);
+
+        result.Status.Should().Be("updated");
+        await _nodes.Received(1).UpdateAsync(
+            Arg.Is<NodeEntity>(item => item.Password == "secret"),
+            Arg.Any<CancellationToken>());
+        await _connectionManager.DidNotReceive()
+            .ReconnectAsync(Arg.Any<long>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetConnectionParameters_ReturnsMetadataWithoutSecrets()
+    {
+        var node = CreateNode();
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+
+        var result = await _controller.GetConnectionParameters(node.Id, CancellationToken.None);
+
+        result.Address.Should().Be(node.Address);
+        result.ApiPort.Should().Be(node.ApiPort);
+        result.HasPassword.Should().BeTrue();
+        result.HasSSHKey.Should().BeFalse();
+        result.WorkingDirectory.Should().Be(node.WorkingDirectory);
     }
 
     [Fact]
@@ -269,6 +310,26 @@ public sealed class NodesControllerTests
             Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Restart_RestartsRemoteNodeAndQueuesReconnect()
+    {
+        var node = CreateNode();
+        node.ReconnectAttemptCount = 2;
+        _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
+        _nodes.UpdateAsync(Arg.Any<NodeEntity>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<NodeEntity>());
+        _remoteClient.RestartRuntimeAsync(Arg.Any<CancellationToken>())
+            .Returns(new OperationAcceptedResponse("restart", "queued"));
+
+        var result = await _controller.Restart(node.Id, CancellationToken.None);
+
+        result.Should().BeOfType<AcceptedResult>();
+        await _remoteClient.Received(1).RestartRuntimeAsync(Arg.Any<CancellationToken>());
+        await _connectionManager.Received(1).ReconnectAsync(node.Id, Arg.Any<CancellationToken>());
+        node.ReconnectAttemptCount.Should().Be(0);
+        node.Message.Should().Be("Remote node restart requested.");
+    }
+
     private static NodeEntity CreateNode()
     {
         return new NodeEntity
@@ -309,23 +370,32 @@ public sealed class NodesControllerTests
 
     private static UpdateNodeRequest CreateUpdateRequest(
         string name = "Node",
-        string address = "node.example.com",
-        int port = 22,
-        int apiPort = 8443,
-        string password = "secret",
         string note = "")
     {
         return new UpdateNodeRequest
         {
             Name = name,
+            Note = note,
+        };
+    }
+
+    private static UpdateNodeConnectionParametersRequest CreateConnectionParametersRequest(
+        string address = "node.example.com",
+        int port = 22,
+        int apiPort = 8443,
+        SSHAuthType authType = SSHAuthType.Password,
+        string password = "secret",
+        string? sshKey = null)
+    {
+        return new UpdateNodeConnectionParametersRequest
+        {
             Address = address,
             Port = port,
             ApiPort = apiPort,
             SSHUsername = "root",
-            AuthType = SSHAuthType.Password,
+            AuthType = authType,
             Password = password,
-            WorkingDirectory = "/opt/xrayne",
-            Note = note,
+            SSHKey = sshKey,
         };
     }
 }

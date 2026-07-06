@@ -59,7 +59,8 @@ that allows or stops automatic reconnect attempts. `INodeConnectionStateStore`
 is the source of truth for the live connection status, remote node API version,
 and remote node uptime as a `DateTimeOffset` start time. `IRemoteNodeCoreStateStore`
 stores whether remote xray-core is installed and running, plus its version and
-enum status. The panel exposes connection state through
+enum status, started-at timestamp, and uptime when the remote core is started.
+The panel exposes connection state through
 `GET /api/nodes/{id}/connection` so profile reads can show live node state
 without calling remote `ping`.
 
@@ -79,9 +80,15 @@ Remote node xray-core management is exposed through panel endpoints under
 standalone node API through `RemoteNode`, and streams status/install events back
 to the UI. Provisioning starts the node container, verifies the node API, then
 installs the latest XTLS `xray-core` as the final remote setup step.
-Saved node connection and provisioning parameters are updated through
-`PUT /api/nodes/{id}`. Updates that change live connection parameters reset the
-node to `Connecting` and schedule a reconnect through the connection manager.
+Node profile metadata is updated through `PUT /api/nodes/{id}`. Saved node
+connection parameters are read through
+`GET /api/nodes/{id}/connection-parameters` and updated through
+`PUT /api/nodes/{id}/connection-parameters`; SSH secrets are write-only and are
+not returned by the read endpoint. Updates that change live connection
+parameters reset the node to `Connecting` and schedule a reconnect through the
+connection manager. The panel proxies remote node service restarts through
+`POST /api/nodes/{id}/restart`, which calls remote `POST /api/runtime/restart`
+and starts reconnect monitoring.
 Each node stores a `ConfigTemplate` value as PostgreSQL `jsonb`, while the
 entity model exposes it as `XrayConfig`. The template is editable through
 dedicated node core config-template endpoints where `configTemplate` is JSON

@@ -10,4 +10,6 @@ public sealed record RemoteNodeCoreState(
     bool IsInstalled,
     bool IsRunning,
     string? Version,
-    CoreStatus? Status);
+    CoreStatus? Status,
+    DateTimeOffset? StartedAt,
+    TimeSpan? Uptime);

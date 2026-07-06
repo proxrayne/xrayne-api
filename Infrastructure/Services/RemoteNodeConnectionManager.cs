@@ -457,7 +457,9 @@ public sealed class RemoteNodeConnectionManager(
                 ping.Core.IsInstalled,
                 ping.Core.IsRunning,
                 ping.Core.Version,
-                TryMapCoreStatus(ping.Core.Status)));
+                TryMapCoreStatus(ping.Core.Status),
+                null,
+                null));
         }
 
         private static async Task MarkConnectedAsync(
@@ -536,7 +538,9 @@ public sealed class RemoteNodeConnectionManager(
                 state.IsInstalled,
                 state.Status is RemoteCoreStatus.Started,
                 state.Version,
-                MapCoreStatus(state.Status)));
+                MapCoreStatus(state.Status),
+                state.StartedAt,
+                state.Uptime));
         }
 
         private static CoreStatus? TryMapCoreStatus(string? status)

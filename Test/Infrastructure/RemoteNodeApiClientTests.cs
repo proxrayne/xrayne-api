@@ -117,7 +117,9 @@ public sealed class RemoteNodeApiClientTests
           "isInstalled": true,
           "status": "started",
           "isInstalling": false,
-          "version": "25.7.1"
+          "version": "25.7.1",
+          "startedAt": "2026-07-03T11:55:00+00:00",
+          "uptime": "00:05:00"
         }
         """));
 
@@ -127,6 +129,8 @@ public sealed class RemoteNodeApiClientTests
         status.Status.Should().Be(RemoteCoreStatus.Started);
         status.IsInstalling.Should().BeFalse();
         status.Version.Should().Be("25.7.1");
+        status.StartedAt.Should().Be(DateTimeOffset.Parse("2026-07-03T11:55:00+00:00"));
+        status.Uptime.Should().Be(TimeSpan.FromMinutes(5));
     }
 
     [Fact]
@@ -191,11 +195,13 @@ public sealed class RemoteNodeApiClientTests
     [InlineData("start")]
     [InlineData("stop")]
     [InlineData("restart")]
+    [InlineData("runtime-restart")]
     public async Task Core_operation_methods_return_accepted_operation(string operation)
     {
+        var responseOperation = operation == "runtime-restart" ? "restart" : operation;
         var client = CreateClient(JsonResponse($$"""
         {
-          "operation": "{{operation}}",
+          "operation": "{{responseOperation}}",
           "status": "queued"
         }
         """));
@@ -205,10 +211,11 @@ public sealed class RemoteNodeApiClientTests
             "start" => await client.StartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
             "stop" => await client.StopCoreAsync(),
             "restart" => await client.RestartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
+            "runtime-restart" => await client.RestartRuntimeAsync(),
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
 
-        result.Operation.Should().Be(operation);
+        result.Operation.Should().Be(responseOperation);
         result.Status.Should().Be("queued");
     }
 

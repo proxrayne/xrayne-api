@@ -179,11 +179,11 @@ public sealed class NodesController(
     }
 
     /// <summary>
-    /// Updates remote node connection and provisioning parameters.
+    /// Updates remote node profile metadata.
     /// </summary>
     [HttpPut("{id:long}")]
     [EndpointSummary("Update node")]
-    [EndpointDescription("Update remote node connection and provisioning parameters.")]
+    [EndpointDescription("Update remote node profile metadata.")]
     [ProducesResponseType(typeof(NodeOperationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
@@ -192,22 +192,63 @@ public sealed class NodesController(
         [FromBody] UpdateNodeRequest request,
         CancellationToken cancellationToken)
     {
-        ValidateUpdateRequest(request);
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
 
+        node.Name = request.Name.Trim();
+        node.Note = request.Note.Trim();
+
+        var updated = await nodes.UpdateAsync(node, cancellationToken)
+            ?? throw new NotFoundException($"Node '{id}' was not found.");
+
+        return new NodeOperationResponse(ToNodeDto(updated), "updated");
+    }
+
+    /// <summary>
+    /// Gets saved remote node connection parameters.
+    /// </summary>
+    [HttpGet("{id:long}/connection-parameters")]
+    [EndpointSummary("Get node connection parameters")]
+    [EndpointDescription("Get saved remote node connection parameters without returning SSH secrets.")]
+    [ProducesResponseType(typeof(NodeConnectionParametersResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<NodeConnectionParametersResponse> GetConnectionParameters(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        return ToConnectionParametersResponse(node);
+    }
+
+    /// <summary>
+    /// Updates saved remote node connection parameters.
+    /// </summary>
+    [HttpPut("{id:long}/connection-parameters")]
+    [EndpointSummary("Update node connection parameters")]
+    [EndpointDescription("Update saved remote node connection parameters and reconnect when live parameters changed.")]
+    [ProducesResponseType(typeof(NodeOperationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<NodeOperationResponse> UpdateConnectionParameters(
+        long id,
+        [FromBody] UpdateNodeConnectionParametersRequest request,
+        CancellationToken cancellationToken)
+    {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
         var address = NormalizeAddress(request.Address);
-        var password = request.AuthType == SSHAuthType.Password
-            ? request.Password!.Trim()
-            : null;
-        var sshKey = request.AuthType == SSHAuthType.PrivateKey
-            ? request.SSHKey!.Trim()
-            : null;
+        var password = ResolvePassword(node, request);
+        var sshKey = ResolveSSHKey(node, request);
         var certificateMode = System.Net.IPAddress.TryParse(address, out _)
             ? CertificateMode.Ip
             : CertificateMode.Domain;
-        var requiresReconnect = HasConnectionParametersChanged(node, address, request.ApiPort, request.AuthType, password, sshKey);
+        var requiresReconnect = HasConnectionParametersChanged(
+            node,
+            address,
+            request.ApiPort,
+            request.AuthType,
+            password,
+            sshKey);
 
-        node.Name = request.Name.Trim();
         node.Address = address;
         node.Port = request.Port;
         node.ApiPort = request.ApiPort;
@@ -215,17 +256,11 @@ public sealed class NodesController(
         node.AuthType = request.AuthType;
         node.Password = password;
         node.SSHKey = sshKey;
-        node.WorkingDirectory = request.WorkingDirectory.Trim();
-        node.Note = request.Note.Trim();
         node.CertificateMode = certificateMode;
 
         if (requiresReconnect)
         {
-            node.Enabled = true;
-            node.ReconnectAttemptCount = 0;
-            node.Message = "Node connection parameters updated. Manual reconnect requested.";
-            node.LastStatusChange = DateTime.UtcNow;
-            connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
+            MarkNodeConnecting(node, "Node connection parameters updated. Manual reconnect requested.");
         }
 
         var updated = await nodes.UpdateAsync(node, cancellationToken)
@@ -236,9 +271,9 @@ public sealed class NodesController(
             await connectionManager.ReconnectAsync(updated.Id, cancellationToken);
         }
 
-        var status = requiresReconnect ? "reconnect_queued" : "updated";
-
-        return new NodeOperationResponse(ToNodeDto(updated), status);
+        return new NodeOperationResponse(
+            ToNodeDto(updated),
+            requiresReconnect ? "reconnect_queued" : "updated");
     }
 
     /// <summary>
@@ -557,16 +592,41 @@ public sealed class NodesController(
     public async Task<IActionResult> Reconnect(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        node.Enabled = true;
-        node.ReconnectAttemptCount = 0;
-        node.Message = "Manual reconnect requested.";
-        node.LastStatusChange = DateTime.UtcNow;
-        connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
+        MarkNodeConnecting(node, "Manual reconnect requested.");
 
         await nodes.UpdateAsync(node, cancellationToken);
         await connectionManager.ReconnectAsync(node.Id, cancellationToken);
 
         return Accepted(new NodeOperationResponse(ToNodeDto(node), "reconnect_queued"));
+    }
+
+    /// <summary>
+    /// Restarts a remote node service.
+    /// </summary>
+    [HttpPost("{id:long}/restart")]
+    [EndpointSummary("Restart remote node")]
+    [EndpointDescription("Ask the remote node service to restart and schedule panel reconnect monitoring.")]
+    [ProducesResponseType(typeof(NodeOperationResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Restart(long id, CancellationToken cancellationToken)
+    {
+        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+
+        try
+        {
+            await CreateRemoteNodeClient(node).RestartRuntimeAsync(cancellationToken);
+        }
+        catch (RemoteNodeException exception)
+        {
+            throw ToApiException(exception);
+        }
+
+        MarkNodeConnecting(node, "Remote node restart requested.");
+        await nodes.UpdateAsync(node, cancellationToken);
+        await connectionManager.ReconnectAsync(node.Id, cancellationToken);
+
+        return Accepted(new NodeOperationResponse(ToNodeDto(node), "restart_queued"));
     }
 
     /// <summary>
@@ -653,19 +713,6 @@ public sealed class NodesController(
         }
     }
 
-    private static void ValidateUpdateRequest(UpdateNodeRequest request)
-    {
-        if (request.AuthType == SSHAuthType.Password && string.IsNullOrWhiteSpace(request.Password))
-        {
-            throw new BadRequestException("SSH password is required for password authentication.");
-        }
-
-        if (request.AuthType == SSHAuthType.PrivateKey && string.IsNullOrWhiteSpace(request.SSHKey))
-        {
-            throw new BadRequestException("SSH private key is required for private key authentication.");
-        }
-    }
-
     private static string NormalizeAddress(string value)
     {
         var address = value.Trim().TrimEnd('.').ToLowerInvariant();
@@ -675,6 +722,72 @@ public sealed class NodesController(
         }
 
         return address;
+    }
+
+    private static string? ResolvePassword(
+        NodeEntity node,
+        UpdateNodeConnectionParametersRequest request)
+    {
+        if (request.AuthType is not SSHAuthType.Password)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            return request.Password.Trim();
+        }
+
+        if (node.AuthType is SSHAuthType.Password && !string.IsNullOrWhiteSpace(node.Password))
+        {
+            return node.Password;
+        }
+
+        throw new BadRequestException("SSH password is required for password authentication.");
+    }
+
+    private static string? ResolveSSHKey(
+        NodeEntity node,
+        UpdateNodeConnectionParametersRequest request)
+    {
+        if (request.AuthType is not SSHAuthType.PrivateKey)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.SSHKey))
+        {
+            return request.SSHKey.Trim();
+        }
+
+        if (node.AuthType is SSHAuthType.PrivateKey && !string.IsNullOrWhiteSpace(node.SSHKey))
+        {
+            return node.SSHKey;
+        }
+
+        throw new BadRequestException("SSH private key is required for private key authentication.");
+    }
+
+    private void MarkNodeConnecting(NodeEntity node, string message)
+    {
+        node.Enabled = true;
+        node.ReconnectAttemptCount = 0;
+        node.Message = message;
+        node.LastStatusChange = DateTime.UtcNow;
+        connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
+    }
+
+    private static NodeConnectionParametersResponse ToConnectionParametersResponse(NodeEntity node)
+    {
+        return new NodeConnectionParametersResponse(
+            node.Address,
+            node.Port,
+            node.ApiPort,
+            node.SSHUsername,
+            node.AuthType,
+            !string.IsNullOrWhiteSpace(node.Password),
+            !string.IsNullOrWhiteSpace(node.SSHKey),
+            node.WorkingDirectory);
     }
 
     private static bool HasConnectionParametersChanged(
@@ -798,7 +911,9 @@ public sealed class NodesController(
             state.IsInstalled,
             state.Status is RemoteCoreStatus.Started,
             state.Version,
-            MapCoreStatus(state.Status)));
+            MapCoreStatus(state.Status),
+            state.StartedAt,
+            state.Uptime));
     }
 
     private static CoreStatusResponse ToCoreStatusResponse(RemoteNodeCoreState state)
@@ -807,7 +922,9 @@ public sealed class NodesController(
             state.IsInstalled,
             MapCoreStatus(state.Status),
             false,
-            state.Version);
+            state.Version,
+            state.StartedAt,
+            state.Uptime);
     }
 
     private static CoreStatus? MapCoreStatus(RemoteCoreStatus? status)

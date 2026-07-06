@@ -152,6 +152,10 @@ public sealed class RemoteNodeApiClient(
         return SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/restart", request, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public Task<OperationAcceptedResponse> RestartRuntimeAsync(CancellationToken cancellationToken = default)
+        => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/runtime/restart", null, cancellationToken);
+
     private async Task<T> SendJsonAsync<T>(
         HttpMethod method,
         string path,

@@ -35,7 +35,9 @@ public sealed class NodeConnectionVerifier(
             ping.Core.IsInstalled,
             ping.Core.IsRunning,
             ping.Core.Version,
-            TryMapCoreStatus(ping.Core.Status)));
+            TryMapCoreStatus(ping.Core.Status),
+            null,
+            null));
 
         return new NodeConnectionVerificationResult(verifiedAt);
     }
