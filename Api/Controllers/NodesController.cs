@@ -41,6 +41,7 @@ public sealed class NodesController(
     INodeCoreConfigBuilder coreConfigBuilder,
     INodeConnectionStateStore connectionStateStore,
     IRemoteNodeCoreStateStore coreStateStore,
+    INodeLogStore nodeLogStore,
     IBackgroundTaskScheduler scheduler,
     INodeProvisionStateMachine provisionStates,
     IEventStreamManager eventStreams,
@@ -692,6 +693,7 @@ public sealed class NodesController(
         await connectionManager.DisconnectAsync(id, cancellationToken);
         connectionStateStore.Remove(id);
         coreStateStore.Remove(id);
+        nodeLogStore.Remove(id);
 
         return NoContent();
     }

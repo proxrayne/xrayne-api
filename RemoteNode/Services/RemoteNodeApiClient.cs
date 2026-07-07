@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
 using RemoteNode.Exceptions;
@@ -36,6 +37,31 @@ public sealed class RemoteNodeApiClient(
                            cancellationToken))
         {
             yield return connectionEvent;
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<RemoteLogSnapshotResponse> GetLogsAsync(
+        int? limit = null,
+        CancellationToken cancellationToken = default)
+    {
+        return SendJsonAsync<RemoteLogSnapshotResponse>(
+            HttpMethod.Get,
+            BuildLogsPath("api/logs", limit),
+            null,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<RemoteLogStreamEvent> LogStreamAsync(
+        int? limit = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var logEvent in ReadServerSentEventsAsync<RemoteLogStreamEvent>(
+                           BuildLogsPath("api/logs/stream", limit),
+                           cancellationToken))
+        {
+            yield return logEvent;
         }
     }
 
@@ -355,4 +381,6 @@ public sealed class RemoteNodeApiClient(
 
         return request;
     }
+
+    private static string BuildLogsPath(string path, int? limit) => limit is null ? path : QueryHelpers.AddQueryString(path, "limit", ((int)limit).ToString());
 }

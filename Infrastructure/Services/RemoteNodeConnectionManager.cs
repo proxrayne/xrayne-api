@@ -21,6 +21,7 @@ public sealed class RemoteNodeConnectionManager(
     IRemoteNodeApiClientFactory apiClientFactory,
     INodeConnectionStateStore connectionStates,
     IRemoteNodeCoreStateStore coreStates,
+    INodeLogStore nodeLogs,
     INodeReconnectPolicy reconnectPolicy,
     IOptions<NodeConnectionOptions> options,
     ILogger<RemoteNodeConnectionManager> logger) : IRemoteNodeConnectionManager, IAsyncDisposable
@@ -29,6 +30,7 @@ public sealed class RemoteNodeConnectionManager(
     private const string HeartbeatEventType = "heartbeat";
     private const string CoreStatusEventType = "core_status";
     private const string CoreInstallEventType = "core_install";
+    private const string CoreLogEventType = "core_log";
 
     private readonly ConcurrentDictionary<long, NodeConnectionWorker> workers = new();
     private readonly CancellationTokenSource lifetimeCancellation = new();
@@ -123,6 +125,7 @@ public sealed class RemoteNodeConnectionManager(
                 apiClientFactory,
                 connectionStates,
                 coreStates,
+                nodeLogs,
                 reconnectPolicy,
                 options.Value,
                 logger,
@@ -141,6 +144,7 @@ public sealed class RemoteNodeConnectionManager(
                     apiClientFactory,
                     connectionStates,
                     coreStates,
+                    nodeLogs,
                     reconnectPolicy,
                     options.Value,
                     logger,
@@ -218,6 +222,7 @@ public sealed class RemoteNodeConnectionManager(
             IRemoteNodeApiClientFactory apiClientFactory,
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
+            INodeLogStore nodeLogs,
             INodeReconnectPolicy reconnectPolicy,
             NodeConnectionOptions options,
             ILogger logger,
@@ -230,6 +235,7 @@ public sealed class RemoteNodeConnectionManager(
                 apiClientFactory,
                 connectionStates,
                 coreStates,
+                nodeLogs,
                 reconnectPolicy,
                 options,
                 logger,
@@ -260,6 +266,7 @@ public sealed class RemoteNodeConnectionManager(
             IRemoteNodeApiClientFactory apiClientFactory,
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
+            INodeLogStore nodeLogs,
             INodeReconnectPolicy reconnectPolicy,
             NodeConnectionOptions options,
             ILogger logger,
@@ -287,6 +294,7 @@ public sealed class RemoteNodeConnectionManager(
                         scopeFactory,
                         connectionStates,
                         coreStates,
+                        nodeLogs,
                         node,
                         client,
                         options,
@@ -352,6 +360,7 @@ public sealed class RemoteNodeConnectionManager(
             IServiceScopeFactory scopeFactory,
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
+            INodeLogStore nodeLogs,
             NodeEntity node,
             IRemoteNodeApiClient client,
             NodeConnectionOptions options,
@@ -362,6 +371,16 @@ public sealed class RemoteNodeConnectionManager(
 
             await foreach (var connectionEvent in client.ConnectStreamAsync(cancellationToken))
             {
+                if (connectionEvent.Type is CoreLogEventType)
+                {
+                    if (connectionEvent.Log is not null)
+                    {
+                        nodeLogs.Append(node.Id, connectionEvent.Log);
+                    }
+
+                    continue;
+                }
+
                 if (connectionEvent.Type is CoreStatusEventType)
                 {
                     if (connectionEvent.Core is not null)

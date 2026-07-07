@@ -69,6 +69,7 @@ public sealed class NodesControllerTests
             _coreConfigBuilder,
             _connectionStateStore,
             _coreStateStore,
+            Substitute.For<INodeLogStore>(),
             Substitute.For<IBackgroundTaskScheduler>(),
             Substitute.For<INodeProvisionStateMachine>(),
             Substitute.For<IEventStreamManager>(),

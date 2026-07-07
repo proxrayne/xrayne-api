@@ -18,6 +18,20 @@ public interface IRemoteNodeApiClient
     IAsyncEnumerable<NodeConnectionEvent> ConnectStreamAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets recent remote node log entries.
+    /// </summary>
+    Task<RemoteLogSnapshotResponse> GetLogsAsync(
+        int? limit = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Opens and reads a remote node log stream.
+    /// </summary>
+    IAsyncEnumerable<RemoteLogStreamEvent> LogStreamAsync(
+        int? limit = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets current remote node system status.
     /// </summary>
     Task<SystemStatusResponse> GetSystemStatusAsync(CancellationToken cancellationToken = default);

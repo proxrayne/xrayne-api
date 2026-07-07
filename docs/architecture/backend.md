@@ -75,6 +75,15 @@ Remote node and xray-core versions are not persisted on `NodeEntity`; they are
 runtime telemetry values and are repopulated after panel restart when node
 streams reconnect.
 
+Remote node logs are runtime-only and limited to xray-core output. The
+standalone node exposes recent xray-core logs through `/api/logs` and
+`/api/logs/stream`, and the panel's `IRemoteNodeConnectionManager` ingests
+`core_log` events from the existing `/api/connect` stream. `INodeLogStore`
+keeps bounded in-memory ring buffers keyed by node id. The panel exposes
+dashboard reads through
+`GET /api/nodes/{id}/logs` and live updates through
+`GET /api/nodes/{id}/logs/stream`; both use the `view_logs` permission.
+
 Remote node xray-core management is exposed through panel endpoints under
 `/api/nodes/{id}/core`. The panel resolves the encrypted node API key, calls the
 standalone node API through `RemoteNode`, and streams status/install events back

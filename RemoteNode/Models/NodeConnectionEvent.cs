@@ -8,4 +8,5 @@ public sealed record NodeConnectionEvent(
     DateTimeOffset Timestamp,
     NodePingResponse? Ping,
     CoreStatusResponse? Core,
-    InstallCoreStatusResponse? Install);
+    InstallCoreStatusResponse? Install,
+    RemoteLogStreamEvent? Log);

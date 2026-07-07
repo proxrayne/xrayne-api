@@ -15,6 +15,7 @@ public static class DependencyInjection
     {
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.Configure<NodeConnectionOptions>(configuration.GetSection("NodeConnection"));
+        services.Configure<NodeLogOptions>(configuration.GetSection("NodeLogs"));
         services.TryAddSingleton(_ => PanelSettings.Parse(configuration));
         services.AddDataProtection();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
@@ -26,6 +27,7 @@ public static class DependencyInjection
         );
 
         services.AddSingleton<IEventStreamManager, EventStreamManager>();
+        services.AddSingleton<INodeLogStore, NodeLogStore>();
         services.AddSingleton<INodeSecretService, NodeSecretService>();
         services.AddSingleton<INodeProvisionStateMachine, NodeProvisionStateMachine>();
         services.AddSingleton<INodeReconnectPolicy, NodeReconnectPolicy>();
