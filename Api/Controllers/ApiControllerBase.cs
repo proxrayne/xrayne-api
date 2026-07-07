@@ -1,9 +1,15 @@
+using Api.Exceptions;
+using Infrastructure.Dto;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using RemoteNode.Exceptions;
 
 namespace Api.Controllers;
 
+/// <summary>
+/// Provides shared API controller helpers.
+/// </summary>
 [ApiController]
 public abstract class ApiControllerBase : ControllerBase
 {
@@ -67,5 +73,33 @@ public abstract class ApiControllerBase : ControllerBase
         Response.Headers.CacheControl = "no-cache";
         Response.Headers.Connection = "keep-alive";
         Response.Headers["X-Accel-Buffering"] = "no";
+    }
+
+    /// <summary>
+    /// Maps remote node client exceptions to API exceptions.
+    /// </summary>
+    protected static ApiException ToApiException(RemoteNodeException exception)
+    {
+        return exception switch
+        {
+            RemoteNodeHttpException httpException when httpException.ResponseBody is not null
+                => new BadRequestException($"{httpException.Message} {httpException.ResponseBody}"),
+            _ => new BadRequestException(exception.Message)
+        };
+    }
+
+    /// <summary>
+    /// Maps node inbound service exceptions to API exceptions.
+    /// </summary>
+    protected static ApiException ToApiException(NodeInboundException exception)
+    {
+        return exception switch
+        {
+            NodeInboundNotFoundException => new NotFoundException(exception.Message),
+            NodeInboundConflictException => new ConflictException(exception.Message),
+            NodeInboundReadonlyException => new BadRequestException(exception.Message),
+            NodeInboundValidationException => new BadRequestException(exception.Message),
+            _ => new BadRequestException(exception.Message)
+        };
     }
 }

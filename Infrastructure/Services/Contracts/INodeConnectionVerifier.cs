@@ -1,4 +1,5 @@
 using Data.Entities;
+using Infrastructure.Dto;
 
 namespace Infrastructure.Services;
 

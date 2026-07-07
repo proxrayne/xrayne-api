@@ -1,6 +1,7 @@
 using Api.Responses;
 using AutoMapper;
 using Contracts.Models;
+using Contracts.Utilities;
 using Data.Entities;
 
 namespace Api.Mapping;
@@ -25,5 +26,18 @@ public sealed class NodeMappingProfile : Profile
                 nameof(NodeDto.Status),
                 options => options.MapFrom((_, context) =>
                     ((NodeConnectionState)context.Items[ConnectionStateItemKey]).Status));
+
+        CreateMap<InboundEntity, NodeInboundDto>()
+            .ForCtorParam(
+                nameof(NodeInboundDto.Port),
+                options => options.MapFrom(inbound => inbound.Port.ToString()))
+            .ForCtorParam(
+                nameof(NodeInboundDto.Config),
+                options => options.MapFrom(inbound => XrayJsonSerializer.Serialize(inbound.Config)));
+
+        CreateMap<InboundEntity, NodeInboundListItemDto>()
+            .ForCtorParam(
+                nameof(NodeInboundListItemDto.Port),
+                options => options.MapFrom(inbound => inbound.Port.ToString()));
     }
 }

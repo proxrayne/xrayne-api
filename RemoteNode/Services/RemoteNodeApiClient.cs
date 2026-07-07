@@ -157,6 +157,33 @@ public sealed class RemoteNodeApiClient(
         => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/runtime/restart", null, cancellationToken);
 
     /// <inheritdoc />
+    public Task AddInboundAsync(SyncInboundRequest request, CancellationToken cancellationToken = default)
+        => SendNoContentAsync(HttpMethod.Post, "api/core/inbounds", request, cancellationToken);
+
+    /// <inheritdoc />
+    public Task UpdateInboundAsync(
+        string tag,
+        SyncInboundRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(
+            HttpMethod.Put,
+            $"api/core/inbounds/{Uri.EscapeDataString(tag)}",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteInboundAsync(string tag, CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(
+            HttpMethod.Delete,
+            $"api/core/inbounds/{Uri.EscapeDataString(tag)}",
+            null,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<List<CertificateDto>>(HttpMethod.Get, "api/certificates", null, cancellationToken);
 
@@ -192,6 +219,7 @@ public sealed class RemoteNodeApiClient(
         return SendNoContentAsync(
             HttpMethod.Delete,
             $"api/certificates/{Uri.EscapeDataString(domain)}",
+            null,
             cancellationToken);
     }
 
@@ -232,10 +260,15 @@ public sealed class RemoteNodeApiClient(
     private async Task SendNoContentAsync(
         HttpMethod method,
         string path,
+        object? body,
         CancellationToken cancellationToken)
     {
         using var httpClient = CreateStandardClient();
         using var request = CreateRequest(method, path);
+        if (body is not null)
+        {
+            request.Content = JsonContent.Create(body, options: JsonOptions);
+        }
 
         using var response = await SendAsync(
             httpClient,

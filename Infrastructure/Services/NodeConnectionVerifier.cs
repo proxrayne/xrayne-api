@@ -1,6 +1,7 @@
 using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
+using Infrastructure.Dto;
 using RemoteNode.Models;
 using RemoteNode.Services;
 using Data.Entities;

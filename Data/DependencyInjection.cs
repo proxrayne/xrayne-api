@@ -1,6 +1,3 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Contracts.Enums;
@@ -35,13 +32,7 @@ public static class DependencyInjection
 
                     dataSourceBuilder
                         .EnableDynamicJson()
-                        .ConfigureJsonOptions(new JsonSerializerOptions
-                        {
-                            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                            WriteIndented = false
-                        });
+                        .ConfigureJsonOptions(XrayJsonSerializer.Options);
 
                 });
             });

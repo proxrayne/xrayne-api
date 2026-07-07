@@ -1,3 +1,4 @@
+using Infrastructure.Dto;
 using Infrastructure.Services;
 
 namespace Test.Infrastructure;

@@ -1,4 +1,4 @@
-namespace Infrastructure.Services;
+namespace Infrastructure.Dto;
 
 /// <summary>
 /// Describes a successful remote node provisioning verification result.

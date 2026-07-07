@@ -1,4 +1,4 @@
-namespace Infrastructure.Services;
+namespace Infrastructure.Dto;
 
 /// <summary>
 /// Defines host directories used by system information storage metrics.

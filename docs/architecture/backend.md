@@ -97,6 +97,15 @@ remote core start and restart, the panel merges the template with a managed
 `XrayConfig` using `XrayConfig.Merge`, then replaces the managed inbounds,
 outbounds, and routing rules from the node entities and sends that complete JSON
 config as a string to the standalone node.
+Node inbounds are managed through node-scoped endpoints under
+`/api/nodes/{id}/inbounds`. Manual inbounds can be created, edited, toggled, and
+deleted. Readonly inbounds are synchronized from `ConfigTemplate` by tag when
+the template is saved; their JSON is updated or removed through the template,
+while the UI can only enable or disable them. Tag and port uniqueness is enforced
+per node for manual and enabled records. Conflicting readonly template inbounds
+are kept as disabled records so operators can see and resolve the conflict.
+Enabled inbound changes are mirrored to the standalone node runtime when cached
+telemetry reports that remote xray-core is running.
 
 ## Contracts Layer
 

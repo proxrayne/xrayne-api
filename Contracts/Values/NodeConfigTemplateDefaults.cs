@@ -1,3 +1,4 @@
+using Xray.Config.Enums;
 using Xray.Config.Models;
 
 namespace Contracts.Values;
@@ -10,8 +11,24 @@ public static class NodeConfigTemplateDefaults
     /// <summary>
     /// Creates the default remote node xray-core configuration template.
     /// </summary>
-    public static XrayConfig Create()
+    public static XrayConfig Create() => new XrayConfig()
     {
-        return XrayConfig.FromJson("""{"log":{"loglevel":"warning"}}""");
-    }
+        Log = new LogConfig()
+        {
+            LogLevel = LogLevel.Warning,
+            DnsLog = false,
+        },
+        Inbounds = new List<Inbound>(),
+        Outbounds = new List<Outbound>()
+            {
+                new FreedomOutbound()
+                {
+                    Tag = "DIRECT",
+                },
+                new BlackHoleOutbound()
+                {
+                    Tag = "BLOCK",
+                }
+            },
+    };
 }

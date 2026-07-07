@@ -1,5 +1,7 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Contracts.Enums;
+using Contracts.Utilities;
 using Infrastructure.Services;
 using Data.Entities;
 using Xray.Config.Enums;
@@ -22,7 +24,7 @@ public sealed class NodeCoreConfigBuilderTests
             WorkingDirectory = "/opt/xrayne",
             EncryptedApiKey = "encrypted",
             ApiKeyFingerprint = "fingerprint",
-            ConfigTemplate = XrayConfig.FromJson("""{"log":{"loglevel":"warning"},"stats":{}}"""),
+            ConfigTemplate = DeserializeConfig("""{"log":{"loglevel":"warning"},"stats":{}}"""),
             Inbounds =
             [
                 new InboundEntity
@@ -47,6 +49,7 @@ public sealed class NodeCoreConfigBuilderTests
                     Id = 2,
                     DisplayName = "Disabled",
                     Enabled = false,
+                    ReadOnly = true,
                     Config = new SocksInbound
                     {
                         Tag = "disabled-in",
@@ -102,7 +105,7 @@ public sealed class NodeCoreConfigBuilderTests
         };
         var builder = new NodeCoreConfigBuilder();
 
-        var config = JsonNode.Parse(builder.Build(node).ToJson())!.AsObject();
+        var config = ToJsonObject(builder.Build(node));
 
         config["stats"].Should().NotBeNull();
         config["inbounds"]!.AsArray().Should().HaveCount(1);
@@ -146,10 +149,21 @@ public sealed class NodeCoreConfigBuilderTests
         };
         var builder = new NodeCoreConfigBuilder();
 
-        var config = JsonNode.Parse(builder.Build(node).ToJson())!.AsObject();
+        var config = ToJsonObject(builder.Build(node));
 
         config["inbounds"]!.AsArray().Should().BeEmpty();
         config["outbounds"]!.AsArray().Should().BeEmpty();
         config["routing"]!["rules"]!.AsArray().Should().BeEmpty();
+    }
+
+    private static XrayConfig DeserializeConfig(string json)
+    {
+        return XrayJsonSerializer.DeserializeRequired<XrayConfig>(json, "Config cannot be empty.");
+    }
+
+    private static JsonObject ToJsonObject(XrayConfig config)
+    {
+        var json = XrayJsonSerializer.Serialize(config);
+        return JsonNode.Parse(json)!.AsObject();
     }
 }

@@ -5,6 +5,7 @@ using Renci.SshNet;
 using Renci.SshNet.Common;
 using Contracts.Configurations;
 using Contracts.Enums;
+using Infrastructure.Dto;
 using Infrastructure.States;
 using RemoteNode.Models;
 using RemoteNode.Services;

@@ -1,3 +1,5 @@
+using Infrastructure.Dto;
+
 namespace Infrastructure.Services;
 
 public interface IEventStreamManager

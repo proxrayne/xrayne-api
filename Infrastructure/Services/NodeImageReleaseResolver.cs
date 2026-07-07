@@ -1,5 +1,6 @@
 using Octokit;
 using System.Reflection;
+using Infrastructure.Dto;
 
 namespace Infrastructure.Services;
 

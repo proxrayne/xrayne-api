@@ -1,3 +1,4 @@
+using Contracts.Utilities;
 using Data.Entities;
 using Xray.Config.Models;
 
@@ -11,7 +12,7 @@ public sealed class NodeCoreConfigBuilder : INodeCoreConfigBuilder
     /// <inheritdoc />
     public XrayConfig Build(NodeEntity node)
     {
-        var template = XrayConfig.FromJson(node.ConfigTemplate.ToJson());
+        var template = XrayJsonSerializer.Clone(node.ConfigTemplate, "Node config template cannot be empty.");
         var managedConfig = new XrayConfig
         {
             Inbounds = node.Inbounds

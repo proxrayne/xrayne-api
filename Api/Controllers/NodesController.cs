@@ -33,6 +33,7 @@ namespace Api.Controllers;
 public sealed class NodesController(
     IMapper mapper,
     INodeService nodes,
+    INodeInboundService nodeInbounds,
     INodeSecretService secrets,
     INodeConnectionVerifier connectionVerifier,
     IRemoteNodeConnectionManager connectionManager,
@@ -290,7 +291,7 @@ public sealed class NodesController(
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
 
-        return new NodeConfigTemplateResponse(node.ConfigTemplate.ToJson());
+        return new NodeConfigTemplateResponse(SerializeConfig(node.ConfigTemplate));
     }
 
     /// <summary>
@@ -313,12 +314,14 @@ public sealed class NodesController(
         }
 
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        node.ConfigTemplate = ParseConfigTemplate(request.ConfigTemplate);
+        var template = ParseConfigTemplate(request.ConfigTemplate);
+        node.ConfigTemplate = template;
+        await nodeInbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
 
         var updated = await nodes.UpdateAsync(node, cancellationToken)
             ?? throw new NotFoundException($"Node '{id}' was not found.");
 
-        return new NodeConfigTemplateResponse(updated.ConfigTemplate.ToJson());
+        return new NodeConfigTemplateResponse(SerializeConfig(updated.ConfigTemplate));
     }
 
     /// <summary>
@@ -507,7 +510,7 @@ public sealed class NodesController(
         => ScheduleCoreOperation(
             id,
             (node, client) => client.StartCoreAsync(
-                new StartCoreRequest(coreConfigBuilder.Build(node).ToJson()),
+                new StartCoreRequest(SerializeConfig(coreConfigBuilder.Build(node))),
                 cancellationToken),
             cancellationToken);
 
@@ -539,7 +542,7 @@ public sealed class NodesController(
         => ScheduleCoreOperation(
             id,
             (node, client) => client.RestartCoreAsync(
-                new StartCoreRequest(coreConfigBuilder.Build(node).ToJson()),
+                new StartCoreRequest(SerializeConfig(coreConfigBuilder.Build(node))),
                 cancellationToken),
             cancellationToken);
 
@@ -836,12 +839,19 @@ public sealed class NodesController(
 
         try
         {
-            return XrayConfig.FromJson(configTemplate);
+            return XrayJsonSerializer.DeserializeRequired<XrayConfig>(
+                configTemplate,
+                "Node config template cannot be empty.");
         }
         catch (JsonException exception)
         {
             throw new BadRequestException($"Node config template is invalid. {exception.Message}");
         }
+    }
+
+    private static string SerializeConfig(XrayConfig config)
+    {
+        return XrayJsonSerializer.Serialize(config);
     }
 
     private static NodeConnectionState CreateFallbackConnectionState(NodeEntity node, NodeConnectionOptions options)
@@ -956,16 +966,6 @@ public sealed class NodesController(
         {
             throw ToApiException(exception);
         }
-    }
-
-    private static ApiException ToApiException(RemoteNodeException exception)
-    {
-        return exception switch
-        {
-            RemoteNodeHttpException httpException when httpException.ResponseBody is not null
-                => new BadRequestException($"{httpException.Message} {httpException.ResponseBody}"),
-            _ => new BadRequestException(exception.Message)
-        };
     }
 
     private async Task ConnectDevelopmentNodeAsync(

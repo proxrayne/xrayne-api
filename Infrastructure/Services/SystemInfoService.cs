@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using Contracts.Models;
+using Infrastructure.Dto;
 using Hardware.Info;
 using MemoryInfo = Contracts.Models.MemoryInfo;
 

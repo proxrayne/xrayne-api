@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Contracts.Configurations;
 using Contracts.Values;
+using Infrastructure.Dto;
 using Infrastructure.Services;
 using Infrastructure.Tasks;
 
@@ -45,6 +46,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAppSettingsService, AppSettingsService>();
         services.AddScoped<INodeService, NodeService>();
+        services.AddScoped<INodeInboundService, NodeInboundService>();
         services.AddScoped<ICertificateService, CertificateService>();
         services.AddScoped<INodeCertificateService, NodeCertificateService>();
         services.AddScoped<IGeoResourceService, GeoResourceService>();

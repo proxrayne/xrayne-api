@@ -214,13 +214,4 @@ public sealed class NodeCertificatesController(
             certificate.UpdatedAt);
     }
 
-    private static ApiException ToApiException(RemoteNodeException exception)
-    {
-        return exception switch
-        {
-            RemoteNodeHttpException httpException when httpException.ResponseBody is not null
-                => new BadRequestException($"{httpException.Message} {httpException.ResponseBody}"),
-            _ => new BadRequestException(exception.Message)
-        };
-    }
 }

@@ -1,4 +1,6 @@
 using AutoMapper;
+using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +27,10 @@ namespace Test.Controllers;
 
 public sealed class NodesControllerTests
 {
+    private static readonly Guid TestAdminId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
     private readonly INodeService _nodes;
+    private readonly INodeInboundService _nodeInbounds;
     private readonly INodeSecretService _secrets;
     private readonly IRemoteNodeApiClient _remoteClient;
     private readonly IRemoteNodeApiClientFactory _apiClientFactory;
@@ -38,6 +43,7 @@ public sealed class NodesControllerTests
     public NodesControllerTests()
     {
         _nodes = Substitute.For<INodeService>();
+        _nodeInbounds = Substitute.For<INodeInboundService>();
         _secrets = Substitute.For<INodeSecretService>();
         _remoteClient = Substitute.For<IRemoteNodeApiClient>();
         _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
@@ -55,6 +61,7 @@ public sealed class NodesControllerTests
         _controller = new NodesController(
             mapper,
             _nodes,
+            _nodeInbounds,
             _secrets,
             Substitute.For<INodeConnectionVerifier>(),
             _connectionManager,
@@ -68,7 +75,7 @@ public sealed class NodesControllerTests
             environment,
             Options.Create(new NodeConnectionOptions()))
         {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
+            ControllerContext = new ControllerContext { HttpContext = CreateHttpContext() },
         };
     }
 
@@ -276,6 +283,11 @@ public sealed class NodesControllerTests
         await _nodes.Received(1).UpdateAsync(
             Arg.Is<NodeEntity>(item => ToJsonObject(item.ConfigTemplate).ContainsKey("stats")),
             Arg.Any<CancellationToken>());
+        await _nodeInbounds.Received(1).SyncReadonlyFromTemplateAsync(
+            TestAdminId,
+            node,
+            Arg.Any<XrayConfig>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -356,16 +368,31 @@ public sealed class NodesControllerTests
     }
 
     private static XrayConfig CreateCoreConfig()
-        => XrayConfig.FromJson("""{"log":{"loglevel":"warning"}}""");
+    {
+        return XrayJsonSerializer.DeserializeRequired<XrayConfig>(
+            """{"log":{"loglevel":"warning"}}""",
+            "Core config cannot be empty.");
+    }
 
     private static JsonObject ToJsonObject(XrayConfig config)
     {
-        return JsonNode.Parse(config.ToJson())!.AsObject();
+        var json = XrayJsonSerializer.Serialize(config);
+        return JsonNode.Parse(json)!.AsObject();
     }
 
     private static JsonObject ToJsonObject(string config)
     {
         return JsonNode.Parse(config)!.AsObject();
+    }
+
+    private static DefaultHttpContext CreateHttpContext()
+    {
+        var context = new DefaultHttpContext();
+        context.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(ClaimTypes.NameIdentifier, TestAdminId.ToString())],
+            "Test"));
+
+        return context;
     }
 
     private static UpdateNodeRequest CreateUpdateRequest(
