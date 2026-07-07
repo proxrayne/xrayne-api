@@ -11,8 +11,6 @@ public sealed class OutboundEntity : CreateUpdateEntity
     [Key]
     public int Id { get; set; }
 
-    public int Position { get; set; }
-
     public bool Enabled { get; set; }
 
     public bool ReadOnly { get; set; }

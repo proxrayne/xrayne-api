@@ -22,7 +22,7 @@ public sealed class NodeCoreConfigBuilder : INodeCoreConfigBuilder
                 .ToList(),
             Outbounds = node.Outbounds
                 .Where(outbound => outbound.Enabled)
-                .OrderBy(outbound => outbound.Position)
+                .OrderBy(outbound => outbound.CreatedAt)
                 .ThenBy(outbound => outbound.Id)
                 .Select(outbound => outbound.Config)
                 .ToList(),
@@ -37,18 +37,11 @@ public sealed class NodeCoreConfigBuilder : INodeCoreConfigBuilder
             }
         };
 
-        var merged = template.Merge(managedConfig, new XrayMergeOptions
+        return template.Merge(managedConfig, new XrayMergeOptions
         {
             CollectionMode = XrayMergeCollectionMode.Replace,
             IgnoreDefaultValueTypes = true,
             IgnoreEmptyCollections = true
         });
-
-        merged.Inbounds = managedConfig.Inbounds;
-        merged.Outbounds = managedConfig.Outbounds;
-        merged.Routing ??= new RoutingConfig();
-        merged.Routing.Rules = managedConfig.Routing.Rules;
-
-        return merged;
     }
 }

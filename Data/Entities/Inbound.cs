@@ -15,9 +15,6 @@ public sealed class InboundEntity : CreateUpdateEntity
 
     public bool ReadOnly { get; set; }
 
-    [MaxLength(256)]
-    public required string DisplayName { get; set; }
-
     public DateTimeOffset? LastTrafficReset { get; set; }
 
     [Column(TypeName = "jsonb")]

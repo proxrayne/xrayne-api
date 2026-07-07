@@ -1,9 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data.Implementations;
 
@@ -17,7 +17,7 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
     public Task<List<InboundEntity>> GetAllAsync(CancellationToken ct = default)
     {
         return _inboundsWithRelations
-            .OrderBy(inbound => inbound.DisplayName)
+            .OrderBy(inbound => inbound.CreatedAt)
             .ToListAsync(ct);
     }
 
@@ -25,7 +25,7 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
     {
         return _inboundsWithRelations
             .Where(inbound => EF.Property<Guid>(inbound, "AdminId") == adminId)
-            .OrderBy(inbound => inbound.DisplayName)
+            .OrderBy(inbound => inbound.CreatedAt)
             .ToListAsync(ct);
     }
 
@@ -199,9 +199,7 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var search = filter.Search.Trim();
-            query = query.Where(inbound =>
-                inbound.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase)
-                || inbound.Tag.Contains(search, StringComparison.OrdinalIgnoreCase));
+            query = query.Where(inbound => inbound.Tag.Contains(search, StringComparison.OrdinalIgnoreCase));
         }
 
         if (filter.Protocol is { Count: > 0 })

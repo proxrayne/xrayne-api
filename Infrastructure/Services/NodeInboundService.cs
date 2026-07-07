@@ -57,7 +57,6 @@ public sealed class NodeInboundService(
 
         var inbound = new InboundEntity
         {
-            DisplayName = inboundConfig.Tag,
             Enabled = enabled,
             ReadOnly = false,
             Config = inboundConfig
@@ -93,7 +92,6 @@ public sealed class NodeInboundService(
         var existing = await inbounds.GetByNodeIdAsync(nodeId, cancellationToken);
         ValidateInbound(inboundConfig, existing, inbound.Id, enabled, allowDisabledReadonlyConflicts: false);
 
-        inbound.DisplayName = inboundConfig.Tag;
         inbound.Config = inboundConfig;
         inbound.Enabled = enabled;
 
@@ -216,7 +214,6 @@ public sealed class NodeInboundService(
                     node.Id,
                     new InboundEntity
                     {
-                        DisplayName = inboundConfig.Tag,
                         Enabled = enabled,
                         ReadOnly = true,
                         Config = inboundConfig
@@ -233,7 +230,7 @@ public sealed class NodeInboundService(
 
             var previousTag = existingReadonly.Tag;
             var wasEnabled = existingReadonly.Enabled;
-            existingReadonly.DisplayName = inboundConfig.Tag;
+
             existingReadonly.Config = inboundConfig;
             existingReadonly.Enabled = enabled;
 

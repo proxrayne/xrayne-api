@@ -58,7 +58,6 @@ public sealed class NodeInboundsControllerTests
         return new InboundEntity
         {
             Id = 10,
-            DisplayName = "socks-in",
             Enabled = true,
             ReadOnly = false,
             Config = new SocksInbound

@@ -1,6 +1,4 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
-using Contracts.Enums;
 using Contracts.Utilities;
 using Infrastructure.Services;
 using Data.Entities;
@@ -30,7 +28,6 @@ public sealed class NodeCoreConfigBuilderTests
                 new InboundEntity
                 {
                     Id = 1,
-                    DisplayName = "Enabled",
                     Enabled = true,
                     Config = new SocksInbound
                     {
@@ -47,7 +44,6 @@ public sealed class NodeCoreConfigBuilderTests
                 new InboundEntity
                 {
                     Id = 2,
-                    DisplayName = "Disabled",
                     Enabled = false,
                     ReadOnly = true,
                     Config = new SocksInbound
@@ -64,21 +60,18 @@ public sealed class NodeCoreConfigBuilderTests
                 new OutboundEntity
                 {
                     Id = 1,
-                    Position = 2,
                     Enabled = true,
                     Config = new FreedomOutbound { Tag = "second" }
                 },
                 new OutboundEntity
                 {
                     Id = 2,
-                    Position = 1,
                     Enabled = true,
                     Config = new FreedomOutbound { Tag = "first" }
                 },
                 new OutboundEntity
                 {
                     Id = 3,
-                    Position = 3,
                     Enabled = false,
                     Config = new FreedomOutbound { Tag = "disabled" }
                 }
