@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IAppSettingsService, AppSettingsService>();
         services.AddScoped<INodeService, NodeService>();
         services.AddScoped<INodeInboundService, NodeInboundService>();
+        services.AddScoped<INodeOutboundService, NodeOutboundService>();
         services.AddScoped<ICertificateService, CertificateService>();
         services.AddScoped<INodeCertificateService, NodeCertificateService>();
         services.AddScoped<IGeoResourceService, GeoResourceService>();

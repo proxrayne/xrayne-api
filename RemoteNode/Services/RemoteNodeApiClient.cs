@@ -210,6 +210,33 @@ public sealed class RemoteNodeApiClient(
     }
 
     /// <inheritdoc />
+    public Task AddOutboundAsync(SyncOutboundRequest request, CancellationToken cancellationToken = default)
+        => SendNoContentAsync(HttpMethod.Post, "api/core/outbounds", request, cancellationToken);
+
+    /// <inheritdoc />
+    public Task UpdateOutboundAsync(
+        string tag,
+        SyncOutboundRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(
+            HttpMethod.Put,
+            $"api/core/outbounds/{Uri.EscapeDataString(tag)}",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteOutboundAsync(string tag, CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(
+            HttpMethod.Delete,
+            $"api/core/outbounds/{Uri.EscapeDataString(tag)}",
+            null,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<List<CertificateDto>>(HttpMethod.Get, "api/certificates", null, cancellationToken);
 

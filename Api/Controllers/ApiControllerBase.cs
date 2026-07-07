@@ -102,4 +102,19 @@ public abstract class ApiControllerBase : ControllerBase
             _ => new BadRequestException(exception.Message)
         };
     }
+
+    /// <summary>
+    /// Maps node outbound service exceptions to API exceptions.
+    /// </summary>
+    protected static ApiException ToApiException(NodeOutboundException exception)
+    {
+        return exception switch
+        {
+            NodeOutboundNotFoundException => new NotFoundException(exception.Message),
+            NodeOutboundConflictException => new ConflictException(exception.Message),
+            NodeOutboundReadonlyException => new BadRequestException(exception.Message),
+            NodeOutboundValidationException => new BadRequestException(exception.Message),
+            _ => new BadRequestException(exception.Message)
+        };
+    }
 }

@@ -103,6 +103,21 @@ public interface IRemoteNodeApiClient
     Task DeleteInboundAsync(string tag, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Adds an outbound to the remote node runtime when xray-core is started.
+    /// </summary>
+    Task AddOutboundAsync(SyncOutboundRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Replaces an outbound in the remote node runtime when xray-core is started.
+    /// </summary>
+    Task UpdateOutboundAsync(string tag, SyncOutboundRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes an outbound from the remote node runtime when xray-core is started.
+    /// </summary>
+    Task DeleteOutboundAsync(string tag, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets certificates available on the remote node.
     /// </summary>
     Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default);

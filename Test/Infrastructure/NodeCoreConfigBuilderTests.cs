@@ -61,19 +61,38 @@ public sealed class NodeCoreConfigBuilderTests
                 {
                     Id = 1,
                     Enabled = true,
+                    CreatedAt = DateTimeOffset.Parse("2026-01-02T00:00:00Z"),
                     Config = new FreedomOutbound { Tag = "second" }
                 },
                 new OutboundEntity
                 {
                     Id = 2,
                     Enabled = true,
+                    CreatedAt = DateTimeOffset.Parse("2026-01-01T00:00:00Z"),
                     Config = new FreedomOutbound { Tag = "first" }
                 },
                 new OutboundEntity
                 {
                     Id = 3,
                     Enabled = false,
+                    CreatedAt = DateTimeOffset.Parse("2026-01-03T00:00:00Z"),
                     Config = new FreedomOutbound { Tag = "disabled" }
+                },
+                new OutboundEntity
+                {
+                    Id = 4,
+                    Enabled = true,
+                    ReadOnly = true,
+                    CreatedAt = DateTimeOffset.Parse("2026-01-04T00:00:00Z"),
+                    Config = new FreedomOutbound { Tag = "readonly" }
+                },
+                new OutboundEntity
+                {
+                    Id = 5,
+                    Enabled = false,
+                    ReadOnly = true,
+                    CreatedAt = DateTimeOffset.Parse("2026-01-05T00:00:00Z"),
+                    Config = new FreedomOutbound { Tag = "disabled-readonly" }
                 }
             ],
             RoutingRules =
@@ -102,9 +121,10 @@ public sealed class NodeCoreConfigBuilderTests
 
         config["stats"].Should().NotBeNull();
         config["inbounds"]!.AsArray().Should().HaveCount(1);
-        config["outbounds"]!.AsArray().Should().HaveCount(2);
+        config["outbounds"]!.AsArray().Should().HaveCount(3);
         config["outbounds"]![0]!["tag"]!.GetValue<string>().Should().Be("first");
         config["outbounds"]![1]!["tag"]!.GetValue<string>().Should().Be("second");
+        config["outbounds"]![2]!["tag"]!.GetValue<string>().Should().Be("readonly");
         config["routing"]!["rules"]!.AsArray().Should().HaveCount(1);
     }
 

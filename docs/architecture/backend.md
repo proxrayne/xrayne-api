@@ -115,6 +115,15 @@ per node for manual and enabled records. Conflicting readonly template inbounds
 are kept as disabled records so operators can see and resolve the conflict.
 Enabled inbound changes are mirrored to the standalone node runtime when cached
 telemetry reports that remote xray-core is running.
+Node outbounds follow the same node-scoped model under
+`/api/nodes/{id}/outbounds`. Manual outbounds can be created, edited, toggled,
+and deleted, while readonly outbounds are synchronized from `ConfigTemplate` by
+tag and can only be enabled or disabled through the UI. Managed node outbounds
+must have tags because tag identity is used for duplicate detection, readonly
+template synchronization, and runtime replacement. Tag uniqueness is enforced per
+node; conflicting readonly template outbounds are preserved as disabled records.
+Enabled outbound changes are mirrored to the standalone node runtime when cached
+telemetry reports that remote xray-core is running.
 
 ## Contracts Layer
 

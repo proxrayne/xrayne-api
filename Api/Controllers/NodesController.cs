@@ -9,6 +9,7 @@ using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
 using Contracts.Values;
+using Data.Entities;
 using Infrastructure.Services;
 using Infrastructure.States;
 using Infrastructure.Values;
@@ -19,7 +20,6 @@ using RemoteNode.Enums;
 using RemoteNode.Exceptions;
 using RemoteNode.Models;
 using RemoteNode.Services;
-using Data.Entities;
 using Xray.Config.Models;
 
 namespace Api.Controllers;
@@ -34,6 +34,7 @@ public sealed class NodesController(
     IMapper mapper,
     INodeService nodes,
     INodeInboundService nodeInbounds,
+    INodeOutboundService nodeOutbounds,
     INodeSecretService secrets,
     INodeConnectionVerifier connectionVerifier,
     IRemoteNodeConnectionManager connectionManager,
@@ -316,11 +317,18 @@ public sealed class NodesController(
 
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
         var template = ParseConfigTemplate(request.ConfigTemplate);
-        node.ConfigTemplate = template;
-        await nodeInbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
 
-        var updated = await nodes.UpdateAsync(node, cancellationToken)
-            ?? throw new NotFoundException($"Node '{id}' was not found.");
+
+        node.ConfigTemplate = template;
+
+        await nodeInbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
+        await nodeOutbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
+
+        var updated = await nodes.UpdateAsync(node, cancellationToken);
+        if (updated is null)
+        {
+            throw new NotFoundException($"Node '{id}' was not found.");
+        }
 
         return new NodeConfigTemplateResponse(SerializeConfig(updated.ConfigTemplate));
     }

@@ -19,7 +19,7 @@ public sealed class NodeInboundService(
     IRemoteNodeApiClientFactory apiClientFactory,
     IRemoteNodeCoreStateStore coreStateStore) : INodeInboundService
 {
-    private const int ReservedXrayApiPort = 10085;
+    private const int ReservedXrayApiPort = 10086;
 
     /// <inheritdoc />
     public async Task<List<InboundEntity>> GetByNodeIdAsync(
@@ -95,8 +95,11 @@ public sealed class NodeInboundService(
         inbound.Config = inboundConfig;
         inbound.Enabled = enabled;
 
-        var updated = await inbounds.UpdateAsync(inbound, cancellationToken)
-            ?? throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+        var updated = await inbounds.UpdateAsync(inbound, cancellationToken);
+        if (updated is null)
+        {
+            throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+        }
 
         if (updated.Enabled)
         {
@@ -128,8 +131,11 @@ public sealed class NodeInboundService(
         ValidateInbound(inbound.Config, existing, inbound.Id, enabled, allowDisabledReadonlyConflicts: inbound.ReadOnly);
 
         inbound.Enabled = enabled;
-        var updated = await inbounds.UpdateAsync(inbound, cancellationToken)
-            ?? throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+        var updated = await inbounds.UpdateAsync(inbound, cancellationToken);
+        if (updated is null)
+        {
+            throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+        }
 
         if (updated.Enabled)
         {
@@ -234,8 +240,12 @@ public sealed class NodeInboundService(
             existingReadonly.Config = inboundConfig;
             existingReadonly.Enabled = enabled;
 
-            var updated = await inbounds.UpdateAsync(existingReadonly, cancellationToken)
-                ?? throw new NodeInboundNotFoundException($"Inbound '{existingReadonly.Id}' was not found.");
+            var updated = await inbounds.UpdateAsync(existingReadonly, cancellationToken);
+            if (updated is null)
+            {
+                throw new NodeInboundNotFoundException($"Inbound '{existingReadonly.Id}' was not found.");
+            }
+
             if (updated.Enabled)
             {
                 await SyncRemoteUpdateAsync(node, previousTag, updated, cancellationToken);
@@ -256,8 +266,12 @@ public sealed class NodeInboundService(
 
         try
         {
-            var inbound = XrayJsonSerializer.Deserialize<Inbound>(config)
-                ?? throw new NodeInboundValidationException("Inbound configuration is invalid.");
+            var inbound = XrayJsonSerializer.Deserialize<Inbound>(config);
+            if (inbound is null)
+            {
+                throw new NodeInboundValidationException("Inbound configuration is invalid.");
+            }
+
             if (string.IsNullOrWhiteSpace(inbound.Tag))
             {
                 throw new NodeInboundValidationException("Inbound tag is required.");
@@ -350,8 +364,13 @@ public sealed class NodeInboundService(
 
     private async Task<NodeEntity> GetNodeAsync(long nodeId, CancellationToken cancellationToken)
     {
-        return await nodes.GetByIdAsync(nodeId, cancellationToken)
-            ?? throw new NodeInboundNotFoundException($"Node '{nodeId}' was not found.");
+        var node = await nodes.GetByIdAsync(nodeId, cancellationToken);
+        if (node is null)
+        {
+            throw new NodeInboundNotFoundException($"Node '{nodeId}' was not found.");
+        }
+
+        return node;
     }
 
     private async Task<InboundEntity> GetInboundAsync(
@@ -359,8 +378,13 @@ public sealed class NodeInboundService(
         int inboundId,
         CancellationToken cancellationToken)
     {
-        return await inbounds.GetByNodeAndIdAsync(nodeId, inboundId, cancellationToken)
-            ?? throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+        var inbound = await inbounds.GetByNodeAndIdAsync(nodeId, inboundId, cancellationToken);
+        if (inbound is null)
+        {
+            throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+        }
+
+        return inbound;
     }
 
     private async Task SyncRemoteAddAsync(

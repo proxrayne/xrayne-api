@@ -31,6 +31,7 @@ public sealed class NodesControllerTests
 
     private readonly INodeService _nodes;
     private readonly INodeInboundService _nodeInbounds;
+    private readonly INodeOutboundService _nodeOutbounds;
     private readonly INodeSecretService _secrets;
     private readonly IRemoteNodeApiClient _remoteClient;
     private readonly IRemoteNodeApiClientFactory _apiClientFactory;
@@ -44,6 +45,7 @@ public sealed class NodesControllerTests
     {
         _nodes = Substitute.For<INodeService>();
         _nodeInbounds = Substitute.For<INodeInboundService>();
+        _nodeOutbounds = Substitute.For<INodeOutboundService>();
         _secrets = Substitute.For<INodeSecretService>();
         _remoteClient = Substitute.For<IRemoteNodeApiClient>();
         _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
@@ -62,6 +64,7 @@ public sealed class NodesControllerTests
             mapper,
             _nodes,
             _nodeInbounds,
+            _nodeOutbounds,
             _secrets,
             Substitute.For<INodeConnectionVerifier>(),
             _connectionManager,
@@ -285,6 +288,11 @@ public sealed class NodesControllerTests
             Arg.Is<NodeEntity>(item => ToJsonObject(item.ConfigTemplate).ContainsKey("stats")),
             Arg.Any<CancellationToken>());
         await _nodeInbounds.Received(1).SyncReadonlyFromTemplateAsync(
+            TestAdminId,
+            node,
+            Arg.Any<XrayConfig>(),
+            Arg.Any<CancellationToken>());
+        await _nodeOutbounds.Received(1).SyncReadonlyFromTemplateAsync(
             TestAdminId,
             node,
             Arg.Any<XrayConfig>(),

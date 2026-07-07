@@ -39,5 +39,18 @@ public sealed class NodeMappingProfile : Profile
             .ForCtorParam(
                 nameof(NodeInboundListItemDto.Port),
                 options => options.MapFrom(inbound => inbound.Port.ToString()));
+
+        CreateMap<OutboundEntity, NodeOutboundDto>()
+            .ForCtorParam(
+                nameof(NodeOutboundDto.Tag),
+                options => options.MapFrom(outbound => outbound.Tag ?? string.Empty))
+            .ForCtorParam(
+                nameof(NodeOutboundDto.Config),
+                options => options.MapFrom(outbound => XrayJsonSerializer.Serialize(outbound.Config)));
+
+        CreateMap<OutboundEntity, NodeOutboundListItemDto>()
+            .ForCtorParam(
+                nameof(NodeOutboundListItemDto.Tag),
+                options => options.MapFrom(outbound => outbound.Tag ?? string.Empty));
     }
 }
