@@ -9,7 +9,7 @@ public sealed record NodeOutboundListItemDto(
     int Id,
     string Tag,
     Protocol Protocol,
-    StreamNetwork Network,
-    StreamSecurity Security,
+    StreamNetwork? Network,
+    StreamSecurity? Security,
     bool Enabled,
     bool ReadOnly);

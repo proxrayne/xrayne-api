@@ -10,8 +10,8 @@ public sealed record NodeInboundDto(
     string Tag,
     string Port,
     Protocol Protocol,
-    StreamNetwork Network,
-    StreamSecurity Security,
+    StreamNetwork? Network,
+    StreamSecurity? Security,
     bool Enabled,
     bool ReadOnly,
     string Config);

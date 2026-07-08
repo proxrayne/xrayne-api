@@ -39,10 +39,10 @@ public sealed class InboundEntity : CreateUpdateEntity
     public Protocol Protocol => Config.Protocol;
 
     [NotMapped]
-    public StreamNetwork Network => Config.StreamSettings.Network;
+    public StreamNetwork? Network => Config.StreamSettings?.Network;
 
     [NotMapped]
-    public StreamSecurity Security => Config.StreamSettings.Security;
+    public StreamSecurity? Security => Config.StreamSettings?.Security;
 
     [NotMapped]
     public InboundSniffing? Sniffing => Config.Sniffing;

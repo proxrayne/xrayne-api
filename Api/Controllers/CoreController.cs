@@ -1,14 +1,16 @@
-using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
+using AutoMapper;
+using Contracts.Utilities;
 using Contracts.Values;
 using Infrastructure.Services;
 using Infrastructure.States;
 using Infrastructure.Values;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using Xray.Config.Share.v2Ray;
 
 namespace Api.Controllers;
 
@@ -190,5 +192,22 @@ public sealed class CoreController(
         await scheduler.ScheduleCoreOperation(CoreOperation.Restart, ct);
 
         return Accepted();
+    }
+
+    [HttpPost("v2ray/decode")]
+    [EndpointSummary("Decode v2ray link")]
+    [EndpointDescription("Decode v2ray link to json outbound")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    public IActionResult DecodeV2RayLink([FromBody] DecodeV2RayLinkRequest request)
+    {
+        var share = V2RayShareEntity.FromString(request.Link);
+        var outbound = share.ToOutbound(remark: request.Remark, email: request.Email);
+        if (outbound is null)
+        {
+            return BadRequest("Invalid operation result.");
+        }
+
+        return Ok(new { Outbound = XrayJsonSerializer.Serialize(outbound) });
     }
 }

@@ -209,12 +209,12 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
 
         if (filter.Network is { Count: > 0 })
         {
-            query = query.Where(inbound => filter.Network.Contains(inbound.Network));
+            query = query.Where(inbound => inbound.Network.HasValue && filter.Network.Contains(inbound.Network.Value));
         }
 
         if (filter.Security is { Count: > 0 })
         {
-            query = query.Where(inbound => filter.Security.Contains(inbound.Security));
+            query = query.Where(inbound => inbound.Security.HasValue && filter.Security.Contains(inbound.Security.Value));
         }
 
         return query;
