@@ -132,6 +132,17 @@ disabled through the UI. Readonly rules stay before manual rules. Enabled
 routing rule changes are mirrored to the standalone node runtime by replacing
 the full enabled ordered `routing.rules` list when cached telemetry reports that
 remote xray-core is running.
+Node geo resources are managed through node-scoped endpoints under
+`/api/nodes/{id}/geo-resources`. The panel stores metadata only in
+`GeoResourceEntity`; remote files live on the standalone node in its managed
+assets directory. Static resources can be uploaded, renamed, downloaded, and
+deleted. Auto-update resources store a download URL and Unix 5-field cron
+template; the panel downloads the URL, uploads the bytes to the node, advances
+`NextRunAt` only after success, and retries on the next ten-minute job pass
+after failures. The panel syncs remote file metadata on first successful connect,
+after successful core install events, and through the two-hour recurring sync
+job. Manual file changes restart remote xray-core through the existing restart
+flow when cached core state reports it is running.
 
 ## Contracts Layer
 

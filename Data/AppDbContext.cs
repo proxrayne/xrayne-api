@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Contracts.Enums;
+using Contracts.Values;
 using Data.Entities;
 
 namespace Data;
@@ -86,8 +87,15 @@ public sealed class AppDbContext : DbContext
         modelBuilder.Entity<GeoResourceEntity>(builder =>
         {
             builder.HasOne(x => x.Node)
-                .WithMany()
+                .WithMany(x => x.GeoResources)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex("NodeId", nameof(GeoResourceEntity.Filename))
+                .IsUnique();
+
+            builder.Property(x => x.SourceType)
+                .HasMaxLength(32)
+                .HasDefaultValue(GeoResourceSourceTypes.Static);
         });
 
         modelBuilder.Entity<AppSettingsEntity>(builder =>

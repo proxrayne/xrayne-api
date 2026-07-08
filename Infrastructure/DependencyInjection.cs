@@ -45,6 +45,8 @@ public static class DependencyInjection
         services.AddTransient<InstallCoreJob>();
         services.AddTransient<CoreOperationJob>();
         services.AddTransient<NodeProvisionJob>();
+        services.AddTransient<GeoResourceSyncJob>();
+        services.AddTransient<GeoResourceAutoUpdateJob>();
 
         services.AddScoped<IAppSettingsService, AppSettingsService>();
         services.AddScoped<INodeService, NodeService>();
@@ -53,7 +55,9 @@ public static class DependencyInjection
         services.AddScoped<ICertificateService, CertificateService>();
         services.AddScoped<INodeCertificateService, NodeCertificateService>();
         services.AddScoped<IGeoResourceService, GeoResourceService>();
+        services.AddScoped<INodeGeoResourceService, NodeGeoResourceService>();
         services.AddScoped<INodeRoutingRuleService, NodeRoutingRuleService>();
+        services.AddHttpClient("geo-resources");
 
         return services;
     }

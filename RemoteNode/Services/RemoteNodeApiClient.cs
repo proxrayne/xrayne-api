@@ -245,6 +245,88 @@ public sealed class RemoteNodeApiClient(
     }
 
     /// <inheritdoc />
+    public Task<List<GeoResourceDto>> GetGeoResourcesAsync(CancellationToken cancellationToken = default)
+        => SendJsonAsync<List<GeoResourceDto>>(HttpMethod.Get, "api/geo-resources", null, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<GeoResourceContent> DownloadGeoResourceAsync(
+        string fileName,
+        CancellationToken cancellationToken = default)
+    {
+        var path = $"api/geo-resources/{Uri.EscapeDataString(fileName)}/content";
+        using var httpClient = CreateStandardClient();
+        using var request = CreateRequest(HttpMethod.Get, path);
+
+        using var response = await SendAsync(
+            httpClient,
+            request,
+            path,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        await EnsureSuccessAsync(response, path, cancellationToken);
+
+        var content = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+        return new GeoResourceContent(fileName, content);
+    }
+
+    /// <inheritdoc />
+    public async Task<GeoResourceDto> UploadGeoResourceAsync(
+        string fileName,
+        Stream content,
+        CancellationToken cancellationToken = default)
+    {
+        var path = $"api/geo-resources/{Uri.EscapeDataString(fileName)}";
+        using var httpClient = CreateStandardClient();
+        using var request = CreateRequest(HttpMethod.Put, path);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Content = new StreamContent(content);
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+        using var response = await SendAsync(
+            httpClient,
+            request,
+            path,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        await EnsureSuccessAsync(response, path, cancellationToken);
+
+        try
+        {
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            return await JsonSerializer.DeserializeAsync<GeoResourceDto>(stream, JsonOptions, cancellationToken)
+                ?? throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Empty JSON response.");
+        }
+        catch (JsonException exception)
+        {
+            throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Invalid JSON response.", exception);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<GeoResourceDto> RenameGeoResourceAsync(
+        string fileName,
+        RenameGeoResourceRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendJsonAsync<GeoResourceDto>(
+            HttpMethod.Post,
+            $"api/geo-resources/{Uri.EscapeDataString(fileName)}/rename",
+            request,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteGeoResourceAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(
+            HttpMethod.Delete,
+            $"api/geo-resources/{Uri.EscapeDataString(fileName)}",
+            null,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<List<CertificateDto>>(HttpMethod.Get, "api/certificates", null, cancellationToken);
 

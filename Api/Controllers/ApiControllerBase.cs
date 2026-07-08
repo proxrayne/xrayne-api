@@ -131,4 +131,18 @@ public abstract class ApiControllerBase : ControllerBase
             _ => new BadRequestException(exception.Message)
         };
     }
+
+    /// <summary>
+    /// Maps node geo resource service exceptions to API exceptions.
+    /// </summary>
+    protected static ApiException ToApiException(NodeGeoResourceException exception)
+    {
+        return exception switch
+        {
+            NodeGeoResourceNotFoundException => new NotFoundException(exception.Message),
+            NodeGeoResourceConflictException => new ConflictException(exception.Message),
+            NodeGeoResourceValidationException => new BadRequestException(exception.Message),
+            _ => new BadRequestException(exception.Message)
+        };
+    }
 }

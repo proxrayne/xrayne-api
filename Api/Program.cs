@@ -9,6 +9,7 @@ using Contracts.Configurations;
 using Contracts.Values;
 using Infrastructure;
 using Infrastructure.Services;
+using Infrastructure.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
@@ -182,6 +183,24 @@ try
         {
             threadPool.MaxConcurrency = 5;
         });
+
+        options.AddJob<GeoResourceSyncJob>(job => job.WithIdentity(GeoResourceSyncJob.JobKey));
+        options.AddTrigger(trigger => trigger
+            .WithIdentity(GeoResourceSyncJob.TriggerKey)
+            .ForJob(GeoResourceSyncJob.JobKey)
+            .StartNow()
+            .WithSimpleSchedule(schedule => schedule
+                .WithInterval(TimeSpan.FromHours(2))
+                .RepeatForever()));
+
+        options.AddJob<GeoResourceAutoUpdateJob>(job => job.WithIdentity(GeoResourceAutoUpdateJob.JobKey));
+        options.AddTrigger(trigger => trigger
+            .WithIdentity(GeoResourceAutoUpdateJob.TriggerKey)
+            .ForJob(GeoResourceAutoUpdateJob.JobKey)
+            .StartNow()
+            .WithSimpleSchedule(schedule => schedule
+                .WithInterval(TimeSpan.FromMinutes(10))
+                .RepeatForever()));
     });
     builder.Services.AddQuartzHostedService(options =>
     {

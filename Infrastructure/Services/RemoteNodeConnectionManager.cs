@@ -393,6 +393,14 @@ public sealed class RemoteNodeConnectionManager(
 
                 if (connectionEvent.Type is CoreInstallEventType)
                 {
+                    if (connectionEvent.Install?.Step is InstallCoreStep.Installed)
+                    {
+                        await SynchronizeGeoResourcesAsync(
+                            scopeFactory,
+                            node,
+                            cancellationToken);
+                    }
+
                     continue;
                 }
 
@@ -411,6 +419,10 @@ public sealed class RemoteNodeConnectionManager(
                         scopeFactory,
                         node.Id,
                         connectionEvent.Timestamp,
+                        cancellationToken);
+                    await SynchronizeGeoResourcesAsync(
+                        scopeFactory,
+                        node,
                         cancellationToken);
                     hasPersistedConnection = true;
                     lastPersistedHeartbeat = now;
@@ -496,6 +508,30 @@ public sealed class RemoteNodeConnectionManager(
                 node.Message = null;
                 node.LastStatusChange = DateTime.UtcNow;
             }, cancellationToken);
+        }
+
+        private static async Task SynchronizeGeoResourcesAsync(
+            IServiceScopeFactory scopeFactory,
+            NodeEntity node,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                using var scope = scopeFactory.CreateScope();
+                var geoResources = scope.ServiceProvider.GetRequiredService<INodeGeoResourceService>();
+
+                await geoResources.SynchronizeNodeAsync(
+                    node.Admin.Id,
+                    node,
+                    cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+            }
         }
 
         private static async Task PersistHeartbeatAsync(
