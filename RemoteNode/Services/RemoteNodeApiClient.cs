@@ -237,6 +237,14 @@ public sealed class RemoteNodeApiClient(
     }
 
     /// <inheritdoc />
+    public Task SyncRoutingRulesAsync(
+        SyncRoutingRulesRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(HttpMethod.Put, "api/core/routing/rules", request, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<List<CertificateDto>>(HttpMethod.Get, "api/certificates", null, cancellationToken);
 

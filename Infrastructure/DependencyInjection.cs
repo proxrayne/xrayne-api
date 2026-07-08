@@ -53,7 +53,7 @@ public static class DependencyInjection
         services.AddScoped<ICertificateService, CertificateService>();
         services.AddScoped<INodeCertificateService, NodeCertificateService>();
         services.AddScoped<IGeoResourceService, GeoResourceService>();
-        services.AddScoped<IRoutingRuleService, RoutingRuleService>();
+        services.AddScoped<INodeRoutingRuleService, NodeRoutingRuleService>();
 
         return services;
     }

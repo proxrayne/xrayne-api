@@ -26,4 +26,12 @@ public class RoutingRuleEntity : CreateUpdateEntity
     public AdminAccount Admin { get; set; } = null!;
 
     public NodeEntity Node { get; set; } = null!;
+
+    // Computed
+
+    [NotMapped]
+    public ICollection<string> InboundTags => Config.InboundTag ?? [];
+
+    [NotMapped]
+    public string? OutboundTag => Config.OutboundTag;
 }

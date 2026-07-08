@@ -34,14 +34,11 @@ public sealed class NodeCoreConfigBuilder : INodeCoreConfigBuilder
             .Select(rule => rule.Config)
             .ToList();
 
-        return config.Merge(new XrayConfig()
-        {
-            Inbounds = inbounds,
-            Outbounds = outbounds,
-            Routing = new RoutingConfig()
-            {
-                Rules = routingRules
-            }
-        });
+        config.Inbounds = inbounds;
+        config.Outbounds = outbounds;
+        config.Routing ??= new RoutingConfig();
+        config.Routing.Rules = routingRules;
+
+        return config;
     }
 }

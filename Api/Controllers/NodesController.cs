@@ -35,6 +35,7 @@ public sealed class NodesController(
     INodeService nodes,
     INodeInboundService nodeInbounds,
     INodeOutboundService nodeOutbounds,
+    INodeRoutingRuleService nodeRoutingRules,
     INodeSecretService secrets,
     INodeConnectionVerifier connectionVerifier,
     IRemoteNodeConnectionManager connectionManager,
@@ -323,6 +324,7 @@ public sealed class NodesController(
 
         await nodeInbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
         await nodeOutbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
+        await nodeRoutingRules.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
 
         var updated = await nodes.UpdateAsync(node, cancellationToken);
         if (updated is null)

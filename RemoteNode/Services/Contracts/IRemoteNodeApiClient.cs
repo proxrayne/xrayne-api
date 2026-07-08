@@ -118,6 +118,11 @@ public interface IRemoteNodeApiClient
     Task DeleteOutboundAsync(string tag, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Replaces routing rules in the remote node runtime when xray-core is started.
+    /// </summary>
+    Task SyncRoutingRulesAsync(SyncRoutingRulesRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets certificates available on the remote node.
     /// </summary>
     Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default);

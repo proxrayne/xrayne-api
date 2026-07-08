@@ -117,4 +117,18 @@ public abstract class ApiControllerBase : ControllerBase
             _ => new BadRequestException(exception.Message)
         };
     }
+
+    /// <summary>
+    /// Maps node routing rule service exceptions to API exceptions.
+    /// </summary>
+    protected static ApiException ToApiException(NodeRoutingRuleException exception)
+    {
+        return exception switch
+        {
+            NodeRoutingRuleNotFoundException => new NotFoundException(exception.Message),
+            NodeRoutingRuleReadonlyException => new BadRequestException(exception.Message),
+            NodeRoutingRuleValidationException => new BadRequestException(exception.Message),
+            _ => new BadRequestException(exception.Message)
+        };
+    }
 }

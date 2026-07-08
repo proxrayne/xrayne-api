@@ -13,6 +13,7 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
     {
         return RoutingRulesWithRelations
             .OrderBy(routingRule => routingRule.Position)
+            .ThenBy(routingRule => routingRule.Id)
             .ToListAsync(ct);
     }
 
@@ -21,6 +22,16 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
         return RoutingRulesWithRelations
             .Where(routingRule => EF.Property<Guid>(routingRule, "AdminId") == adminId)
             .OrderBy(routingRule => routingRule.Position)
+            .ThenBy(routingRule => routingRule.Id)
+            .ToListAsync(ct);
+    }
+
+    public Task<List<RoutingRuleEntity>> GetByNodeIdAsync(long nodeId, CancellationToken ct = default)
+    {
+        return RoutingRulesWithRelations
+            .Where(routingRule => EF.Property<long>(routingRule, "NodeId") == nodeId)
+            .OrderBy(routingRule => routingRule.Position)
+            .ThenBy(routingRule => routingRule.Id)
             .ToListAsync(ct);
     }
 
@@ -38,9 +49,32 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
                 ct);
     }
 
+    public Task<RoutingRuleEntity?> GetByNodeAndIdAsync(long nodeId, long id, CancellationToken ct = default)
+    {
+        return RoutingRulesWithRelations
+            .SingleOrDefaultAsync(
+                routingRule => routingRule.Id == id && EF.Property<long>(routingRule, "NodeId") == nodeId,
+                ct);
+    }
+
     public async Task<RoutingRuleEntity> AddAsync(RoutingRuleEntity routingRule, CancellationToken ct = default)
     {
         await dbContext.RoutingRules.AddAsync(routingRule, ct);
+        await dbContext.SaveChangesAsync(ct);
+        await dbContext.Entry(routingRule).ReloadAsync(ct);
+
+        return routingRule;
+    }
+
+    public async Task<RoutingRuleEntity> AddAsync(
+        Guid adminId,
+        long nodeId,
+        RoutingRuleEntity routingRule,
+        CancellationToken ct = default)
+    {
+        await dbContext.RoutingRules.AddAsync(routingRule, ct);
+        dbContext.Entry(routingRule).Property("AdminId").CurrentValue = adminId;
+        dbContext.Entry(routingRule).Property("NodeId").CurrentValue = nodeId;
         await dbContext.SaveChangesAsync(ct);
         await dbContext.Entry(routingRule).ReloadAsync(ct);
 

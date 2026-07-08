@@ -32,6 +32,7 @@ public sealed class NodesControllerTests
     private readonly INodeService _nodes;
     private readonly INodeInboundService _nodeInbounds;
     private readonly INodeOutboundService _nodeOutbounds;
+    private readonly INodeRoutingRuleService _nodeRoutingRules;
     private readonly INodeSecretService _secrets;
     private readonly IRemoteNodeApiClient _remoteClient;
     private readonly IRemoteNodeApiClientFactory _apiClientFactory;
@@ -46,6 +47,7 @@ public sealed class NodesControllerTests
         _nodes = Substitute.For<INodeService>();
         _nodeInbounds = Substitute.For<INodeInboundService>();
         _nodeOutbounds = Substitute.For<INodeOutboundService>();
+        _nodeRoutingRules = Substitute.For<INodeRoutingRuleService>();
         _secrets = Substitute.For<INodeSecretService>();
         _remoteClient = Substitute.For<IRemoteNodeApiClient>();
         _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
@@ -65,6 +67,7 @@ public sealed class NodesControllerTests
             _nodes,
             _nodeInbounds,
             _nodeOutbounds,
+            _nodeRoutingRules,
             _secrets,
             Substitute.For<INodeConnectionVerifier>(),
             _connectionManager,
@@ -293,6 +296,11 @@ public sealed class NodesControllerTests
             Arg.Any<XrayConfig>(),
             Arg.Any<CancellationToken>());
         await _nodeOutbounds.Received(1).SyncReadonlyFromTemplateAsync(
+            TestAdminId,
+            node,
+            Arg.Any<XrayConfig>(),
+            Arg.Any<CancellationToken>());
+        await _nodeRoutingRules.Received(1).SyncReadonlyFromTemplateAsync(
             TestAdminId,
             node,
             Arg.Any<XrayConfig>(),

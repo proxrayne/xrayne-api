@@ -124,6 +124,14 @@ template synchronization, and runtime replacement. Tag uniqueness is enforced pe
 node; conflicting readonly template outbounds are preserved as disabled records.
 Enabled outbound changes are mirrored to the standalone node runtime when cached
 telemetry reports that remote xray-core is running.
+Node routing rules are managed through node-scoped endpoints under
+`/api/nodes/{id}/routing-rules`. Manual rules can be created, edited, toggled,
+deleted, and reordered, while readonly rules are synchronized from
+`ConfigTemplate.Routing.Rules` in template order and can only be enabled or
+disabled through the UI. Readonly rules stay before manual rules. Enabled
+routing rule changes are mirrored to the standalone node runtime by replacing
+the full enabled ordered `routing.rules` list when cached telemetry reports that
+remote xray-core is running.
 
 ## Contracts Layer
 

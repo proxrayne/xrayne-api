@@ -52,5 +52,12 @@ public sealed class NodeMappingProfile : Profile
             .ForCtorParam(
                 nameof(NodeOutboundListItemDto.Tag),
                 options => options.MapFrom(outbound => outbound.Tag ?? string.Empty));
+
+        CreateMap<RoutingRuleEntity, NodeRoutingRuleDto>()
+            .ForCtorParam(
+                nameof(NodeRoutingRuleDto.Config),
+                options => options.MapFrom(rule => XrayJsonSerializer.Serialize(rule.Config)));
+
+        CreateMap<RoutingRuleEntity, NodeRoutingRuleListItemDto>();
     }
 }
