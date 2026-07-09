@@ -8,7 +8,7 @@ internal static class AppDbContextFactory
     public static async Task<AppDbContext> CreateAsync(string connectionString)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(connectionString)
+            .UseXRayneNpgsql(connectionString)
             .Options;
 
         var context = new AppDbContext(options);

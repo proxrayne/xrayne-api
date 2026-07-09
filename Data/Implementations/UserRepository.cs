@@ -10,7 +10,8 @@ namespace Data.Implementations;
 public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
 {
     private IQueryable<UserEntity> _usersWithRelations => dbContext.Users
-        .Include(user => user.Inbounds);
+        .Include(user => user.Warehouse)
+        .Include(user => user.Connections);
 
     public Task<List<UserEntity>> GetAllAsync(CancellationToken ct = default)
     {
@@ -40,13 +41,13 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return SearchCoreAsync(query, filter, ct);
     }
 
-    public Task<UserEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public Task<UserEntity?> GetByIdAsync(long id, CancellationToken ct = default)
     {
         return _usersWithRelations
             .SingleOrDefaultAsync(user => user.Id == id, ct);
     }
 
-    public Task<UserEntity?> GetByIdAsync(Guid adminId, Guid id, CancellationToken ct = default)
+    public Task<UserEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         return _usersWithRelations
             .SingleOrDefaultAsync(
@@ -122,7 +123,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return user;
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(long id, CancellationToken ct = default)
     {
         var user = await GetByIdAsync(id, ct);
         if (user is null)
@@ -136,7 +137,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid adminId, Guid id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         var user = await GetByIdAsync(adminId, id, ct);
         if (user is null)
@@ -193,27 +194,22 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
                 && filter.LimitResetStrategy.Contains(user.LimitResetStrategy.Value));
         }
 
-        if (filter.Protocol is { Count: > 0 })
-        {
-            query = query.Where(user => filter.Protocol.Any(protocol => user.Options.ContainsKey(protocol)));
-        }
-
         return query;
     }
 
     private static IQueryable<UserEntity> ApplyCursor(IQueryable<UserEntity> query, UserFilter filter)
     {
         var cursor = CursorPagination.TryReadCursor(filter.Cursor);
-        if (cursor is null || !Guid.TryParse(cursor.Id, out var id))
+        if (cursor is null || !long.TryParse(cursor.Id, out var id))
         {
             return query;
         }
 
         return filter.Order is SortOrder.Desc
             ? query.Where(user => user.CreatedAt < cursor.CreatedAt
-                || (user.CreatedAt == cursor.CreatedAt && user.Id.CompareTo(id) < 0))
+                || (user.CreatedAt == cursor.CreatedAt && user.Id < id))
             : query.Where(user => user.CreatedAt > cursor.CreatedAt
-                || (user.CreatedAt == cursor.CreatedAt && user.Id.CompareTo(id) > 0));
+                || (user.CreatedAt == cursor.CreatedAt && user.Id > id));
     }
 
     private static IQueryable<UserEntity> ApplyOrder(IQueryable<UserEntity> query, SortOrder order)

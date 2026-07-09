@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Data.Entities;
@@ -97,7 +98,7 @@ namespace Data.Migrations
                     OnHoldExpire = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false),
                     LimitResetStrategy = table.Column<string>(type: "text", nullable: true),
-                    Options = table.Column<Dictionary<Protocol, ClientOption>>(type: "jsonb", nullable: false),
+                    Options = table.Column<Dictionary<Protocol, JsonElement>>(type: "jsonb", nullable: false),
                     LastTrafficReset = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     OnlineAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ExpireAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),

@@ -109,7 +109,7 @@ public sealed class XrayConfigJsonMappingTests
     private static AppDbContext CreateNpgsqlModelContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql("Host=localhost;Database=xrayne;Username=xrayne;Password=xrayne")
+            .UseXRayneNpgsql("Host=localhost;Database=xrayne;Username=xrayne;Password=xrayne")
             .Options;
 
         return new AppDbContext(options);

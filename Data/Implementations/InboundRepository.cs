@@ -10,7 +10,6 @@ namespace Data.Implementations;
 public sealed class InboundRepository(AppDbContext dbContext) : IInboundRepository
 {
     private IQueryable<InboundEntity> _inboundsWithRelations => dbContext.Inbounds
-        .Include(inbound => inbound.Users)
         .Include(inbound => inbound.Admin)
         .Include(inbound => inbound.Node);
 

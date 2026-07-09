@@ -34,7 +34,7 @@ public sealed class XRayneWebApplicationFactory : WebApplicationFactory<Program>
         {
             ReplaceDbContext(services);
             services.RemoveAll<NpgsqlDataSource>();
-            services.AddSingleton(_ => NpgsqlDataSource.Create(_connectionString));
+            services.AddSingleton(_ => NpgsqlOptionsBuilderExtensions.CreateXRayneDataSource(_connectionString));
             services.RemoveHostedServices();
         });
     }

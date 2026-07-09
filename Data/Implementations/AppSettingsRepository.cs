@@ -56,7 +56,7 @@ public sealed class AppSettingsRepository(AppDbContext dbContext) : IAppSettings
         webhook.Id = webhook.Id == Guid.Empty ? Guid.NewGuid() : webhook.Id;
         webhook.AppSettingsId = AppSettingsEntity.SingletonId;
 
-        await dbContext.AppWebhookSettings.AddAsync(webhook, ct);
+        await dbContext.AppWebhooks.AddAsync(webhook, ct);
         await dbContext.SaveChangesAsync(ct);
 
         return webhook;
@@ -67,7 +67,7 @@ public sealed class AppSettingsRepository(AppDbContext dbContext) : IAppSettings
         AppWebhookEntity webhook,
         CancellationToken ct = default)
     {
-        var current = await dbContext.AppWebhookSettings
+        var current = await dbContext.AppWebhooks
             .SingleOrDefaultAsync(item => item.Id == id, ct);
         if (current is null)
         {
@@ -89,14 +89,14 @@ public sealed class AppSettingsRepository(AppDbContext dbContext) : IAppSettings
 
     public async Task<bool> DeleteWebhookAsync(Guid id, CancellationToken ct = default)
     {
-        var current = await dbContext.AppWebhookSettings
+        var current = await dbContext.AppWebhooks
             .SingleOrDefaultAsync(item => item.Id == id, ct);
         if (current is null)
         {
             return false;
         }
 
-        dbContext.AppWebhookSettings.Remove(current);
+        dbContext.AppWebhooks.Remove(current);
         await dbContext.SaveChangesAsync(ct);
 
         return true;

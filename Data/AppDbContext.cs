@@ -1,8 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Contracts.Enums;
 using Data.Entities;
-using Xray.Config.Enums;
 
 namespace Data;
 
@@ -19,21 +16,16 @@ public sealed class AppDbContext : DbContext
     public DbSet<GeoResourceEntity> GeoResources { get; set; }
     public DbSet<RoutingRuleEntity> RoutingRules { get; set; }
     public DbSet<AppSettingsEntity> AppSettings { get; set; }
-    public DbSet<AppWebhookEntity> AppWebhookSettings { get; set; }
+    public DbSet<AppWebhookEntity> AppWebhooks { get; set; }
+    public DbSet<ApplicationEntity> Applications { get; set; }
+    public DbSet<ConnectionEntity> Connections { get; set; }
+    public DbSet<WarehouseEntity> Warehouses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.HasPostgresEnum<UserStatus>();
-        modelBuilder.HasPostgresEnum<LimitResetStrategy>();
-        modelBuilder.HasPostgresEnum<AdminPermission>();
-        modelBuilder.HasPostgresEnum<SSHAuthType>();
-        modelBuilder.HasPostgresEnum<CertificateMode>();
-        modelBuilder.HasPostgresEnum<GeoResourceSourceType>();
-        modelBuilder.HasPostgresEnum<XtlsFlow>();
-        modelBuilder.HasPostgresEnum<EncryptionMethod>();
-        modelBuilder.HasPostgresEnum<SubscriptionFormat>();
+        modelBuilder.ConfigureXRaynePostgresEnums();
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
@@ -73,10 +65,14 @@ public sealed class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(x => x.CertificateMode)
-                .HasDefaultValue(CertificateMode.Domain);
+                .HasColumnType("certificate_mode")
+                .HasDefaultValueSql("'domain'::certificate_mode");
 
             builder.Property(x => x.Enabled)
                 .HasDefaultValue(true);
+
+            builder.Property(x => x.AuthType)
+                .HasColumnType("ssh_auth_type");
 
             builder.Property(x => x.ConfigTemplate)
                 .HasColumnType("jsonb");
@@ -98,11 +94,86 @@ public sealed class AppDbContext : DbContext
             builder.HasIndex("NodeId", nameof(GeoResourceEntity.Filename))
                 .IsUnique();
 
-            var sourceType = builder.Property(x => x.SourceType)
+            builder.Property(x => x.SourceType)
                 .HasColumnType("geo_resource_source_type")
                 .HasDefaultValueSql("'static'::geo_resource_source_type");
-            sourceType.Metadata.SetValueConverter((ValueConverter?)null);
-            sourceType.Metadata.SetProviderClrType(null);
+        });
+
+        modelBuilder.Entity<ApplicationEntity>(builder =>
+        {
+            builder.Property(x => x.Assets)
+                .HasColumnType("jsonb");
+
+            builder.Property(x => x.SubscriptionFormat)
+                .HasColumnType("subscription_format");
+
+            builder.HasOne(x => x.Admin)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ConnectionEntity>(builder =>
+        {
+            builder.Property(x => x.Flow)
+                .HasColumnType("xtls_flow");
+
+            builder.Property(x => x.Method)
+                .HasColumnType("encryption_method");
+
+            builder.HasOne(x => x.User)
+                .WithMany(x => x.Connections)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.Application)
+                .WithMany(x => x.Connections)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<WarehouseEntity>(builder =>
+        {
+            builder.Property(x => x.Enabled)
+                .HasDefaultValue(true);
+
+            builder.HasOne(x => x.Admin)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.Inbounds)
+                .WithMany()
+                .UsingEntity("WarehouseInbounds");
+        });
+
+        modelBuilder.Entity<UserEntity>(builder =>
+        {
+            builder.Property(x => x.Status)
+                .HasColumnType("user_status");
+
+            builder.Property(x => x.LimitResetStrategy)
+                .HasColumnType("limit_reset_strategy");
+
+            builder.Property(x => x.DataLimit)
+                .HasColumnType("numeric(20,0)")
+                .HasConversion(
+                    value => (decimal)value,
+                    value => (ulong)value);
+
+            builder.Property(x => x.ConnectionLimit)
+                .HasDefaultValue(1U);
+
+            builder.HasOne(x => x.Admin)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.Warehouse)
+                .WithMany(x => x.Users)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<AdminAccount>(builder =>
+        {
+            builder.Property(x => x.Permissions)
+                .HasColumnType("text")
+                .HasConversion<string>();
         });
 
         modelBuilder.Entity<AppSettingsEntity>(builder =>
@@ -169,10 +240,4 @@ public sealed class AppDbContext : DbContext
         });
     }
 
-    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
-        configurationBuilder
-            .Properties<Enum>()
-            .HaveConversion<string>();
-    }
 }

@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Contracts.Enums;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Implementations;
-using Xray.Config.Enums;
 
 namespace Data;
 
@@ -19,29 +17,7 @@ public static class DependencyInjection
             throw new InvalidOperationException("PostgreSQL connection string is not configured.");
         }
 
-        services.AddDbContext<AppDbContext>(options =>
-        {
-            options.UseNpgsql(connectionString, npgsqlOptions =>
-            {
-                npgsqlOptions.ConfigureDataSource(dataSourceBuilder =>
-                {
-                    dataSourceBuilder.MapEnum<UserStatus>();
-                    dataSourceBuilder.MapEnum<LimitResetStrategy>();
-                    dataSourceBuilder.MapEnum<AdminPermission>();
-                    dataSourceBuilder.MapEnum<SSHAuthType>();
-                    dataSourceBuilder.MapEnum<CertificateMode>();
-                    dataSourceBuilder.MapEnum<GeoResourceSourceType>();
-                    dataSourceBuilder.MapEnum<XtlsFlow>();
-                    dataSourceBuilder.MapEnum<EncryptionMethod>();
-                    dataSourceBuilder.MapEnum<SubscriptionFormat>();
-
-                    dataSourceBuilder
-                        .EnableDynamicJson()
-                        .ConfigureJsonOptions(XrayJsonSerializer.Options);
-
-                });
-            });
-        });
+        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
         services.AddScoped<IAdminAccountRepository, AdminAccountRepository>();
         services.AddScoped<IUserRepository, UserRepository>();

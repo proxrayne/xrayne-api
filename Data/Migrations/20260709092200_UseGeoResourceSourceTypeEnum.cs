@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 #nullable disable
 
 namespace Data.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
     [Migration("20260709092200_UseGeoResourceSourceTypeEnum")]
     public partial class UseGeoResourceSourceTypeEnum : Migration
     {

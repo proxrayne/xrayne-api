@@ -7,7 +7,6 @@ namespace Data.Implementations;
 public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundRepository
 {
     private IQueryable<OutboundEntity> _outboundsWithRelations => dbContext.Outbounds
-        .Include(outbound => outbound.Users)
         .Include(outbound => outbound.Admin)
         .Include(outbound => outbound.Node);
 

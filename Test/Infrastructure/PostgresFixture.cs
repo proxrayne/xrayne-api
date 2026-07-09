@@ -24,7 +24,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async Task ResetAsync()
     {
         await using var context = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(ConnectionString)
+            .UseXRayneNpgsql(ConnectionString)
             .Options
             .CreateContext();
 
