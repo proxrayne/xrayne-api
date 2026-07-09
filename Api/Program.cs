@@ -156,6 +156,8 @@ try
                     return Task.CompletedTask;
                 }
             };
+
+            options.Events.OnTokenValidated = AdminJwtValidation.ValidateActiveAdminAsync;
         });
 
     builder.Services.AddAuthorization(options =>

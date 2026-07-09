@@ -7,7 +7,7 @@ namespace Data.Entities;
 
 [Table("Admins")]
 [Index(nameof(Username), IsUnique = true)]
-public sealed class AdminAccount : CreatedEntity
+public sealed class AdminAccount : CreateUpdateEntity
 {
     /// <summary>
     /// Gets or sets the administrator account identifier.
@@ -39,6 +39,11 @@ public sealed class AdminAccount : CreatedEntity
     /// Gets or sets the administrator permissions.
     /// </summary>
     public AdminPermission Permissions { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the administrator account has been soft deleted.
+    /// </summary>
+    public bool IsDeleted { get; set; }
 
     /// <summary>
     /// Gets or sets the last successful login timestamp.

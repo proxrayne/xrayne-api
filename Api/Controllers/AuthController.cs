@@ -59,7 +59,7 @@ public sealed class AuthController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var account = await adminAccounts.GetByUsernameAsync(request.Username, ct);
+        var account = await adminAccounts.GetActiveByUsernameAsync(request.Username, ct);
         if (account is null || !IdentityPasswordHasher.VerifyPassword(request.Password, account.PasswordHash))
         {
             throw new BadRequestException("Invalid username or password.");

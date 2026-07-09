@@ -13,10 +13,22 @@ public sealed class AdminAccountRepository(AppDbContext dbContext) : IAdminAccou
             .SingleOrDefaultAsync(account => account.Id == id, ct);
     }
 
+    public Task<AdminAccount?> GetActiveByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return dbContext.AdminAccounts
+            .SingleOrDefaultAsync(account => account.Id == id && !account.IsDeleted, ct);
+    }
+
     public Task<AdminAccount?> GetByUsernameAsync(string username, CancellationToken ct = default)
     {
         return dbContext.AdminAccounts
             .SingleOrDefaultAsync(account => account.Username == username, ct);
+    }
+
+    public Task<AdminAccount?> GetActiveByUsernameAsync(string username, CancellationToken ct = default)
+    {
+        return dbContext.AdminAccounts
+            .SingleOrDefaultAsync(account => account.Username == username && !account.IsDeleted, ct);
     }
 
     public Task<bool> ExistsAsync(string username, CancellationToken ct = default)
@@ -39,7 +51,7 @@ public sealed class AdminAccountRepository(AppDbContext dbContext) : IAdminAccou
         DateTimeOffset lastLoginAt,
         CancellationToken ct = default)
     {
-        var account = await GetByIdAsync(id, ct);
+        var account = await GetActiveByIdAsync(id, ct);
         if (account is null)
         {
             return null;
@@ -57,7 +69,7 @@ public sealed class AdminAccountRepository(AppDbContext dbContext) : IAdminAccou
         string passwordHash,
         CancellationToken ct = default)
     {
-        var account = await GetByIdAsync(id, ct);
+        var account = await GetActiveByIdAsync(id, ct);
         if (account is null)
         {
             return null;
@@ -74,7 +86,7 @@ public sealed class AdminAccountRepository(AppDbContext dbContext) : IAdminAccou
         AdminPermission permissions,
         CancellationToken ct = default)
     {
-        var account = await GetByIdAsync(id, ct);
+        var account = await GetActiveByIdAsync(id, ct);
         if (account is null)
         {
             return null;
@@ -88,13 +100,14 @@ public sealed class AdminAccountRepository(AppDbContext dbContext) : IAdminAccou
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        var account = await GetByIdAsync(id, ct);
+        var account = await GetActiveByIdAsync(id, ct);
         if (account is null)
         {
             return false;
         }
 
-        dbContext.AdminAccounts.Remove(account);
+        account.IsDeleted = true;
+        account.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(ct);
 
         return true;

@@ -97,6 +97,11 @@ public sealed class AdminsController(
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
+        if (id == AdminId)
+        {
+            throw new BadRequestException("Cannot delete the current administrator account.");
+        }
+
         var deleted = await adminAccounts.DeleteAsync(id, cancellationToken);
         if (!deleted)
         {

@@ -174,6 +174,9 @@ public sealed class AppDbContext : DbContext
             builder.Property(x => x.Permissions)
                 .HasColumnType("text")
                 .HasConversion<string>();
+
+            builder.Property(x => x.IsDeleted)
+                .HasDefaultValue(false);
         });
 
         modelBuilder.Entity<AppSettingsEntity>(builder =>
