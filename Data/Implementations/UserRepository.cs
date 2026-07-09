@@ -9,17 +9,17 @@ namespace Data.Implementations;
 
 public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
 {
-    private IQueryable<User> _usersWithRelations => dbContext.Users
+    private IQueryable<UserEntity> _usersWithRelations => dbContext.Users
         .Include(user => user.Inbounds);
 
-    public Task<List<User>> GetAllAsync(CancellationToken ct = default)
+    public Task<List<UserEntity>> GetAllAsync(CancellationToken ct = default)
     {
         return _usersWithRelations
             .OrderBy(user => user.Username)
             .ToListAsync(ct);
     }
 
-    public Task<List<User>> GetAllAsync(Guid adminId, CancellationToken ct = default)
+    public Task<List<UserEntity>> GetAllAsync(Guid adminId, CancellationToken ct = default)
     {
         return _usersWithRelations
             .Where(user => EF.Property<Guid>(user, "AdminId") == adminId)
@@ -27,12 +27,12 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
             .ToListAsync(ct);
     }
 
-    public Task<CursorPage<User>> SearchAsync(UserFilter filter, CancellationToken ct = default)
+    public Task<CursorPage<UserEntity>> SearchAsync(UserFilter filter, CancellationToken ct = default)
     {
         return SearchCoreAsync(_usersWithRelations, filter, ct);
     }
 
-    public Task<CursorPage<User>> SearchAsync(Guid adminId, UserFilter filter, CancellationToken ct = default)
+    public Task<CursorPage<UserEntity>> SearchAsync(Guid adminId, UserFilter filter, CancellationToken ct = default)
     {
         var query = _usersWithRelations
             .Where(user => EF.Property<Guid>(user, "AdminId") == adminId);
@@ -40,13 +40,13 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return SearchCoreAsync(query, filter, ct);
     }
 
-    public Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public Task<UserEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return _usersWithRelations
             .SingleOrDefaultAsync(user => user.Id == id, ct);
     }
 
-    public Task<User?> GetByIdAsync(Guid adminId, Guid id, CancellationToken ct = default)
+    public Task<UserEntity?> GetByIdAsync(Guid adminId, Guid id, CancellationToken ct = default)
     {
         return _usersWithRelations
             .SingleOrDefaultAsync(
@@ -54,13 +54,13 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
                 ct);
     }
 
-    public Task<User?> GetByUsernameAsync(string username, CancellationToken ct = default)
+    public Task<UserEntity?> GetByUsernameAsync(string username, CancellationToken ct = default)
     {
         return _usersWithRelations
             .SingleOrDefaultAsync(user => user.Username == username, ct);
     }
 
-    public Task<User?> GetByUsernameAsync(Guid adminId, string username, CancellationToken ct = default)
+    public Task<UserEntity?> GetByUsernameAsync(Guid adminId, string username, CancellationToken ct = default)
     {
         return _usersWithRelations
             .SingleOrDefaultAsync(
@@ -81,7 +81,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
                 ct);
     }
 
-    public async Task<User> AddAsync(User user, CancellationToken ct = default)
+    public async Task<UserEntity> AddAsync(UserEntity user, CancellationToken ct = default)
     {
         await dbContext.Users.AddAsync(user, ct);
         await dbContext.SaveChangesAsync(ct);
@@ -90,7 +90,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return user;
     }
 
-    public async Task<User?> UpdateAsync(User user, CancellationToken ct = default)
+    public async Task<UserEntity?> UpdateAsync(UserEntity user, CancellationToken ct = default)
     {
         var exists = await dbContext.Users.AnyAsync(item => item.Id == user.Id, ct);
         if (!exists)
@@ -105,7 +105,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return user;
     }
 
-    public async Task<User?> UpdateAsync(Guid adminId, User user, CancellationToken ct = default)
+    public async Task<UserEntity?> UpdateAsync(Guid adminId, UserEntity user, CancellationToken ct = default)
     {
         var exists = await dbContext.Users.AnyAsync(
             item => item.Id == user.Id && EF.Property<Guid>(item, "AdminId") == adminId,
@@ -150,7 +150,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return true;
     }
 
-    private static async Task<CursorPage<User>> SearchCoreAsync(IQueryable<User> query, UserFilter filter, CancellationToken ct)
+    private static async Task<CursorPage<UserEntity>> SearchCoreAsync(IQueryable<UserEntity> query, UserFilter filter, CancellationToken ct)
     {
         query = ApplyFilter(query, filter);
         var totalCount = await query.CountAsync(ct);
@@ -169,10 +169,10 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
             ? CursorPagination.CreateCursor(items[^1].CreatedAt, items[^1].Id)
             : null;
 
-        return new CursorPage<User>(items, nextCursor, hasNextPage, totalCount);
+        return new CursorPage<UserEntity>(items, nextCursor, hasNextPage, totalCount);
     }
 
-    private static IQueryable<User> ApplyFilter(IQueryable<User> query, UserFilter filter)
+    private static IQueryable<UserEntity> ApplyFilter(IQueryable<UserEntity> query, UserFilter filter)
     {
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
@@ -201,7 +201,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         return query;
     }
 
-    private static IQueryable<User> ApplyCursor(IQueryable<User> query, UserFilter filter)
+    private static IQueryable<UserEntity> ApplyCursor(IQueryable<UserEntity> query, UserFilter filter)
     {
         var cursor = CursorPagination.TryReadCursor(filter.Cursor);
         if (cursor is null || !Guid.TryParse(cursor.Id, out var id))
@@ -216,7 +216,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
                 || (user.CreatedAt == cursor.CreatedAt && user.Id.CompareTo(id) > 0));
     }
 
-    private static IQueryable<User> ApplyOrder(IQueryable<User> query, SortOrder order)
+    private static IQueryable<UserEntity> ApplyOrder(IQueryable<UserEntity> query, SortOrder order)
     {
         return order is SortOrder.Desc
             ? query.OrderByDescending(user => user.CreatedAt).ThenByDescending(user => user.Id)

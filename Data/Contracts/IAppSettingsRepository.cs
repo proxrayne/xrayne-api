@@ -22,16 +22,16 @@ public interface IAppSettingsRepository
     /// <summary>
     /// Adds a webhook settings row.
     /// </summary>
-    Task<AppWebhookSettingsEntity> AddWebhookAsync(
-        AppWebhookSettingsEntity webhook,
+    Task<AppWebhookEntity> AddWebhookAsync(
+        AppWebhookEntity webhook,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates a webhook settings row without changing its secret.
     /// </summary>
-    Task<AppWebhookSettingsEntity?> UpdateWebhookAsync(
+    Task<AppWebhookEntity?> UpdateWebhookAsync(
         Guid id,
-        AppWebhookSettingsEntity webhook,
+        AppWebhookEntity webhook,
         CancellationToken cancellationToken = default);
 
     /// <summary>

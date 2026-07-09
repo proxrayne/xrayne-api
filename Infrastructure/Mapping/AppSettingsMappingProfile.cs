@@ -17,7 +17,7 @@ public sealed class AppSettingsMappingProfile : Profile
     public AppSettingsMappingProfile()
     {
         CreateMap<AppSettingsEntity, AppSettings>();
-        CreateMap<AppWebhookSettingsEntity, AppWebhook>()
+        CreateMap<AppWebhookEntity, AppWebhook>()
             .ForMember(
                 destination => destination.Events,
                 options => options.MapFrom(source => (WebhookEvent)source.Events));
@@ -26,7 +26,7 @@ public sealed class AppSettingsMappingProfile : Profile
             .ForMember(destination => destination.Id, options => options.Ignore())
             .ForMember(destination => destination.CreatedAt, options => options.Ignore())
             .ForMember(destination => destination.UpdatedAt, options => options.Ignore());
-        CreateMap<AppWebhook, AppWebhookSettingsEntity>()
+        CreateMap<AppWebhook, AppWebhookEntity>()
             .ForMember(destination => destination.AppSettingsId, options => options.Ignore())
             .ForMember(destination => destination.AppSettings, options => options.Ignore())
             .ForMember(destination => destination.CreatedAt, options => options.Ignore())

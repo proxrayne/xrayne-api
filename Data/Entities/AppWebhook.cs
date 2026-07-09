@@ -7,7 +7,7 @@ namespace Data.Entities;
 /// Stores one application settings webhook.
 /// </summary>
 [Table("AppWebhooks")]
-public sealed class AppWebhookSettingsEntity : CreateUpdateEntity
+public sealed class AppWebhookEntity : CreateUpdateEntity
 {
     /// <summary>
     /// Gets or sets the webhook identifier.

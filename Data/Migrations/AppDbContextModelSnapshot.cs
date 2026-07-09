@@ -27,6 +27,7 @@ namespace Data.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "admin_permission", new[] { "none", "create_users", "edit_users", "delete_users", "reset_traffic", "change_xray_settings", "view_logs", "manage_admins", "super_admin" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "certificate_mode", new[] { "domain", "ip" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "geo_resource_source_type", new[] { "static", "auto_update" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "limit_reset_strategy", new[] { "day", "week", "month", "year" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "ssh_auth_type", new[] { "password", "private_key" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_status", new[] { "active", "expired", "limited", "on_hold", "disabled" });
@@ -267,12 +268,10 @@ namespace Data.Migrations
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("SourceType")
-                        .IsRequired()
+                    b.Property<int>("SourceType")
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasDefaultValue("static");
+                        .HasColumnType("geo_resource_source_type")
+                        .HasDefaultValueSql("'static'::geo_resource_source_type");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

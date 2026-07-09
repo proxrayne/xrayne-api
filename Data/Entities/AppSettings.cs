@@ -53,5 +53,5 @@ public sealed class AppSettingsEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets configured webhooks.
     /// </summary>
-    public List<AppWebhookSettingsEntity> Webhooks { get; set; } = [];
+    public List<AppWebhookEntity> Webhooks { get; set; } = [];
 }

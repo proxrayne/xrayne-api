@@ -1,3 +1,5 @@
+using Contracts.Enums;
+
 namespace Api.Responses;
 
 /// <summary>
@@ -8,7 +10,7 @@ public sealed record NodeGeoResourceDto(
     string FileName,
     long SizeBytes,
     DateTimeOffset LastModifiedAt,
-    string SourceType,
+    GeoResourceSourceType SourceType,
     string? Url,
     string? CronTemplate,
     DateTimeOffset? NextRunAt,

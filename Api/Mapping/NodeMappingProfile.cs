@@ -59,5 +59,12 @@ public sealed class NodeMappingProfile : Profile
                 options => options.MapFrom(rule => XrayJsonSerializer.Serialize(rule.Config)));
 
         CreateMap<RoutingRuleEntity, NodeRoutingRuleListItemDto>();
+
+        CreateMap<CertificateEntity, NodeCertificateDto>();
+
+        CreateMap<GeoResourceEntity, NodeGeoResourceDto>()
+            .ForCtorParam(
+                nameof(NodeGeoResourceDto.FileName),
+                options => options.MapFrom(resource => resource.Filename));
     }
 }

@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Contracts.Enums;
-using Contracts.Values;
 using Data.Entities;
+using Xray.Config.Enums;
 
 namespace Data;
 
@@ -12,13 +13,13 @@ public sealed class AppDbContext : DbContext
     public DbSet<AdminAccount> AdminAccounts { get; set; }
     public DbSet<InboundEntity> Inbounds { get; set; }
     public DbSet<OutboundEntity> Outbounds { get; set; }
-    public DbSet<User> Users { get; set; }
+    public DbSet<UserEntity> Users { get; set; }
     public DbSet<NodeEntity> Nodes { get; set; }
     public DbSet<CertificateEntity> Certificates { get; set; }
     public DbSet<GeoResourceEntity> GeoResources { get; set; }
     public DbSet<RoutingRuleEntity> RoutingRules { get; set; }
     public DbSet<AppSettingsEntity> AppSettings { get; set; }
-    public DbSet<AppWebhookSettingsEntity> AppWebhookSettings { get; set; }
+    public DbSet<AppWebhookEntity> AppWebhookSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +30,10 @@ public sealed class AppDbContext : DbContext
         modelBuilder.HasPostgresEnum<AdminPermission>();
         modelBuilder.HasPostgresEnum<SSHAuthType>();
         modelBuilder.HasPostgresEnum<CertificateMode>();
+        modelBuilder.HasPostgresEnum<GeoResourceSourceType>();
+        modelBuilder.HasPostgresEnum<XtlsFlow>();
+        modelBuilder.HasPostgresEnum<EncryptionMethod>();
+        modelBuilder.HasPostgresEnum<SubscriptionFormat>();
 
         foreach (var entity in modelBuilder.Model.GetEntityTypes())
         {
@@ -93,9 +98,11 @@ public sealed class AppDbContext : DbContext
             builder.HasIndex("NodeId", nameof(GeoResourceEntity.Filename))
                 .IsUnique();
 
-            builder.Property(x => x.SourceType)
-                .HasMaxLength(32)
-                .HasDefaultValue(GeoResourceSourceTypes.Static);
+            var sourceType = builder.Property(x => x.SourceType)
+                .HasColumnType("geo_resource_source_type")
+                .HasDefaultValueSql("'static'::geo_resource_source_type");
+            sourceType.Metadata.SetValueConverter((ValueConverter?)null);
+            sourceType.Metadata.SetProviderClrType(null);
         });
 
         modelBuilder.Entity<AppSettingsEntity>(builder =>
@@ -129,7 +136,7 @@ public sealed class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<AppWebhookSettingsEntity>(builder =>
+        modelBuilder.Entity<AppWebhookEntity>(builder =>
         {
             builder.HasKey(x => x.Id);
 

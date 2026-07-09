@@ -1,6 +1,7 @@
 using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
+using AutoMapper;
 using Contracts.Values;
 using Data.Entities;
 using Infrastructure.Services;
@@ -19,7 +20,8 @@ namespace Api.Controllers;
 [Route("api/nodes/{nodeId:long}/certificates")]
 public sealed class NodeCertificatesController(
     INodeService nodes,
-    INodeCertificateService certificates) : ApiControllerBase
+    INodeCertificateService certificates,
+    IMapper mapper) : ApiControllerBase
 {
     /// <summary>
     /// Lists certificates available on a remote node.
@@ -38,7 +40,7 @@ public sealed class NodeCertificatesController(
         {
             var result = await certificates.GetAllAsync(AdminId, node, cancellationToken);
 
-            return result.Select(ToDto).ToList();
+            return mapper.Map<List<NodeCertificateDto>>(result);
         }
         catch (RemoteNodeException exception)
         {
@@ -75,7 +77,7 @@ public sealed class NodeCertificatesController(
                 new IssueCertificateRequest(request.Domain),
                 cancellationToken);
 
-            return ToDto(result);
+            return mapper.Map<NodeCertificateDto>(result);
         }
         catch (RemoteNodeException exception)
         {
@@ -118,7 +120,7 @@ public sealed class NodeCertificatesController(
                 new UploadCertificateRequest(request.Domain, request.CertificateFile, request.PrivateKeyFile),
                 cancellationToken);
 
-            return ToDto(result);
+            return mapper.Map<NodeCertificateDto>(result);
         }
         catch (RemoteNodeException exception)
         {
@@ -150,7 +152,7 @@ public sealed class NodeCertificatesController(
         {
             var result = await certificates.RenewAsync(AdminId, node, domain, cancellationToken);
 
-            return ToDto(result);
+            return mapper.Map<NodeCertificateDto>(result);
         }
         catch (RemoteNodeException exception)
         {
@@ -200,18 +202,4 @@ public sealed class NodeCertificatesController(
 
         return node ?? throw new NotFoundException($"Node '{nodeId}' was not found.");
     }
-
-    private static NodeCertificateDto ToDto(CertificateEntity certificate)
-    {
-        return new NodeCertificateDto(
-            certificate.Id,
-            certificate.Domain,
-            certificate.Active,
-            certificate.ExpireAt,
-            certificate.CertificateFile,
-            certificate.PrivateKeyFile,
-            certificate.CreatedAt,
-            certificate.UpdatedAt);
-    }
-
 }

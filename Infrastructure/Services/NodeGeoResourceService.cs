@@ -1,6 +1,6 @@
 using System.Net;
+using Contracts.Enums;
 using Contracts.Utilities;
-using Contracts.Values;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
@@ -48,7 +48,7 @@ public sealed class NodeGeoResourceService(
                 adminId,
                 node,
                 remoteResource,
-                GeoResourceSourceTypes.Static,
+                GeoResourceSourceType.Static,
                 null,
                 null,
                 null,
@@ -84,7 +84,7 @@ public sealed class NodeGeoResourceService(
             adminId,
             node,
             remote,
-            GeoResourceSourceTypes.Static,
+            GeoResourceSourceType.Static,
             null,
             null,
             null,
@@ -115,7 +115,7 @@ public sealed class NodeGeoResourceService(
             adminId,
             node,
             remote,
-            GeoResourceSourceTypes.AutoUpdate,
+            GeoResourceSourceType.AutoUpdate,
             normalizedUrl,
             normalizedCron,
             GetNextRun(normalizedCron, DateTimeOffset.UtcNow),
@@ -140,7 +140,7 @@ public sealed class NodeGeoResourceService(
         var nextFileName = NormalizeFileName(fileName);
         await EnsureUniqueAsync(adminId, node.Id, nextFileName, resource.Id, cancellationToken);
 
-        var isAutoUpdate = resource.SourceType == GeoResourceSourceTypes.AutoUpdate;
+        var isAutoUpdate = resource.SourceType == GeoResourceSourceType.AutoUpdate;
         var nextUrl = isAutoUpdate ? NormalizeUrl(url) : null;
         var nextCron = isAutoUpdate ? NormalizeCron(cronTemplate) : null;
         var fileNameChanged = !string.Equals(resource.Filename, nextFileName, StringComparison.Ordinal);
@@ -257,7 +257,7 @@ public sealed class NodeGeoResourceService(
         Guid adminId,
         NodeEntity node,
         GeoResourceDto remoteResource,
-        string sourceType,
+        GeoResourceSourceType sourceType,
         string? url,
         string? cronTemplate,
         DateTimeOffset? nextRunAt,

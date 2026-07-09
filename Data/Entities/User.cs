@@ -1,17 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
-using Xray.Config.Enums;
 using Contracts.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data.Entities;
 
 [Table("Users")]
 [Index(nameof(Username), IsUnique = true)]
-public sealed class User : CreateUpdateEntity
+public sealed class UserEntity : CreateUpdateEntity
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public long Id { get; set; }
 
     [MaxLength(128)]
     public required string Username { get; set; }
@@ -21,14 +20,13 @@ public sealed class User : CreateUpdateEntity
 
     public ulong DataLimit { get; set; }
 
+    public uint DeviceLimit { get; set; } = 1;
+
     public DateTimeOffset? OnHoldExpire { get; set; }
 
     public required UserStatus Status { get; set; }
 
     public LimitResetStrategy? LimitResetStrategy { get; set; }
-
-    [Column(TypeName = "jsonb")]
-    public Dictionary<Protocol, ClientOption> Options { get; set; } = new();
 
     public DateTimeOffset? LastTrafficReset { get; set; }
 
@@ -37,7 +35,9 @@ public sealed class User : CreateUpdateEntity
     public DateTimeOffset? ExpireAt { get; set; }
 
     // relation tables
-    public List<InboundEntity> Inbounds { get; set; } = new();
+    public List<ConnectionEntity> Connections { get; set; } = new();
+
+    public WarehouseEntity Warehouse { get; set; } = null!;
 
     public AdminAccount Admin { get; set; } = null!;
 }

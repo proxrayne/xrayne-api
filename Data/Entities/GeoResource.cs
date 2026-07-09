@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Contracts.Values;
+using Contracts.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Data.Entities;
@@ -37,8 +37,7 @@ public class GeoResourceEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the source type, such as static or autoUpdate.
     /// </summary>
-    [MaxLength(32)]
-    public string SourceType { get; set; } = GeoResourceSourceTypes.Static;
+    public GeoResourceSourceType SourceType { get; set; } = GeoResourceSourceType.Static;
 
     /// <summary>
     /// Gets or sets the URL used by auto-updated geo resources.

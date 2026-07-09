@@ -47,8 +47,8 @@ public sealed class AppSettingsRepository(AppDbContext dbContext) : IAppSettings
         return current;
     }
 
-    public async Task<AppWebhookSettingsEntity> AddWebhookAsync(
-        AppWebhookSettingsEntity webhook,
+    public async Task<AppWebhookEntity> AddWebhookAsync(
+        AppWebhookEntity webhook,
         CancellationToken ct = default)
     {
         await GetAsync(ct);
@@ -62,9 +62,9 @@ public sealed class AppSettingsRepository(AppDbContext dbContext) : IAppSettings
         return webhook;
     }
 
-    public async Task<AppWebhookSettingsEntity?> UpdateWebhookAsync(
+    public async Task<AppWebhookEntity?> UpdateWebhookAsync(
         Guid id,
-        AppWebhookSettingsEntity webhook,
+        AppWebhookEntity webhook,
         CancellationToken ct = default)
     {
         var current = await dbContext.AppWebhookSettings

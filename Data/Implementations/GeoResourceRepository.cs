@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Contracts.Values;
+using Contracts.Enums;
 using Data.Contracts;
 using Data.Entities;
 
@@ -40,7 +40,7 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
     {
         return GeoResourcesWithRelations
             .Where(geoResource =>
-                geoResource.SourceType == GeoResourceSourceTypes.AutoUpdate &&
+                geoResource.SourceType == GeoResourceSourceType.AutoUpdate &&
                 geoResource.NextRunAt != null &&
                 geoResource.NextRunAt <= now)
             .OrderBy(geoResource => geoResource.NextRunAt)

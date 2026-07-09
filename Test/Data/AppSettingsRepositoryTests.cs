@@ -44,22 +44,22 @@ public sealed class AppSettingsRepositoryTests
     public void Model_ConfiguresWebhookPersistence()
     {
         using var context = CreateNpgsqlModelContext();
-        var entity = context.Model.FindEntityType(typeof(AppWebhookSettingsEntity));
+        var entity = context.Model.FindEntityType(typeof(AppWebhookEntity));
 
         entity.Should().NotBeNull();
-        entity!.FindProperty(nameof(AppWebhookSettingsEntity.Events))!
+        entity!.FindProperty(nameof(AppWebhookEntity.Events))!
             .GetColumnType()
             .Should()
             .Be("numeric(20,0)");
-        entity.FindProperty(nameof(AppWebhookSettingsEntity.SubscriptionExpirationThresholdHours))!
+        entity.FindProperty(nameof(AppWebhookEntity.SubscriptionExpirationThresholdHours))!
             .GetColumnType()
             .Should()
             .Be("jsonb");
-        entity.FindProperty(nameof(AppWebhookSettingsEntity.TrafficThresholdPercents))!
+        entity.FindProperty(nameof(AppWebhookEntity.TrafficThresholdPercents))!
             .GetColumnType()
             .Should()
             .Be("jsonb");
-        entity.FindNavigation(nameof(AppWebhookSettingsEntity.AppSettings))!
+        entity.FindNavigation(nameof(AppWebhookEntity.AppSettings))!
             .ForeignKey
             .DeleteBehavior
             .Should()

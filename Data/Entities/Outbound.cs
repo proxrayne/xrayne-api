@@ -19,7 +19,7 @@ public sealed class OutboundEntity : CreateUpdateEntity
     public required Outbound Config { get; set; }
 
     // relation tables
-    public List<User> Users { get; set; } = new();
+    public List<UserEntity> Users { get; set; } = new();
 
     public AdminAccount Admin { get; set; } = null!;
 

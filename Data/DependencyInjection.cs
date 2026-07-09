@@ -4,6 +4,7 @@ using Contracts.Enums;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Implementations;
+using Xray.Config.Enums;
 
 namespace Data;
 
@@ -29,6 +30,10 @@ public static class DependencyInjection
                     dataSourceBuilder.MapEnum<AdminPermission>();
                     dataSourceBuilder.MapEnum<SSHAuthType>();
                     dataSourceBuilder.MapEnum<CertificateMode>();
+                    dataSourceBuilder.MapEnum<GeoResourceSourceType>();
+                    dataSourceBuilder.MapEnum<XtlsFlow>();
+                    dataSourceBuilder.MapEnum<EncryptionMethod>();
+                    dataSourceBuilder.MapEnum<SubscriptionFormat>();
 
                     dataSourceBuilder
                         .EnableDynamicJson()

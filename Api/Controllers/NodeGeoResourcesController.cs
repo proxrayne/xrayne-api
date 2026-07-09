@@ -1,6 +1,7 @@
+using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
-using Api.Exceptions;
+using AutoMapper;
 using Contracts.Values;
 using Data.Entities;
 using Infrastructure.Dto;
@@ -19,7 +20,8 @@ namespace Api.Controllers;
 [Route("api/nodes/{nodeId:long}/geo-resources")]
 public sealed class NodeGeoResourcesController(
     INodeService nodes,
-    INodeGeoResourceService geoResources) : ApiControllerBase
+    INodeGeoResourceService geoResources,
+    IMapper mapper) : ApiControllerBase
 {
     /// <summary>
     /// Lists geo resources assigned to a remote node.
@@ -38,7 +40,7 @@ public sealed class NodeGeoResourcesController(
         {
             var result = await geoResources.SynchronizeNodeAsync(AdminId, node, cancellationToken);
 
-            return result.Select(ToDto).ToList();
+            return mapper.Map<List<NodeGeoResourceDto>>(result);
         }
         catch (RemoteNodeException exception)
         {
@@ -129,7 +131,7 @@ public sealed class NodeGeoResourcesController(
                 stream,
                 cancellationToken);
 
-            return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", ToDto(created));
+            return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", mapper.Map<NodeGeoResourceDto>(created));
         }
         catch (NodeGeoResourceException exception)
         {
@@ -168,7 +170,7 @@ public sealed class NodeGeoResourcesController(
                 request.CronTemplate,
                 cancellationToken);
 
-            return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", ToDto(created));
+            return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", mapper.Map<NodeGeoResourceDto>(created));
         }
         catch (NodeGeoResourceException exception)
         {
@@ -213,7 +215,7 @@ public sealed class NodeGeoResourcesController(
                 request.CronTemplate,
                 cancellationToken);
 
-            return ToDto(updated);
+            return mapper.Map<NodeGeoResourceDto>(updated);
         }
         catch (NodeGeoResourceException exception)
         {
@@ -268,20 +270,4 @@ public sealed class NodeGeoResourcesController(
         return node ?? throw new NotFoundException($"Node '{nodeId}' was not found.");
     }
 
-    private static NodeGeoResourceDto ToDto(GeoResourceEntity resource)
-    {
-        return new NodeGeoResourceDto(
-            resource.Id,
-            resource.Filename,
-            resource.SizeBytes,
-            resource.LastModifiedAt,
-            resource.SourceType,
-            resource.Url,
-            resource.CronTemplate,
-            resource.NextRunAt,
-            resource.LastErrorAt,
-            resource.LastError,
-            resource.CreatedAt,
-            resource.UpdatedAt);
-    }
 }

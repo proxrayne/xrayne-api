@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
+using Contracts.Enums;
 using Contracts.Utilities;
-using Contracts.Values;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Services;
@@ -44,7 +44,7 @@ public sealed class NodeGeoResourceServiceTests
 
         saved.Should().NotBeNull();
         saved!.Filename.Should().Be("geoip.dat");
-        saved.SourceType.Should().Be(GeoResourceSourceTypes.Static);
+        saved.SourceType.Should().Be(GeoResourceSourceType.Static);
         saved.Node.Should().Be(fixture.Node);
         saved.Admin.Should().Be(fixture.Node.Admin);
     }
@@ -60,7 +60,7 @@ public sealed class NodeGeoResourceServiceTests
             Filename = "geosite.dat",
             SizeBytes = 10,
             LastModifiedAt = DateTimeOffset.UtcNow.AddHours(-1),
-            SourceType = GeoResourceSourceTypes.AutoUpdate,
+            SourceType = GeoResourceSourceType.AutoUpdate,
             Url = "https://example.com/geosite.dat",
             CronTemplate = "*/10 * * * *",
             NextRunAt = nextRunAt,
@@ -100,7 +100,7 @@ public sealed class NodeGeoResourceServiceTests
             Filename = "geosite.dat",
             SizeBytes = 10,
             LastModifiedAt = DateTimeOffset.UtcNow.AddHours(-1),
-            SourceType = GeoResourceSourceTypes.AutoUpdate,
+            SourceType = GeoResourceSourceType.AutoUpdate,
             Url = "https://example.com/geosite.dat",
             CronTemplate = "*/10 * * * *",
             NextRunAt = nextRunAt,

@@ -73,7 +73,7 @@ public sealed class AppSettingsService(
         webhook.Id = webhook.Id == Guid.Empty ? Guid.NewGuid() : webhook.Id;
 
         var entity = await repository.AddWebhookAsync(
-            mapper.Map<AppWebhookSettingsEntity>(Normalize(webhook)),
+            mapper.Map<AppWebhookEntity>(Normalize(webhook)),
             ct);
         await RefreshCacheAsync(ct);
 
@@ -91,7 +91,7 @@ public sealed class AppSettingsService(
         webhook.Secret = null;
         var entity = await repository.UpdateWebhookAsync(
             id,
-            mapper.Map<AppWebhookSettingsEntity>(Normalize(webhook)),
+            mapper.Map<AppWebhookEntity>(Normalize(webhook)),
             ct);
         if (entity is null)
         {

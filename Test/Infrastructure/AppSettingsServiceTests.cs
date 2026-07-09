@@ -47,7 +47,7 @@ public sealed class AppSettingsServiceTests
                 },
                 Webhooks =
                 [
-                    new AppWebhookSettingsEntity
+                    new AppWebhookEntity
                     {
                         Url = "https://example.com/webhook",
                         TrafficThresholdPercents = [50],
@@ -154,7 +154,7 @@ public sealed class AppSettingsServiceTests
             {
                 Webhooks =
                 [
-                    new AppWebhookSettingsEntity
+                    new AppWebhookEntity
                     {
                         Id = webhookId,
                         Url = "https://example.com/webhook",
@@ -189,7 +189,7 @@ public sealed class AppSettingsServiceTests
                 {
                     Webhooks =
                     [
-                        new AppWebhookSettingsEntity
+                        new AppWebhookEntity
                         {
                             Id = webhookId,
                             Url = "https://example.com/webhook",
@@ -201,8 +201,8 @@ public sealed class AppSettingsServiceTests
                         },
                     ],
                 });
-        repository.AddWebhookAsync(Arg.Any<AppWebhookSettingsEntity>(), Arg.Any<CancellationToken>())
-            .Returns(call => call.Arg<AppWebhookSettingsEntity>());
+        repository.AddWebhookAsync(Arg.Any<AppWebhookEntity>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<AppWebhookEntity>());
         using var cache = new MemoryCache(new MemoryCacheOptions());
         var service = new AppSettingsService(repository, cache, _mapper);
 
@@ -225,7 +225,7 @@ public sealed class AppSettingsServiceTests
         created.TrafficThresholdPercents.Should().Equal(90);
         cached.Webhooks.Should().ContainSingle(item => item.Id == created.Id);
         await repository.Received(1).AddWebhookAsync(
-            Arg.Is<AppWebhookSettingsEntity>(entity =>
+            Arg.Is<AppWebhookEntity>(entity =>
                 entity.Url == "https://example.com/webhook"
                 && entity.Events == (ulong)WebhookEvent.UserCreated
                 && entity.RetryAttempts == 0
@@ -246,7 +246,7 @@ public sealed class AppSettingsServiceTests
                 {
                     Webhooks =
                     [
-                        new AppWebhookSettingsEntity
+                        new AppWebhookEntity
                         {
                             Id = webhookId,
                             Url = "https://example.com/updated",
@@ -257,11 +257,11 @@ public sealed class AppSettingsServiceTests
                 });
         repository.UpdateWebhookAsync(
                 webhookId,
-                Arg.Any<AppWebhookSettingsEntity>(),
+                Arg.Any<AppWebhookEntity>(),
                 Arg.Any<CancellationToken>())
             .Returns(call =>
             {
-                var entity = call.Arg<AppWebhookSettingsEntity>();
+                var entity = call.Arg<AppWebhookEntity>();
                 entity.Id = webhookId;
                 entity.Secret = "stored";
 
@@ -271,7 +271,7 @@ public sealed class AppSettingsServiceTests
         ulong? persistedEvents = null;
         repository.UpdateWebhookAsync(
                 webhookId,
-                Arg.Do<AppWebhookSettingsEntity>(entity =>
+                Arg.Do<AppWebhookEntity>(entity =>
                 {
                     persistedSecret = entity.Secret;
                     persistedEvents = entity.Events;
@@ -279,7 +279,7 @@ public sealed class AppSettingsServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(call =>
             {
-                var entity = call.Arg<AppWebhookSettingsEntity>();
+                var entity = call.Arg<AppWebhookEntity>();
                 entity.Id = webhookId;
                 entity.Secret = "stored";
 
@@ -305,7 +305,7 @@ public sealed class AppSettingsServiceTests
         persistedEvents.Should().Be((ulong)WebhookEvent.UserDeleted);
         await repository.Received(1).UpdateWebhookAsync(
             webhookId,
-            Arg.Any<AppWebhookSettingsEntity>(),
+            Arg.Any<AppWebhookEntity>(),
             Arg.Any<CancellationToken>());
     }
 
@@ -315,9 +315,9 @@ public sealed class AppSettingsServiceTests
         var repository = Substitute.For<IAppSettingsRepository>();
         repository.UpdateWebhookAsync(
                 Arg.Any<Guid>(),
-                Arg.Any<AppWebhookSettingsEntity>(),
+                Arg.Any<AppWebhookEntity>(),
                 Arg.Any<CancellationToken>())
-            .Returns((AppWebhookSettingsEntity?)null);
+            .Returns((AppWebhookEntity?)null);
         using var cache = new MemoryCache(new MemoryCacheOptions());
         var service = new AppSettingsService(repository, cache, _mapper);
 
@@ -330,7 +330,7 @@ public sealed class AppSettingsServiceTests
         await repository.DidNotReceive().GetAsync(Arg.Any<CancellationToken>());
         await repository.Received(1).UpdateWebhookAsync(
             Arg.Any<Guid>(),
-            Arg.Any<AppWebhookSettingsEntity>(),
+            Arg.Any<AppWebhookEntity>(),
             Arg.Any<CancellationToken>());
     }
 

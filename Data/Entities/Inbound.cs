@@ -21,7 +21,7 @@ public sealed class InboundEntity : CreateUpdateEntity
     public required Inbound Config { get; set; }
 
     // relation tables
-    public List<User> Users { get; set; } = new();
+    public List<UserEntity> Users { get; set; } = new();
 
     public AdminAccount Admin { get; set; } = null!;
 
