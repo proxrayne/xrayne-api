@@ -44,7 +44,7 @@ public sealed class XRayneWebApplicationFactory : WebApplicationFactory<Program>
         services.RemoveAll<DbContextOptions<AppDbContext>>();
         services.RemoveAll<DbContextOptions>();
         services.RemoveAll<AppDbContext>();
-        services.AddDbContext<AppDbContext>(o => o.UseNpgsql(_connectionString));
+        services.AddDbContext<AppDbContext>(o => o.UseXRayneNpgsql(_connectionString));
     }
 
     protected override void Dispose(bool disposing)

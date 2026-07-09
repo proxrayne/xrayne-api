@@ -145,7 +145,11 @@ public sealed class AppSettingsRepositoryTests
         admin!.FindProperty(nameof(AdminAccount.Permissions))!
             .GetColumnType()
             .Should()
-            .Be("text");
+            .Be("bigint");
+        admin.FindProperty(nameof(AdminAccount.Permissions))!
+            .GetValueConverter()
+            .Should()
+            .BeNull();
         node!.FindProperty(nameof(NodeEntity.CertificateMode))!
             .GetColumnType()
             .Should()

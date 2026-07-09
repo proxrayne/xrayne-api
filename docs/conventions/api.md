@@ -7,6 +7,8 @@
   `api/core/start`, `api/settings/panel/restart`.
 - Keep route names stable; update this document and frontend API clients when
   routes change.
+- Use offset-paginated response fields `items`, `totalItems`, `currentPage`,
+  and `totalPages` for list endpoints that need page-number navigation.
 
 ## Controllers
 

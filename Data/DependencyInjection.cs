@@ -17,7 +17,7 @@ public static class DependencyInjection
             throw new InvalidOperationException("PostgreSQL connection string is not configured.");
         }
 
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+        services.AddDbContext<AppDbContext>(options => options.UseXRayneNpgsql(connectionString));
 
         services.AddScoped<IAdminAccountRepository, AdminAccountRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IGeoResourceRepository, GeoResourceRepository>();
         services.AddScoped<IRoutingRuleRepository, RoutingRuleRepository>();
         services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
+        services.AddScoped<IWarehouseRepository, WarehouseRepository>();
         services.AddSingleton<INodeConnectionStateStore, NodeConnectionStateStore>();
         services.AddSingleton<IRemoteNodeCoreStateStore, RemoteNodeCoreStateStore>();
 

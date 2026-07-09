@@ -11,5 +11,6 @@ public enum AdminPermission : long
     ChangeXraySettings = 1L << 5,
     ViewLogs = 1L << 6,
     ManageAdmins = 1L << 7,
-    SuperAdmin = 1L << 8
+    ManageWarehouses = 1L << 8,
+    SuperAdmin = 1L << 62
 }

@@ -11,6 +11,7 @@ public static class AdminPermissionNames
     public const string ChangeXraySettings = "change_xray_settings";
     public const string ViewLogs = "view_logs";
     public const string ManageAdmins = "manage_admins";
+    public const string ManageWarehouses = "manage_warehouses";
     public const string SuperAdmin = "super_admin";
 
     private static readonly IReadOnlyDictionary<string, AdminPermission> NameToPermission =
@@ -23,6 +24,7 @@ public static class AdminPermissionNames
             [ChangeXraySettings] = AdminPermission.ChangeXraySettings,
             [ViewLogs] = AdminPermission.ViewLogs,
             [ManageAdmins] = AdminPermission.ManageAdmins,
+            [ManageWarehouses] = AdminPermission.ManageWarehouses,
             [SuperAdmin] = AdminPermission.SuperAdmin
         };
 

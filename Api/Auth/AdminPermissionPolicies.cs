@@ -17,6 +17,7 @@ public static class AdminPermissionPolicies
         AddPermissionPolicy(options, AdminPermissionNames.ChangeXraySettings);
         AddPermissionPolicy(options, AdminPermissionNames.ViewLogs);
         AddPermissionPolicy(options, AdminPermissionNames.ManageAdmins);
+        AddPermissionPolicy(options, AdminPermissionNames.ManageWarehouses);
     }
 
     private static void AddPermissionPolicy(AuthorizationOptions options, string permission)

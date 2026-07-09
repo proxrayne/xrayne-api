@@ -14,7 +14,6 @@ public static class NpgsqlOptionsBuilderExtensions
 {
     private static readonly NpgsqlEnumMapping[] EnumMappings =
     [
-        CreateEnumMapping<AdminPermission>("admin_permission", configureRuntimeMapping: false),
         CreateEnumMapping<UserStatus>("user_status"),
         CreateEnumMapping<LimitResetStrategy>("limit_reset_strategy"),
         CreateEnumMapping<SSHAuthType>("ssh_auth_type"),

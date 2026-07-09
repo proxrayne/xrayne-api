@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Contracts.Enums;
 using Contracts.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Data;
@@ -38,6 +39,19 @@ public sealed class XrayConfigJsonMappingTests
             .GetValueConverter()
             .Should()
             .BeNull();
+    }
+
+    [Fact]
+    public void Model_MapsPostgresEnumsForRuntimeQueries()
+    {
+        using var context = CreateNpgsqlModelContext();
+
+        var sql = context.GeoResources
+            .Where(resource => resource.SourceType == GeoResourceSourceType.AutoUpdate)
+            .ToQueryString();
+
+        sql.Should().Contain("auto_update");
+        sql.Should().NotContain("= 1");
     }
 
     [Fact]

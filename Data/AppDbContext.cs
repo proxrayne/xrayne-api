@@ -172,8 +172,7 @@ public sealed class AppDbContext : DbContext
         modelBuilder.Entity<AdminAccount>(builder =>
         {
             builder.Property(x => x.Permissions)
-                .HasColumnType("text")
-                .HasConversion<string>();
+                .HasColumnType("bigint");
 
             builder.Property(x => x.IsDeleted)
                 .HasDefaultValue(false);

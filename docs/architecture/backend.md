@@ -144,6 +144,14 @@ after successful core install events, and through the two-hour recurring sync
 job. Manual file changes restart remote xray-core through the existing restart
 flow when cached core state reports it is running.
 
+Connection warehouses are managed through `/api/warehouses`. Warehouses group
+node inbounds for user connection distribution, expose list filtering by name,
+enabled state, and assigned inbounds, and use offset pagination with a default
+page size of ten. Warehouses can be created and updated with zero or more
+assigned inbounds. Deletion is blocked while users are assigned to the
+warehouse. The warehouse API requires the `manage_warehouses` administrator
+permission, which is also satisfied by `super_admin`.
+
 ## Contracts Layer
 
 `Contracts` owns shared types used across backend projects:

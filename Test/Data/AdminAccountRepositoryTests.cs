@@ -1,5 +1,6 @@
 using Data;
 using Microsoft.EntityFrameworkCore;
+using Contracts.Enums;
 using Data.Entities;
 
 namespace Test.Data;
@@ -43,6 +44,12 @@ public sealed class AdminAccountRepositoryTests
 
         foreignKey.IsRequired.Should().BeTrue();
         foreignKey.DeleteBehavior.Should().Be(DeleteBehavior.Cascade);
+    }
+
+    [Fact]
+    public void Permissions_KeepsSuperAdminOnStableHighBit()
+    {
+        ((long)AdminPermission.SuperAdmin).Should().Be(1L << 62);
     }
 
     private static AppDbContext CreateNpgsqlModelContext()
