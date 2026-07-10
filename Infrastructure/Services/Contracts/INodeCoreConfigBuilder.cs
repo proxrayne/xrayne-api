@@ -1,5 +1,5 @@
 using Data.Entities;
-using Xray.Config.Models;
+using RemoteNode.Models;
 
 namespace Infrastructure.Services;
 
@@ -11,5 +11,5 @@ public interface INodeCoreConfigBuilder
     /// <summary>
     /// Builds a runtime xray-core configuration from a node template and managed entities.
     /// </summary>
-    XrayConfig Build(NodeEntity node);
+    StartCoreRequest Build(NodeEntity node);
 }

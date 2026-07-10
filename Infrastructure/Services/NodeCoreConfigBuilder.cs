@@ -1,5 +1,6 @@
 using Contracts.Utilities;
 using Data.Entities;
+using RemoteNode.Models;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;
@@ -10,35 +11,62 @@ namespace Infrastructure.Services;
 public sealed class NodeCoreConfigBuilder : INodeCoreConfigBuilder
 {
     /// <inheritdoc />
-    public XrayConfig Build(NodeEntity node)
+    public StartCoreRequest Build(NodeEntity node)
     {
         var config = XrayJsonSerializer.Clone(node.ConfigTemplate, "Node config template cannot be empty.");
+        StripManagedSections(config);
 
         var inbounds = node.Inbounds
              .Where(inbound => inbound.Enabled)
              .OrderBy(inbound => inbound.CreatedAt)
-             .ThenBy(outbound => outbound.Id)
-             .Select(inbound => inbound.Config)
+             .ThenBy(inbound => inbound.Id)
+             .Select((inbound, index) => new InboundSyncItem
+             {
+                 Id = inbound.Id,
+                 Position = index,
+                 Inbound = inbound.Config
+             })
              .ToList();
         var outbounds = node.Outbounds
              .Where(outbound => outbound.Enabled)
              .OrderBy(outbound => outbound.CreatedAt)
              .ThenBy(outbound => outbound.Id)
-             .Select(outbound => outbound.Config)
+             .Select((outbound, index) => new OutboundSyncItem
+             {
+                 Id = outbound.Id,
+                 Position = index,
+                 Outbound = outbound.Config
+             })
              .ToList();
 
         var routingRules = node.RoutingRules
             .Where(rule => rule.Enabled)
             .OrderBy(rule => rule.Position)
             .ThenBy(rule => rule.Id)
-            .Select(rule => rule.Config)
+            .Select(rule => new RoutingRuleSyncItem
+            {
+                Id = rule.Id,
+                Position = rule.Position,
+                RoutingRule = rule.Config
+            })
             .ToList();
 
-        config.Inbounds = inbounds;
-        config.Outbounds = outbounds;
-        config.Routing ??= new RoutingConfig();
-        config.Routing.Rules = routingRules;
+        return new StartCoreRequest
+        {
+            ConfigTemplate = config,
+            Inbounds = inbounds,
+            Outbounds = outbounds,
+            RoutingRules = routingRules
+        };
+    }
 
-        return config;
+    private static void StripManagedSections(XrayConfig config)
+    {
+        config.Inbounds = null!;
+        config.Outbounds = null!;
+        if (config.Routing is not null)
+        {
+            config.Routing.Rules = null!;
+        }
     }
 }

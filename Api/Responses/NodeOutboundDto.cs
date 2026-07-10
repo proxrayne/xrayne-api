@@ -6,7 +6,7 @@ namespace Api.Responses;
 /// Describes an outbound assigned to a remote node.
 /// </summary>
 public sealed record NodeOutboundDto(
-    int Id,
+    long Id,
     string Tag,
     Protocol Protocol,
     StreamNetwork? Network,

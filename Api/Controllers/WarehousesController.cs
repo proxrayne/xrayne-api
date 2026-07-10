@@ -173,7 +173,7 @@ public sealed class WarehousesController(IWarehouseRepository warehouses) : ApiC
     }
 
     private async Task<List<InboundEntity>> ResolveInboundsAsync(
-        IReadOnlyCollection<int> inboundIds,
+        IReadOnlyCollection<long> inboundIds,
         CancellationToken cancellationToken)
     {
         var distinctIds = inboundIds.Distinct().ToArray();

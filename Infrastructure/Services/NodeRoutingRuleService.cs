@@ -417,11 +417,16 @@ public sealed class NodeRoutingRuleService(
             .Where(rule => rule.Enabled)
             .OrderBy(rule => rule.Position)
             .ThenBy(rule => rule.Id)
-            .Select(rule => rule.Config)
+            .Select(rule => new RoutingRuleSyncItem
+            {
+                Id = rule.Id,
+                Position = rule.Position,
+                RoutingRule = rule.Config
+            })
             .ToList();
 
         await CreateRemoteNodeClient(node).SyncRoutingRulesAsync(
-            new SyncRoutingRulesRequest { Rules = XrayJsonSerializer.Serialize(enabledRules) },
+            new SyncRoutingRulesRequest { RoutingRules = enabledRules },
             cancellationToken);
     }
 

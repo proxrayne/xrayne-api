@@ -53,13 +53,13 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
         return SearchCoreAsync(query, filter, ct);
     }
 
-    public Task<InboundEntity?> GetByIdAsync(int id, CancellationToken ct = default)
+    public Task<InboundEntity?> GetByIdAsync(long id, CancellationToken ct = default)
     {
         return _inboundsWithRelations
             .SingleOrDefaultAsync(inbound => inbound.Id == id, ct);
     }
 
-    public Task<InboundEntity?> GetByIdAsync(Guid adminId, int id, CancellationToken ct = default)
+    public Task<InboundEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         return _inboundsWithRelations
             .SingleOrDefaultAsync(
@@ -67,7 +67,7 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
                 ct);
     }
 
-    public Task<InboundEntity?> GetByNodeAndIdAsync(long nodeId, int id, CancellationToken ct = default)
+    public Task<InboundEntity?> GetByNodeAndIdAsync(long nodeId, long id, CancellationToken ct = default)
     {
         return _inboundsWithRelations
             .SingleOrDefaultAsync(
@@ -131,7 +131,7 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
         return inbound;
     }
 
-    public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(long id, CancellationToken ct = default)
     {
         var inbound = await GetByIdAsync(id, ct);
         if (inbound is null)
@@ -145,7 +145,7 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid adminId, int id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         var inbound = await GetByIdAsync(adminId, id, ct);
         if (inbound is null)

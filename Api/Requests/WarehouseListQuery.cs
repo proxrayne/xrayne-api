@@ -18,7 +18,7 @@ public sealed record WarehouseListQuery
     /// <summary>
     /// Gets inbound identifiers where any match includes the warehouse.
     /// </summary>
-    public List<int> InboundIds { get; init; } = [];
+    public List<long> InboundIds { get; init; } = [];
 
     /// <summary>
     /// Gets the requested page number.

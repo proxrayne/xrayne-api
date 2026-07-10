@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton(Options.Create(options));
         services.AddHttpClient("remote-node");
         services.AddSingleton<IRemoteNodeApiClientFactory, RemoteNodeApiClientFactory>();
+        services.AddSingleton<IRemoteNodeStreamClientFactory, RemoteNodeStreamClientFactory>();
 
         return services;
     }

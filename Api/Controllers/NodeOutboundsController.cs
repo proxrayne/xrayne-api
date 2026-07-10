@@ -42,14 +42,14 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Gets one outbound assigned to a remote node.
     /// </summary>
-    [HttpGet("{outboundId:int}")]
+    [HttpGet("{outboundId:long}")]
     [EndpointSummary("Get node outbound")]
     [EndpointDescription("Get one outbound assigned to a remote node profile with its full JSON configuration.")]
     [ProducesResponseType(typeof(NodeOutboundDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeOutboundDto> GetById(
         long nodeId,
-        int outboundId,
+        long outboundId,
         CancellationToken cancellationToken)
     {
         try
@@ -99,7 +99,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Updates a manually managed outbound for a remote node.
     /// </summary>
-    [HttpPut("{outboundId:int}")]
+    [HttpPut("{outboundId:long}")]
     [EndpointSummary("Update node outbound")]
     [EndpointDescription("Update a manually managed outbound assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeOutboundDto), StatusCodes.Status200OK)]
@@ -108,7 +108,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<NodeOutboundDto> Update(
         long nodeId,
-        int outboundId,
+        long outboundId,
         [FromBody] UpdateNodeOutboundRequest request,
         CancellationToken cancellationToken)
     {
@@ -132,7 +132,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Updates enabled state for an outbound assigned to a remote node.
     /// </summary>
-    [HttpPatch("{outboundId:int}/enabled")]
+    [HttpPatch("{outboundId:long}/enabled")]
     [EndpointSummary("Toggle node outbound")]
     [EndpointDescription("Enable or disable an outbound assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeOutboundDto), StatusCodes.Status200OK)]
@@ -141,7 +141,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<NodeOutboundDto> UpdateEnabled(
         long nodeId,
-        int outboundId,
+        long outboundId,
         [FromBody] UpdateNodeOutboundEnabledRequest request,
         CancellationToken cancellationToken)
     {
@@ -164,13 +164,13 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Deletes a manually managed outbound from a remote node.
     /// </summary>
-    [HttpDelete("{outboundId:int}")]
+    [HttpDelete("{outboundId:long}")]
     [EndpointSummary("Delete node outbound")]
     [EndpointDescription("Delete a manually managed outbound assigned to a remote node profile.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(long nodeId, int outboundId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(long nodeId, long outboundId, CancellationToken cancellationToken)
     {
         try
         {

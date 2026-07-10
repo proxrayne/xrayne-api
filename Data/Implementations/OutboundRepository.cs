@@ -37,13 +37,13 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
             .ToList();
     }
 
-    public Task<OutboundEntity?> GetByIdAsync(int id, CancellationToken ct = default)
+    public Task<OutboundEntity?> GetByIdAsync(long id, CancellationToken ct = default)
     {
         return _outboundsWithRelations
             .SingleOrDefaultAsync(outbound => outbound.Id == id, ct);
     }
 
-    public Task<OutboundEntity?> GetByIdAsync(Guid adminId, int id, CancellationToken ct = default)
+    public Task<OutboundEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         return _outboundsWithRelations
             .SingleOrDefaultAsync(
@@ -51,7 +51,7 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
                 ct);
     }
 
-    public Task<OutboundEntity?> GetByNodeAndIdAsync(long nodeId, int id, CancellationToken ct = default)
+    public Task<OutboundEntity?> GetByNodeAndIdAsync(long nodeId, long id, CancellationToken ct = default)
     {
         return _outboundsWithRelations
             .SingleOrDefaultAsync(
@@ -115,7 +115,7 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
         return outbound;
     }
 
-    public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(long id, CancellationToken ct = default)
     {
         var outbound = await GetByIdAsync(id, ct);
         if (outbound is null)
@@ -129,7 +129,7 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid adminId, int id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         var outbound = await GetByIdAsync(adminId, id, ct);
         if (outbound is null)

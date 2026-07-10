@@ -18,7 +18,7 @@ public sealed record WarehouseFilter
     /// <summary>
     /// Gets inbound identifiers where any match includes the warehouse.
     /// </summary>
-    public IReadOnlyCollection<int>? InboundIds { get; init; }
+    public IReadOnlyCollection<long>? InboundIds { get; init; }
 
     /// <summary>
     /// Gets the requested page number.

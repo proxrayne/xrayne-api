@@ -40,6 +40,7 @@ public sealed class NodesController(
     INodeConnectionVerifier connectionVerifier,
     IRemoteNodeConnectionManager connectionManager,
     IRemoteNodeApiClientFactory apiClientFactory,
+    IRemoteNodeStreamClientFactory streamClientFactory,
     INodeCoreConfigBuilder coreConfigBuilder,
     INodeConnectionStateStore connectionStateStore,
     IRemoteNodeCoreStateStore coreStateStore,
@@ -332,6 +333,23 @@ public sealed class NodesController(
             throw new NotFoundException($"Node '{id}' was not found.");
         }
 
+        if (IsRemoteCoreRunning(updated.Id))
+        {
+            try
+            {
+                await CreateRemoteNodeClient(updated).UpdateCoreConfigTemplateAsync(
+                    new RemoteNode.Models.UpdateCoreConfigTemplateRequest
+                    {
+                        ConfigTemplate = coreConfigBuilder.Build(updated).ConfigTemplate
+                    },
+                    cancellationToken);
+            }
+            catch (RemoteNodeException exception)
+            {
+                throw ToApiException(exception);
+            }
+        }
+
         return new NodeConfigTemplateResponse(SerializeConfig(updated.ConfigTemplate));
     }
 
@@ -377,7 +395,7 @@ public sealed class NodesController(
     public async Task StreamCoreStatus(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        var client = CreateRemoteNodeClient(node);
+        var client = CreateRemoteNodeStreamClient(node);
 
         SetupStreamHeaders();
 
@@ -486,7 +504,7 @@ public sealed class NodesController(
         CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        var client = CreateRemoteNodeClient(node);
+        var client = CreateRemoteNodeStreamClient(node);
 
         SetupStreamHeaders();
 
@@ -521,7 +539,7 @@ public sealed class NodesController(
         => ScheduleCoreOperation(
             id,
             (node, client) => client.StartCoreAsync(
-                new StartCoreRequest(SerializeConfig(coreConfigBuilder.Build(node))),
+                coreConfigBuilder.Build(node),
                 cancellationToken),
             cancellationToken);
 
@@ -553,7 +571,7 @@ public sealed class NodesController(
         => ScheduleCoreOperation(
             id,
             (node, client) => client.RestartCoreAsync(
-                new StartCoreRequest(SerializeConfig(coreConfigBuilder.Build(node))),
+                coreConfigBuilder.Build(node),
                 cancellationToken),
             cancellationToken);
 
@@ -842,6 +860,17 @@ public sealed class NodesController(
         return apiClientFactory.Create(endpoint);
     }
 
+    private IRemoteNodeStreamClient CreateRemoteNodeStreamClient(NodeEntity node)
+    {
+        var endpoint = new RemoteNodeEndpoint(
+            node.Id,
+            node.Address,
+            node.ApiPort,
+            secrets.UnprotectApiKey(node.EncryptedApiKey));
+
+        return streamClientFactory.Create(endpoint);
+    }
+
     private static XrayConfig ParseConfigTemplate(string configTemplate)
     {
         if (string.IsNullOrWhiteSpace(configTemplate))
@@ -937,6 +966,9 @@ public sealed class NodesController(
             state.StartedAt,
             state.Uptime));
     }
+
+    private bool IsRemoteCoreRunning(long nodeId)
+        => coreStateStore.TryGet(nodeId, out var state) && state?.IsRunning == true;
 
     private static CoreStatusResponse ToCoreStatusResponse(RemoteNodeCoreState state)
     {

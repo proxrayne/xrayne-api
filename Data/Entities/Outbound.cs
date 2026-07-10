@@ -9,7 +9,7 @@ namespace Data.Entities;
 public sealed class OutboundEntity : CreateUpdateEntity
 {
     [Key]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     public bool Enabled { get; set; }
 

@@ -10,11 +10,11 @@ public interface IOutboundRepository
 
     Task<List<OutboundEntity>> GetByNodeIdAsync(long nodeId, CancellationToken cancellationToken = default);
 
-    Task<OutboundEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<OutboundEntity?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
 
-    Task<OutboundEntity?> GetByIdAsync(Guid adminId, int id, CancellationToken cancellationToken = default);
+    Task<OutboundEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
 
-    Task<OutboundEntity?> GetByNodeAndIdAsync(long nodeId, int id, CancellationToken cancellationToken = default);
+    Task<OutboundEntity?> GetByNodeAndIdAsync(long nodeId, long id, CancellationToken cancellationToken = default);
 
     Task<OutboundEntity> AddAsync(OutboundEntity outbound, CancellationToken cancellationToken = default);
 
@@ -24,7 +24,7 @@ public interface IOutboundRepository
 
     Task<OutboundEntity?> UpdateAsync(Guid adminId, OutboundEntity outbound, CancellationToken cancellationToken = default);
 
-    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default);
 
-    Task<bool> DeleteAsync(Guid adminId, int id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
 }

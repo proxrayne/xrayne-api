@@ -115,7 +115,7 @@ public sealed class NodeOutboundServiceTests
 
         result.Enabled.Should().BeTrue();
         await remoteClient.Received(1).AddOutboundAsync(
-            Arg.Is<SyncOutboundRequest>(request => request.Config.Contains("direct")),
+            Arg.Is<SyncOutboundRequest>(request => request.Outbound.Tag == "direct"),
             Arg.Any<CancellationToken>());
     }
 
@@ -130,7 +130,7 @@ public sealed class NodeOutboundServiceTests
         await service.DeleteAsync(node.Id, outbound.Id, CancellationToken.None);
 
         await remoteClient.DidNotReceive()
-            .DeleteOutboundAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+            .DeleteOutboundAsync(Arg.Any<long>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

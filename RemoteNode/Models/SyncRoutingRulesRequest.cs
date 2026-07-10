@@ -1,15 +1,16 @@
-using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using RemoteNode.Models.Json;
 
 namespace RemoteNode.Models;
 
 /// <summary>
 /// Requests synchronization of ordered routing rules with the running core.
 /// </summary>
+[JsonConverter(typeof(SyncRoutingRulesRequestJsonConverter))]
 public sealed class SyncRoutingRulesRequest
 {
     /// <summary>
-    /// Gets the enabled routing rules as JSON array text.
+    /// Gets the enabled routing rules ordered by position.
     /// </summary>
-    [Required]
-    public required string Rules { get; init; }
+    public List<RoutingRuleSyncItem> RoutingRules { get; init; } = [];
 }

@@ -1,44 +1,22 @@
-using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
-using RemoteNode.Exceptions;
 using RemoteNode.Models;
-using RemoteNode.Parsing;
 
 namespace RemoteNode.Services;
 
 /// <summary>
-/// Sends authenticated HTTP and SSE requests to a remote node API.
+/// Sends authenticated request/response API calls to a remote node.
 /// </summary>
 public sealed class RemoteNodeApiClient(
     IHttpClientFactory httpClientFactory,
     IOptions<RemoteNodeOptions> options,
-    RemoteNodeEndpoint endpoint) : IRemoteNodeApiClient
+    RemoteNodeEndpoint endpoint)
+    : RemoteNodeHttpClientBase(httpClientFactory, options, endpoint), IRemoteNodeApiClient
 {
-    private const string ClientName = "remote-node";
-    private const int MaxErrorBodyLength = 2048;
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
     /// <inheritdoc />
     public Task<NodePingResponse> PingAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<NodePingResponse>(HttpMethod.Get, "api/ping", null, cancellationToken);
-
-    /// <inheritdoc />
-    public async IAsyncEnumerable<NodeConnectionEvent> ConnectStreamAsync(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        await foreach (var connectionEvent in ReadServerSentEventsAsync<NodeConnectionEvent>(
-                           "api/connect",
-                           cancellationToken))
-        {
-            yield return connectionEvent;
-        }
-    }
 
     /// <inheritdoc />
     public Task<RemoteLogSnapshotResponse> GetLogsAsync(
@@ -50,84 +28,6 @@ public sealed class RemoteNodeApiClient(
             BuildLogsPath("api/logs", limit),
             null,
             cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async IAsyncEnumerable<RemoteLogStreamEvent> LogStreamAsync(
-        int? limit = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        await foreach (var logEvent in ReadServerSentEventsAsync<RemoteLogStreamEvent>(
-                           BuildLogsPath("api/logs/stream", limit),
-                           cancellationToken))
-        {
-            yield return logEvent;
-        }
-    }
-
-    /// <inheritdoc />
-    public async IAsyncEnumerable<CoreStatusResponse> CoreStatusStreamAsync(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        await foreach (var state in ReadServerSentEventsAsync<CoreStatusResponse>(
-                           "api/core/status/stream",
-                           cancellationToken))
-        {
-            yield return state;
-        }
-    }
-
-    /// <inheritdoc />
-    public async IAsyncEnumerable<InstallCoreStatusResponse> InstallCoreStatusStreamAsync(
-        string jobId,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        await foreach (var state in ReadServerSentEventsAsync<InstallCoreStatusResponse>(
-                           $"api/core/install/{Uri.EscapeDataString(jobId)}/stream",
-                           cancellationToken))
-        {
-            yield return state;
-        }
-    }
-
-    private async IAsyncEnumerable<T> ReadServerSentEventsAsync<T>(
-        string path,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        using var httpClient = CreateStreamClient();
-        using var request = CreateRequest(HttpMethod.Get, path);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-
-        using var response = await SendAsync(
-            httpClient,
-            request,
-            path,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-        await EnsureSuccessAsync(response, path, cancellationToken);
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        await foreach (var payload in ServerSentEventParser.ReadDataAsync(reader, cancellationToken))
-        {
-            T? value;
-            try
-            {
-                value = JsonSerializer.Deserialize<T>(payload, JsonOptions);
-            }
-            catch (JsonException exception)
-            {
-                throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Invalid SSE JSON payload.", exception);
-            }
-
-            if (value is null)
-            {
-                throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Empty SSE JSON payload.");
-            }
-
-            yield return value;
-        }
     }
 
     /// <inheritdoc />
@@ -179,6 +79,14 @@ public sealed class RemoteNodeApiClient(
     }
 
     /// <inheritdoc />
+    public Task UpdateCoreConfigTemplateAsync(
+        UpdateCoreConfigTemplateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return SendNoContentAsync(HttpMethod.Put, "api/core/config-template", request, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<OperationAcceptedResponse> RestartRuntimeAsync(CancellationToken cancellationToken = default)
         => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/runtime/restart", null, cancellationToken);
 
@@ -188,23 +96,23 @@ public sealed class RemoteNodeApiClient(
 
     /// <inheritdoc />
     public Task UpdateInboundAsync(
-        string tag,
+        long id,
         SyncInboundRequest request,
         CancellationToken cancellationToken = default)
     {
         return SendNoContentAsync(
             HttpMethod.Put,
-            $"api/core/inbounds/{Uri.EscapeDataString(tag)}",
+            $"api/core/inbounds/{id}",
             request,
             cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task DeleteInboundAsync(string tag, CancellationToken cancellationToken = default)
+    public Task DeleteInboundAsync(long id, CancellationToken cancellationToken = default)
     {
         return SendNoContentAsync(
             HttpMethod.Delete,
-            $"api/core/inbounds/{Uri.EscapeDataString(tag)}",
+            $"api/core/inbounds/{id}",
             null,
             cancellationToken);
     }
@@ -215,23 +123,23 @@ public sealed class RemoteNodeApiClient(
 
     /// <inheritdoc />
     public Task UpdateOutboundAsync(
-        string tag,
+        long id,
         SyncOutboundRequest request,
         CancellationToken cancellationToken = default)
     {
         return SendNoContentAsync(
             HttpMethod.Put,
-            $"api/core/outbounds/{Uri.EscapeDataString(tag)}",
+            $"api/core/outbounds/{id}",
             request,
             cancellationToken);
     }
 
     /// <inheritdoc />
-    public Task DeleteOutboundAsync(string tag, CancellationToken cancellationToken = default)
+    public Task DeleteOutboundAsync(long id, CancellationToken cancellationToken = default)
     {
         return SendNoContentAsync(
             HttpMethod.Delete,
-            $"api/core/outbounds/{Uri.EscapeDataString(tag)}",
+            $"api/core/outbounds/{id}",
             null,
             cancellationToken);
     }
@@ -254,11 +162,10 @@ public sealed class RemoteNodeApiClient(
         CancellationToken cancellationToken = default)
     {
         var path = $"api/geo-resources/{Uri.EscapeDataString(fileName)}/content";
-        using var httpClient = CreateStandardClient();
         using var request = CreateRequest(HttpMethod.Get, path);
 
         using var response = await SendAsync(
-            httpClient,
+            StandardClient,
             request,
             path,
             HttpCompletionOption.ResponseHeadersRead,
@@ -277,30 +184,20 @@ public sealed class RemoteNodeApiClient(
         CancellationToken cancellationToken = default)
     {
         var path = $"api/geo-resources/{Uri.EscapeDataString(fileName)}";
-        using var httpClient = CreateStandardClient();
         using var request = CreateRequest(HttpMethod.Put, path);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         request.Content = new StreamContent(content);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
         using var response = await SendAsync(
-            httpClient,
+            StandardClient,
             request,
             path,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
         await EnsureSuccessAsync(response, path, cancellationToken);
 
-        try
-        {
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            return await JsonSerializer.DeserializeAsync<GeoResourceDto>(stream, JsonOptions, cancellationToken)
-                ?? throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Empty JSON response.");
-        }
-        catch (JsonException exception)
-        {
-            throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Invalid JSON response.", exception);
-        }
+        return await ReadJsonAsync<GeoResourceDto>(response.Content, path, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -372,32 +269,22 @@ public sealed class RemoteNodeApiClient(
         object? body,
         CancellationToken cancellationToken)
     {
-        using var httpClient = CreateStandardClient();
         using var request = CreateRequest(method, path);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         if (body is not null)
         {
-            request.Content = JsonContent.Create(body, options: JsonOptions);
+            request.Content = CreateJsonContent(body);
         }
 
         using var response = await SendAsync(
-            httpClient,
+            StandardClient,
             request,
             path,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
         await EnsureSuccessAsync(response, path, cancellationToken);
 
-        try
-        {
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            return await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions, cancellationToken)
-                ?? throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Empty JSON response.");
-        }
-        catch (JsonException exception)
-        {
-            throw new RemoteNodeProtocolException(endpoint.NodeId, path, "Invalid JSON response.", exception);
-        }
+        return await ReadJsonAsync<T>(response.Content, path, cancellationToken);
     }
 
     private async Task SendNoContentAsync(
@@ -406,98 +293,18 @@ public sealed class RemoteNodeApiClient(
         object? body,
         CancellationToken cancellationToken)
     {
-        using var httpClient = CreateStandardClient();
         using var request = CreateRequest(method, path);
         if (body is not null)
         {
-            request.Content = JsonContent.Create(body, options: JsonOptions);
+            request.Content = CreateJsonContent(body);
         }
 
         using var response = await SendAsync(
-            httpClient,
+            StandardClient,
             request,
             path,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
         await EnsureSuccessAsync(response, path, cancellationToken);
     }
-
-    private async Task<HttpResponseMessage> SendAsync(
-        HttpClient httpClient,
-        HttpRequestMessage request,
-        string path,
-        HttpCompletionOption completionOption,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await httpClient.SendAsync(request, completionOption, cancellationToken);
-        }
-        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
-        {
-            throw new RemoteNodeTimeoutException(endpoint.NodeId, path, exception);
-        }
-        catch (HttpRequestException exception)
-        {
-            throw new RemoteNodeUnavailableException(endpoint.NodeId, path, exception);
-        }
-    }
-
-    private async Task EnsureSuccessAsync(
-        HttpResponseMessage response,
-        string path,
-        CancellationToken cancellationToken)
-    {
-        if (response.IsSuccessStatusCode)
-        {
-            return;
-        }
-
-        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-        {
-            throw new RemoteNodeUnauthorizedException(endpoint.NodeId, path, response.StatusCode);
-        }
-
-        var body = await ReadErrorBodyAsync(response, cancellationToken);
-        throw new RemoteNodeHttpException(endpoint.NodeId, path, response.StatusCode, body);
-    }
-
-    private static async Task<string?> ReadErrorBodyAsync(
-        HttpResponseMessage response,
-        CancellationToken cancellationToken)
-    {
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (string.IsNullOrWhiteSpace(body))
-        {
-            return null;
-        }
-
-        return body.Length <= MaxErrorBodyLength ? body : body[..MaxErrorBodyLength];
-    }
-
-    private HttpClient CreateStandardClient()
-    {
-        var httpClient = httpClientFactory.CreateClient(ClientName);
-        httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(1, options.Value.PingTimeoutSeconds));
-
-        return httpClient;
-    }
-
-    private HttpClient CreateStreamClient()
-    {
-        var httpClient = httpClientFactory.CreateClient(ClientName);
-        httpClient.Timeout = Timeout.InfiniteTimeSpan;
-
-        return httpClient;
-    }
-
-    private HttpRequestMessage CreateRequest(HttpMethod method, string path)
-    {
-        var request = new HttpRequestMessage(method, new UriBuilder("https", endpoint.Address, endpoint.ApiPort, path).Uri);
-        request.Headers.Add("X-Node-Api-Key", endpoint.ApiKey);
-
-        return request;
-    }
-
-    private static string BuildLogsPath(string path, int? limit) => limit is null ? path : QueryHelpers.AddQueryString(path, "limit", ((int)limit).ToString());
 }

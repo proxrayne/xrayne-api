@@ -86,7 +86,7 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
     /// <inheritdoc />
     public Task<List<InboundEntity>> GetInboundsByIdsAsync(
         Guid adminId,
-        IReadOnlyCollection<int> inboundIds,
+        IReadOnlyCollection<long> inboundIds,
         CancellationToken cancellationToken = default)
     {
         if (inboundIds.Count == 0)

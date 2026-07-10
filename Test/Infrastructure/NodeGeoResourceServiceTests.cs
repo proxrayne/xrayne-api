@@ -201,7 +201,7 @@ public sealed class NodeGeoResourceServiceTests
             secrets.UnprotectApiKey("protected").Returns("api-key");
             var coreStates = Substitute.For<IRemoteNodeCoreStateStore>();
             var builder = Substitute.For<INodeCoreConfigBuilder>();
-            builder.Build(node).Returns(new XrayConfig());
+            builder.Build(node).Returns(new StartCoreRequest { ConfigTemplate = new XrayConfig() });
             var httpClientFactory = Substitute.For<IHttpClientFactory>();
             httpClientFactory.CreateClient(Arg.Any<string>()).Returns(new HttpClient(new StubHandler(downloadStatusCode)));
 

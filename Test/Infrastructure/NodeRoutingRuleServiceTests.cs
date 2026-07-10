@@ -135,7 +135,7 @@ public sealed class NodeRoutingRuleServiceTests
 
         result.Enabled.Should().BeTrue();
         await remoteClient.Received(1).SyncRoutingRulesAsync(
-            Arg.Is<SyncRoutingRulesRequest>(request => request.Rules.Contains("direct")),
+            Arg.Is<SyncRoutingRulesRequest>(request => request.RoutingRules.Any(rule => rule.RoutingRule.OutboundTag == "direct")),
             Arg.Any<CancellationToken>());
     }
 

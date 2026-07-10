@@ -37,7 +37,7 @@ public interface IWarehouseRepository
     /// </summary>
     Task<List<InboundEntity>> GetInboundsByIdsAsync(
         Guid adminId,
-        IReadOnlyCollection<int> inboundIds,
+        IReadOnlyCollection<long> inboundIds,
         CancellationToken cancellationToken = default);
 
     /// <summary>

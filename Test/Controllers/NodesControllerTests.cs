@@ -36,6 +36,7 @@ public sealed class NodesControllerTests
     private readonly INodeSecretService _secrets;
     private readonly IRemoteNodeApiClient _remoteClient;
     private readonly IRemoteNodeApiClientFactory _apiClientFactory;
+    private readonly IRemoteNodeStreamClientFactory _streamClientFactory;
     private readonly INodeCoreConfigBuilder _coreConfigBuilder;
     private readonly IRemoteNodeConnectionManager _connectionManager;
     private readonly INodeConnectionStateStore _connectionStateStore;
@@ -51,6 +52,7 @@ public sealed class NodesControllerTests
         _secrets = Substitute.For<INodeSecretService>();
         _remoteClient = Substitute.For<IRemoteNodeApiClient>();
         _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
+        _streamClientFactory = Substitute.For<IRemoteNodeStreamClientFactory>();
         _coreConfigBuilder = Substitute.For<INodeCoreConfigBuilder>();
         _connectionManager = Substitute.For<IRemoteNodeConnectionManager>();
         _connectionStateStore = new NodeConnectionStateStore(new MemoryCache(new MemoryCacheOptions()));
@@ -60,7 +62,7 @@ public sealed class NodesControllerTests
         environment.EnvironmentName.Returns(Environments.Production);
         _secrets.UnprotectApiKey("encrypted").Returns("api-key");
         _apiClientFactory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(_remoteClient);
-        _coreConfigBuilder.Build(Arg.Any<NodeEntity>()).Returns(CreateCoreConfig());
+        _coreConfigBuilder.Build(Arg.Any<NodeEntity>()).Returns(CreateStartRequest());
 
         _controller = new NodesController(
             mapper,
@@ -72,6 +74,7 @@ public sealed class NodesControllerTests
             Substitute.For<INodeConnectionVerifier>(),
             _connectionManager,
             _apiClientFactory,
+            _streamClientFactory,
             _coreConfigBuilder,
             _connectionStateStore,
             _coreStateStore,
@@ -319,7 +322,7 @@ public sealed class NodesControllerTests
 
         result.Result.Should().BeOfType<AcceptedResult>();
         await _remoteClient.Received(1).StartCoreAsync(
-            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
+            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.ConfigTemplate)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
             Arg.Any<CancellationToken>());
     }
 
@@ -335,7 +338,7 @@ public sealed class NodesControllerTests
 
         result.Result.Should().BeOfType<AcceptedResult>();
         await _remoteClient.Received(1).RestartCoreAsync(
-            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
+            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.ConfigTemplate)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
             Arg.Any<CancellationToken>());
     }
 
@@ -389,6 +392,14 @@ public sealed class NodesControllerTests
         return XrayJsonSerializer.DeserializeRequired<XrayConfig>(
             """{"log":{"loglevel":"warning"}}""",
             "Core config cannot be empty.");
+    }
+
+    private static StartCoreRequest CreateStartRequest()
+    {
+        return new StartCoreRequest
+        {
+            ConfigTemplate = CreateCoreConfig()
+        };
     }
 
     private static JsonObject ToJsonObject(XrayConfig config)

@@ -6,7 +6,7 @@ namespace Api.Responses;
 /// Describes an inbound assigned to a remote node.
 /// </summary>
 public sealed record NodeInboundDto(
-    int Id,
+    long Id,
     string Tag,
     string Port,
     Protocol Protocol,

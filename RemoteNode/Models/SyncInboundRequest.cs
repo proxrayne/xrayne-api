@@ -1,6 +1,10 @@
+using System.Text.Json.Serialization;
+using RemoteNode.Models.Json;
+
 namespace RemoteNode.Models;
 
 /// <summary>
-/// Carries one inbound JSON configuration to the remote node runtime.
+/// Requests synchronization of a single inbound configuration with the running core.
 /// </summary>
-public sealed record SyncInboundRequest(string Config);
+[JsonConverter(typeof(SyncInboundRequestJsonConverter))]
+public sealed class SyncInboundRequest : InboundSyncItem;

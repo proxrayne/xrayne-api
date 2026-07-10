@@ -28,5 +28,5 @@ public sealed record UpdateWarehouseRequest
     /// <summary>
     /// Gets inbound identifiers assigned to the warehouse.
     /// </summary>
-    public List<int> InboundIds { get; init; } = [];
+    public List<long> InboundIds { get; init; } = [];
 }

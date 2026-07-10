@@ -18,7 +18,7 @@ public interface INodeOutboundService
     /// </summary>
     Task<OutboundEntity> GetByNodeAndIdAsync(
         long nodeId,
-        int outboundId,
+        long outboundId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -36,7 +36,7 @@ public interface INodeOutboundService
     /// </summary>
     Task<OutboundEntity> UpdateAsync(
         long nodeId,
-        int outboundId,
+        long outboundId,
         string config,
         bool enabled,
         CancellationToken cancellationToken = default);
@@ -46,14 +46,14 @@ public interface INodeOutboundService
     /// </summary>
     Task<OutboundEntity> UpdateEnabledAsync(
         long nodeId,
-        int outboundId,
+        long outboundId,
         bool enabled,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a manually managed outbound from a remote node.
     /// </summary>
-    Task DeleteAsync(long nodeId, int outboundId, CancellationToken cancellationToken = default);
+    Task DeleteAsync(long nodeId, long outboundId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Synchronizes readonly outbounds from a node config template.

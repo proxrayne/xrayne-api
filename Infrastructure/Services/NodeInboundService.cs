@@ -34,7 +34,7 @@ public sealed class NodeInboundService(
     /// <inheritdoc />
     public async Task<InboundEntity> GetByNodeAndIdAsync(
         long nodeId,
-        int inboundId,
+        long inboundId,
         CancellationToken cancellationToken = default)
     {
         _ = await GetNodeAsync(nodeId, cancellationToken);
@@ -74,7 +74,7 @@ public sealed class NodeInboundService(
     /// <inheritdoc />
     public async Task<InboundEntity> UpdateAsync(
         long nodeId,
-        int inboundId,
+        long inboundId,
         string config,
         bool enabled,
         CancellationToken cancellationToken = default)
@@ -86,7 +86,6 @@ public sealed class NodeInboundService(
             throw new NodeInboundReadonlyException("Readonly inbounds can only be enabled or disabled.");
         }
 
-        var previousTag = inbound.Tag;
         var wasEnabled = inbound.Enabled;
         var inboundConfig = ParseInbound(config);
         var existing = await inbounds.GetByNodeIdAsync(nodeId, cancellationToken);
@@ -103,11 +102,11 @@ public sealed class NodeInboundService(
 
         if (updated.Enabled)
         {
-            await SyncRemoteUpdateAsync(node, previousTag, updated, cancellationToken);
+            await SyncRemoteUpdateAsync(node, updated, cancellationToken);
         }
         else if (wasEnabled)
         {
-            await SyncRemoteDeleteAsync(node, previousTag, cancellationToken);
+            await SyncRemoteDeleteAsync(node, inbound.Id, cancellationToken);
         }
 
         return updated;
@@ -116,7 +115,7 @@ public sealed class NodeInboundService(
     /// <inheritdoc />
     public async Task<InboundEntity> UpdateEnabledAsync(
         long nodeId,
-        int inboundId,
+        long inboundId,
         bool enabled,
         CancellationToken cancellationToken = default)
     {
@@ -143,14 +142,14 @@ public sealed class NodeInboundService(
         }
         else
         {
-            await SyncRemoteDeleteAsync(node, updated.Tag, cancellationToken);
+            await SyncRemoteDeleteAsync(node, updated.Id, cancellationToken);
         }
 
         return updated;
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync(long nodeId, int inboundId, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(long nodeId, long inboundId, CancellationToken cancellationToken = default)
     {
         var node = await GetNodeAsync(nodeId, cancellationToken);
         var inbound = await GetInboundAsync(nodeId, inboundId, cancellationToken);
@@ -159,7 +158,7 @@ public sealed class NodeInboundService(
             throw new NodeInboundReadonlyException("Readonly inbounds are managed through the node config template.");
         }
 
-        var tag = inbound.Tag;
+        var id = inbound.Id;
         var wasEnabled = inbound.Enabled;
         var deleted = await inbounds.DeleteAsync(inbound.Id, cancellationToken);
         if (!deleted)
@@ -169,7 +168,7 @@ public sealed class NodeInboundService(
 
         if (wasEnabled)
         {
-            await SyncRemoteDeleteAsync(node, tag, cancellationToken);
+            await SyncRemoteDeleteAsync(node, id, cancellationToken);
         }
     }
 
@@ -193,12 +192,12 @@ public sealed class NodeInboundService(
 
         foreach (var stale in readonlyByTag.Values.Where(inbound => !desiredTags.Contains(inbound.Tag)).ToList())
         {
-            var tag = stale.Tag;
+            var id = stale.Id;
             var wasEnabled = stale.Enabled;
             await inbounds.DeleteAsync(stale.Id, cancellationToken);
             if (wasEnabled)
             {
-                await SyncRemoteDeleteAsync(node, tag, cancellationToken);
+                await SyncRemoteDeleteAsync(node, id, cancellationToken);
             }
         }
 
@@ -234,7 +233,6 @@ public sealed class NodeInboundService(
                 continue;
             }
 
-            var previousTag = existingReadonly.Tag;
             var wasEnabled = existingReadonly.Enabled;
 
             existingReadonly.Config = inboundConfig;
@@ -248,11 +246,11 @@ public sealed class NodeInboundService(
 
             if (updated.Enabled)
             {
-                await SyncRemoteUpdateAsync(node, previousTag, updated, cancellationToken);
+                await SyncRemoteUpdateAsync(node, updated, cancellationToken);
             }
             else if (wasEnabled)
             {
-                await SyncRemoteDeleteAsync(node, previousTag, cancellationToken);
+                await SyncRemoteDeleteAsync(node, existingReadonly.Id, cancellationToken);
             }
         }
     }
@@ -292,7 +290,7 @@ public sealed class NodeInboundService(
     private static void ValidateInbound(
         Inbound config,
         IEnumerable<InboundEntity> existing,
-        int? currentId,
+        long? currentId,
         bool enabled,
         bool allowDisabledReadonlyConflicts)
     {
@@ -329,7 +327,7 @@ public sealed class NodeInboundService(
     private static bool IsValidReadonlyTemplateInbound(
         Inbound config,
         IEnumerable<InboundEntity> existing,
-        int? currentId)
+        long? currentId)
     {
         if (IsReservedApiPort(config.Port))
         {
@@ -375,7 +373,7 @@ public sealed class NodeInboundService(
 
     private async Task<InboundEntity> GetInboundAsync(
         long nodeId,
-        int inboundId,
+        long inboundId,
         CancellationToken cancellationToken)
     {
         var inbound = await inbounds.GetByNodeAndIdAsync(nodeId, inboundId, cancellationToken);
@@ -398,13 +396,12 @@ public sealed class NodeInboundService(
         }
 
         await CreateRemoteNodeClient(node).AddInboundAsync(
-            new SyncInboundRequest(XrayJsonSerializer.Serialize(inbound.Config)),
+            await CreateSyncInboundRequestAsync(node.Id, inbound, cancellationToken),
             cancellationToken);
     }
 
     private async Task SyncRemoteUpdateAsync(
         NodeEntity node,
-        string previousTag,
         InboundEntity inbound,
         CancellationToken cancellationToken)
     {
@@ -414,14 +411,14 @@ public sealed class NodeInboundService(
         }
 
         await CreateRemoteNodeClient(node).UpdateInboundAsync(
-            previousTag,
-            new SyncInboundRequest(XrayJsonSerializer.Serialize(inbound.Config)),
+            inbound.Id,
+            await CreateSyncInboundRequestAsync(node.Id, inbound, cancellationToken),
             cancellationToken);
     }
 
     private async Task SyncRemoteDeleteAsync(
         NodeEntity node,
-        string tag,
+        long id,
         CancellationToken cancellationToken)
     {
         if (!IsRemoteCoreRunning(node.Id))
@@ -429,7 +426,26 @@ public sealed class NodeInboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).DeleteInboundAsync(tag, cancellationToken);
+        await CreateRemoteNodeClient(node).DeleteInboundAsync(id, cancellationToken);
+    }
+
+    private async Task<SyncInboundRequest> CreateSyncInboundRequestAsync(
+        long nodeId,
+        InboundEntity inbound,
+        CancellationToken cancellationToken)
+    {
+        var enabled = (await inbounds.GetByNodeIdAsync(nodeId, cancellationToken))
+            .Where(item => item.Enabled)
+            .OrderBy(item => item.CreatedAt)
+            .ThenBy(item => item.Id)
+            .ToList();
+
+        return new SyncInboundRequest
+        {
+            Id = inbound.Id,
+            Position = Math.Max(0, enabled.FindIndex(item => item.Id == inbound.Id)),
+            Inbound = inbound.Config
+        };
     }
 
     private bool IsRemoteCoreRunning(long nodeId)

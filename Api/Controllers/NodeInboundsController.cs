@@ -42,14 +42,14 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     /// <summary>
     /// Gets one inbound assigned to a remote node.
     /// </summary>
-    [HttpGet("{inboundId:int}")]
+    [HttpGet("{inboundId:long}")]
     [EndpointSummary("Get node inbound")]
     [EndpointDescription("Get one inbound assigned to a remote node profile with its full JSON configuration.")]
     [ProducesResponseType(typeof(NodeInboundDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeInboundDto> GetById(
         long nodeId,
-        int inboundId,
+        long inboundId,
         CancellationToken cancellationToken)
     {
         try
@@ -99,7 +99,7 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     /// <summary>
     /// Updates a manually managed inbound for a remote node.
     /// </summary>
-    [HttpPut("{inboundId:int}")]
+    [HttpPut("{inboundId:long}")]
     [EndpointSummary("Update node inbound")]
     [EndpointDescription("Update a manually managed inbound assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeInboundDto), StatusCodes.Status200OK)]
@@ -108,7 +108,7 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<NodeInboundDto> Update(
         long nodeId,
-        int inboundId,
+        long inboundId,
         [FromBody] UpdateNodeInboundRequest request,
         CancellationToken cancellationToken)
     {
@@ -132,7 +132,7 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     /// <summary>
     /// Updates enabled state for an inbound assigned to a remote node.
     /// </summary>
-    [HttpPatch("{inboundId:int}/enabled")]
+    [HttpPatch("{inboundId:long}/enabled")]
     [EndpointSummary("Toggle node inbound")]
     [EndpointDescription("Enable or disable an inbound assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeInboundDto), StatusCodes.Status200OK)]
@@ -141,7 +141,7 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<NodeInboundDto> UpdateEnabled(
         long nodeId,
-        int inboundId,
+        long inboundId,
         [FromBody] UpdateNodeInboundEnabledRequest request,
         CancellationToken cancellationToken)
     {
@@ -164,13 +164,13 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     /// <summary>
     /// Deletes a manually managed inbound from a remote node.
     /// </summary>
-    [HttpDelete("{inboundId:int}")]
+    [HttpDelete("{inboundId:long}")]
     [EndpointSummary("Delete node inbound")]
     [EndpointDescription("Delete a manually managed inbound assigned to a remote node profile.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(long nodeId, int inboundId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(long nodeId, long inboundId, CancellationToken cancellationToken)
     {
         try
         {

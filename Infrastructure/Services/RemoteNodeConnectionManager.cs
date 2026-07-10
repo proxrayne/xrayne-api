@@ -18,7 +18,7 @@ namespace Infrastructure.Services;
 /// </summary>
 public sealed class RemoteNodeConnectionManager(
     IServiceScopeFactory scopeFactory,
-    IRemoteNodeApiClientFactory apiClientFactory,
+    IRemoteNodeStreamClientFactory streamClientFactory,
     INodeConnectionStateStore connectionStates,
     IRemoteNodeCoreStateStore coreStates,
     INodeLogStore nodeLogs,
@@ -122,7 +122,7 @@ public sealed class RemoteNodeConnectionManager(
             _ => NodeConnectionWorker.Start(
                 nodeId,
                 scopeFactory,
-                apiClientFactory,
+                streamClientFactory,
                 connectionStates,
                 coreStates,
                 nodeLogs,
@@ -141,7 +141,7 @@ public sealed class RemoteNodeConnectionManager(
                 return NodeConnectionWorker.Start(
                     existingNodeId,
                     scopeFactory,
-                    apiClientFactory,
+                    streamClientFactory,
                     connectionStates,
                     coreStates,
                     nodeLogs,
@@ -219,7 +219,7 @@ public sealed class RemoteNodeConnectionManager(
         public static NodeConnectionWorker Start(
             long nodeId,
             IServiceScopeFactory scopeFactory,
-            IRemoteNodeApiClientFactory apiClientFactory,
+            IRemoteNodeStreamClientFactory streamClientFactory,
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
             INodeLogStore nodeLogs,
@@ -232,7 +232,7 @@ public sealed class RemoteNodeConnectionManager(
             var task = RunAsync(
                 nodeId,
                 scopeFactory,
-                apiClientFactory,
+                streamClientFactory,
                 connectionStates,
                 coreStates,
                 nodeLogs,
@@ -263,7 +263,7 @@ public sealed class RemoteNodeConnectionManager(
         private static async Task RunAsync(
             long nodeId,
             IServiceScopeFactory scopeFactory,
-            IRemoteNodeApiClientFactory apiClientFactory,
+            IRemoteNodeStreamClientFactory streamClientFactory,
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
             INodeLogStore nodeLogs,
@@ -289,7 +289,7 @@ public sealed class RemoteNodeConnectionManager(
                 {
                     await MarkConnectingAsync(scopeFactory, connectionStates, nodeId, "Connecting to remote node stream.", cancellationToken);
                     var endpoint = await CreateEndpointAsync(scopeFactory, node, cancellationToken);
-                    var client = apiClientFactory.Create(endpoint);
+                    var client = streamClientFactory.Create(endpoint);
                     await ConnectStreamAsync(
                         scopeFactory,
                         connectionStates,
@@ -362,7 +362,7 @@ public sealed class RemoteNodeConnectionManager(
             IRemoteNodeCoreStateStore coreStates,
             INodeLogStore nodeLogs,
             NodeEntity node,
-            IRemoteNodeApiClient client,
+            IRemoteNodeStreamClient client,
             NodeConnectionOptions options,
             CancellationToken cancellationToken)
         {

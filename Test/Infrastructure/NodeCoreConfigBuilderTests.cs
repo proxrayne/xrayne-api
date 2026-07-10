@@ -117,15 +117,20 @@ public sealed class NodeCoreConfigBuilderTests
         };
         var builder = new NodeCoreConfigBuilder();
 
-        var config = ToJsonObject(builder.Build(node));
+        var request = builder.Build(node);
+        var config = ToJsonObject(request.ConfigTemplate);
 
         config["stats"].Should().NotBeNull();
-        config["inbounds"]!.AsArray().Should().HaveCount(1);
-        config["outbounds"]!.AsArray().Should().HaveCount(3);
-        config["outbounds"]![0]!["tag"]!.GetValue<string>().Should().Be("first");
-        config["outbounds"]![1]!["tag"]!.GetValue<string>().Should().Be("second");
-        config["outbounds"]![2]!["tag"]!.GetValue<string>().Should().Be("readonly");
-        config["routing"]!["rules"]!.AsArray().Should().HaveCount(1);
+        config.ContainsKey("inbounds").Should().BeFalse();
+        config.ContainsKey("outbounds").Should().BeFalse();
+        request.Inbounds.Should().ContainSingle(item => item.Id == 1 && item.Position == 0);
+        request.Outbounds.Should().HaveCount(3);
+        request.Outbounds[0].Outbound.Tag.Should().Be("first");
+        request.Outbounds[0].Position.Should().Be(0);
+        request.Outbounds[1].Outbound.Tag.Should().Be("second");
+        request.Outbounds[1].Position.Should().Be(1);
+        request.Outbounds[2].Outbound.Tag.Should().Be("readonly");
+        request.RoutingRules.Should().ContainSingle(item => item.Id == 2 && item.Position == 2);
     }
 
     [Fact]
@@ -162,11 +167,15 @@ public sealed class NodeCoreConfigBuilderTests
         };
         var builder = new NodeCoreConfigBuilder();
 
-        var config = ToJsonObject(builder.Build(node));
+        var request = builder.Build(node);
+        var config = ToJsonObject(request.ConfigTemplate);
 
-        config["inbounds"]!.AsArray().Should().BeEmpty();
-        config["outbounds"]!.AsArray().Should().BeEmpty();
-        config["routing"]!["rules"]!.AsArray().Should().BeEmpty();
+        config.ContainsKey("inbounds").Should().BeFalse();
+        config.ContainsKey("outbounds").Should().BeFalse();
+        config["routing"]!.AsObject().ContainsKey("rules").Should().BeFalse();
+        request.Inbounds.Should().BeEmpty();
+        request.Outbounds.Should().BeEmpty();
+        request.RoutingRules.Should().BeEmpty();
     }
 
     private static XrayConfig DeserializeConfig(string json)

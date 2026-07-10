@@ -13,21 +13,9 @@ public interface IRemoteNodeApiClient
     Task<NodePingResponse> PingAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Opens and reads the remote node connection stream.
-    /// </summary>
-    IAsyncEnumerable<NodeConnectionEvent> ConnectStreamAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Gets recent remote node log entries.
     /// </summary>
     Task<RemoteLogSnapshotResponse> GetLogsAsync(
-        int? limit = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Opens and reads a remote node log stream.
-    /// </summary>
-    IAsyncEnumerable<RemoteLogStreamEvent> LogStreamAsync(
         int? limit = null,
         CancellationToken cancellationToken = default);
 
@@ -42,11 +30,6 @@ public interface IRemoteNodeApiClient
     Task<CoreStatusResponse> GetCoreStatusAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Opens and reads the remote xray-core status stream.
-    /// </summary>
-    IAsyncEnumerable<CoreStatusResponse> CoreStatusStreamAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Schedules remote xray-core installation.
     /// </summary>
     Task<InstallCoreResponse> InstallCoreAsync(InstallCoreRequest request, CancellationToken cancellationToken = default);
@@ -55,13 +38,6 @@ public interface IRemoteNodeApiClient
     /// Gets remote xray-core installation status.
     /// </summary>
     Task<InstallCoreStatusResponse> GetInstallCoreStatusAsync(string jobId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Opens and reads a remote xray-core installation status stream.
-    /// </summary>
-    IAsyncEnumerable<InstallCoreStatusResponse> InstallCoreStatusStreamAsync(
-        string jobId,
-        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Starts remote xray-core.
@@ -83,6 +59,13 @@ public interface IRemoteNodeApiClient
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates the remote node base xray-core configuration template.
+    /// </summary>
+    Task UpdateCoreConfigTemplateAsync(
+        UpdateCoreConfigTemplateRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Restarts the remote node service runtime.
     /// </summary>
     Task<OperationAcceptedResponse> RestartRuntimeAsync(CancellationToken cancellationToken = default);
@@ -95,12 +78,12 @@ public interface IRemoteNodeApiClient
     /// <summary>
     /// Replaces an inbound in the remote node runtime when xray-core is started.
     /// </summary>
-    Task UpdateInboundAsync(string tag, SyncInboundRequest request, CancellationToken cancellationToken = default);
+    Task UpdateInboundAsync(long id, SyncInboundRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes an inbound from the remote node runtime when xray-core is started.
     /// </summary>
-    Task DeleteInboundAsync(string tag, CancellationToken cancellationToken = default);
+    Task DeleteInboundAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds an outbound to the remote node runtime when xray-core is started.
@@ -110,12 +93,12 @@ public interface IRemoteNodeApiClient
     /// <summary>
     /// Replaces an outbound in the remote node runtime when xray-core is started.
     /// </summary>
-    Task UpdateOutboundAsync(string tag, SyncOutboundRequest request, CancellationToken cancellationToken = default);
+    Task UpdateOutboundAsync(long id, SyncOutboundRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes an outbound from the remote node runtime when xray-core is started.
     /// </summary>
-    Task DeleteOutboundAsync(string tag, CancellationToken cancellationToken = default);
+    Task DeleteOutboundAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Replaces routing rules in the remote node runtime when xray-core is started.

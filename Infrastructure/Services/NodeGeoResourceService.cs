@@ -346,7 +346,7 @@ public sealed class NodeGeoResourceService(
         }
 
         await CreateClient(node).RestartCoreAsync(
-            new StartCoreRequest(XrayJsonSerializer.Serialize(coreConfigBuilder.Build(node))),
+            coreConfigBuilder.Build(node),
             cancellationToken);
     }
 

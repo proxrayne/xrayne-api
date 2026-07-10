@@ -1,12 +1,16 @@
 using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
+using Contracts.Utilities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using RemoteNode;
 using RemoteNode.Configurations;
 using RemoteNode.Enums;
 using RemoteNode.Exceptions;
 using RemoteNode.Models;
 using RemoteNode.Services;
+using Xray.Config.Models;
 
 namespace Test.Infrastructure;
 
@@ -47,54 +51,6 @@ public sealed class RemoteNodeApiClientTests
         });
 
         await Assert.ThrowsAsync<RemoteNodeProtocolException>(() => client.PingAsync());
-    }
-
-    [Fact]
-    public async Task ConnectStreamAsync_reads_server_sent_events()
-    {
-        var payload = SampleConnectionEventJson();
-        var client = CreateClient(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent($"data: {payload}\n\n", Encoding.UTF8, "text/event-stream")
-        });
-
-        var events = new List<NodeConnectionEvent>();
-        await foreach (var item in client.ConnectStreamAsync())
-        {
-            events.Add(item);
-        }
-
-        events.Should().ContainSingle();
-        events[0].Type.Should().Be("heartbeat");
-        events[0].Timestamp.Should().Be(DateTimeOffset.Parse("2026-07-03T12:00:00+00:00"));
-        events[0].Ping?.NodeVersion.Should().Be("1.2.3");
-    }
-
-    [Fact]
-    public async Task ConnectStreamAsync_reads_runtime_event_payloads()
-    {
-        var client = CreateClient(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(
-                "data: {\"type\":\"core_status\",\"timestamp\":\"2026-07-03T12:00:00+00:00\",\"core\":{\"isInstalled\":true,\"status\":\"started\",\"isInstalling\":false,\"version\":\"25.7.1\"}}\n\n"
-                + "data: {\"type\":\"core_install\",\"timestamp\":\"2026-07-03T12:00:01+00:00\",\"install\":{\"jobId\":\"job-1\",\"step\":\"installed\",\"message\":\"done\",\"updatedAt\":\"2026-07-03T12:00:01+00:00\"}}\n\n",
-                Encoding.UTF8,
-                "text/event-stream")
-        });
-
-        var events = new List<NodeConnectionEvent>();
-        await foreach (var item in client.ConnectStreamAsync())
-        {
-            events.Add(item);
-        }
-
-        events.Should().HaveCount(2);
-        events[0].Type.Should().Be("core_status");
-        events[0].Core?.Status.Should().Be(RemoteCoreStatus.Started);
-        events[0].Core?.Version.Should().Be("25.7.1");
-        events[1].Type.Should().Be("core_install");
-        events[1].Install?.JobId.Should().Be("job-1");
-        events[1].Install?.Step.Should().Be(InstallCoreStep.Installed);
     }
 
     [Fact]
@@ -170,27 +126,6 @@ public sealed class RemoteNodeApiClientTests
         result.Message.Should().Be("done");
     }
 
-    [Fact]
-    public async Task CoreStatusStreamAsync_reads_server_sent_events()
-    {
-        var client = CreateClient(new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(
-                "data: {\"isInstalled\":true,\"status\":\"stopped\",\"isInstalling\":false,\"version\":\"25.7.1\"}\n\n",
-                Encoding.UTF8,
-                "text/event-stream")
-        });
-
-        var events = new List<CoreStatusResponse>();
-        await foreach (var item in client.CoreStatusStreamAsync())
-        {
-            events.Add(item);
-        }
-
-        events.Should().ContainSingle();
-        events[0].Status.Should().Be(RemoteCoreStatus.Stopped);
-    }
-
     [Theory]
     [InlineData("start")]
     [InlineData("stop")]
@@ -208,9 +143,9 @@ public sealed class RemoteNodeApiClientTests
 
         var result = operation switch
         {
-            "start" => await client.StartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
+            "start" => await client.StartCoreAsync(CreateStartCoreRequest()),
             "stop" => await client.StopCoreAsync(),
-            "restart" => await client.RestartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
+            "restart" => await client.RestartCoreAsync(CreateStartCoreRequest()),
             "runtime-restart" => await client.RestartRuntimeAsync(),
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
@@ -235,15 +170,71 @@ public sealed class RemoteNodeApiClientTests
 
         _ = operation switch
         {
-            "start" => await client.StartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
-            "restart" => await client.RestartCoreAsync(new StartCoreRequest(CreateCoreConfig())),
+            "start" => await client.StartCoreAsync(CreateStartCoreRequest()),
+            "restart" => await client.RestartCoreAsync(CreateStartCoreRequest()),
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
 
         var body = JsonNode.Parse(handler.RequestBody!)!.AsObject();
-        var config = JsonNode.Parse(body["config"]!.GetValue<string>())!.AsObject();
+        var config = body["configTemplate"]!.AsObject();
 
         config["log"]!["loglevel"]!.GetValue<string>().Should().Be("warning");
+        body.ContainsKey("config").Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task StartCoreAsync_sends_structured_inbound_body()
+    {
+        var handler = new StubHandler(JsonResponse("""
+        {
+          "operation": "start",
+          "status": "queued"
+        }
+        """));
+        var client = CreateClient(handler);
+
+        await client.StartCoreAsync(CreateStartCoreRequestWithInbound());
+
+        var body = JsonNode.Parse(handler.RequestBody!)!.AsObject();
+        var inbounds = body["inbounds"]!.AsArray();
+        var item = inbounds.Should().ContainSingle().Subject!.AsObject();
+
+        item["id"]!.GetValue<long>().Should().Be(123);
+        item["position"]!.GetValue<int>().Should().Be(0);
+        item["inbound"]!["tag"]!.GetValue<string>().Should().Be("vless-in");
+    }
+
+    [Fact]
+    public async Task Json_endpoints_use_cached_standard_client()
+    {
+        var handler = new StubHandler(JsonResponse(SamplePingJson()));
+        var factory = new StubHttpClientFactory(handler);
+        var client = CreateClient(factory);
+
+        await client.PingAsync();
+
+        factory.CreateCount.Should().Be(2);
+        factory.Clients[0].Timeout.Should().Be(TimeSpan.FromSeconds(5));
+        factory.Clients[1].Timeout.Should().Be(Timeout.InfiniteTimeSpan);
+    }
+
+    [Fact]
+    public void AddRemoteNodes_registers_api_and_stream_factories()
+    {
+        var services = new ServiceCollection();
+        services.AddRemoteNodes(new RemoteNodeOptions { PingTimeoutSeconds = 5 });
+
+        using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true
+        });
+
+        var endpoint = new RemoteNodeEndpoint(42, "node.example.test", 8443, "secret");
+        provider.GetRequiredService<IRemoteNodeApiClientFactory>().Create(endpoint)
+            .Should().BeAssignableTo<IRemoteNodeApiClient>();
+        provider.GetRequiredService<IRemoteNodeStreamClientFactory>().Create(endpoint)
+            .Should().BeAssignableTo<IRemoteNodeStreamClient>();
     }
 
     private static IRemoteNodeApiClient CreateClient(HttpResponseMessage response)
@@ -252,6 +243,12 @@ public sealed class RemoteNodeApiClientTests
     private static IRemoteNodeApiClient CreateClient(StubHandler handler)
     {
         var factory = new StubHttpClientFactory(handler);
+
+        return CreateClient(factory);
+    }
+
+    private static IRemoteNodeApiClient CreateClient(StubHttpClientFactory factory)
+    {
         var options = Options.Create(new RemoteNodeOptions { PingTimeoutSeconds = 5 });
         var endpoint = new RemoteNodeEndpoint(42, "node.example.test", 8443, "secret");
 
@@ -264,13 +261,6 @@ public sealed class RemoteNodeApiClientTests
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
-    }
-
-    private static string SampleConnectionEventJson()
-    {
-        return """
-        {"type":"heartbeat","timestamp":"2026-07-03T12:00:00+00:00","ping":{"nodeVersion":"1.2.3","environment":"Development","uptime":"01:00:00","core":{"isInstalled":true,"isRunning":true,"version":"24.9.30","status":"started"}}}
-        """;
     }
 
     private static string SamplePingJson()
@@ -334,13 +324,63 @@ public sealed class RemoteNodeApiClientTests
         """;
     }
 
-    private static string CreateCoreConfig() => """{"log":{"loglevel":"warning"}}""";
+    private static StartCoreRequest CreateStartCoreRequest()
+    {
+        return new StartCoreRequest
+        {
+            ConfigTemplate = XrayJsonSerializer.DeserializeRequired<XrayConfig>(
+                """{"log":{"loglevel":"warning"}}""",
+                "Core config cannot be empty.")
+        };
+    }
+
+    private static StartCoreRequest CreateStartCoreRequestWithInbound()
+    {
+        return new StartCoreRequest
+        {
+            ConfigTemplate = XrayJsonSerializer.DeserializeRequired<XrayConfig>(
+                """{"log":{"loglevel":"warning"}}""",
+                "Core config cannot be empty."),
+            Inbounds =
+            [
+                new InboundSyncItem
+                {
+                    Id = 123,
+                    Position = 0,
+                    Inbound = XrayJsonSerializer.DeserializeRequired<Inbound>(
+                        """
+                        {
+                          "tag": "vless-in",
+                          "listen": "0.0.0.0",
+                          "port": 443,
+                          "protocol": "vless",
+                          "settings": {
+                            "clients": [
+                              { "id": "11111111-1111-1111-1111-111111111111", "email": "alice@example.com" }
+                            ],
+                            "decryption": "none"
+                          }
+                        }
+                        """,
+                        "Inbound config cannot be empty.")
+                }
+            ]
+        };
+    }
 
     private sealed class StubHttpClientFactory(StubHandler handler) : IHttpClientFactory
     {
+        public int CreateCount { get; private set; }
+
+        public List<HttpClient> Clients { get; } = [];
+
         public HttpClient CreateClient(string name)
         {
-            return new HttpClient(handler);
+            CreateCount++;
+            var client = new HttpClient(handler);
+            Clients.Add(client);
+
+            return client;
         }
     }
 

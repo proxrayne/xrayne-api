@@ -6,7 +6,7 @@ namespace Api.Responses;
 /// Describes an inbound option used by warehouses.
 /// </summary>
 public sealed record WarehouseInboundDto(
-    int Id,
+    long Id,
     string Tag,
     string Port,
     Protocol Protocol,
