@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
+using RemoteNode.Grpc;
 using RemoteNode.Models;
 
 namespace RemoteNode.Services;
@@ -8,11 +9,12 @@ namespace RemoteNode.Services;
 /// Creates gRPC API clients for remote nodes.
 /// </summary>
 public sealed class RemoteNodeApiClientFactory(
-    IOptions<RemoteNodeOptions> options) : IRemoteNodeApiClientFactory
+    IOptions<RemoteNodeOptions> options,
+    IRemoteNodeGrpcChannelProvider channelProvider) : IRemoteNodeApiClientFactory
 {
     /// <inheritdoc />
     public IRemoteNodeApiClient Create(RemoteNodeEndpoint endpoint)
     {
-        return new RemoteNodeApiClient(options, endpoint);
+        return new RemoteNodeApiClient(options, channelProvider, endpoint);
     }
 }

@@ -82,9 +82,12 @@ public static class RemoteNodeGrpcMapper
     public static RemoteLogStreamEvent ToDomain(Proto.RemoteLogStreamEvent value)
     {
         return new RemoteLogStreamEvent(
-            value.Type,
+            ResolveType(value.Type, value.EventType),
             value.Entries.Count == 0 ? null : [.. value.Entries.Select(ToDomain)],
-            value.Entry is null ? null : ToDomain(value.Entry));
+            value.Entry is null ? null : ToDomain(value.Entry),
+            value.Sequence,
+            value.DroppedCount,
+            string.IsNullOrWhiteSpace(value.Source) ? null : value.Source);
     }
 
     /// <summary>
@@ -93,12 +96,15 @@ public static class RemoteNodeGrpcMapper
     public static NodeConnectionEvent ToDomain(Proto.NodeConnectionEvent value)
     {
         return new NodeConnectionEvent(
-            value.Type,
+            ResolveType(value.Type, value.EventType),
             ToDateTimeOffset(value.Timestamp),
             value.Ping is null ? null : ToDomain(value.Ping),
             value.Core is null ? null : ToDomain(value.Core),
             value.Install is null ? null : ToDomain(value.Install),
-            value.Log is null ? null : ToDomain(value.Log));
+            value.Log is null ? null : ToDomain(value.Log),
+            value.Sequence,
+            value.DroppedCount,
+            string.IsNullOrWhiteSpace(value.Source) ? null : value.Source);
     }
 
     /// <summary>
@@ -313,6 +319,26 @@ public static class RemoteNodeGrpcMapper
             Proto.InstallCoreStep.Installed => InstallCoreStep.Installed,
             Proto.InstallCoreStep.Failure => InstallCoreStep.Failure,
             _ => throw new RemoteNodeProtocolException(0, "grpc", $"Unknown install step '{value}'.")
+        };
+    }
+
+    private static string ResolveType(string type, Proto.StreamEventType eventType)
+    {
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            return type;
+        }
+
+        return eventType switch
+        {
+            Proto.StreamEventType.Connected => "connected",
+            Proto.StreamEventType.Heartbeat => "heartbeat",
+            Proto.StreamEventType.CoreStatus => "core_status",
+            Proto.StreamEventType.CoreInstall => "core_install",
+            Proto.StreamEventType.CoreLog => "core_log",
+            Proto.StreamEventType.LogSnapshot => "snapshot",
+            Proto.StreamEventType.LogEntry => "entry",
+            _ => string.Empty
         };
     }
 

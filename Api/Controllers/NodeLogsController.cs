@@ -64,7 +64,8 @@ public sealed class NodeLogsController(
                 new RemoteLogStreamEvent(
                     "snapshot",
                     nodeLogs.Get(id, normalizedLimit),
-                    null),
+                    null,
+                    Source: "panel"),
                 cancellationToken);
 
             await foreach (var logEvent in subscription.Reader.ReadAllAsync(cancellationToken))

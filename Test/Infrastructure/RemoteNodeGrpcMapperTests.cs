@@ -69,4 +69,31 @@ public sealed class RemoteNodeGrpcMapperTests
         result.Entries![0].Timestamp.Should().Be(new DateTimeOffset(timestamp));
         result.Entries[0].Message.Should().Be("started");
     }
+
+    [Fact]
+    public void ToDomain_NodeConnectionEvent_MapsStreamMetadata()
+    {
+        var timestamp = DateTime.SpecifyKind(new DateTime(2026, 7, 10, 14, 0, 0), DateTimeKind.Utc);
+        var response = new Proto.NodeConnectionEvent
+        {
+            EventType = Proto.StreamEventType.CoreStatus,
+            Timestamp = Timestamp.FromDateTime(timestamp),
+            Sequence = 12,
+            DroppedCount = 3,
+            Source = "node",
+            Core = new Proto.CoreStatusResponse
+            {
+                IsInstalled = true,
+                Status = Proto.RemoteCoreStatus.Started
+            }
+        };
+
+        var result = RemoteNodeGrpcMapper.ToDomain(response);
+
+        result.Type.Should().Be("core_status");
+        result.Sequence.Should().Be(12);
+        result.DroppedCount.Should().Be(3);
+        result.Source.Should().Be("node");
+        result.Core.Should().NotBeNull();
+    }
 }

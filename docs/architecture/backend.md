@@ -52,6 +52,12 @@ implementing node management features in this repository.
 panel startup, exposes immediate connect/reconnect/disconnect operations for
 controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every heartbeat to the database.
+Each worker is the only persistent upstream gRPC `Connect` subscriber for its
+node. It updates panel-local stores and dispatches local event-bus updates for
+dashboard SSE clients, so dashboard tabs do not create additional remote node
+streams. The worker treats stream idleness as a failed connection after
+`NodeConnection:StreamIdleTimeoutSeconds`, or `3 * StreamHeartbeatSeconds + 5`
+seconds when unset, and then uses the normal reconnect policy.
 Live node and remote xray-core state is kept in process memory through
 data-layer singleton stores. `NodeEntity` does not persist connection
 status; it persists `Enabled` only as the durable operator-controlled flag
@@ -67,7 +73,9 @@ without calling remote `ping`.
 The standalone remote node `Ping` response and `Connect` heartbeat stream
 payloads must include `NodeVersion`, `Environment`, `Uptime`, and `Core`.
 The `Connect` gRPC stream also emits `core_status`, `core_install`, and
-`core_log` events from the node runtime state machine. The stream event
+`core_log` events from the node runtime state machine. Stream envelopes include
+compatibility `type`, typed `eventType`, `sequence`, `droppedCount`, and
+`source` metadata. The stream event
 timestamp is the heartbeat time persisted by the panel. Host telemetry is
 fetched separately from the node `GetSystemStatus` RPC and proxied by the panel through
 `/api/nodes/{id}/system/status`.
@@ -78,7 +86,7 @@ streams reconnect.
 Remote node logs are runtime-only and limited to xray-core output. The
 standalone node exposes recent xray-core logs through `GetLogs` and
 `StreamLogs`, and the panel's `IRemoteNodeConnectionManager` ingests
-`core_log` events from the existing `Connect` gRPC stream. `INodeLogStore`
+batched `core_log` events from the existing `Connect` gRPC stream. `INodeLogStore`
 keeps bounded in-memory ring buffers keyed by node id. The panel exposes
 dashboard reads through
 `GET /api/nodes/{id}/logs` and live updates through
@@ -87,7 +95,7 @@ dashboard reads through
 Remote node xray-core management is exposed through panel endpoints under
 `/api/nodes/{id}/core`. The panel resolves the encrypted node API key, calls the
 standalone node gRPC API through `RemoteNode`, and streams status/install events back
-to the UI. Provisioning starts the node container, verifies the node API, then
+to the UI from panel-local event streams. Provisioning starts the node container, verifies the node API, then
 installs the latest XTLS `xray-core` as the final remote setup step.
 Node profile metadata is updated through `PUT /api/nodes/{id}`. Saved node
 connection parameters are read through

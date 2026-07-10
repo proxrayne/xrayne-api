@@ -46,14 +46,14 @@ public sealed class NodeLogStore(
     {
         if (logEvent.Entry is not null)
         {
-            AppendEntry(nodeId, logEvent.Entry);
+            AppendEntry(nodeId, logEvent.Entry, logEvent);
         }
 
         if (logEvent.Entries is not null)
         {
             foreach (var entry in logEvent.Entries)
             {
-                AppendEntry(nodeId, entry);
+                AppendEntry(nodeId, entry, logEvent);
             }
         }
     }
@@ -67,7 +67,7 @@ public sealed class NodeLogStore(
         }
     }
 
-    private void AppendEntry(long nodeId, RemoteLogEntry entry)
+    private void AppendEntry(long nodeId, RemoteLogEntry entry, RemoteLogStreamEvent sourceEvent)
     {
         lock (gate)
         {
@@ -86,7 +86,13 @@ public sealed class NodeLogStore(
 
         eventStreams.Dispatch(
             NodeLogStreamKeys.ForNode(nodeId),
-            new RemoteLogStreamEvent("entry", null, entry));
+            new RemoteLogStreamEvent(
+                "entry",
+                null,
+                entry,
+                sourceEvent.Sequence,
+                sourceEvent.DroppedCount,
+                sourceEvent.Source));
     }
 
     private int GetMaxEntries() => Math.Max(1, options.Value.MaxEntriesPerSource);

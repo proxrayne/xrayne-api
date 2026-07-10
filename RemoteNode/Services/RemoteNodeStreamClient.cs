@@ -13,8 +13,9 @@ namespace RemoteNode.Services;
 /// </summary>
 public sealed class RemoteNodeStreamClient(
     IOptions<RemoteNodeOptions> options,
+    IRemoteNodeGrpcChannelProvider channelProvider,
     RemoteNodeEndpoint endpoint)
-    : RemoteNodeGrpcClientBase(options, endpoint), IRemoteNodeStreamClient
+    : RemoteNodeGrpcClientBase(options, channelProvider, endpoint), IRemoteNodeStreamClient
 {
     /// <inheritdoc />
     public async IAsyncEnumerable<NodeConnectionEvent> ConnectStreamAsync(

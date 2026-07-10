@@ -9,4 +9,7 @@ public sealed record NodeConnectionEvent(
     NodePingResponse? Ping,
     CoreStatusResponse? Core,
     InstallCoreStatusResponse? Install,
-    RemoteLogStreamEvent? Log);
+    RemoteLogStreamEvent? Log,
+    long Sequence = 0,
+    long DroppedCount = 0,
+    string? Source = null);

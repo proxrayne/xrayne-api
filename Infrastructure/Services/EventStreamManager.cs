@@ -1,12 +1,22 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using Contracts.Configurations;
 using Infrastructure.Dto;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Services;
 
 public sealed class EventStreamManager : IEventStreamManager
 {
+    private const int DefaultChannelCapacity = 256;
+
     private readonly ConcurrentDictionary<Guid, IEventStreamSubscriptionState> subscriptions = new();
+    private readonly int channelCapacity;
+
+    public EventStreamManager(IOptions<NodeConnectionOptions>? options = null)
+    {
+        channelCapacity = NormalizeCapacity(options?.Value.StreamChannelCapacity ?? DefaultChannelCapacity);
+    }
 
     public EventStreamSubscription<object> Subscribe(string streamKey)
     {
@@ -18,17 +28,18 @@ public sealed class EventStreamManager : IEventStreamManager
         ArgumentException.ThrowIfNullOrWhiteSpace(streamKey);
 
         var id = Guid.NewGuid();
-        var channel = Channel.CreateUnbounded<T>(new UnboundedChannelOptions
+        var channel = Channel.CreateBounded<T>(new BoundedChannelOptions(channelCapacity)
         {
             SingleReader = true,
             SingleWriter = false,
+            FullMode = BoundedChannelFullMode.Wait,
             AllowSynchronousContinuations = false,
         });
 
         var state = new EventStreamSubscriptionState<T>(streamKey, channel);
         subscriptions[id] = state;
 
-        return new EventStreamSubscription<T>(id, streamKey, channel.Reader);
+        return new EventStreamSubscription<T>(id, streamKey, channel.Reader, state.GetDroppedCount);
     }
 
     public bool Unsubscribe(Guid subscriptionId)
@@ -72,6 +83,8 @@ public sealed class EventStreamManager : IEventStreamManager
         string streamKey,
         Channel<T> channel) : IEventStreamSubscriptionState
     {
+        private long droppedCount;
+
         public string StreamKey { get; } = streamKey;
 
         public void Dispatch(object? data)
@@ -83,19 +96,36 @@ public sealed class EventStreamManager : IEventStreamManager
                     return;
                 }
 
-                channel.Writer.TryWrite(default!);
+                if (!channel.Writer.TryWrite(default!))
+                {
+                    Interlocked.Increment(ref droppedCount);
+                }
+
                 return;
             }
 
             if (data is T typedData)
             {
-                channel.Writer.TryWrite(typedData);
+                if (!channel.Writer.TryWrite(typedData))
+                {
+                    Interlocked.Increment(ref droppedCount);
+                }
             }
+        }
+
+        public long GetDroppedCount()
+        {
+            return Interlocked.Read(ref droppedCount);
         }
 
         public void Complete()
         {
             channel.Writer.TryComplete();
         }
+    }
+
+    private static int NormalizeCapacity(int value)
+    {
+        return Math.Clamp(value, 1, 100_000);
     }
 }

@@ -36,7 +36,6 @@ public sealed class NodesControllerTests
     private readonly INodeSecretService _secrets;
     private readonly IRemoteNodeApiClient _remoteClient;
     private readonly IRemoteNodeApiClientFactory _apiClientFactory;
-    private readonly IRemoteNodeStreamClientFactory _streamClientFactory;
     private readonly INodeCoreConfigBuilder _coreConfigBuilder;
     private readonly IRemoteNodeConnectionManager _connectionManager;
     private readonly INodeConnectionStateStore _connectionStateStore;
@@ -52,7 +51,6 @@ public sealed class NodesControllerTests
         _secrets = Substitute.For<INodeSecretService>();
         _remoteClient = Substitute.For<IRemoteNodeApiClient>();
         _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
-        _streamClientFactory = Substitute.For<IRemoteNodeStreamClientFactory>();
         _coreConfigBuilder = Substitute.For<INodeCoreConfigBuilder>();
         _connectionManager = Substitute.For<IRemoteNodeConnectionManager>();
         _connectionStateStore = new NodeConnectionStateStore(new MemoryCache(new MemoryCacheOptions()));
@@ -74,7 +72,6 @@ public sealed class NodesControllerTests
             Substitute.For<INodeConnectionVerifier>(),
             _connectionManager,
             _apiClientFactory,
-            _streamClientFactory,
             _coreConfigBuilder,
             _connectionStateStore,
             _coreStateStore,

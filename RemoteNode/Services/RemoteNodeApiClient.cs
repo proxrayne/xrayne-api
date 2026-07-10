@@ -13,8 +13,9 @@ namespace RemoteNode.Services;
 /// </summary>
 public sealed class RemoteNodeApiClient(
     IOptions<RemoteNodeOptions> options,
+    IRemoteNodeGrpcChannelProvider channelProvider,
     RemoteNodeEndpoint endpoint)
-    : RemoteNodeGrpcClientBase(options, endpoint), IRemoteNodeApiClient
+    : RemoteNodeGrpcClientBase(options, channelProvider, endpoint), IRemoteNodeApiClient
 {
     /// <inheritdoc />
     public Task<NodePingResponse> PingAsync(CancellationToken cancellationToken = default)

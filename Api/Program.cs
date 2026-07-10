@@ -163,7 +163,9 @@ try
     builder.Services.AddSingleton(settings);
     builder.Services.AddRemoteNodes(new RemoteNodeOptions
     {
-        PingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:PingTimeoutSeconds", 15)
+        PingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:PingTimeoutSeconds", 15),
+        KeepAlivePingDelaySeconds = builder.Configuration.GetValue("NodeConnection:GrpcKeepAliveDelaySeconds", 60),
+        KeepAlivePingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:GrpcKeepAliveTimeoutSeconds", 20)
     });
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddData(builder.Configuration.GetConnectionString("Default"));

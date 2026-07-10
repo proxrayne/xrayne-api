@@ -40,7 +40,6 @@ public sealed class NodesController(
     INodeConnectionVerifier connectionVerifier,
     IRemoteNodeConnectionManager connectionManager,
     IRemoteNodeApiClientFactory apiClientFactory,
-    IRemoteNodeStreamClientFactory streamClientFactory,
     INodeCoreConfigBuilder coreConfigBuilder,
     INodeConnectionStateStore connectionStateStore,
     IRemoteNodeCoreStateStore coreStateStore,
@@ -395,14 +394,22 @@ public sealed class NodesController(
     public async Task StreamCoreStatus(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        var client = CreateRemoteNodeStreamClient(node);
+        var subscription = eventStreams.Subscribe<CoreStatusResponse>(RemoteNodeStreamKeys.CoreStatus(id));
 
         SetupStreamHeaders();
 
         try
         {
+            var initialState = coreStateStore.TryGet(id, out var cachedState) && cachedState is not null
+                ? ToCoreStatusResponse(cachedState)
+                : await CreateRemoteNodeClient(node).GetCoreStatusAsync(cancellationToken);
+
+            StoreCoreState(id, initialState);
+
             await Response.StartAsync(cancellationToken);
-            await foreach (var state in client.CoreStatusStreamAsync(cancellationToken))
+            await WriteServerSentEventAsync(initialState, cancellationToken);
+
+            await foreach (var state in subscription.Reader.ReadAllAsync(cancellationToken))
             {
                 StoreCoreState(id, state);
                 await WriteServerSentEventAsync(state, cancellationToken);
@@ -415,6 +422,10 @@ public sealed class NodesController(
             {
                 throw ToApiException(exception);
             }
+        }
+        finally
+        {
+            eventStreams.Unsubscribe(subscription.Id);
         }
     }
 
@@ -504,14 +515,18 @@ public sealed class NodesController(
         CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        var client = CreateRemoteNodeStreamClient(node);
+        var subscription = eventStreams.Subscribe<InstallCoreStatusResponse>(
+            RemoteNodeStreamKeys.CoreInstall(id, jobId));
 
         SetupStreamHeaders();
 
         try
         {
+            var initialState = await CreateRemoteNodeClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
             await Response.StartAsync(cancellationToken);
-            await foreach (var state in client.InstallCoreStatusStreamAsync(jobId, cancellationToken))
+            await WriteServerSentEventAsync(initialState, cancellationToken);
+
+            await foreach (var state in subscription.Reader.ReadAllAsync(cancellationToken))
             {
                 await WriteServerSentEventAsync(state, cancellationToken);
             }
@@ -523,6 +538,10 @@ public sealed class NodesController(
             {
                 throw ToApiException(exception);
             }
+        }
+        finally
+        {
+            eventStreams.Unsubscribe(subscription.Id);
         }
     }
 
@@ -858,17 +877,6 @@ public sealed class NodesController(
             secrets.UnprotectApiKey(node.EncryptedApiKey));
 
         return apiClientFactory.Create(endpoint);
-    }
-
-    private IRemoteNodeStreamClient CreateRemoteNodeStreamClient(NodeEntity node)
-    {
-        var endpoint = new RemoteNodeEndpoint(
-            node.Id,
-            node.Address,
-            node.ApiPort,
-            secrets.UnprotectApiKey(node.EncryptedApiKey));
-
-        return streamClientFactory.Create(endpoint);
     }
 
     private static XrayConfig ParseConfigTemplate(string configTemplate)

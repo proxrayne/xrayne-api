@@ -6,4 +6,7 @@ namespace RemoteNode.Models;
 public sealed record RemoteLogStreamEvent(
     string Type,
     IReadOnlyList<RemoteLogEntry>? Entries,
-    RemoteLogEntry? Entry);
+    RemoteLogEntry? Entry,
+    long Sequence = 0,
+    long DroppedCount = 0,
+    string? Source = null);

@@ -9,19 +9,23 @@ using Contracts.Utilities;
 using RemoteNode.Models;
 using RemoteNode.Services;
 using Data.Entities;
+using Infrastructure.Values;
+using RemoteNode.Grpc;
 using RemoteNode.Enums;
 
 namespace Infrastructure.Services;
 
 /// <summary>
-/// Maintains one live SSE connection worker per active remote node.
+/// Maintains one live gRPC connection worker per active remote node.
 /// </summary>
 public sealed class RemoteNodeConnectionManager(
     IServiceScopeFactory scopeFactory,
     IRemoteNodeStreamClientFactory streamClientFactory,
+    IRemoteNodeGrpcChannelProvider grpcChannels,
     INodeConnectionStateStore connectionStates,
     IRemoteNodeCoreStateStore coreStates,
     INodeLogStore nodeLogs,
+    IEventStreamManager eventStreams,
     INodeReconnectPolicy reconnectPolicy,
     IOptions<NodeConnectionOptions> options,
     ILogger<RemoteNodeConnectionManager> logger) : IRemoteNodeConnectionManager, IAsyncDisposable
@@ -75,6 +79,8 @@ public sealed class RemoteNodeConnectionManager(
     /// <inheritdoc />
     public async Task ReconnectAsync(long nodeId, CancellationToken cancellationToken = default)
     {
+        var node = await GetNodeAsync(nodeId, cancellationToken);
+        InvalidateChannel(node);
         await StopWorkerAsync(nodeId, cancellationToken);
         connectionStates.Set(new NodeConnectionState(
             nodeId,
@@ -87,13 +93,15 @@ public sealed class RemoteNodeConnectionManager(
     /// <inheritdoc />
     public async Task DisconnectAsync(long nodeId, CancellationToken cancellationToken = default)
     {
+        var node = await GetNodeAsync(nodeId, cancellationToken);
+        InvalidateChannel(node);
+
         if (workers.TryRemove(nodeId, out var worker))
         {
             await worker.StopAsync(cancellationToken);
             await worker.DisposeAsync();
         }
 
-        var node = await GetNodeAsync(nodeId, cancellationToken);
         connectionStates.Set(new NodeConnectionState(
             nodeId,
             ResolveDisconnectedStatus(node),
@@ -126,6 +134,7 @@ public sealed class RemoteNodeConnectionManager(
                 connectionStates,
                 coreStates,
                 nodeLogs,
+                eventStreams,
                 reconnectPolicy,
                 options.Value,
                 logger,
@@ -145,6 +154,7 @@ public sealed class RemoteNodeConnectionManager(
                     connectionStates,
                     coreStates,
                     nodeLogs,
+                    eventStreams,
                     reconnectPolicy,
                     options.Value,
                     logger,
@@ -189,6 +199,16 @@ public sealed class RemoteNodeConnectionManager(
         await worker.DisposeAsync();
     }
 
+    private void InvalidateChannel(NodeEntity? node)
+    {
+        if (node is null || string.IsNullOrWhiteSpace(node.Address) || node.ApiPort <= 0)
+        {
+            return;
+        }
+
+        grpcChannels.Invalidate(new RemoteNodeEndpoint(node.Id, node.Address, node.ApiPort, string.Empty));
+    }
+
     private static NodeConnectionStatus ResolveDisconnectedStatus(NodeEntity? node)
     {
         if (node?.Enabled == false)
@@ -223,6 +243,7 @@ public sealed class RemoteNodeConnectionManager(
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
             INodeLogStore nodeLogs,
+            IEventStreamManager eventStreams,
             INodeReconnectPolicy reconnectPolicy,
             NodeConnectionOptions options,
             ILogger logger,
@@ -236,6 +257,7 @@ public sealed class RemoteNodeConnectionManager(
                 connectionStates,
                 coreStates,
                 nodeLogs,
+                eventStreams,
                 reconnectPolicy,
                 options,
                 logger,
@@ -267,6 +289,7 @@ public sealed class RemoteNodeConnectionManager(
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
             INodeLogStore nodeLogs,
+            IEventStreamManager eventStreams,
             INodeReconnectPolicy reconnectPolicy,
             NodeConnectionOptions options,
             ILogger logger,
@@ -295,6 +318,7 @@ public sealed class RemoteNodeConnectionManager(
                         connectionStates,
                         coreStates,
                         nodeLogs,
+                        eventStreams,
                         node,
                         client,
                         options,
@@ -361,6 +385,7 @@ public sealed class RemoteNodeConnectionManager(
             INodeConnectionStateStore connectionStates,
             IRemoteNodeCoreStateStore coreStates,
             INodeLogStore nodeLogs,
+            IEventStreamManager eventStreams,
             NodeEntity node,
             IRemoteNodeStreamClient client,
             NodeConnectionOptions options,
@@ -368,9 +393,24 @@ public sealed class RemoteNodeConnectionManager(
         {
             var lastPersistedHeartbeat = DateTimeOffset.MinValue;
             var hasPersistedConnection = false;
+            var idleTimeout = ResolveIdleTimeout(options);
+            await using var enumerator = client.ConnectStreamAsync(cancellationToken).GetAsyncEnumerator(cancellationToken);
 
-            await foreach (var connectionEvent in client.ConnectStreamAsync(cancellationToken))
+            while (!cancellationToken.IsCancellationRequested)
             {
+                var moveNextTask = enumerator.MoveNextAsync().AsTask();
+                var completedTask = await Task.WhenAny(moveNextTask, Task.Delay(idleTimeout, cancellationToken));
+                if (!ReferenceEquals(completedTask, moveNextTask))
+                {
+                    throw new TimeoutException($"Remote node stream was idle for {idleTimeout.TotalSeconds:N0} seconds.");
+                }
+
+                if (!await moveNextTask)
+                {
+                    break;
+                }
+
+                var connectionEvent = enumerator.Current;
                 if (connectionEvent.Type is CoreLogEventType)
                 {
                     if (connectionEvent.Log is not null)
@@ -386,6 +426,7 @@ public sealed class RemoteNodeConnectionManager(
                     if (connectionEvent.Core is not null)
                     {
                         StoreCoreState(coreStates, node.Id, connectionEvent.Core);
+                        eventStreams.Dispatch(RemoteNodeStreamKeys.CoreStatus(node.Id), connectionEvent.Core);
                     }
 
                     continue;
@@ -393,6 +434,13 @@ public sealed class RemoteNodeConnectionManager(
 
                 if (connectionEvent.Type is CoreInstallEventType)
                 {
+                    if (connectionEvent.Install is not null)
+                    {
+                        eventStreams.Dispatch(
+                            RemoteNodeStreamKeys.CoreInstall(node.Id, connectionEvent.Install.JobId),
+                            connectionEvent.Install);
+                    }
+
                     if (connectionEvent.Install?.Step is InstallCoreStep.Installed)
                     {
                         await SynchronizeGeoResourcesAsync(
@@ -644,6 +692,16 @@ public sealed class RemoteNodeConnectionManager(
             var delay = TimeSpan.FromMilliseconds(initialDelay.TotalMilliseconds * multiplier);
 
             return delay <= maxDelay ? delay : maxDelay;
+        }
+
+        private static TimeSpan ResolveIdleTimeout(NodeConnectionOptions options)
+        {
+            if (options.StreamIdleTimeoutSeconds > 0)
+            {
+                return TimeSpan.FromSeconds(options.StreamIdleTimeoutSeconds);
+            }
+
+            return TimeSpan.FromSeconds(Math.Max(10, (options.StreamHeartbeatSeconds * 3) + 5));
         }
 
         private static async Task<int> GetReconnectAttemptCountAsync(

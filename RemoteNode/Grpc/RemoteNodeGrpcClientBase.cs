@@ -1,7 +1,6 @@
 using System.Net;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using Grpc.Net.Client;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
 using RemoteNode.Exceptions;
@@ -22,12 +21,12 @@ public abstract class RemoteNodeGrpcClientBase
     /// </summary>
     protected RemoteNodeGrpcClientBase(
         IOptions<RemoteNodeOptions> options,
+        IRemoteNodeGrpcChannelProvider channelProvider,
         RemoteNodeEndpoint endpoint)
     {
         Options = options.Value;
         Endpoint = endpoint;
-        Channel = GrpcChannel.ForAddress(BuildAddress(endpoint));
-        Client = new Proto.RemoteNodeService.RemoteNodeServiceClient(Channel);
+        Client = channelProvider.CreateClient(endpoint);
     }
 
     /// <summary>
@@ -44,8 +43,6 @@ public abstract class RemoteNodeGrpcClientBase
     /// Gets the generated gRPC client.
     /// </summary>
     protected Proto.RemoteNodeService.RemoteNodeServiceClient Client { get; }
-
-    private GrpcChannel Channel { get; }
 
     /// <summary>
     /// Executes a unary gRPC call and maps transport failures.
@@ -169,8 +166,4 @@ public abstract class RemoteNodeGrpcClientBase
         };
     }
 
-    private static Uri BuildAddress(RemoteNodeEndpoint endpoint)
-    {
-        return new UriBuilder("https", endpoint.Address, endpoint.ApiPort).Uri;
-    }
 }

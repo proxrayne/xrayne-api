@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
+using RemoteNode.Grpc;
 using RemoteNode.Services;
 
 namespace RemoteNode;
@@ -16,6 +17,7 @@ public static class DependencyInjection
     public static IServiceCollection AddRemoteNodes(this IServiceCollection services, RemoteNodeOptions options)
     {
         services.AddSingleton(Options.Create(options));
+        services.AddSingleton<IRemoteNodeGrpcChannelProvider, RemoteNodeGrpcChannelProvider>();
         services.AddSingleton<IRemoteNodeApiClientFactory, RemoteNodeApiClientFactory>();
         services.AddSingleton<IRemoteNodeStreamClientFactory, RemoteNodeStreamClientFactory>();
 
