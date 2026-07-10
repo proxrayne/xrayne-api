@@ -1,49 +1,82 @@
-using System.Net.Http.Headers;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
+using RemoteNode.Grpc;
 using RemoteNode.Models;
+using Proto = XRayne.ProtoTypes.RemoteNode.V1;
 
 namespace RemoteNode.Services;
 
 /// <summary>
-/// Sends authenticated request/response API calls to a remote node.
+/// Sends authenticated request/response gRPC calls to a remote node.
 /// </summary>
 public sealed class RemoteNodeApiClient(
-    IHttpClientFactory httpClientFactory,
     IOptions<RemoteNodeOptions> options,
     RemoteNodeEndpoint endpoint)
-    : RemoteNodeHttpClientBase(httpClientFactory, options, endpoint), IRemoteNodeApiClient
+    : RemoteNodeGrpcClientBase(options, endpoint), IRemoteNodeApiClient
 {
     /// <inheritdoc />
     public Task<NodePingResponse> PingAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<NodePingResponse>(HttpMethod.Get, "api/ping", null, cancellationToken);
+    {
+        return ExecuteUnaryAsync(
+            "Ping",
+            callOptions => Client.PingAsync(new Empty(), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<RemoteLogSnapshotResponse> GetLogsAsync(
         int? limit = null,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<RemoteLogSnapshotResponse>(
-            HttpMethod.Get,
-            BuildLogsPath("api/logs", limit),
-            null,
+        return ExecuteUnaryAsync(
+            "GetLogs",
+            callOptions =>
+            {
+                var request = new Proto.LogStreamRequest();
+                if (limit is not null)
+                {
+                    request.Limit = limit.Value;
+                }
+
+                return Client.GetLogsAsync(request, callOptions);
+            },
+            response => new RemoteLogSnapshotResponse(response.Limit, [.. response.Entries.Select(RemoteNodeGrpcMapper.ToDomain)]),
             cancellationToken);
     }
 
     /// <inheritdoc />
     public Task<SystemStatusResponse> GetSystemStatusAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<SystemStatusResponse>(HttpMethod.Get, "api/system/status", null, cancellationToken);
+    {
+        return ExecuteUnaryAsync(
+            "GetSystemStatus",
+            callOptions => Client.GetSystemStatusAsync(new Empty(), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<CoreStatusResponse> GetCoreStatusAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<CoreStatusResponse>(HttpMethod.Get, "api/core/status", null, cancellationToken);
+    {
+        return ExecuteUnaryAsync(
+            "GetCoreStatus",
+            callOptions => Client.GetCoreStatusAsync(new Empty(), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<InstallCoreResponse> InstallCoreAsync(
         InstallCoreRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<InstallCoreResponse>(HttpMethod.Post, "api/core/install", request, cancellationToken);
+        return ExecuteUnaryAsync(
+            "InstallCore",
+            callOptions => Client.InstallCoreAsync(ToProto(request), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
     }
 
     /// <inheritdoc />
@@ -51,10 +84,10 @@ public sealed class RemoteNodeApiClient(
         string jobId,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<InstallCoreStatusResponse>(
-            HttpMethod.Get,
-            $"api/core/install/{Uri.EscapeDataString(jobId)}/status",
-            null,
+        return ExecuteUnaryAsync(
+            "GetInstallCoreStatus",
+            callOptions => Client.GetInstallCoreStatusAsync(new Proto.GetInstallCoreStatusRequest { JobId = jobId }, callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
 
@@ -63,19 +96,33 @@ public sealed class RemoteNodeApiClient(
         StartCoreRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/start", request, cancellationToken);
+        return ExecuteUnaryAsync(
+            "StartCore",
+            callOptions => Client.StartCoreAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
     }
 
     /// <inheritdoc />
     public Task<OperationAcceptedResponse> StopCoreAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/stop", null, cancellationToken);
+    {
+        return ExecuteUnaryAsync(
+            "StopCore",
+            callOptions => Client.StopCoreAsync(new Empty(), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<OperationAcceptedResponse> RestartCoreAsync(
         StartCoreRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/core/restart", request, cancellationToken);
+        return ExecuteUnaryAsync(
+            "RestartCore",
+            callOptions => Client.RestartCoreAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
     }
 
     /// <inheritdoc />
@@ -83,16 +130,30 @@ public sealed class RemoteNodeApiClient(
         UpdateCoreConfigTemplateRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(HttpMethod.Put, "api/core/config-template", request, cancellationToken);
+        return ExecuteEmptyUnaryAsync(
+            "UpdateCoreConfigTemplate",
+            callOptions => Client.UpdateCoreConfigTemplateAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            cancellationToken);
     }
 
     /// <inheritdoc />
     public Task<OperationAcceptedResponse> RestartRuntimeAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<OperationAcceptedResponse>(HttpMethod.Post, "api/runtime/restart", null, cancellationToken);
+    {
+        return ExecuteUnaryAsync(
+            "RestartRuntime",
+            callOptions => Client.RestartRuntimeAsync(new Empty(), callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task AddInboundAsync(SyncInboundRequest request, CancellationToken cancellationToken = default)
-        => SendNoContentAsync(HttpMethod.Post, "api/core/inbounds", request, cancellationToken);
+    {
+        return ExecuteEmptyUnaryAsync(
+            "AddInbound",
+            callOptions => Client.AddInboundAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task UpdateInboundAsync(
@@ -100,26 +161,35 @@ public sealed class RemoteNodeApiClient(
         SyncInboundRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(
-            HttpMethod.Put,
-            $"api/core/inbounds/{id}",
-            request,
+        return ExecuteEmptyUnaryAsync(
+            "UpdateInbound",
+            callOptions => Client.UpdateInboundAsync(
+                new Proto.UpdateInboundRequest
+                {
+                    Id = id,
+                    Request = RemoteNodeGrpcMapper.ToProto(request)
+                },
+                callOptions),
             cancellationToken);
     }
 
     /// <inheritdoc />
     public Task DeleteInboundAsync(long id, CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(
-            HttpMethod.Delete,
-            $"api/core/inbounds/{id}",
-            null,
+        return ExecuteEmptyUnaryAsync(
+            "DeleteInbound",
+            callOptions => Client.DeleteInboundAsync(new Proto.DeleteManagedSliceRequest { Id = id }, callOptions),
             cancellationToken);
     }
 
     /// <inheritdoc />
     public Task AddOutboundAsync(SyncOutboundRequest request, CancellationToken cancellationToken = default)
-        => SendNoContentAsync(HttpMethod.Post, "api/core/outbounds", request, cancellationToken);
+    {
+        return ExecuteEmptyUnaryAsync(
+            "AddOutbound",
+            callOptions => Client.AddOutboundAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task UpdateOutboundAsync(
@@ -127,20 +197,24 @@ public sealed class RemoteNodeApiClient(
         SyncOutboundRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(
-            HttpMethod.Put,
-            $"api/core/outbounds/{id}",
-            request,
+        return ExecuteEmptyUnaryAsync(
+            "UpdateOutbound",
+            callOptions => Client.UpdateOutboundAsync(
+                new Proto.UpdateOutboundRequest
+                {
+                    Id = id,
+                    Request = RemoteNodeGrpcMapper.ToProto(request)
+                },
+                callOptions),
             cancellationToken);
     }
 
     /// <inheritdoc />
     public Task DeleteOutboundAsync(long id, CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(
-            HttpMethod.Delete,
-            $"api/core/outbounds/{id}",
-            null,
+        return ExecuteEmptyUnaryAsync(
+            "DeleteOutbound",
+            callOptions => Client.DeleteOutboundAsync(new Proto.DeleteManagedSliceRequest { Id = id }, callOptions),
             cancellationToken);
     }
 
@@ -149,32 +223,32 @@ public sealed class RemoteNodeApiClient(
         SyncRoutingRulesRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(HttpMethod.Put, "api/core/routing/rules", request, cancellationToken);
+        return ExecuteEmptyUnaryAsync(
+            "SyncRoutingRules",
+            callOptions => Client.SyncRoutingRulesAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            cancellationToken);
     }
 
     /// <inheritdoc />
     public Task<List<GeoResourceDto>> GetGeoResourcesAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<List<GeoResourceDto>>(HttpMethod.Get, "api/geo-resources", null, cancellationToken);
+    {
+        return ExecuteUnaryAsync(
+            "ListGeoResources",
+            callOptions => Client.ListGeoResourcesAsync(new Empty(), callOptions),
+            response => response.Items.Select(RemoteNodeGrpcMapper.ToDomain).ToList(),
+            cancellationToken);
+    }
 
     /// <inheritdoc />
-    public async Task<GeoResourceContent> DownloadGeoResourceAsync(
+    public Task<GeoResourceContent> DownloadGeoResourceAsync(
         string fileName,
         CancellationToken cancellationToken = default)
     {
-        var path = $"api/geo-resources/{Uri.EscapeDataString(fileName)}/content";
-        using var request = CreateRequest(HttpMethod.Get, path);
-
-        using var response = await SendAsync(
-            StandardClient,
-            request,
-            path,
-            HttpCompletionOption.ResponseHeadersRead,
+        return ExecuteUnaryAsync(
+            "DownloadGeoResource",
+            callOptions => Client.DownloadGeoResourceAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
+            response => new GeoResourceContent(response.FileName, response.Content.ToByteArray()),
             cancellationToken);
-        await EnsureSuccessAsync(response, path, cancellationToken);
-
-        var content = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-
-        return new GeoResourceContent(fileName, content);
     }
 
     /// <inheritdoc />
@@ -183,21 +257,20 @@ public sealed class RemoteNodeApiClient(
         Stream content,
         CancellationToken cancellationToken = default)
     {
-        var path = $"api/geo-resources/{Uri.EscapeDataString(fileName)}";
-        using var request = CreateRequest(HttpMethod.Put, path);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        request.Content = new StreamContent(content);
-        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        using var memory = new MemoryStream();
+        await content.CopyToAsync(memory, cancellationToken);
 
-        using var response = await SendAsync(
-            StandardClient,
-            request,
-            path,
-            HttpCompletionOption.ResponseHeadersRead,
+        return await ExecuteUnaryAsync(
+            "UploadGeoResource",
+            callOptions => Client.UploadGeoResourceAsync(
+                new Proto.UploadGeoResourceRequest
+                {
+                    FileName = fileName,
+                    Content = ByteString.CopyFrom(memory.ToArray())
+                },
+                callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
-        await EnsureSuccessAsync(response, path, cancellationToken);
-
-        return await ReadJsonAsync<GeoResourceDto>(response.Content, path, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -206,33 +279,48 @@ public sealed class RemoteNodeApiClient(
         RenameGeoResourceRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<GeoResourceDto>(
-            HttpMethod.Post,
-            $"api/geo-resources/{Uri.EscapeDataString(fileName)}/rename",
-            request,
+        return ExecuteUnaryAsync(
+            "RenameGeoResource",
+            callOptions => Client.RenameGeoResourceAsync(
+                new Proto.RenameGeoResourceRequest
+                {
+                    FileName = fileName,
+                    NewFileName = request.FileName
+                },
+                callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
 
     /// <inheritdoc />
     public Task DeleteGeoResourceAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(
-            HttpMethod.Delete,
-            $"api/geo-resources/{Uri.EscapeDataString(fileName)}",
-            null,
+        return ExecuteEmptyUnaryAsync(
+            "DeleteGeoResource",
+            callOptions => Client.DeleteGeoResourceAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
             cancellationToken);
     }
 
     /// <inheritdoc />
     public Task<List<CertificateDto>> GetCertificatesAsync(CancellationToken cancellationToken = default)
-        => SendJsonAsync<List<CertificateDto>>(HttpMethod.Get, "api/certificates", null, cancellationToken);
+    {
+        return ExecuteUnaryAsync(
+            "ListCertificates",
+            callOptions => Client.ListCertificatesAsync(new Empty(), callOptions),
+            response => response.Items.Select(RemoteNodeGrpcMapper.ToDomain).ToList(),
+            cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<CertificateDto> IssueCertificateAsync(
         IssueCertificateRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<CertificateDto>(HttpMethod.Post, "api/certificates/issue", request, cancellationToken);
+        return ExecuteUnaryAsync(
+            "IssueCertificate",
+            callOptions => Client.IssueCertificateAsync(new Proto.IssueCertificateRequest { Domain = request.Domain }, callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
     }
 
     /// <inheritdoc />
@@ -240,71 +328,47 @@ public sealed class RemoteNodeApiClient(
         UploadCertificateRequest request,
         CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<CertificateDto>(HttpMethod.Post, "api/certificates/upload", request, cancellationToken);
+        return ExecuteUnaryAsync(
+            "UploadCertificate",
+            callOptions => Client.UploadCertificateAsync(
+                new Proto.UploadCertificateRequest
+                {
+                    Domain = request.Domain,
+                    CertificateFile = request.CertificateFile,
+                    PrivateKeyFile = request.PrivateKeyFile
+                },
+                callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
+            cancellationToken);
     }
 
     /// <inheritdoc />
     public Task<CertificateDto> RenewCertificateAsync(string domain, CancellationToken cancellationToken = default)
     {
-        return SendJsonAsync<CertificateDto>(
-            HttpMethod.Post,
-            $"api/certificates/{Uri.EscapeDataString(domain)}/renew",
-            null,
+        return ExecuteUnaryAsync(
+            "RenewCertificate",
+            callOptions => Client.RenewCertificateAsync(new Proto.CertificateDomainRequest { Domain = domain }, callOptions),
+            RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
 
     /// <inheritdoc />
     public Task DeleteCertificateAsync(string domain, CancellationToken cancellationToken = default)
     {
-        return SendNoContentAsync(
-            HttpMethod.Delete,
-            $"api/certificates/{Uri.EscapeDataString(domain)}",
-            null,
+        return ExecuteEmptyUnaryAsync(
+            "DeleteCertificate",
+            callOptions => Client.DeleteCertificateAsync(new Proto.CertificateDomainRequest { Domain = domain }, callOptions),
             cancellationToken);
     }
 
-    private async Task<T> SendJsonAsync<T>(
-        HttpMethod method,
-        string path,
-        object? body,
-        CancellationToken cancellationToken)
+    private static Proto.InstallCoreRequest ToProto(InstallCoreRequest request)
     {
-        using var request = CreateRequest(method, path);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        if (body is not null)
+        var response = new Proto.InstallCoreRequest();
+        if (!string.IsNullOrWhiteSpace(request.Version))
         {
-            request.Content = CreateJsonContent(body);
+            response.Version = request.Version;
         }
 
-        using var response = await SendAsync(
-            StandardClient,
-            request,
-            path,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-        await EnsureSuccessAsync(response, path, cancellationToken);
-
-        return await ReadJsonAsync<T>(response.Content, path, cancellationToken);
-    }
-
-    private async Task SendNoContentAsync(
-        HttpMethod method,
-        string path,
-        object? body,
-        CancellationToken cancellationToken)
-    {
-        using var request = CreateRequest(method, path);
-        if (body is not null)
-        {
-            request.Content = CreateJsonContent(body);
-        }
-
-        using var response = await SendAsync(
-            StandardClient,
-            request,
-            path,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-        await EnsureSuccessAsync(response, path, cancellationToken);
+        return response;
     }
 }

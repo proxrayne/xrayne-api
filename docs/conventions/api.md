@@ -63,6 +63,8 @@ When API behavior changes, update:
 - Event streams may receive JWT through `access_token` query string for SSE.
 - Node-management endpoints are panel API endpoints and use the same JWT and
   admin permission policy model as the rest of the panel.
+- Panel-to-node calls use gRPC with the remote node API key sent as
+  `X-Node-Api-Key` metadata.
 
 ## Middleware And Filters
 
@@ -94,9 +96,12 @@ When API behavior changes, update:
 
 ## Streaming
 
-SSE endpoints should:
+Panel SSE endpoints should:
 
 - use `text/event-stream`;
 - send initial state before streaming updates;
 - clean up subscriptions in `finally`;
 - accept cancellation tokens.
+
+Panel-to-node streaming uses gRPC server-streaming from `ProtoTypes/remote_node.proto`
+instead of node HTTP/SSE endpoints.

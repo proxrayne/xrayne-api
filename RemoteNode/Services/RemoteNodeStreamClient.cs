@@ -1,32 +1,29 @@
-using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
-using RemoteNode.Exceptions;
+using RemoteNode.Grpc;
 using RemoteNode.Models;
-using RemoteNode.Parsing;
+using Proto = XRayne.ProtoTypes.RemoteNode.V1;
 
 namespace RemoteNode.Services;
 
 /// <summary>
-/// Opens and reads long-lived SSE streams from a remote node.
+/// Opens authenticated gRPC streams to one remote node.
 /// </summary>
 public sealed class RemoteNodeStreamClient(
-    IHttpClientFactory httpClientFactory,
     IOptions<RemoteNodeOptions> options,
     RemoteNodeEndpoint endpoint)
-    : RemoteNodeHttpClientBase(httpClientFactory, options, endpoint), IRemoteNodeStreamClient
+    : RemoteNodeGrpcClientBase(options, endpoint), IRemoteNodeStreamClient
 {
     /// <inheritdoc />
     public async IAsyncEnumerable<NodeConnectionEvent> ConnectStreamAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var connectionEvent in ReadServerSentEventsAsync<NodeConnectionEvent>(
-                           "api/connect",
-                           cancellationToken))
+        using var call = Client.Connect(new Empty(), CreateStreamingCallOptions(cancellationToken));
+        while (await MoveNextStreamMessageAsync("Connect", call.ResponseStream, cancellationToken))
         {
-            yield return connectionEvent;
+            yield return RemoteNodeGrpcMapper.ToDomain(call.ResponseStream.Current);
         }
     }
 
@@ -35,11 +32,16 @@ public sealed class RemoteNodeStreamClient(
         int? limit = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var logEvent in ReadServerSentEventsAsync<RemoteLogStreamEvent>(
-                           BuildLogsPath("api/logs/stream", limit),
-                           cancellationToken))
+        var request = new Proto.LogStreamRequest();
+        if (limit is not null)
         {
-            yield return logEvent;
+            request.Limit = limit.Value;
+        }
+
+        using var call = Client.StreamLogs(request, CreateStreamingCallOptions(cancellationToken));
+        while (await MoveNextStreamMessageAsync("StreamLogs", call.ResponseStream, cancellationToken))
+        {
+            yield return RemoteNodeGrpcMapper.ToDomain(call.ResponseStream.Current);
         }
     }
 
@@ -47,11 +49,10 @@ public sealed class RemoteNodeStreamClient(
     public async IAsyncEnumerable<CoreStatusResponse> CoreStatusStreamAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var state in ReadServerSentEventsAsync<CoreStatusResponse>(
-                           "api/core/status/stream",
-                           cancellationToken))
+        using var call = Client.StreamCoreStatus(new Empty(), CreateStreamingCallOptions(cancellationToken));
+        while (await MoveNextStreamMessageAsync("StreamCoreStatus", call.ResponseStream, cancellationToken))
         {
-            yield return state;
+            yield return RemoteNodeGrpcMapper.ToDomain(call.ResponseStream.Current);
         }
     }
 
@@ -60,50 +61,12 @@ public sealed class RemoteNodeStreamClient(
         string jobId,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var state in ReadServerSentEventsAsync<InstallCoreStatusResponse>(
-                           $"api/core/install/{Uri.EscapeDataString(jobId)}/stream",
-                           cancellationToken))
+        using var call = Client.StreamInstallCoreStatus(
+            new Proto.GetInstallCoreStatusRequest { JobId = jobId },
+            CreateStreamingCallOptions(cancellationToken));
+        while (await MoveNextStreamMessageAsync("StreamInstallCoreStatus", call.ResponseStream, cancellationToken))
         {
-            yield return state;
-        }
-    }
-
-    private async IAsyncEnumerable<T> ReadServerSentEventsAsync<T>(
-        string path,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        using var request = CreateRequest(HttpMethod.Get, path);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-
-        using var response = await SendAsync(
-            StreamClient,
-            request,
-            path,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-        await EnsureSuccessAsync(response, path, cancellationToken);
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        await foreach (var payload in ServerSentEventParser.ReadDataAsync(reader, cancellationToken))
-        {
-            T? value;
-            try
-            {
-                value = JsonSerializer.Deserialize<T>(payload, JsonOptions);
-            }
-            catch (JsonException exception)
-            {
-                throw new RemoteNodeProtocolException(Endpoint.NodeId, path, "Invalid SSE JSON payload.", exception);
-            }
-
-            if (value is null)
-            {
-                throw new RemoteNodeProtocolException(Endpoint.NodeId, path, "Empty SSE JSON payload.");
-            }
-
-            yield return value;
+            yield return RemoteNodeGrpcMapper.ToDomain(call.ResponseStream.Current);
         }
     }
 }

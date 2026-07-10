@@ -3,7 +3,7 @@ using RemoteNode.Models;
 namespace RemoteNode.Services;
 
 /// <summary>
-/// Opens authenticated SSE streams to one remote node.
+/// Opens authenticated gRPC streams to one remote node.
 /// </summary>
 public interface IRemoteNodeStreamClient
 {

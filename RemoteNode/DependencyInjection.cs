@@ -6,17 +6,16 @@ using RemoteNode.Services;
 namespace RemoteNode;
 
 /// <summary>
-/// Registers remote node API protocol clients.
+/// Registers remote node gRPC protocol clients.
 /// </summary>
 public static class DependencyInjection
 {
     /// <summary>
-    /// Adds remote node API clients and related protocol services.
+    /// Adds remote node gRPC clients and related protocol services.
     /// </summary>
     public static IServiceCollection AddRemoteNodes(this IServiceCollection services, RemoteNodeOptions options)
     {
         services.AddSingleton(Options.Create(options));
-        services.AddHttpClient("remote-node");
         services.AddSingleton<IRemoteNodeApiClientFactory, RemoteNodeApiClientFactory>();
         services.AddSingleton<IRemoteNodeStreamClientFactory, RemoteNodeStreamClientFactory>();
 
