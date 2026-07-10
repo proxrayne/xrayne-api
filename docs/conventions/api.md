@@ -9,6 +9,8 @@
   routes change.
 - Use offset-paginated response fields `items`, `totalItems`, `currentPage`,
   and `totalPages` for list endpoints that need page-number navigation.
+- Use plural resource names for user management endpoints, for example
+  `api/users`.
 
 ## Controllers
 
@@ -30,6 +32,9 @@
 - Return intended validation failures through consistent API errors and documented
   status codes.
 - Do not hide validation inside repositories.
+- Public API enum string values are declared explicitly with
+  `JsonStringEnumMemberName` and are used in JSON and query parameters. Numeric
+  enum values are accepted on input.
 
 ## Scalar / OpenAPI
 

@@ -17,6 +17,6 @@ public enum GeoResourceSourceType
     /// <summary>
     /// Geo resource is refreshed from a URL by a scheduled job.
     /// </summary>
-    [JsonStringEnumMemberName("autoUpdate")]
+    [JsonStringEnumMemberName("auto_update")]
     AutoUpdate
 }

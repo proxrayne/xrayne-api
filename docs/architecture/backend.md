@@ -152,6 +152,18 @@ assigned inbounds. Deletion is blocked while users are assigned to the
 warehouse. The warehouse API requires the `manage_warehouses` administrator
 permission, which is also satisfied by `super_admin`.
 
+Subscription users are managed through `/api/users`. User lists support
+username search, multi-status filtering, offset pagination, newest-first default
+sorting by creation date, and explicit sorting by username, status, configured
+traffic limit, and connection count. Create, update, and delete operations use
+the existing `create_users`, `edit_users`, and `delete_users` permissions. Users
+must belong to a warehouse; new users do not create connection credentials
+automatically, so the connection count starts at zero until a separate
+connection flow adds records. User creation uses `onHoldDays` to create an
+initial on-hold user and extends `ExpireAt` by the same duration when an
+expiration date is provided. User reset strategy is stored only when `ExpireAt`
+is configured.
+
 ## Contracts Layer
 
 `Contracts` owns shared types used across backend projects:

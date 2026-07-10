@@ -21,12 +21,12 @@ public interface IUserRepository
     /// <summary>
     /// Searches users.
     /// </summary>
-    Task<CursorPage<UserEntity>> SearchAsync(UserFilter filter, CancellationToken cancellationToken = default);
+    Task<OffsetPage<UserEntity>> SearchAsync(UserFilter filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Searches users owned by an administrator.
     /// </summary>
-    Task<CursorPage<UserEntity>> SearchAsync(Guid adminId, UserFilter filter, CancellationToken cancellationToken = default);
+    Task<OffsetPage<UserEntity>> SearchAsync(Guid adminId, UserFilter filter, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a user by identifier.
@@ -64,6 +64,15 @@ public interface IUserRepository
     Task<UserEntity> AddAsync(UserEntity user, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Adds a user owned by an administrator.
+    /// </summary>
+    Task<UserEntity> AddAsync(
+        Guid adminId,
+        UserEntity user,
+        WarehouseEntity warehouse,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates a user.
     /// </summary>
     Task<UserEntity?> UpdateAsync(UserEntity user, CancellationToken cancellationToken = default);
@@ -72,6 +81,16 @@ public interface IUserRepository
     /// Updates a user owned by an administrator.
     /// </summary>
     Task<UserEntity?> UpdateAsync(Guid adminId, UserEntity user, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates a user owned by an administrator.
+    /// </summary>
+    Task<UserEntity?> UpdateAsync(
+        Guid adminId,
+        long id,
+        UserEntity user,
+        WarehouseEntity warehouse,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a user by identifier.

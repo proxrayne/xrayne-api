@@ -1,12 +1,12 @@
 using System.Globalization;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Api.Auth;
 using Api.Filters;
+using Api.ModelBinding;
 using Contracts;
 using Contracts.Configurations;
 using Contracts.Values;
+using Data;
 using Infrastructure;
 using Infrastructure.Services;
 using Infrastructure.Tasks;
@@ -17,7 +17,6 @@ using Microsoft.OpenApi.Models;
 using Quartz;
 using RemoteNode;
 using RemoteNode.Configurations;
-using Data;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -60,10 +59,7 @@ try
     builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ApiExceptionFilter>();
-    }).AddJsonOptions(o =>
-    {
-        o.JsonSerializerOptions.Converters.Add(
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        options.ModelBinderProviders.Insert(0, new JsonStringEnumMemberNameModelBinderProvider());
     });
     builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
@@ -154,10 +150,9 @@ try
                     }
 
                     return Task.CompletedTask;
-                }
+                },
+                OnTokenValidated = AdminJwtValidation.ValidateActiveAdminAsync
             };
-
-            options.Events.OnTokenValidated = AdminJwtValidation.ValidateActiveAdminAsync;
         });
 
     builder.Services.AddAuthorization(options =>
@@ -173,7 +168,6 @@ try
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddData(builder.Configuration.GetConnectionString("Default"));
     builder.Services.AddContracts(builder.Configuration);
-    builder.Services.AddSingleton<IPanelRestartService, PanelRestartService>();
 
     builder.Services.AddQuartz(options =>
     {

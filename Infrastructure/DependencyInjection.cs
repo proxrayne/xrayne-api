@@ -1,11 +1,11 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Contracts.Configurations;
 using Contracts.Values;
 using Infrastructure.Dto;
 using Infrastructure.Services;
 using Infrastructure.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Infrastructure;
 
@@ -25,6 +25,7 @@ public static class DependencyInjection
                 PathProvider.Paths.DownloadsDirectory
             ))
         );
+        services.AddSingleton<IPanelRestartService, PanelRestartService>();
 
         services.AddSingleton<IEventStreamManager, EventStreamManager>();
         services.AddSingleton<INodeLogStore, NodeLogStore>();
