@@ -42,19 +42,19 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     /// <summary>
     /// Gets one routing rule assigned to a remote node.
     /// </summary>
-    [HttpGet("{routingRuleId:long}")]
+    [HttpGet("{id:long}")]
     [EndpointSummary("Get node routing rule")]
     [EndpointDescription("Get one routing rule assigned to a remote node profile with its full JSON configuration.")]
     [ProducesResponseType(typeof(NodeRoutingRuleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeRoutingRuleDto> GetById(
         long nodeId,
-        long routingRuleId,
+        long id,
         CancellationToken cancellationToken)
     {
         try
         {
-            var routingRule = await routingRules.GetByNodeAndIdAsync(nodeId, routingRuleId, cancellationToken);
+            var routingRule = await routingRules.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
 
             return mapper.Map<NodeRoutingRuleDto>(routingRule);
         }
@@ -83,7 +83,6 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
             var created = await routingRules.CreateAsync(
                 AdminId,
                 nodeId,
-                request.Tag,
                 request.Config,
                 request.Enabled,
                 cancellationToken);
@@ -99,7 +98,7 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     /// <summary>
     /// Updates a manually managed routing rule for a remote node.
     /// </summary>
-    [HttpPut("{routingRuleId:long}")]
+    [HttpPut("{id:long}")]
     [EndpointSummary("Update node routing rule")]
     [EndpointDescription("Update a manually managed routing rule assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeRoutingRuleDto), StatusCodes.Status200OK)]
@@ -107,7 +106,7 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeRoutingRuleDto> Update(
         long nodeId,
-        long routingRuleId,
+        long id,
         [FromBody] UpdateNodeRoutingRuleRequest request,
         CancellationToken cancellationToken)
     {
@@ -115,8 +114,7 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         {
             var updated = await routingRules.UpdateAsync(
                 nodeId,
-                routingRuleId,
-                request.Tag,
+                id,
                 request.Config,
                 request.Enabled,
                 cancellationToken);
@@ -132,7 +130,7 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     /// <summary>
     /// Updates enabled state for a routing rule assigned to a remote node.
     /// </summary>
-    [HttpPatch("{routingRuleId:long}/enabled")]
+    [HttpPatch("{id:long}/enabled")]
     [EndpointSummary("Toggle node routing rule")]
     [EndpointDescription("Enable or disable a routing rule assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeRoutingRuleDto), StatusCodes.Status200OK)]
@@ -140,7 +138,7 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeRoutingRuleDto> UpdateEnabled(
         long nodeId,
-        long routingRuleId,
+        long id,
         [FromBody] UpdateNodeRoutingRuleEnabledRequest request,
         CancellationToken cancellationToken)
     {
@@ -148,7 +146,7 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         {
             var updated = await routingRules.UpdateEnabledAsync(
                 nodeId,
-                routingRuleId,
+                id,
                 request.Enabled,
                 cancellationToken);
 
@@ -178,7 +176,7 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         {
             var updated = await routingRules.UpdateOrderAsync(
                 nodeId,
-                request.RoutingRuleIds,
+                request.RuleIds,
                 cancellationToken);
 
             return mapper.Map<List<NodeRoutingRuleListItemDto>>(updated);
@@ -192,17 +190,17 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     /// <summary>
     /// Deletes a manually managed routing rule from a remote node.
     /// </summary>
-    [HttpDelete("{routingRuleId:long}")]
+    [HttpDelete("{id:long}")]
     [EndpointSummary("Delete node routing rule")]
     [EndpointDescription("Delete a manually managed routing rule assigned to a remote node profile.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(long nodeId, long routingRuleId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(long nodeId, long id, CancellationToken cancellationToken)
     {
         try
         {
-            await routingRules.DeleteAsync(nodeId, routingRuleId, cancellationToken);
+            await routingRules.DeleteAsync(nodeId, id, cancellationToken);
 
             return NoContent();
         }

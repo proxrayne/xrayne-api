@@ -11,5 +11,5 @@ public sealed class UpdateNodeRoutingRuleOrderRequest
     /// Gets manual routing rule ids in their desired order.
     /// </summary>
     [Required]
-    public required List<long> RoutingRuleIds { get; init; }
+    public required List<long> RuleIds { get; init; }
 }

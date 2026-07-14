@@ -78,12 +78,12 @@ public interface IRemoteNodeApiClient
     /// <summary>
     /// Replaces an inbound in the remote node runtime when xray-core is started.
     /// </summary>
-    Task UpdateInboundAsync(long id, SyncInboundRequest request, CancellationToken cancellationToken = default);
+    Task UpdateInboundAsync(string id, SyncInboundRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes an inbound from the remote node runtime when xray-core is started.
     /// </summary>
-    Task DeleteInboundAsync(long id, CancellationToken cancellationToken = default);
+    Task DeleteInboundAsync(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds an outbound to the remote node runtime when xray-core is started.
@@ -93,12 +93,12 @@ public interface IRemoteNodeApiClient
     /// <summary>
     /// Replaces an outbound in the remote node runtime when xray-core is started.
     /// </summary>
-    Task UpdateOutboundAsync(long id, SyncOutboundRequest request, CancellationToken cancellationToken = default);
+    Task UpdateOutboundAsync(string id, SyncOutboundRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes an outbound from the remote node runtime when xray-core is started.
     /// </summary>
-    Task DeleteOutboundAsync(long id, CancellationToken cancellationToken = default);
+    Task DeleteOutboundAsync(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Replaces routing rules in the remote node runtime when xray-core is started.

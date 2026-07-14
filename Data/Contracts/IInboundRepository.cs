@@ -21,6 +21,8 @@ public interface IInboundRepository
 
     Task<InboundEntity?> GetByNodeAndIdAsync(long nodeId, long id, CancellationToken cancellationToken = default);
 
+    Task<InboundEntity?> GetByNodeAndTagAsync(long nodeId, string tag, CancellationToken cancellationToken = default);
+
     Task<InboundEntity> AddAsync(InboundEntity inbound, CancellationToken cancellationToken = default);
 
     Task<InboundEntity> AddAsync(Guid adminId, long nodeId, InboundEntity inbound, CancellationToken cancellationToken = default);

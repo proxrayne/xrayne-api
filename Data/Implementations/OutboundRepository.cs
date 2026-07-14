@@ -59,6 +59,15 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
                 ct);
     }
 
+    public async Task<OutboundEntity?> GetByNodeAndTagAsync(long nodeId, string tag, CancellationToken ct = default)
+    {
+        var items = await _outboundsWithRelations
+            .Where(outbound => EF.Property<long>(outbound, "NodeId") == nodeId)
+            .ToListAsync(ct);
+
+        return items.SingleOrDefault(outbound => string.Equals(outbound.Tag, tag, StringComparison.Ordinal));
+    }
+
     public async Task<OutboundEntity> AddAsync(OutboundEntity outbound, CancellationToken ct = default)
     {
         await dbContext.Outbounds.AddAsync(outbound, ct);

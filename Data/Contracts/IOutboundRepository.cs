@@ -16,6 +16,8 @@ public interface IOutboundRepository
 
     Task<OutboundEntity?> GetByNodeAndIdAsync(long nodeId, long id, CancellationToken cancellationToken = default);
 
+    Task<OutboundEntity?> GetByNodeAndTagAsync(long nodeId, string tag, CancellationToken cancellationToken = default);
+
     Task<OutboundEntity> AddAsync(OutboundEntity outbound, CancellationToken cancellationToken = default);
 
     Task<OutboundEntity> AddAsync(Guid adminId, long nodeId, OutboundEntity outbound, CancellationToken cancellationToken = default);

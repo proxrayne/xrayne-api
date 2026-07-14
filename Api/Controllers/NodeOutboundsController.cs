@@ -42,19 +42,19 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Gets one outbound assigned to a remote node.
     /// </summary>
-    [HttpGet("{outboundId:long}")]
+    [HttpGet("{id:long}")]
     [EndpointSummary("Get node outbound")]
     [EndpointDescription("Get one outbound assigned to a remote node profile with its full JSON configuration.")]
     [ProducesResponseType(typeof(NodeOutboundDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeOutboundDto> GetById(
         long nodeId,
-        long outboundId,
+        long id,
         CancellationToken cancellationToken)
     {
         try
         {
-            var outbound = await outbounds.GetByNodeAndIdAsync(nodeId, outboundId, cancellationToken);
+            var outbound = await outbounds.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
 
             return mapper.Map<NodeOutboundDto>(outbound);
         }
@@ -99,7 +99,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Updates a manually managed outbound for a remote node.
     /// </summary>
-    [HttpPut("{outboundId:long}")]
+    [HttpPut("{id:long}")]
     [EndpointSummary("Update node outbound")]
     [EndpointDescription("Update a manually managed outbound assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeOutboundDto), StatusCodes.Status200OK)]
@@ -108,7 +108,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<NodeOutboundDto> Update(
         long nodeId,
-        long outboundId,
+        long id,
         [FromBody] UpdateNodeOutboundRequest request,
         CancellationToken cancellationToken)
     {
@@ -116,7 +116,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
         {
             var updated = await outbounds.UpdateAsync(
                 nodeId,
-                outboundId,
+                id,
                 request.Config,
                 request.Enabled,
                 cancellationToken);
@@ -132,7 +132,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Updates enabled state for an outbound assigned to a remote node.
     /// </summary>
-    [HttpPatch("{outboundId:long}/enabled")]
+    [HttpPatch("{id:long}/enabled")]
     [EndpointSummary("Toggle node outbound")]
     [EndpointDescription("Enable or disable an outbound assigned to a remote node profile.")]
     [ProducesResponseType(typeof(NodeOutboundDto), StatusCodes.Status200OK)]
@@ -141,7 +141,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<NodeOutboundDto> UpdateEnabled(
         long nodeId,
-        long outboundId,
+        long id,
         [FromBody] UpdateNodeOutboundEnabledRequest request,
         CancellationToken cancellationToken)
     {
@@ -149,7 +149,7 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
         {
             var updated = await outbounds.UpdateEnabledAsync(
                 nodeId,
-                outboundId,
+                id,
                 request.Enabled,
                 cancellationToken);
 
@@ -164,17 +164,17 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     /// <summary>
     /// Deletes a manually managed outbound from a remote node.
     /// </summary>
-    [HttpDelete("{outboundId:long}")]
+    [HttpDelete("{id:long}")]
     [EndpointSummary("Delete node outbound")]
     [EndpointDescription("Delete a manually managed outbound assigned to a remote node profile.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(long nodeId, long outboundId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(long nodeId, long id, CancellationToken cancellationToken)
     {
         try
         {
-            await outbounds.DeleteAsync(nodeId, outboundId, cancellationToken);
+            await outbounds.DeleteAsync(nodeId, id, cancellationToken);
 
             return NoContent();
         }

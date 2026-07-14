@@ -75,6 +75,15 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
                 ct);
     }
 
+    public async Task<InboundEntity?> GetByNodeAndTagAsync(long nodeId, string tag, CancellationToken ct = default)
+    {
+        var items = await _inboundsWithRelations
+            .Where(inbound => EF.Property<long>(inbound, "NodeId") == nodeId)
+            .ToListAsync(ct);
+
+        return items.SingleOrDefault(inbound => string.Equals(inbound.Tag, tag, StringComparison.Ordinal));
+    }
+
     public async Task<InboundEntity> AddAsync(InboundEntity inbound, CancellationToken ct = default)
     {
         await dbContext.Inbounds.AddAsync(inbound, ct);

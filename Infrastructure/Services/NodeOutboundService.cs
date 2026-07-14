@@ -84,6 +84,7 @@ public sealed class NodeOutboundService(
             throw new NodeOutboundReadonlyException("Readonly outbounds can only be enabled or disabled.");
         }
 
+        var oldTag = outbound.Tag!;
         var wasEnabled = outbound.Enabled;
         var outboundConfig = ParseOutbound(config);
         var existing = await outbounds.GetByNodeIdAsync(nodeId, cancellationToken);
@@ -100,11 +101,11 @@ public sealed class NodeOutboundService(
 
         if (updated.Enabled)
         {
-            await SyncRemoteUpdateAsync(node, updated, cancellationToken);
+            await SyncRemoteUpdateAsync(node, oldTag, updated, cancellationToken);
         }
         else if (wasEnabled)
         {
-            await SyncRemoteDeleteAsync(node, outbound.Id, cancellationToken);
+            await SyncRemoteDeleteAsync(node, oldTag, cancellationToken);
         }
 
         return updated;
@@ -140,7 +141,7 @@ public sealed class NodeOutboundService(
         }
         else
         {
-            await SyncRemoteDeleteAsync(node, updated.Id, cancellationToken);
+            await SyncRemoteDeleteAsync(node, updated, cancellationToken);
         }
 
         return updated;
@@ -156,7 +157,7 @@ public sealed class NodeOutboundService(
             throw new NodeOutboundReadonlyException("Readonly outbounds are managed through the node config template.");
         }
 
-        var id = outbound.Id;
+        var outboundTag = outbound.Tag!;
         var wasEnabled = outbound.Enabled;
         var deleted = await outbounds.DeleteAsync(outbound.Id, cancellationToken);
         if (!deleted)
@@ -166,7 +167,7 @@ public sealed class NodeOutboundService(
 
         if (wasEnabled)
         {
-            await SyncRemoteDeleteAsync(node, id, cancellationToken);
+            await SyncRemoteDeleteAsync(node, outboundTag, cancellationToken);
         }
     }
 
@@ -178,6 +179,7 @@ public sealed class NodeOutboundService(
         CancellationToken cancellationToken = default)
     {
         var desired = (template.Outbounds ?? [])
+            .Select(NormalizeOutboundTag)
             .Where(outbound => !string.IsNullOrWhiteSpace(outbound.Tag))
             .GroupBy(outbound => outbound.Tag, StringComparer.Ordinal)
             .Select(group => group.First())
@@ -190,12 +192,11 @@ public sealed class NodeOutboundService(
 
         foreach (var stale in readonlyByTag.Values.Where(outbound => !desiredTags.Contains(outbound.Tag!)).ToList())
         {
-            var id = stale.Id;
             var wasEnabled = stale.Enabled;
             await outbounds.DeleteAsync(stale.Id, cancellationToken);
             if (wasEnabled)
             {
-                await SyncRemoteDeleteAsync(node, id, cancellationToken);
+                await SyncRemoteDeleteAsync(node, stale, cancellationToken);
             }
         }
 
@@ -212,6 +213,11 @@ public sealed class NodeOutboundService(
 
             if (existingReadonly is null)
             {
+                if (!valid)
+                {
+                    continue;
+                }
+
                 var created = await outbounds.AddAsync(
                     adminId,
                     node.Id,
@@ -248,7 +254,7 @@ public sealed class NodeOutboundService(
             }
             else if (wasEnabled)
             {
-                await SyncRemoteDeleteAsync(node, existingReadonly.Id, cancellationToken);
+                await SyncRemoteDeleteAsync(node, existingReadonly, cancellationToken);
             }
         }
     }
@@ -273,7 +279,7 @@ public sealed class NodeOutboundService(
                 throw new NodeOutboundValidationException("Outbound tag is required.");
             }
 
-            return outbound;
+            return NormalizeOutboundTag(outbound);
         }
         catch (JsonException exception)
         {
@@ -297,22 +303,17 @@ public sealed class NodeOutboundService(
             throw new NodeOutboundValidationException("Outbound tag is required.");
         }
 
-        if (!enabled && allowDisabledReadonlyConflicts)
-        {
-            return;
-        }
-
         foreach (var outbound in existing.Where(outbound => outbound.Id != currentId))
         {
+            if (string.Equals(outbound.Tag, config.Tag, StringComparison.Ordinal))
+            {
+                throw new NodeOutboundConflictException($"Outbound tag '{config.Tag}' already exists on this node.");
+            }
+
             var conflictsWithReadonly = outbound.ReadOnly && !outbound.Enabled;
             if (allowDisabledReadonlyConflicts && conflictsWithReadonly)
             {
                 continue;
-            }
-
-            if (string.Equals(outbound.Tag, config.Tag, StringComparison.Ordinal))
-            {
-                throw new NodeOutboundConflictException($"Outbound tag '{config.Tag}' already exists on this node.");
             }
         }
     }
@@ -328,11 +329,21 @@ public sealed class NodeOutboundService(
             {
                 if (outbound.ReadOnly && !outbound.Enabled)
                 {
-                    return true;
+                    return !string.Equals(outbound.Tag, config.Tag, StringComparison.Ordinal);
                 }
 
                 return !string.Equals(outbound.Tag, config.Tag, StringComparison.Ordinal);
             });
+    }
+
+    private static Outbound NormalizeOutboundTag(Outbound outbound)
+    {
+        if (!string.IsNullOrWhiteSpace(outbound.Tag))
+        {
+            outbound.Tag = outbound.Tag.Trim();
+        }
+
+        return outbound;
     }
 
     private async Task<NodeEntity> GetNodeAsync(long nodeId, CancellationToken cancellationToken)
@@ -371,12 +382,21 @@ public sealed class NodeOutboundService(
         }
 
         await CreateRemoteNodeClient(node).AddOutboundAsync(
-            await CreateSyncOutboundRequestAsync(node.Id, outbound, cancellationToken),
+            CreateSyncOutboundRequest(outbound),
             cancellationToken);
     }
 
     private async Task SyncRemoteUpdateAsync(
         NodeEntity node,
+        OutboundEntity outbound,
+        CancellationToken cancellationToken)
+    {
+        await SyncRemoteUpdateAsync(node, outbound.Tag!, outbound, cancellationToken);
+    }
+
+    private async Task SyncRemoteUpdateAsync(
+        NodeEntity node,
+        string oldTag,
         OutboundEntity outbound,
         CancellationToken cancellationToken)
     {
@@ -386,14 +406,14 @@ public sealed class NodeOutboundService(
         }
 
         await CreateRemoteNodeClient(node).UpdateOutboundAsync(
-            outbound.Id,
-            await CreateSyncOutboundRequestAsync(node.Id, outbound, cancellationToken),
+            oldTag,
+            CreateSyncOutboundRequest(outbound),
             cancellationToken);
     }
 
     private async Task SyncRemoteDeleteAsync(
         NodeEntity node,
-        long id,
+        string tag,
         CancellationToken cancellationToken)
     {
         if (!IsRemoteCoreRunning(node.Id))
@@ -401,24 +421,26 @@ public sealed class NodeOutboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).DeleteOutboundAsync(id, cancellationToken);
+        await CreateRemoteNodeClient(node).DeleteOutboundAsync(tag, cancellationToken);
     }
 
-    private async Task<SyncOutboundRequest> CreateSyncOutboundRequestAsync(
-        long nodeId,
+    private async Task SyncRemoteDeleteAsync(
+        NodeEntity node,
         OutboundEntity outbound,
         CancellationToken cancellationToken)
     {
-        var enabled = (await outbounds.GetByNodeIdAsync(nodeId, cancellationToken))
-            .Where(item => item.Enabled)
-            .OrderBy(item => item.CreatedAt)
-            .ThenBy(item => item.Id)
-            .ToList();
+        if (!IsRemoteCoreRunning(node.Id))
+        {
+            return;
+        }
 
+        await CreateRemoteNodeClient(node).DeleteOutboundAsync(outbound.Tag!, cancellationToken);
+    }
+
+    private static SyncOutboundRequest CreateSyncOutboundRequest(OutboundEntity outbound)
+    {
         return new SyncOutboundRequest
         {
-            Id = outbound.Id,
-            Position = Math.Max(0, enabled.FindIndex(item => item.Id == outbound.Id)),
             Outbound = outbound.Config
         };
     }

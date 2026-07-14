@@ -133,16 +133,10 @@ public static class RemoteNodeGrpcMapper
     /// </summary>
     public static Proto.StartCoreRequest ToProto(StartCoreRequest value)
     {
-        var request = new Proto.StartCoreRequest
+        return new Proto.StartCoreRequest
         {
-            ConfigTemplateJson = SerializeXray(value.ConfigTemplate)
+            ConfigJson = SerializeXray(value.Config)
         };
-
-        request.Inbounds.AddRange(value.Inbounds.Select(ToProto));
-        request.Outbounds.AddRange(value.Outbounds.Select(ToProto));
-        request.RoutingRules.AddRange(value.RoutingRules.Select(ToProto));
-
-        return request;
     }
 
     /// <summary>
@@ -163,7 +157,7 @@ public static class RemoteNodeGrpcMapper
     {
         return new Proto.SyncInboundRequest
         {
-            Inbound = ToProto((InboundSyncItem)value)
+            InboundJson = SerializeXray(value.Inbound)
         };
     }
 
@@ -174,7 +168,7 @@ public static class RemoteNodeGrpcMapper
     {
         return new Proto.SyncOutboundRequest
         {
-            Outbound = ToProto((OutboundSyncItem)value)
+            OutboundJson = SerializeXray(value.Outbound)
         };
     }
 
@@ -184,7 +178,7 @@ public static class RemoteNodeGrpcMapper
     public static Proto.SyncRoutingRulesRequest ToProto(SyncRoutingRulesRequest value)
     {
         var request = new Proto.SyncRoutingRulesRequest();
-        request.RoutingRules.AddRange(value.RoutingRules.Select(ToProto));
+        request.RoutingRuleJson.AddRange(value.RoutingRules.Select(SerializeXray));
 
         return request;
     }
@@ -262,36 +256,6 @@ public static class RemoteNodeGrpcMapper
             ToDateTimeOffset(value.Timestamp),
             value.Level,
             value.Message);
-    }
-
-    private static Proto.ManagedInbound ToProto(InboundSyncItem value)
-    {
-        return new Proto.ManagedInbound
-        {
-            Id = value.Id,
-            Position = value.Position,
-            InboundJson = SerializeXray(value.Inbound)
-        };
-    }
-
-    private static Proto.ManagedOutbound ToProto(OutboundSyncItem value)
-    {
-        return new Proto.ManagedOutbound
-        {
-            Id = value.Id,
-            Position = value.Position,
-            OutboundJson = SerializeXray(value.Outbound)
-        };
-    }
-
-    private static Proto.ManagedRoutingRule ToProto(RoutingRuleSyncItem value)
-    {
-        return new Proto.ManagedRoutingRule
-        {
-            Id = value.Id,
-            Position = value.Position,
-            RoutingRuleJson = SerializeXray(value.RoutingRule)
-        };
     }
 
     private static RemoteCoreStatus ToDomain(Proto.RemoteCoreStatus value)

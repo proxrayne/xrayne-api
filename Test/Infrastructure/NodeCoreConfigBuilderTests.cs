@@ -100,37 +100,31 @@ public sealed class NodeCoreConfigBuilderTests
                 new RoutingRuleEntity
                 {
                     Id = 1,
-                    Tag = "disabled-rule",
                     Position = 1,
                     Enabled = false,
-                    Config = new RoutingRule { OutboundTag = "disabled" }
+                    Config = new RoutingRule { RuleTag = "disabled-rule", OutboundTag = "disabled" }
                 },
                 new RoutingRuleEntity
                 {
                     Id = 2,
-                    Tag = "enabled-rule",
                     Position = 2,
                     Enabled = true,
-                    Config = new RoutingRule { OutboundTag = "first" }
+                    Config = new RoutingRule { RuleTag = "enabled-rule", OutboundTag = "first" }
                 }
             ]
         };
         var builder = new NodeCoreConfigBuilder();
 
         var request = builder.Build(node);
-        var config = ToJsonObject(request.ConfigTemplate);
+        var config = ToJsonObject(request.Config);
 
         config["stats"].Should().NotBeNull();
-        config.ContainsKey("inbounds").Should().BeFalse();
-        config.ContainsKey("outbounds").Should().BeFalse();
-        request.Inbounds.Should().ContainSingle(item => item.Id == 1 && item.Position == 0);
-        request.Outbounds.Should().HaveCount(3);
-        request.Outbounds[0].Outbound.Tag.Should().Be("first");
-        request.Outbounds[0].Position.Should().Be(0);
-        request.Outbounds[1].Outbound.Tag.Should().Be("second");
-        request.Outbounds[1].Position.Should().Be(1);
-        request.Outbounds[2].Outbound.Tag.Should().Be("readonly");
-        request.RoutingRules.Should().ContainSingle(item => item.Id == 2 && item.Position == 2);
+        request.Config.Inbounds.Should().ContainSingle(inbound => inbound.Tag == "socks-in");
+        request.Config.Outbounds.Should().HaveCount(3);
+        request.Config.Outbounds.Select(outbound => outbound.Tag)
+            .Should()
+            .Equal("first", "second", "readonly");
+        request.Config.Routing!.Rules.Should().ContainSingle(rule => rule.RuleTag == "enabled-rule");
     }
 
     [Fact]
@@ -168,14 +162,14 @@ public sealed class NodeCoreConfigBuilderTests
         var builder = new NodeCoreConfigBuilder();
 
         var request = builder.Build(node);
-        var config = ToJsonObject(request.ConfigTemplate);
+        var config = ToJsonObject(request.Config);
 
-        config.ContainsKey("inbounds").Should().BeFalse();
-        config.ContainsKey("outbounds").Should().BeFalse();
-        config["routing"]!.AsObject().ContainsKey("rules").Should().BeFalse();
-        request.Inbounds.Should().BeEmpty();
-        request.Outbounds.Should().BeEmpty();
-        request.RoutingRules.Should().BeEmpty();
+        config.ContainsKey("inbounds").Should().BeTrue();
+        config.ContainsKey("outbounds").Should().BeTrue();
+        config["routing"]!.AsObject().ContainsKey("rules").Should().BeTrue();
+        request.Config.Inbounds.Should().BeEmpty();
+        request.Config.Outbounds.Should().BeEmpty();
+        request.Config.Routing!.Rules.Should().BeEmpty();
     }
 
     private static XrayConfig DeserializeConfig(string json)

@@ -50,6 +50,7 @@ public sealed class NodeInboundsControllerTests
         var result = await controller.GetById(1, inbound.Id, CancellationToken.None);
 
         result.Config.Should().Contain("\"tag\"");
+        result.Id.Should().Be(inbound.Id);
         result.Tag.Should().Be(inbound.Tag);
     }
 

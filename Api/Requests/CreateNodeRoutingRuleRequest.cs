@@ -8,13 +8,6 @@ namespace Api.Requests;
 public sealed class CreateNodeRoutingRuleRequest
 {
     /// <summary>
-    /// Gets the display tag for the managed routing rule.
-    /// </summary>
-    [Required]
-    [MaxLength(128)]
-    public required string Tag { get; init; }
-
-    /// <summary>
     /// Gets the xray routing rule JSON configuration.
     /// </summary>
     [Required]

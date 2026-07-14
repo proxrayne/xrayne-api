@@ -57,6 +57,18 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
                 ct);
     }
 
+    public async Task<RoutingRuleEntity?> GetByNodeAndRuleTagAsync(
+        long nodeId,
+        string ruleTag,
+        CancellationToken ct = default)
+    {
+        var items = await RoutingRulesWithRelations
+            .Where(routingRule => EF.Property<long>(routingRule, "NodeId") == nodeId)
+            .ToListAsync(ct);
+
+        return items.SingleOrDefault(rule => string.Equals(rule.RuleTag, ruleTag, StringComparison.Ordinal));
+    }
+
     public async Task<RoutingRuleEntity> AddAsync(RoutingRuleEntity routingRule, CancellationToken ct = default)
     {
         await dbContext.RoutingRules.AddAsync(routingRule, ct);

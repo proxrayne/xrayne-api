@@ -29,6 +29,9 @@ public sealed class NodeMappingProfile : Profile
 
         CreateMap<InboundEntity, NodeInboundDto>()
             .ForCtorParam(
+                nameof(NodeInboundDto.Id),
+                options => options.MapFrom(inbound => inbound.Id))
+            .ForCtorParam(
                 nameof(NodeInboundDto.Port),
                 options => options.MapFrom(inbound => inbound.Port.ToString()))
             .ForCtorParam(
@@ -37,10 +40,16 @@ public sealed class NodeMappingProfile : Profile
 
         CreateMap<InboundEntity, NodeInboundListItemDto>()
             .ForCtorParam(
+                nameof(NodeInboundListItemDto.Id),
+                options => options.MapFrom(inbound => inbound.Id))
+            .ForCtorParam(
                 nameof(NodeInboundListItemDto.Port),
                 options => options.MapFrom(inbound => inbound.Port.ToString()));
 
         CreateMap<OutboundEntity, NodeOutboundDto>()
+            .ForCtorParam(
+                nameof(NodeOutboundDto.Id),
+                options => options.MapFrom(outbound => outbound.Id))
             .ForCtorParam(
                 nameof(NodeOutboundDto.Tag),
                 options => options.MapFrom(outbound => outbound.Tag ?? string.Empty))
@@ -50,15 +59,30 @@ public sealed class NodeMappingProfile : Profile
 
         CreateMap<OutboundEntity, NodeOutboundListItemDto>()
             .ForCtorParam(
+                nameof(NodeOutboundListItemDto.Id),
+                options => options.MapFrom(outbound => outbound.Id))
+            .ForCtorParam(
                 nameof(NodeOutboundListItemDto.Tag),
                 options => options.MapFrom(outbound => outbound.Tag ?? string.Empty));
 
         CreateMap<RoutingRuleEntity, NodeRoutingRuleDto>()
             .ForCtorParam(
+                nameof(NodeRoutingRuleDto.Id),
+                options => options.MapFrom(rule => rule.Id))
+            .ForCtorParam(
+                nameof(NodeRoutingRuleDto.Tag),
+                options => options.MapFrom(rule => rule.RuleTag ?? string.Empty))
+            .ForCtorParam(
                 nameof(NodeRoutingRuleDto.Config),
                 options => options.MapFrom(rule => XrayJsonSerializer.Serialize(rule.Config)));
 
-        CreateMap<RoutingRuleEntity, NodeRoutingRuleListItemDto>();
+        CreateMap<RoutingRuleEntity, NodeRoutingRuleListItemDto>()
+            .ForCtorParam(
+                nameof(NodeRoutingRuleListItemDto.Id),
+                options => options.MapFrom(rule => rule.Id))
+            .ForCtorParam(
+                nameof(NodeRoutingRuleListItemDto.Tag),
+                options => options.MapFrom(rule => rule.RuleTag ?? string.Empty));
 
         CreateMap<CertificateEntity, NodeCertificateDto>();
 

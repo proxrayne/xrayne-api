@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
@@ -47,7 +46,6 @@ public sealed class NodeRoutingRuleService(
     public async Task<RoutingRuleEntity> CreateAsync(
         Guid adminId,
         long nodeId,
-        string tag,
         string config,
         bool enabled,
         CancellationToken cancellationToken = default)
@@ -55,11 +53,10 @@ public sealed class NodeRoutingRuleService(
         var node = await GetNodeAsync(nodeId, cancellationToken);
         var ruleConfig = ParseRoutingRule(config);
         var existing = await routingRules.GetByNodeIdAsync(nodeId, cancellationToken);
-        var normalizedTag = NormalizeTag(tag);
+        ValidateRuleTag(ruleConfig, existing, null);
 
         var rule = new RoutingRuleEntity
         {
-            Tag = normalizedTag,
             Enabled = enabled,
             ReadOnly = false,
             Position = GetNextManualPosition(existing),
@@ -76,7 +73,6 @@ public sealed class NodeRoutingRuleService(
     public async Task<RoutingRuleEntity> UpdateAsync(
         long nodeId,
         long routingRuleId,
-        string tag,
         string config,
         bool enabled,
         CancellationToken cancellationToken = default)
@@ -88,8 +84,11 @@ public sealed class NodeRoutingRuleService(
             throw new NodeRoutingRuleReadonlyException("Readonly routing rules can only be enabled or disabled.");
         }
 
-        rule.Tag = NormalizeTag(tag);
-        rule.Config = ParseRoutingRule(config);
+        var ruleConfig = ParseRoutingRule(config);
+        var existing = await routingRules.GetByNodeIdAsync(nodeId, cancellationToken);
+        ValidateRuleTag(ruleConfig, existing, rule.Id);
+
+        rule.Config = ruleConfig;
         rule.Enabled = enabled;
 
         var updated = await routingRules.UpdateAsync(rule, cancellationToken);
@@ -132,15 +131,15 @@ public sealed class NodeRoutingRuleService(
     /// <inheritdoc />
     public async Task<List<RoutingRuleEntity>> UpdateOrderAsync(
         long nodeId,
-        IReadOnlyList<long> routingRuleIds,
+        IReadOnlyList<long> ruleIds,
         CancellationToken cancellationToken = default)
     {
         var node = await GetNodeAsync(nodeId, cancellationToken);
         var current = await routingRules.GetByNodeIdAsync(nodeId, cancellationToken);
         var manualRules = current.Where(rule => !rule.ReadOnly).ToList();
 
-        ValidateManualOrder(routingRuleIds, manualRules);
-        ApplyManualPositions(current, routingRuleIds);
+        ValidateManualOrder(ruleIds, manualRules);
+        ApplyManualPositions(current, ruleIds);
 
         foreach (var rule in current)
         {
@@ -186,19 +185,33 @@ public sealed class NodeRoutingRuleService(
         XrayConfig template,
         CancellationToken cancellationToken = default)
     {
-        var desired = template.Routing?.Rules?.ToList() ?? [];
+        var desired = (template.Routing?.Rules ?? [])
+            .Select(EnsureRuleTag)
+            .GroupBy(rule => rule.RuleTag, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .ToList();
         var existing = await routingRules.GetByNodeIdAsync(node.Id, cancellationToken);
-        var readonlyRules = existing.Where(rule => rule.ReadOnly).ToList();
+        var readonlyByRuleTag = existing
+            .Where(rule => rule.ReadOnly && !string.IsNullOrWhiteSpace(rule.RuleTag))
+            .ToDictionary(rule => rule.RuleTag!, StringComparer.Ordinal);
+        var desiredRuleTags = desired.Select(rule => rule.RuleTag!).ToHashSet(StringComparer.Ordinal);
 
-        foreach (var stale in readonlyRules.Skip(desired.Count).ToList())
+        foreach (var stale in readonlyByRuleTag.Values.Where(rule => !desiredRuleTags.Contains(rule.RuleTag!)).ToList())
         {
             await routingRules.DeleteAsync(stale.Id, cancellationToken);
         }
 
+        var current = await routingRules.GetByNodeIdAsync(node.Id, cancellationToken);
         for (var index = 0; index < desired.Count; index++)
         {
             var config = desired[index];
-            var existingReadonly = readonlyRules.ElementAtOrDefault(index);
+            var existingReadonly = current.FirstOrDefault(rule => rule.ReadOnly
+                && string.Equals(rule.RuleTag, config.RuleTag, StringComparison.Ordinal));
+            if (!IsRuleTagAvailable(config, current, existingReadonly?.Id))
+            {
+                continue;
+            }
+
             if (existingReadonly is null)
             {
                 var created = await routingRules.AddAsync(
@@ -206,25 +219,17 @@ public sealed class NodeRoutingRuleService(
                     node.Id,
                     new RoutingRuleEntity
                     {
-                        Tag = GetTemplateTag(config, null),
                         Enabled = true,
                         ReadOnly = true,
                         Position = index * PositionStep,
                         Config = config
                     },
                     cancellationToken);
-
-                var tag = GetTemplateTag(config, created.Id);
-                if (!string.Equals(created.Tag, tag, StringComparison.Ordinal))
-                {
-                    created.Tag = tag;
-                    await routingRules.UpdateAsync(created, cancellationToken);
-                }
+                current.Add(created);
 
                 continue;
             }
 
-            existingReadonly.Tag = GetTemplateTag(config, existingReadonly.Id);
             existingReadonly.Config = config;
             existingReadonly.Position = index * PositionStep;
 
@@ -254,7 +259,7 @@ public sealed class NodeRoutingRuleService(
                 throw new NodeRoutingRuleValidationException("Routing rule configuration is invalid.");
             }
 
-            return rule;
+            return EnsureRuleTag(rule);
         }
         catch (JsonException exception)
         {
@@ -266,20 +271,39 @@ public sealed class NodeRoutingRuleService(
         }
     }
 
-    private static string NormalizeTag(string tag)
+    private static RoutingRule EnsureRuleTag(RoutingRule rule)
     {
-        if (string.IsNullOrWhiteSpace(tag))
+        if (string.IsNullOrWhiteSpace(rule.RuleTag))
         {
-            throw new NodeRoutingRuleValidationException("Routing rule tag is required.");
+            rule.RuleTag = Guid.NewGuid().ToString();
+
+            return rule;
         }
 
-        var normalized = tag.Trim();
-        if (normalized.Length > 128)
-        {
-            throw new NodeRoutingRuleValidationException("Routing rule tag must be 128 characters or fewer.");
-        }
+        rule.RuleTag = rule.RuleTag.Trim();
 
-        return normalized;
+        return rule;
+    }
+
+    private static void ValidateRuleTag(
+        RoutingRule config,
+        IEnumerable<RoutingRuleEntity> existing,
+        long? currentId)
+    {
+        if (!IsRuleTagAvailable(config, existing, currentId))
+        {
+            throw new NodeRoutingRuleValidationException($"Routing rule tag '{config.RuleTag}' already exists on this node.");
+        }
+    }
+
+    private static bool IsRuleTagAvailable(
+        RoutingRule config,
+        IEnumerable<RoutingRuleEntity> existing,
+        long? currentId)
+    {
+        return existing
+            .Where(rule => rule.Id != currentId)
+            .All(rule => !string.Equals(rule.RuleTag, config.RuleTag, StringComparison.Ordinal));
     }
 
     private static int GetNextManualPosition(IEnumerable<RoutingRuleEntity> current)
@@ -290,13 +314,13 @@ public sealed class NodeRoutingRuleService(
     }
 
     private static void ValidateManualOrder(
-        IReadOnlyList<long> routingRuleIds,
+        IReadOnlyList<long> ruleIds,
         IReadOnlyCollection<RoutingRuleEntity> manualRules)
     {
-        var requested = routingRuleIds.ToHashSet();
-        if (requested.Count != routingRuleIds.Count)
+        var requested = ruleIds.ToHashSet();
+        if (requested.Count != ruleIds.Count)
         {
-            throw new NodeRoutingRuleValidationException("Routing rule order contains duplicate ids.");
+            throw new NodeRoutingRuleValidationException("Routing rule order contains duplicate rule ids.");
         }
 
         var existing = manualRules.Select(rule => rule.Id).ToHashSet();
@@ -326,9 +350,9 @@ public sealed class NodeRoutingRuleService(
             position += PositionStep;
         }
 
-        foreach (var id in manualOrder)
+        foreach (var ruleId in manualOrder)
         {
-            manualById[id].Position = position;
+            manualById[ruleId].Position = position;
             position += PositionStep;
         }
     }
@@ -352,32 +376,6 @@ public sealed class NodeRoutingRuleService(
             {
                 throw new NodeRoutingRuleNotFoundException($"Routing rule '{rule.Id}' was not found.");
             }
-        }
-    }
-
-    private static string GetTemplateTag(RoutingRule rule, long? id)
-    {
-        var ruleTag = GetRuleTag(rule);
-        if (!string.IsNullOrWhiteSpace(ruleTag))
-        {
-            return ruleTag.Trim();
-        }
-
-        return id.HasValue ? $"Rule #{id.Value}" : "Rule";
-    }
-
-    private static string? GetRuleTag(RoutingRule rule)
-    {
-        try
-        {
-            var json = XrayJsonSerializer.Serialize(rule);
-            var node = JsonNode.Parse(json);
-
-            return node?["ruleTag"]?.GetValue<string>();
-        }
-        catch (JsonException)
-        {
-            return null;
         }
     }
 
@@ -417,12 +415,7 @@ public sealed class NodeRoutingRuleService(
             .Where(rule => rule.Enabled)
             .OrderBy(rule => rule.Position)
             .ThenBy(rule => rule.Id)
-            .Select(rule => new RoutingRuleSyncItem
-            {
-                Id = rule.Id,
-                Position = rule.Position,
-                RoutingRule = rule.Config
-            })
+            .Select(rule => rule.Config)
             .ToList();
 
         await CreateRemoteNodeClient(node).SyncRoutingRulesAsync(

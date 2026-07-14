@@ -38,6 +38,14 @@ public interface IRoutingRuleRepository
     Task<RoutingRuleEntity?> GetByNodeAndIdAsync(long nodeId, long id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets one routing rule assigned to a remote node by ruleTag.
+    /// </summary>
+    Task<RoutingRuleEntity?> GetByNodeAndRuleTagAsync(
+        long nodeId,
+        string ruleTag,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a routing rule.
     /// </summary>
     Task<RoutingRuleEntity> AddAsync(RoutingRuleEntity routingRule, CancellationToken cancellationToken = default);

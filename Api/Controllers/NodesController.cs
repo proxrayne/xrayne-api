@@ -339,7 +339,7 @@ public sealed class NodesController(
                 await CreateRemoteNodeClient(updated).UpdateCoreConfigTemplateAsync(
                     new RemoteNode.Models.UpdateCoreConfigTemplateRequest
                     {
-                        ConfigTemplate = coreConfigBuilder.Build(updated).ConfigTemplate
+                        ConfigTemplate = updated.ConfigTemplate
                     },
                     cancellationToken);
             }

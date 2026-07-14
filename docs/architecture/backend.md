@@ -110,36 +110,48 @@ Each node stores a `ConfigTemplate` value as PostgreSQL `jsonb`, while the
 entity model exposes it as `XrayConfig`. The template is editable through
 dedicated node core config-template endpoints where `configTemplate` is JSON
 text in a string field, but it is not the final runtime config by itself. On
-remote core start and restart, the panel merges the template with a managed
-`XrayConfig` using `XrayConfig.Merge`, then replaces the managed inbounds,
-outbounds, and routing rules from the node entities and sends the base template
-and managed slices as JSON strings to the standalone node gRPC service.
+remote core start and restart, the panel clones the template, replaces
+`inbounds`, `outbounds`, and `routing.rules` with the enabled node entities in
+panel order, and sends one full native `XrayConfig` JSON payload to the
+standalone node gRPC service.
 Node inbounds are managed through node-scoped endpoints under
-`/api/nodes/{id}/inbounds`. Manual inbounds can be created, edited, toggled, and
-deleted. Readonly inbounds are synchronized from `ConfigTemplate` by tag when
-the template is saved; their JSON is updated or removed through the template,
-while the UI can only enable or disable them. Tag and port uniqueness is enforced
-per node for manual and enabled records. Conflicting readonly template inbounds
-are kept as disabled records so operators can see and resolve the conflict.
+`/api/nodes/{id}/inbounds`; item routes use native inbound `tag` as the public
+id. Manual inbounds can be created, edited, toggled, and deleted. Update routes
+use the old tag, while the JSON payload may carry a new tag to rename the
+record. Readonly inbounds are synchronized from `ConfigTemplate` by tag when the
+template is saved; their JSON is updated or removed through the template, while
+the UI can only enable or disable them. Tag uniqueness is enforced per node
+across manual, disabled, and readonly records. Conflicting readonly template
+inbounds are skipped instead of creating duplicate semantic ids.
 Enabled inbound changes are mirrored to the standalone node runtime when cached
-telemetry reports that remote xray-core is running.
+telemetry reports that remote xray-core is running. The live sync payload is the
+native inbound JSON and the remote node identifies it by `tag`.
 Node outbounds follow the same node-scoped model under
-`/api/nodes/{id}/outbounds`. Manual outbounds can be created, edited, toggled,
-and deleted, while readonly outbounds are synchronized from `ConfigTemplate` by
-tag and can only be enabled or disabled through the UI. Managed node outbounds
+`/api/nodes/{id}/outbounds`; item routes use native outbound `tag` as the
+public id. Manual outbounds can be created, edited, toggled, and deleted, while
+readonly outbounds are synchronized from `ConfigTemplate` by tag and can only be
+enabled or disabled through the UI. Update routes use the old tag, while the
+JSON payload may carry a new tag to rename the record. Managed node outbounds
 must have tags because tag identity is used for duplicate detection, readonly
 template synchronization, and runtime replacement. Tag uniqueness is enforced per
-node; conflicting readonly template outbounds are preserved as disabled records.
+node across manual, disabled, and readonly records; conflicting readonly
+template outbounds are skipped instead of creating duplicate semantic ids.
 Enabled outbound changes are mirrored to the standalone node runtime when cached
-telemetry reports that remote xray-core is running.
+telemetry reports that remote xray-core is running. The live sync payload is the
+native outbound JSON and the remote node identifies it by `tag`.
 Node routing rules are managed through node-scoped endpoints under
-`/api/nodes/{id}/routing-rules`. Manual rules can be created, edited, toggled,
+`/api/nodes/{id}/routing-rules`; item routes and reorder payloads use native
+Xray `ruleTag` as the public id. Manual rules can be created, edited, toggled,
 deleted, and reordered, while readonly rules are synchronized from
-`ConfigTemplate.Routing.Rules` in template order and can only be enabled or
-disabled through the UI. Readonly rules stay before manual rules. Enabled
-routing rule changes are mirrored to the standalone node runtime by replacing
-the full enabled ordered `routing.rules` list when cached telemetry reports that
-remote xray-core is running.
+`ConfigTemplate.Routing.Rules` in template order by `ruleTag` and can only be
+enabled or disabled through the UI. When a created or updated rule omits
+`ruleTag`, the panel generates a UUID before persistence. RuleTag uniqueness is
+enforced per node across manual, disabled, and readonly records. Readonly rules
+stay before manual rules.
+Enabled routing rule changes are mirrored to the standalone node runtime by
+replacing the full enabled ordered native `routing.rules` list when cached
+telemetry reports that remote xray-core is running. The remote node identifies
+rules by native `ruleTag`.
 Node geo resources are managed through node-scoped endpoints under
 `/api/nodes/{id}/geo-resources`. The panel stores metadata only in
 `GeoResourceEntity`; remote files live on the standalone node in its managed

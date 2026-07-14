@@ -27,7 +27,6 @@ public interface INodeRoutingRuleService
     Task<RoutingRuleEntity> CreateAsync(
         Guid adminId,
         long nodeId,
-        string tag,
         string config,
         bool enabled,
         CancellationToken cancellationToken = default);
@@ -38,7 +37,6 @@ public interface INodeRoutingRuleService
     Task<RoutingRuleEntity> UpdateAsync(
         long nodeId,
         long routingRuleId,
-        string tag,
         string config,
         bool enabled,
         CancellationToken cancellationToken = default);
@@ -57,7 +55,7 @@ public interface INodeRoutingRuleService
     /// </summary>
     Task<List<RoutingRuleEntity>> UpdateOrderAsync(
         long nodeId,
-        IReadOnlyList<long> routingRuleIds,
+        IReadOnlyList<long> ruleIds,
         CancellationToken cancellationToken = default);
 
     /// <summary>

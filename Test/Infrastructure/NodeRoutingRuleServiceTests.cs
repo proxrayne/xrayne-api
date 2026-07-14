@@ -69,14 +69,51 @@ public sealed class NodeRoutingRuleServiceTests
         var result = await service.CreateAsync(
             AdminId,
             node.Id,
-            "Manual",
             """{"type":"field","outboundTag":"direct"}""",
             false,
             CancellationToken.None);
 
-        result.Tag.Should().Be("Manual");
+        result.Config.RuleTag.Should().NotBeNullOrWhiteSpace();
+        Guid.TryParse(result.Config.RuleTag, out _).Should().BeTrue();
         result.Enabled.Should().BeFalse();
         result.Position.Should().Be(20);
+    }
+
+    [Fact]
+    public async Task CreateAsync_PreservesProvidedRuleTag()
+    {
+        routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        var result = await service.CreateAsync(
+            AdminId,
+            node.Id,
+            """{"type":"field","ruleTag":"  manual-rule  ","outboundTag":"direct"}""",
+            true,
+            CancellationToken.None);
+
+        result.Config.RuleTag.Should().Be("manual-rule");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_GeneratesRuleTag_WhenMissing()
+    {
+        var rule = CreateRule();
+        routingRules.GetByNodeAndIdAsync(node.Id, rule.Id, Arg.Any<CancellationToken>())
+            .Returns(rule);
+        routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
+            .Returns([rule]);
+
+        var result = await service.UpdateAsync(
+            node.Id,
+            rule.Id,
+            """{"type":"field","outboundTag":"block"}""",
+            true,
+            CancellationToken.None);
+
+        result.Config.RuleTag.Should().NotBeNullOrWhiteSpace();
+        Guid.TryParse(result.Config.RuleTag, out _).Should().BeTrue();
+        result.Config.OutboundTag.Should().Be("block");
     }
 
     [Fact]
@@ -89,7 +126,6 @@ public sealed class NodeRoutingRuleServiceTests
         var act = () => service.UpdateAsync(
             node.Id,
             rule.Id,
-            "Updated",
             """{"type":"field","outboundTag":"direct"}""",
             true,
             CancellationToken.None);
@@ -135,7 +171,7 @@ public sealed class NodeRoutingRuleServiceTests
 
         result.Enabled.Should().BeTrue();
         await remoteClient.Received(1).SyncRoutingRulesAsync(
-            Arg.Is<SyncRoutingRulesRequest>(request => request.RoutingRules.Any(rule => rule.RoutingRule.OutboundTag == "direct")),
+            Arg.Is<SyncRoutingRulesRequest>(request => request.RoutingRules.Any(rule => rule.OutboundTag == "direct")),
             Arg.Any<CancellationToken>());
     }
 
@@ -145,6 +181,7 @@ public sealed class NodeRoutingRuleServiceTests
         routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
             .Returns([], [CreateRule(id: 10, position: 0, readOnly: true), CreateRule(id: 11, position: 10, readOnly: true)]);
         var nextId = 100L;
+        var added = new List<RoutingRuleEntity>();
         routingRules.AddAsync(
                 AdminId,
                 node.Id,
@@ -153,6 +190,18 @@ public sealed class NodeRoutingRuleServiceTests
             .Returns(call =>
             {
                 var rule = call.Arg<RoutingRuleEntity>();
+                added.Add(new RoutingRuleEntity
+                {
+                    Id = nextId,
+                    Enabled = rule.Enabled,
+                    ReadOnly = rule.ReadOnly,
+                    Position = rule.Position,
+                    Config = new RoutingRule
+                    {
+                        RuleTag = rule.Config.RuleTag,
+                        OutboundTag = rule.Config.OutboundTag
+                    }
+                });
                 rule.Id = nextId++;
 
                 return rule;
@@ -171,22 +220,18 @@ public sealed class NodeRoutingRuleServiceTests
 
         await service.SyncReadonlyFromTemplateAsync(AdminId, node, template, CancellationToken.None);
 
-        await routingRules.Received(1).AddAsync(
-            AdminId,
-            node.Id,
-            Arg.Is<RoutingRuleEntity>(rule => rule.ReadOnly && rule.Position == 0),
-            Arg.Any<CancellationToken>());
-        await routingRules.Received(1).AddAsync(
-            AdminId,
-            node.Id,
-            Arg.Is<RoutingRuleEntity>(rule => rule.ReadOnly && rule.Position == 10),
-            Arg.Any<CancellationToken>());
-        await routingRules.Received(1).UpdateAsync(
-            Arg.Is<RoutingRuleEntity>(rule => rule.Id == 100 && rule.Tag == "Rule #100"),
-            Arg.Any<CancellationToken>());
-        await routingRules.Received(1).UpdateAsync(
-            Arg.Is<RoutingRuleEntity>(rule => rule.Id == 101 && rule.Tag == "Rule #101"),
-            Arg.Any<CancellationToken>());
+        added.Should().HaveCount(2);
+        added[0].ReadOnly.Should().BeTrue();
+        added[0].Position.Should().Be(0);
+        IsGuid(added[0].Config.RuleTag).Should().BeTrue();
+        added[1].ReadOnly.Should().BeTrue();
+        added[1].Position.Should().Be(10);
+        IsGuid(added[1].Config.RuleTag).Should().BeTrue();
+    }
+
+    private static bool IsGuid(string? value)
+    {
+        return Guid.TryParse(value, out _);
     }
 
     private static NodeEntity CreateNode()
@@ -217,11 +262,10 @@ public sealed class NodeRoutingRuleServiceTests
         return new RoutingRuleEntity
         {
             Id = id,
-            Tag = $"Rule {id}",
             Enabled = enabled,
             ReadOnly = readOnly,
             Position = position,
-            Config = new RoutingRule { OutboundTag = outboundTag }
+            Config = new RoutingRule { RuleTag = $"rule-{id}", OutboundTag = outboundTag }
         };
     }
 }

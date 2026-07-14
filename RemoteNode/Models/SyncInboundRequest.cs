@@ -1,10 +1,14 @@
-using System.Text.Json.Serialization;
-using RemoteNode.Models.Json;
+using Xray.Config.Models;
 
 namespace RemoteNode.Models;
 
 /// <summary>
 /// Requests synchronization of a single inbound configuration with the running core.
 /// </summary>
-[JsonConverter(typeof(SyncInboundRequestJsonConverter))]
-public sealed class SyncInboundRequest : InboundSyncItem;
+public sealed class SyncInboundRequest
+{
+    /// <summary>
+    /// Gets the native xray-core inbound configuration.
+    /// </summary>
+    public required Inbound Inbound { get; init; }
+}

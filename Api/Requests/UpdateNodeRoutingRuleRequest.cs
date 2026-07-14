@@ -8,13 +8,6 @@ namespace Api.Requests;
 public sealed class UpdateNodeRoutingRuleRequest
 {
     /// <summary>
-    /// Gets the replacement display tag for the managed routing rule.
-    /// </summary>
-    [Required]
-    [MaxLength(128)]
-    public required string Tag { get; init; }
-
-    /// <summary>
     /// Gets the replacement xray routing rule JSON configuration.
     /// </summary>
     [Required]

@@ -42,7 +42,7 @@ public sealed class NodeRoutingRulesControllerTests
         var result = await controller.GetAll(1, CancellationToken.None);
 
         result.Should().ContainSingle();
-        result[0].Tag.Should().Be(routingRule.Tag);
+        result[0].Tag.Should().Be(routingRule.RuleTag);
         result[0].InboundTags.Should().ContainSingle("socks-in");
         result[0].OutboundTag.Should().Be("direct");
         var json = JsonSerializer.Serialize(result);
@@ -59,7 +59,8 @@ public sealed class NodeRoutingRulesControllerTests
         var result = await controller.GetById(1, routingRule.Id, CancellationToken.None);
 
         result.Config.Should().Contain("\"outboundTag\"");
-        result.Tag.Should().Be(routingRule.Tag);
+        result.Id.Should().Be(routingRule.Id);
+        result.Tag.Should().Be(routingRule.RuleTag);
     }
 
     [Fact]
@@ -67,15 +68,13 @@ public sealed class NodeRoutingRulesControllerTests
     {
         var request = new CreateNodeRoutingRuleRequest
         {
-            Tag = "Manual",
             Config = """{"type":"field","outboundTag":"direct"}""",
             Enabled = false
         };
-        var routingRule = CreateRoutingRule(tag: request.Tag, enabled: request.Enabled);
+        var routingRule = CreateRoutingRule(tag: "manual-rule", enabled: request.Enabled);
         routingRules.CreateAsync(
                 TestAdminId,
                 1,
-                request.Tag,
                 request.Config,
                 request.Enabled,
                 Arg.Any<CancellationToken>())
@@ -89,7 +88,7 @@ public sealed class NodeRoutingRulesControllerTests
             new
             {
                 routingRule.Id,
-                routingRule.Tag,
+                Tag = routingRule.RuleTag,
                 routingRule.Enabled,
                 routingRule.ReadOnly,
                 routingRule.Position
@@ -101,16 +100,15 @@ public sealed class NodeRoutingRulesControllerTests
     {
         var request = new UpdateNodeRoutingRuleRequest
         {
-            Tag = "Updated",
             Config = """{"type":"field","outboundTag":"block"}""",
             Enabled = true
         };
-        routingRules.UpdateAsync(1, 10, request.Tag, request.Config, request.Enabled, Arg.Any<CancellationToken>())
-            .Returns(CreateRoutingRule(id: 10, tag: request.Tag, enabled: request.Enabled, outboundTag: "block"));
+        routingRules.UpdateAsync(1, 10, request.Config, request.Enabled, Arg.Any<CancellationToken>())
+            .Returns(CreateRoutingRule(id: 10, tag: "updated-rule", enabled: request.Enabled, outboundTag: "block"));
 
         var result = await controller.Update(1, 10, request, CancellationToken.None);
 
-        result.Tag.Should().Be(request.Tag);
+        result.Tag.Should().Be("updated-rule");
         result.Enabled.Should().BeTrue();
         result.OutboundTag.Should().Be("block");
     }
@@ -134,11 +132,14 @@ public sealed class NodeRoutingRulesControllerTests
     public async Task UpdateOrder_DelegatesToService()
     {
         routingRules.UpdateOrderAsync(1, Arg.Is<IReadOnlyList<long>>(ids => ids.SequenceEqual(new long[] { 11, 10 })), Arg.Any<CancellationToken>())
-            .Returns([CreateRoutingRule(id: 11, position: 0), CreateRoutingRule(id: 10, position: 10)]);
+            .Returns([
+                CreateRoutingRule(id: 11, tag: "rule-11", position: 0),
+                CreateRoutingRule(id: 10, tag: "rule-10", position: 10)
+            ]);
 
         var result = await controller.UpdateOrder(
             1,
-            new UpdateNodeRoutingRuleOrderRequest { RoutingRuleIds = [11, 10] },
+            new UpdateNodeRoutingRuleOrderRequest { RuleIds = [11, 10] },
             CancellationToken.None);
 
         result.Select(rule => rule.Id).Should().Equal(11, 10);
@@ -164,12 +165,12 @@ public sealed class NodeRoutingRulesControllerTests
         return new RoutingRuleEntity
         {
             Id = id,
-            Tag = tag,
             Enabled = enabled,
             ReadOnly = readOnly,
             Position = position,
             Config = new RoutingRule
             {
+                RuleTag = tag,
                 InboundTag = ["socks-in"],
                 OutboundTag = outboundTag
             }

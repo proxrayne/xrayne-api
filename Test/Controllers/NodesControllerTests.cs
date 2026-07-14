@@ -319,7 +319,7 @@ public sealed class NodesControllerTests
 
         result.Result.Should().BeOfType<AcceptedResult>();
         await _remoteClient.Received(1).StartCoreAsync(
-            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.ConfigTemplate)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
+            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
             Arg.Any<CancellationToken>());
     }
 
@@ -335,7 +335,7 @@ public sealed class NodesControllerTests
 
         result.Result.Should().BeOfType<AcceptedResult>();
         await _remoteClient.Received(1).RestartCoreAsync(
-            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.ConfigTemplate)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
+            Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
             Arg.Any<CancellationToken>());
     }
 
@@ -395,7 +395,7 @@ public sealed class NodesControllerTests
     {
         return new StartCoreRequest
         {
-            ConfigTemplate = CreateCoreConfig()
+            Config = CreateCoreConfig()
         };
     }
 

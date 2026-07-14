@@ -10,9 +10,6 @@ public class RoutingRuleEntity : CreateUpdateEntity
     [Key]
     public long Id { get; set; }
 
-    [MaxLength(128)]
-    public required string Tag { get; set; }
-
     public bool Enabled { get; set; } = true;
 
     public bool ReadOnly { get; set; } = false;
@@ -34,4 +31,7 @@ public class RoutingRuleEntity : CreateUpdateEntity
 
     [NotMapped]
     public string? OutboundTag => Config.OutboundTag;
+
+    [NotMapped]
+    public string? RuleTag => Config.RuleTag;
 }

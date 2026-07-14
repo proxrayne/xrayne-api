@@ -158,7 +158,7 @@ public sealed class RemoteNodeApiClient(
 
     /// <inheritdoc />
     public Task UpdateInboundAsync(
-        long id,
+        string id,
         SyncInboundRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -175,7 +175,7 @@ public sealed class RemoteNodeApiClient(
     }
 
     /// <inheritdoc />
-    public Task DeleteInboundAsync(long id, CancellationToken cancellationToken = default)
+    public Task DeleteInboundAsync(string id, CancellationToken cancellationToken = default)
     {
         return ExecuteEmptyUnaryAsync(
             "DeleteInbound",
@@ -194,7 +194,7 @@ public sealed class RemoteNodeApiClient(
 
     /// <inheritdoc />
     public Task UpdateOutboundAsync(
-        long id,
+        string id,
         SyncOutboundRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -211,7 +211,7 @@ public sealed class RemoteNodeApiClient(
     }
 
     /// <inheritdoc />
-    public Task DeleteOutboundAsync(long id, CancellationToken cancellationToken = default)
+    public Task DeleteOutboundAsync(string id, CancellationToken cancellationToken = default)
     {
         return ExecuteEmptyUnaryAsync(
             "DeleteOutbound",
