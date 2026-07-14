@@ -1,8 +1,10 @@
 using Api.Responses;
+using Api.Requests;
 using AutoMapper;
 using Contracts.Models;
 using Contracts.Utilities;
 using Data.Entities;
+using Infrastructure.Dto;
 
 namespace Api.Mapping;
 
@@ -82,7 +84,13 @@ public sealed class NodeMappingProfile : Profile
                 options => options.MapFrom(rule => rule.Id))
             .ForCtorParam(
                 nameof(NodeRoutingRuleListItemDto.Tag),
-                options => options.MapFrom(rule => rule.RuleTag ?? string.Empty));
+                options => options.MapFrom(rule => rule.RuleTag ?? string.Empty))
+            .ForCtorParam(
+                nameof(NodeRoutingRuleListItemDto.Config),
+                options => options.MapFrom(rule => XrayJsonSerializer.Serialize(rule.Config)));
+
+        CreateMap<SaveNodeRoutingRuleManualRequest, NodeRoutingRuleManualSaveItem>();
+        CreateMap<SaveNodeRoutingRuleReadonlyRequest, NodeRoutingRuleReadonlySaveItem>();
 
         CreateMap<CertificateEntity, NodeCertificateDto>();
 

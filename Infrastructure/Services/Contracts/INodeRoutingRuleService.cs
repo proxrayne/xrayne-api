@@ -1,4 +1,5 @@
 using Data.Entities;
+using Infrastructure.Dto;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;
@@ -48,6 +49,16 @@ public interface INodeRoutingRuleService
         long nodeId,
         long routingRuleId,
         bool enabled,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves a full routing rule draft snapshot for a remote node.
+    /// </summary>
+    Task<List<RoutingRuleEntity>> SaveAsync(
+        Guid adminId,
+        long nodeId,
+        IReadOnlyCollection<NodeRoutingRuleManualSaveItem> manualRules,
+        IReadOnlyCollection<NodeRoutingRuleReadonlySaveItem> readonlyRules,
         CancellationToken cancellationToken = default);
 
     /// <summary>

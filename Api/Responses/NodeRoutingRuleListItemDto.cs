@@ -10,4 +10,5 @@ public sealed record NodeRoutingRuleListItemDto(
     string? OutboundTag,
     bool Enabled,
     bool ReadOnly,
-    int Position);
+    int Position,
+    string Config);

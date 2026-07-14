@@ -125,6 +125,36 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
         return routingRule;
     }
 
+    public async Task<List<RoutingRuleEntity>> SaveChangesAsync(
+        Guid adminId,
+        long nodeId,
+        IReadOnlyCollection<RoutingRuleEntity> rulesToCreate,
+        IReadOnlyCollection<RoutingRuleEntity> rulesToUpdate,
+        IReadOnlyCollection<RoutingRuleEntity> rulesToDelete,
+        CancellationToken ct = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var rule in rulesToUpdate)
+        {
+            rule.UpdatedAt = now;
+        }
+
+        dbContext.RoutingRules.RemoveRange(rulesToDelete);
+        dbContext.RoutingRules.UpdateRange(rulesToUpdate);
+        await dbContext.RoutingRules.AddRangeAsync(rulesToCreate, ct);
+
+        foreach (var rule in rulesToCreate)
+        {
+            dbContext.Entry(rule).Property("AdminId").CurrentValue = adminId;
+            dbContext.Entry(rule).Property("NodeId").CurrentValue = nodeId;
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+
+        return await GetByNodeIdAsync(nodeId, ct);
+    }
+
     public async Task<bool> DeleteAsync(long id, CancellationToken ct = default)
     {
         var routingRule = await GetByIdAsync(id, ct);

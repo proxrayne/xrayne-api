@@ -70,6 +70,17 @@ public interface IRoutingRuleRepository
     Task<RoutingRuleEntity?> UpdateAsync(Guid adminId, RoutingRuleEntity routingRule, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Saves routing rule creations, updates, and deletions in one database operation.
+    /// </summary>
+    Task<List<RoutingRuleEntity>> SaveChangesAsync(
+        Guid adminId,
+        long nodeId,
+        IReadOnlyCollection<RoutingRuleEntity> rulesToCreate,
+        IReadOnlyCollection<RoutingRuleEntity> rulesToUpdate,
+        IReadOnlyCollection<RoutingRuleEntity> rulesToDelete,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes a routing rule by id.
     /// </summary>
     Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default);

@@ -1,10 +1,10 @@
 using System.Security.Claims;
-using System.Text.Json;
 using Api.Controllers;
 using Api.Mapping;
 using Api.Requests;
 using AutoMapper;
 using Data.Entities;
+using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -45,8 +45,7 @@ public sealed class NodeRoutingRulesControllerTests
         result[0].Tag.Should().Be(routingRule.RuleTag);
         result[0].InboundTags.Should().ContainSingle("socks-in");
         result[0].OutboundTag.Should().Be("direct");
-        var json = JsonSerializer.Serialize(result);
-        json.Should().NotContain("Config");
+        result[0].Config.Should().Contain("\"outboundTag\"");
     }
 
     [Fact]
@@ -126,6 +125,45 @@ public sealed class NodeRoutingRulesControllerTests
             CancellationToken.None);
 
         result.Enabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Save_DelegatesToServiceAndReturnsListItems()
+    {
+        var request = new SaveNodeRoutingRulesRequest
+        {
+            ManualRules =
+            [
+                new SaveNodeRoutingRuleManualRequest
+                {
+                    Id = 10,
+                    Config = """{"type":"field","ruleTag":"manual-rule","outboundTag":"direct"}""",
+                    Enabled = true
+                }
+            ],
+            ReadonlyRules =
+            [
+                new SaveNodeRoutingRuleReadonlyRequest { Id = 1, Enabled = false }
+            ]
+        };
+        routingRules.SaveAsync(
+                TestAdminId,
+                1,
+                Arg.Is<IReadOnlyCollection<NodeRoutingRuleManualSaveItem>>(rules =>
+                    rules.Single().Id == 10 && rules.Single().Enabled),
+                Arg.Is<IReadOnlyCollection<NodeRoutingRuleReadonlySaveItem>>(rules =>
+                    rules.Single().Id == 1 && !rules.Single().Enabled),
+                Arg.Any<CancellationToken>())
+            .Returns([
+                CreateRoutingRule(id: 1, tag: "readonly-rule", enabled: false, readOnly: true, position: 0),
+                CreateRoutingRule(id: 10, tag: "manual-rule", enabled: true, position: 10)
+            ]);
+
+        var result = await controller.Save(1, request, CancellationToken.None);
+
+        result.Select(rule => rule.Id).Should().Equal(1, 10);
+        result[0].ReadOnly.Should().BeTrue();
+        result[0].Enabled.Should().BeFalse();
     }
 
     [Fact]

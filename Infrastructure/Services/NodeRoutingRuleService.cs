@@ -20,6 +20,7 @@ public sealed class NodeRoutingRuleService(
     IRemoteNodeCoreStateStore coreStateStore) : INodeRoutingRuleService
 {
     private const int PositionStep = 10;
+    private const int GeneratedRuleTagLength = 8;
 
     /// <inheritdoc />
     public async Task<List<RoutingRuleEntity>> GetByNodeIdAsync(
@@ -126,6 +127,81 @@ public sealed class NodeRoutingRuleService(
         await SyncRemoteRulesAsync(node, cancellationToken);
 
         return updated;
+    }
+
+    /// <inheritdoc />
+    public async Task<List<RoutingRuleEntity>> SaveAsync(
+        Guid adminId,
+        long nodeId,
+        IReadOnlyCollection<NodeRoutingRuleManualSaveItem> manualRules,
+        IReadOnlyCollection<NodeRoutingRuleReadonlySaveItem> readonlyRules,
+        CancellationToken cancellationToken = default)
+    {
+        var node = await GetNodeAsync(nodeId, cancellationToken);
+        var current = await routingRules.GetByNodeIdAsync(nodeId, cancellationToken);
+        var readonlyById = current
+            .Where(rule => rule.ReadOnly)
+            .ToDictionary(rule => rule.Id);
+        var manualById = current
+            .Where(rule => !rule.ReadOnly)
+            .ToDictionary(rule => rule.Id);
+        var readonlyUpdates = ValidateReadonlySnapshot(readonlyRules, readonlyById, manualById);
+        var desiredManuals = ValidateManualSnapshot(manualRules, manualById, readonlyById);
+        var rulesToDelete = manualById.Values
+            .Where(rule => !desiredManuals.ExistingIds.Contains(rule.Id))
+            .ToList();
+        var rulesToUpdate = new List<RoutingRuleEntity>();
+        var rulesToCreate = new List<RoutingRuleEntity>();
+
+        var position = 0;
+        foreach (var rule in current.Where(rule => rule.ReadOnly).OrderBy(rule => rule.Position).ThenBy(rule => rule.Id))
+        {
+            if (readonlyUpdates.TryGetValue(rule.Id, out var enabled))
+            {
+                rule.Enabled = enabled;
+            }
+
+            rule.Position = position;
+            position += PositionStep;
+            rulesToUpdate.Add(rule);
+        }
+
+        foreach (var desired in desiredManuals.Items)
+        {
+            if (desired.Id.HasValue)
+            {
+                var existing = manualById[desired.Id.Value];
+                existing.Config = desired.Config;
+                existing.Enabled = desired.Enabled;
+                existing.Position = position;
+                rulesToUpdate.Add(existing);
+            }
+            else
+            {
+                rulesToCreate.Add(
+                    new RoutingRuleEntity
+                    {
+                        Enabled = desired.Enabled,
+                        ReadOnly = false,
+                        Position = position,
+                        Config = desired.Config
+                    });
+            }
+
+            position += PositionStep;
+        }
+
+        var saved = await routingRules.SaveChangesAsync(
+            adminId,
+            node.Id,
+            rulesToCreate,
+            rulesToUpdate,
+            rulesToDelete,
+            cancellationToken);
+
+        await SyncRemoteRulesAsync(node, saved, cancellationToken);
+
+        return saved;
     }
 
     /// <inheritdoc />
@@ -275,7 +351,7 @@ public sealed class NodeRoutingRuleService(
     {
         if (string.IsNullOrWhiteSpace(rule.RuleTag))
         {
-            rule.RuleTag = Guid.NewGuid().ToString();
+            rule.RuleTag = Guid.NewGuid().ToString("N")[..GeneratedRuleTagLength];
 
             return rule;
         }
@@ -327,6 +403,98 @@ public sealed class NodeRoutingRuleService(
         if (!requested.SetEquals(existing))
         {
             throw new NodeRoutingRuleValidationException("Routing rule order must contain every manual routing rule id exactly once.");
+        }
+    }
+
+    private static IReadOnlyDictionary<long, bool> ValidateReadonlySnapshot(
+        IReadOnlyCollection<NodeRoutingRuleReadonlySaveItem> readonlyRules,
+        IReadOnlyDictionary<long, RoutingRuleEntity> readonlyById,
+        IReadOnlyDictionary<long, RoutingRuleEntity> manualById)
+    {
+        var requestedIds = readonlyRules.Select(rule => rule.Id).ToList();
+        var requested = requestedIds.ToHashSet();
+        if (requested.Count != requestedIds.Count)
+        {
+            throw new NodeRoutingRuleValidationException("Readonly routing rule snapshot contains duplicate rule ids.");
+        }
+
+        foreach (var id in requestedIds)
+        {
+            if (manualById.ContainsKey(id))
+            {
+                throw new NodeRoutingRuleValidationException(
+                    $"Routing rule '{id}' is manually managed and cannot be saved as readonly.");
+            }
+
+            if (!readonlyById.ContainsKey(id))
+            {
+                throw new NodeRoutingRuleNotFoundException($"Routing rule '{id}' was not found.");
+            }
+        }
+
+        return readonlyRules.ToDictionary(rule => rule.Id, rule => rule.Enabled);
+    }
+
+    private static ManualSnapshot ValidateManualSnapshot(
+        IReadOnlyCollection<NodeRoutingRuleManualSaveItem> manualRules,
+        IReadOnlyDictionary<long, RoutingRuleEntity> manualById,
+        IReadOnlyDictionary<long, RoutingRuleEntity> readonlyById)
+    {
+        var requestedExistingIds = manualRules
+            .Where(rule => rule.Id.HasValue)
+            .Select(rule => rule.Id!.Value)
+            .ToList();
+        var requested = requestedExistingIds.ToHashSet();
+        if (requested.Count != requestedExistingIds.Count)
+        {
+            throw new NodeRoutingRuleValidationException("Manual routing rule snapshot contains duplicate rule ids.");
+        }
+
+        var desired = new List<ManualSnapshotItem>();
+        foreach (var rule in manualRules)
+        {
+            if (rule.Id.HasValue)
+            {
+                if (readonlyById.ContainsKey(rule.Id.Value))
+                {
+                    throw new NodeRoutingRuleReadonlyException(
+                        $"Readonly routing rule '{rule.Id.Value}' cannot be saved as a manual rule.");
+                }
+
+                if (!manualById.ContainsKey(rule.Id.Value))
+                {
+                    throw new NodeRoutingRuleNotFoundException($"Routing rule '{rule.Id.Value}' was not found.");
+                }
+            }
+
+            desired.Add(new ManualSnapshotItem(
+                rule.Id,
+                ParseRoutingRule(rule.Config),
+                rule.Enabled));
+        }
+
+        ValidateDesiredRuleTags(desired, readonlyById.Values);
+
+        return new ManualSnapshot(desired, requested);
+    }
+
+    private static void ValidateDesiredRuleTags(
+        IEnumerable<ManualSnapshotItem> desiredManuals,
+        IEnumerable<RoutingRuleEntity> readonlyRules)
+    {
+        var ruleTags = readonlyRules
+            .Select(rule => rule.RuleTag)
+            .Where(tag => !string.IsNullOrWhiteSpace(tag))
+            .ToList();
+        ruleTags.AddRange(desiredManuals.Select(rule => rule.Config.RuleTag!));
+
+        var duplicate = ruleTags
+            .GroupBy(tag => tag, StringComparer.Ordinal)
+            .FirstOrDefault(group => group.Count() > 1)
+            ?.Key;
+        if (duplicate is not null)
+        {
+            throw new NodeRoutingRuleValidationException($"Routing rule tag '{duplicate}' already exists on this node.");
         }
     }
 
@@ -418,8 +586,36 @@ public sealed class NodeRoutingRuleService(
             .Select(rule => rule.Config)
             .ToList();
 
+        await SyncRemoteRulesAsync(node, enabledRules, cancellationToken);
+    }
+
+    private async Task SyncRemoteRulesAsync(
+        NodeEntity node,
+        IReadOnlyCollection<RoutingRuleEntity> current,
+        CancellationToken cancellationToken)
+    {
+        if (!IsRemoteCoreRunning(node.Id))
+        {
+            return;
+        }
+
+        var enabledRules = current
+            .Where(rule => rule.Enabled)
+            .OrderBy(rule => rule.Position)
+            .ThenBy(rule => rule.Id)
+            .Select(rule => rule.Config)
+            .ToList();
+
+        await SyncRemoteRulesAsync(node, enabledRules, cancellationToken);
+    }
+
+    private async Task SyncRemoteRulesAsync(
+        NodeEntity node,
+        IReadOnlyCollection<RoutingRule> enabledRules,
+        CancellationToken cancellationToken)
+    {
         await CreateRemoteNodeClient(node).SyncRoutingRulesAsync(
-            new SyncRoutingRulesRequest { RoutingRules = enabledRules },
+            new SyncRoutingRulesRequest { RoutingRules = [.. enabledRules] },
             cancellationToken);
     }
 
@@ -434,4 +630,13 @@ public sealed class NodeRoutingRuleService(
             node.ApiPort,
             secrets.UnprotectApiKey(node.EncryptedApiKey)));
     }
+
+    private sealed record ManualSnapshot(
+        IReadOnlyCollection<ManualSnapshotItem> Items,
+        IReadOnlySet<long> ExistingIds);
+
+    private sealed record ManualSnapshotItem(
+        long? Id,
+        RoutingRule Config,
+        bool Enabled);
 }

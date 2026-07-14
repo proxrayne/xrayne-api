@@ -159,6 +159,37 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     }
 
     /// <summary>
+    /// Saves a routing rule draft snapshot for a remote node.
+    /// </summary>
+    [HttpPut]
+    [EndpointSummary("Save node routing rules")]
+    [EndpointDescription("Save a routing rule draft snapshot for a remote node profile.")]
+    [ProducesResponseType(typeof(List<NodeRoutingRuleListItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<List<NodeRoutingRuleListItemDto>> Save(
+        long nodeId,
+        [FromBody] SaveNodeRoutingRulesRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var updated = await routingRules.SaveAsync(
+                AdminId,
+                nodeId,
+                mapper.Map<List<NodeRoutingRuleManualSaveItem>>(request.ManualRules),
+                mapper.Map<List<NodeRoutingRuleReadonlySaveItem>>(request.ReadonlyRules),
+                cancellationToken);
+
+            return mapper.Map<List<NodeRoutingRuleListItemDto>>(updated);
+        }
+        catch (NodeRoutingRuleException exception)
+        {
+            throw ToApiException(exception);
+        }
+    }
+
+    /// <summary>
     /// Reorders manually managed routing rules for a remote node.
     /// </summary>
     [HttpPut("order")]

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Contracts.Enums;
 using Contracts.Models;
 using Data.Contracts;
@@ -74,7 +75,7 @@ public sealed class NodeRoutingRuleServiceTests
             CancellationToken.None);
 
         result.Config.RuleTag.Should().NotBeNullOrWhiteSpace();
-        Guid.TryParse(result.Config.RuleTag, out _).Should().BeTrue();
+        IsShortGuid(result.Config.RuleTag).Should().BeTrue();
         result.Enabled.Should().BeFalse();
         result.Position.Should().Be(20);
     }
@@ -112,7 +113,7 @@ public sealed class NodeRoutingRuleServiceTests
             CancellationToken.None);
 
         result.Config.RuleTag.Should().NotBeNullOrWhiteSpace();
-        Guid.TryParse(result.Config.RuleTag, out _).Should().BeTrue();
+        IsShortGuid(result.Config.RuleTag).Should().BeTrue();
         result.Config.OutboundTag.Should().Be("block");
     }
 
@@ -176,6 +177,162 @@ public sealed class NodeRoutingRuleServiceTests
     }
 
     [Fact]
+    public async Task SaveAsync_SavesSnapshotAndSyncsRemoteOnce_WhenCoreIsRunning()
+    {
+        var current = new List<RoutingRuleEntity>
+        {
+            CreateRule(id: 1, position: 0, enabled: true, readOnly: true),
+            CreateRule(id: 2, position: 10),
+            CreateRule(id: 3, position: 20, outboundTag: "old")
+        };
+        routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
+            .Returns(_ => current.OrderBy(rule => rule.Position).ThenBy(rule => rule.Id).ToList());
+        routingRules.SaveChangesAsync(
+                AdminId,
+                node.Id,
+                Arg.Any<IReadOnlyCollection<RoutingRuleEntity>>(),
+                Arg.Any<IReadOnlyCollection<RoutingRuleEntity>>(),
+                Arg.Any<IReadOnlyCollection<RoutingRuleEntity>>(),
+                Arg.Any<CancellationToken>())
+            .Returns(call =>
+            {
+                var rulesToCreate = call.ArgAt<IReadOnlyCollection<RoutingRuleEntity>>(2);
+                var rulesToDelete = call.ArgAt<IReadOnlyCollection<RoutingRuleEntity>>(4);
+
+                current.RemoveAll(rule => rulesToDelete.Any(deleted => deleted.Id == rule.Id));
+                foreach (var rule in rulesToCreate)
+                {
+                    rule.Id = 100;
+                    current.Add(rule);
+                }
+
+                return current.OrderBy(rule => rule.Position).ThenBy(rule => rule.Id).ToList();
+            });
+        coreStateStore.Set(new RemoteNodeCoreState(
+            node.Id,
+            true,
+            true,
+            "1.0.0",
+            CoreStatus.Started,
+            DateTimeOffset.UtcNow,
+            TimeSpan.FromMinutes(1)));
+
+        var result = await service.SaveAsync(
+            AdminId,
+            node.Id,
+            [
+                new NodeRoutingRuleManualSaveItem(
+                    3,
+                    """{"type":"field","ruleTag":"renamed-rule","outboundTag":"proxy"}""",
+                    true),
+                new NodeRoutingRuleManualSaveItem(
+                    null,
+                    """{"type":"field","ruleTag":"new-rule","outboundTag":"block"}""",
+                    false)
+            ],
+            [
+                new NodeRoutingRuleReadonlySaveItem(1, false)
+            ],
+            CancellationToken.None);
+
+        result.OrderBy(rule => rule.Position).Select(rule => rule.Id).Should().Equal(1, 3, 100);
+        current.Single(rule => rule.Id == 1).Enabled.Should().BeFalse();
+        current.Single(rule => rule.Id == 3).Config.RuleTag.Should().Be("renamed-rule");
+        current.Single(rule => rule.Id == 3).Config.OutboundTag.Should().Be("proxy");
+        current.Single(rule => rule.Id == 3).Position.Should().Be(10);
+        current.Single(rule => rule.Id == 100).Position.Should().Be(20);
+        await routingRules.Received(1).SaveChangesAsync(
+            AdminId,
+            node.Id,
+            Arg.Is<IReadOnlyCollection<RoutingRuleEntity>>(rules => rules.Count == 1),
+            Arg.Is<IReadOnlyCollection<RoutingRuleEntity>>(rules =>
+                rules.Select(rule => rule.Id).OrderBy(id => id).SequenceEqual(new long[] { 1, 3 })),
+            Arg.Is<IReadOnlyCollection<RoutingRuleEntity>>(rules =>
+                rules.Select(rule => rule.Id).SequenceEqual(new long[] { 2 })),
+            Arg.Any<CancellationToken>());
+        await routingRules.DidNotReceive().AddAsync(
+            Arg.Any<Guid>(),
+            Arg.Any<long>(),
+            Arg.Any<RoutingRuleEntity>(),
+            Arg.Any<CancellationToken>());
+        await routingRules.DidNotReceive().UpdateAsync(
+            Arg.Any<RoutingRuleEntity>(),
+            Arg.Any<CancellationToken>());
+        await routingRules.DidNotReceive().DeleteAsync(Arg.Any<long>(), Arg.Any<CancellationToken>());
+        await remoteClient.Received(1).SyncRoutingRulesAsync(
+            Arg.Is<SyncRoutingRulesRequest>(request =>
+                request.RoutingRules.Select(rule => rule.RuleTag).SequenceEqual(new[] { "renamed-rule" })),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThrowsReadonly_WhenReadonlyRuleIsSubmittedAsManual()
+    {
+        routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
+            .Returns([CreateRule(id: 1, readOnly: true)]);
+
+        var act = () => service.SaveAsync(
+            AdminId,
+            node.Id,
+            [
+                new NodeRoutingRuleManualSaveItem(
+                    1,
+                    """{"type":"field","ruleTag":"readonly-rule","outboundTag":"direct"}""",
+                    true)
+            ],
+            [],
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NodeRoutingRuleReadonlyException>();
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThrowsNotFound_WhenManualRuleIdIsUnknown()
+    {
+        routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        var act = () => service.SaveAsync(
+            AdminId,
+            node.Id,
+            [
+                new NodeRoutingRuleManualSaveItem(
+                    99,
+                    """{"type":"field","ruleTag":"missing-rule","outboundTag":"direct"}""",
+                    true)
+            ],
+            [],
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NodeRoutingRuleNotFoundException>();
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThrowsValidation_WhenRuleTagsAreDuplicated()
+    {
+        routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
+            .Returns([]);
+
+        var act = () => service.SaveAsync(
+            AdminId,
+            node.Id,
+            [
+                new NodeRoutingRuleManualSaveItem(
+                    null,
+                    """{"type":"field","ruleTag":"same-rule","outboundTag":"direct"}""",
+                    true),
+                new NodeRoutingRuleManualSaveItem(
+                    null,
+                    """{"type":"field","ruleTag":"same-rule","outboundTag":"block"}""",
+                    true)
+            ],
+            [],
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NodeRoutingRuleValidationException>();
+    }
+
+    [Fact]
     public async Task SyncReadonlyFromTemplateAsync_CreatesReadonlyRulesInTemplateOrder()
     {
         routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
@@ -223,15 +380,15 @@ public sealed class NodeRoutingRuleServiceTests
         added.Should().HaveCount(2);
         added[0].ReadOnly.Should().BeTrue();
         added[0].Position.Should().Be(0);
-        IsGuid(added[0].Config.RuleTag).Should().BeTrue();
+        IsShortGuid(added[0].Config.RuleTag).Should().BeTrue();
         added[1].ReadOnly.Should().BeTrue();
         added[1].Position.Should().Be(10);
-        IsGuid(added[1].Config.RuleTag).Should().BeTrue();
+        IsShortGuid(added[1].Config.RuleTag).Should().BeTrue();
     }
 
-    private static bool IsGuid(string? value)
+    private static bool IsShortGuid(string? value)
     {
-        return Guid.TryParse(value, out _);
+        return value is not null && Regex.IsMatch(value, "^[a-f0-9]{8}$", RegexOptions.CultureInvariant);
     }
 
     private static NodeEntity CreateNode()
