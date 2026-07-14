@@ -8,7 +8,6 @@ using Contracts.Configurations;
 using Contracts.Values;
 using Data;
 using Infrastructure;
-using Infrastructure.Services;
 using Infrastructure.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
