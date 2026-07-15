@@ -71,10 +71,10 @@ public sealed class RemoteNodeGrpcMapperTests
     }
 
     [Fact]
-    public void ToDomain_NodeConnectionEvent_MapsStreamMetadata()
+    public void ToDomain_ConnectionEvent_MapsStreamMetadata()
     {
         var timestamp = DateTime.SpecifyKind(new DateTime(2026, 7, 10, 14, 0, 0), DateTimeKind.Utc);
-        var response = new Proto.NodeConnectionEvent
+        var response = new Proto.ConnectionEvent
         {
             EventType = Proto.StreamEventType.CoreStatus,
             Timestamp = Timestamp.FromDateTime(timestamp),

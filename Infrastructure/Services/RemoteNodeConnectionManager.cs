@@ -524,7 +524,7 @@ public sealed class RemoteNodeConnectionManager(
             IRemoteNodeCoreStateStore coreStates,
             long nodeId,
             DateTimeOffset heartbeatAt,
-            NodePingResponse ping)
+            PingResponse ping)
         {
             connectionStates.Set(new NodeConnectionState(
                 nodeId,

@@ -10,7 +10,7 @@ public interface IRemoteNodeStreamClient
     /// <summary>
     /// Opens and reads the remote node connection stream.
     /// </summary>
-    IAsyncEnumerable<NodeConnectionEvent> ConnectStreamAsync(CancellationToken cancellationToken = default);
+    IAsyncEnumerable<ConnectionEvent> ConnectStreamAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Opens and reads a remote node log stream.

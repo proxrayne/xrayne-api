@@ -5,4 +5,4 @@ namespace RemoteNode.Models;
 /// </summary>
 public sealed record SystemStatusResponse(
     DateTimeOffset Timestamp,
-    NodeSystemStats System);
+    SystemStats System);

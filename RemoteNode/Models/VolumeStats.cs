@@ -3,7 +3,7 @@ namespace RemoteNode.Models;
 /// <summary>
 /// Describes a mounted volume on a remote node.
 /// </summary>
-public sealed record NodeVolumeStats(
+public sealed record VolumeStats(
     string Name,
     string FileSystem,
     long TotalBytes,

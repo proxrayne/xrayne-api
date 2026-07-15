@@ -18,11 +18,11 @@ public sealed class RemoteNodeApiClient(
     : RemoteNodeGrpcClientBase(options, channelProvider, endpoint), IRemoteNodeApiClient
 {
     /// <inheritdoc />
-    public Task<NodePingResponse> PingAsync(CancellationToken cancellationToken = default)
+    public Task<PingResponse> PingAsync(CancellationToken cancellationToken = default)
     {
         return ExecuteUnaryAsync(
             "Ping",
-            callOptions => Client.PingAsync(new Empty(), callOptions),
+            callOptions => HealthClient.PingAsync(new Empty(), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -42,7 +42,7 @@ public sealed class RemoteNodeApiClient(
                     request.Limit = limit.Value;
                 }
 
-                return Client.GetLogsAsync(request, callOptions);
+                return LogClient.GetLogsAsync(request, callOptions);
             },
             response => new RemoteLogSnapshotResponse(response.Limit, [.. response.Entries.Select(RemoteNodeGrpcMapper.ToDomain)]),
             cancellationToken);
@@ -53,7 +53,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "GetSystemStatus",
-            callOptions => Client.GetSystemStatusAsync(new Empty(), callOptions),
+            callOptions => HealthClient.GetSystemStatusAsync(new Empty(), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -63,7 +63,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "GetCoreStatus",
-            callOptions => Client.GetCoreStatusAsync(new Empty(), callOptions),
+            callOptions => CoreClient.GetStatusAsync(new Empty(), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -75,7 +75,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "InstallCore",
-            callOptions => Client.InstallCoreAsync(ToProto(request), callOptions),
+            callOptions => CoreClient.InstallAsync(ToProto(request), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -87,7 +87,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "GetInstallCoreStatus",
-            callOptions => Client.GetInstallCoreStatusAsync(new Proto.GetInstallCoreStatusRequest { JobId = jobId }, callOptions),
+            callOptions => CoreClient.GetInstallStatusAsync(new Proto.GetInstallCoreStatusRequest { JobId = jobId }, callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -99,7 +99,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "StartCore",
-            callOptions => Client.StartCoreAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            callOptions => CoreClient.StartAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -109,7 +109,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "StopCore",
-            callOptions => Client.StopCoreAsync(new Empty(), callOptions),
+            callOptions => CoreClient.StopAsync(new Empty(), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -121,7 +121,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "RestartCore",
-            callOptions => Client.RestartCoreAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            callOptions => CoreClient.RestartAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -133,7 +133,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "UpdateCoreConfigTemplate",
-            callOptions => Client.UpdateCoreConfigTemplateAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            callOptions => CoreClient.UpdateConfigTemplateAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
             cancellationToken);
     }
 
@@ -142,7 +142,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "RestartRuntime",
-            callOptions => Client.RestartRuntimeAsync(new Empty(), callOptions),
+            callOptions => HealthClient.RestartRuntimeAsync(new Empty(), callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -152,7 +152,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "AddInbound",
-            callOptions => Client.AddInboundAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            callOptions => RuntimeConfigClient.AddInboundAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
             cancellationToken);
     }
 
@@ -164,7 +164,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "UpdateInbound",
-            callOptions => Client.UpdateInboundAsync(
+            callOptions => RuntimeConfigClient.UpdateInboundAsync(
                 new Proto.UpdateInboundRequest
                 {
                     Id = id,
@@ -179,7 +179,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "DeleteInbound",
-            callOptions => Client.DeleteInboundAsync(new Proto.DeleteManagedSliceRequest { Id = id }, callOptions),
+            callOptions => RuntimeConfigClient.DeleteInboundAsync(new Proto.DeleteManagedSliceRequest { Id = id }, callOptions),
             cancellationToken);
     }
 
@@ -188,7 +188,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "AddOutbound",
-            callOptions => Client.AddOutboundAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            callOptions => RuntimeConfigClient.AddOutboundAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
             cancellationToken);
     }
 
@@ -200,7 +200,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "UpdateOutbound",
-            callOptions => Client.UpdateOutboundAsync(
+            callOptions => RuntimeConfigClient.UpdateOutboundAsync(
                 new Proto.UpdateOutboundRequest
                 {
                     Id = id,
@@ -215,7 +215,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "DeleteOutbound",
-            callOptions => Client.DeleteOutboundAsync(new Proto.DeleteManagedSliceRequest { Id = id }, callOptions),
+            callOptions => RuntimeConfigClient.DeleteOutboundAsync(new Proto.DeleteManagedSliceRequest { Id = id }, callOptions),
             cancellationToken);
     }
 
@@ -226,7 +226,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "SyncRoutingRules",
-            callOptions => Client.SyncRoutingRulesAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
+            callOptions => RuntimeConfigClient.SyncRoutingRulesAsync(RemoteNodeGrpcMapper.ToProto(request), callOptions),
             cancellationToken);
     }
 
@@ -235,7 +235,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "ListGeoResources",
-            callOptions => Client.ListGeoResourcesAsync(new Empty(), callOptions),
+            callOptions => GeoResourceClient.ListAsync(new Empty(), callOptions),
             response => response.Items.Select(RemoteNodeGrpcMapper.ToDomain).ToList(),
             cancellationToken);
     }
@@ -247,7 +247,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "DownloadGeoResource",
-            callOptions => Client.DownloadGeoResourceAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
+            callOptions => GeoResourceClient.DownloadAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
             response => new GeoResourceContent(response.FileName, response.Content.ToByteArray()),
             cancellationToken);
     }
@@ -263,7 +263,7 @@ public sealed class RemoteNodeApiClient(
 
         return await ExecuteUnaryAsync(
             "UploadGeoResource",
-            callOptions => Client.UploadGeoResourceAsync(
+            callOptions => GeoResourceClient.UploadAsync(
                 new Proto.UploadGeoResourceRequest
                 {
                     FileName = fileName,
@@ -282,7 +282,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "RenameGeoResource",
-            callOptions => Client.RenameGeoResourceAsync(
+            callOptions => GeoResourceClient.RenameAsync(
                 new Proto.RenameGeoResourceRequest
                 {
                     FileName = fileName,
@@ -298,7 +298,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "DeleteGeoResource",
-            callOptions => Client.DeleteGeoResourceAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
+            callOptions => GeoResourceClient.DeleteAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
             cancellationToken);
     }
 
@@ -307,7 +307,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "ListCertificates",
-            callOptions => Client.ListCertificatesAsync(new Empty(), callOptions),
+            callOptions => CertificateClient.ListAsync(new Empty(), callOptions),
             response => response.Items.Select(RemoteNodeGrpcMapper.ToDomain).ToList(),
             cancellationToken);
     }
@@ -319,7 +319,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "IssueCertificate",
-            callOptions => Client.IssueCertificateAsync(new Proto.IssueCertificateRequest { Domain = request.Domain }, callOptions),
+            callOptions => CertificateClient.IssueAsync(new Proto.IssueCertificateRequest { Domain = request.Domain }, callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -331,7 +331,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "UploadCertificate",
-            callOptions => Client.UploadCertificateAsync(
+            callOptions => CertificateClient.UploadAsync(
                 new Proto.UploadCertificateRequest
                 {
                     Domain = request.Domain,
@@ -348,7 +348,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteUnaryAsync(
             "RenewCertificate",
-            callOptions => Client.RenewCertificateAsync(new Proto.CertificateDomainRequest { Domain = domain }, callOptions),
+            callOptions => CertificateClient.RenewAsync(new Proto.CertificateDomainRequest { Domain = domain }, callOptions),
             RemoteNodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -358,7 +358,7 @@ public sealed class RemoteNodeApiClient(
     {
         return ExecuteEmptyUnaryAsync(
             "DeleteCertificate",
-            callOptions => Client.DeleteCertificateAsync(new Proto.CertificateDomainRequest { Domain = domain }, callOptions),
+            callOptions => CertificateClient.DeleteAsync(new Proto.CertificateDomainRequest { Domain = domain }, callOptions),
             cancellationToken);
     }
 

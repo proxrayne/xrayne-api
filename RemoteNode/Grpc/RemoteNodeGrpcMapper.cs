@@ -17,9 +17,9 @@ public static class RemoteNodeGrpcMapper
     /// <summary>
     /// Converts node telemetry from the gRPC contract.
     /// </summary>
-    public static NodePingResponse ToDomain(Proto.NodePingResponse value)
+    public static PingResponse ToDomain(Proto.PingResponse value)
     {
-        return new NodePingResponse(
+        return new PingResponse(
             value.NodeVersion,
             value.Environment,
             ToTimeSpan(value.UptimeSeconds),
@@ -93,9 +93,9 @@ public static class RemoteNodeGrpcMapper
     /// <summary>
     /// Converts a node connection event from the gRPC contract.
     /// </summary>
-    public static NodeConnectionEvent ToDomain(Proto.NodeConnectionEvent value)
+    public static ConnectionEvent ToDomain(Proto.ConnectionEvent value)
     {
-        return new NodeConnectionEvent(
+        return new ConnectionEvent(
             ResolveType(value.Type, value.EventType),
             ToDateTimeOffset(value.Timestamp),
             value.Ping is null ? null : ToDomain(value.Ping),
@@ -183,18 +183,18 @@ public static class RemoteNodeGrpcMapper
         return request;
     }
 
-    private static NodeCoreStatus ToDomain(Proto.NodeCoreStatus value)
+    private static CoreSummary ToDomain(Proto.CoreSummary value)
     {
-        return new NodeCoreStatus(
+        return new CoreSummary(
             value.IsInstalled,
             value.IsRunning,
             value.HasVersion ? value.Version : null,
             value.Status);
     }
 
-    private static NodeSystemStats ToDomain(Proto.NodeSystemStats value)
+    private static SystemStats ToDomain(Proto.SystemStats value)
     {
-        return new NodeSystemStats(
+        return new SystemStats(
             value.MachineName,
             value.OsDescription,
             value.ProcessorCount,
@@ -212,27 +212,27 @@ public static class RemoteNodeGrpcMapper
             ToDomain(value.Network));
     }
 
-    private static NodeCpuStats ToDomain(Proto.NodeCpuStats value)
+    private static CpuStats ToDomain(Proto.CpuStats value)
     {
-        return new NodeCpuStats(
+        return new CpuStats(
             value.LogicalCoreCount,
             value.HasAverageUsagePercent ? value.AverageUsagePercent : null,
             [.. value.Cores.Select(ToDomain)]);
     }
 
-    private static NodeCpuCoreUsage ToDomain(Proto.NodeCpuCoreUsage value)
+    private static CpuCoreUsage ToDomain(Proto.CpuCoreUsage value)
     {
-        return new NodeCpuCoreUsage(value.Index, value.HasUsagePercent ? value.UsagePercent : null);
+        return new CpuCoreUsage(value.Index, value.HasUsagePercent ? value.UsagePercent : null);
     }
 
-    private static NodeMemoryStats ToDomain(Proto.NodeMemoryStats value)
+    private static MemoryStats ToDomain(Proto.MemoryStats value)
     {
-        return new NodeMemoryStats(value.TotalBytes, value.UsedBytes, value.AvailableBytes);
+        return new MemoryStats(value.TotalBytes, value.UsedBytes, value.AvailableBytes);
     }
 
-    private static NodeVolumeStats ToDomain(Proto.NodeVolumeStats value)
+    private static VolumeStats ToDomain(Proto.VolumeStats value)
     {
-        return new NodeVolumeStats(
+        return new VolumeStats(
             value.Name,
             value.FileSystem,
             value.TotalBytes,
@@ -241,9 +241,9 @@ public static class RemoteNodeGrpcMapper
             value.UsedPercent);
     }
 
-    private static NodeNetworkStats ToDomain(Proto.NodeNetworkStats value)
+    private static NetworkStats ToDomain(Proto.NetworkStats value)
     {
-        return new NodeNetworkStats(value.Ipv4Addresses, value.Ipv6Addresses);
+        return new NetworkStats(value.Ipv4Addresses, value.Ipv6Addresses);
     }
 
     /// <summary>

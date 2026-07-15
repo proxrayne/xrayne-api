@@ -44,6 +44,9 @@ Panel-owned node behavior includes:
 `RemoteNode` must not depend on `Contracts`, `Infrastructure`, `Data`,
 or `Api`.
 It is the only panel project that should know the remote node API wire shape.
+It creates typed clients for the split `HealthService`, `CoreService`,
+`RuntimeConfigService`, `LogService`, `GeoResourceService`, and
+`CertificateService` gRPC services over one cached channel per remote node.
 Do not add or reference a local standalone node-service project when
 implementing node management features in this repository.
 
@@ -52,10 +55,10 @@ implementing node management features in this repository.
 panel startup, exposes immediate connect/reconnect/disconnect operations for
 controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every heartbeat to the database.
-Each worker is the only persistent upstream gRPC `Connect` subscriber for its
-node. It updates panel-local stores and dispatches local event-bus updates for
-dashboard SSE clients, so dashboard tabs do not create additional remote node
-streams. The worker treats stream idleness as a failed connection after
+Each worker is the only persistent upstream gRPC `HealthService.Connect`
+subscriber for its node. It updates panel-local stores and dispatches local
+event-bus updates for dashboard SSE clients, so dashboard tabs do not create
+additional remote node streams. The worker treats stream idleness as a failed connection after
 `NodeConnection:StreamIdleTimeoutSeconds`, or `3 * StreamHeartbeatSeconds + 5`
 seconds when unset, and then uses the normal reconnect policy.
 Live node and remote xray-core state is kept in process memory through
@@ -70,23 +73,23 @@ The panel exposes connection state through
 `GET /api/nodes/{id}/connection` so profile reads can show live node state
 without calling remote `ping`.
 
-The standalone remote node `Ping` response and `Connect` heartbeat stream
+The standalone remote node `Ping` response and `HealthService.Connect` heartbeat stream
 payloads must include `NodeVersion`, `Environment`, `Uptime`, and `Core`.
-The `Connect` gRPC stream also emits `core_status`, `core_install`, and
+The `HealthService.Connect` gRPC stream also emits `core_status`, `core_install`, and
 `core_log` events from the node runtime state machine. Stream envelopes include
 compatibility `type`, typed `eventType`, `sequence`, `droppedCount`, and
 `source` metadata. The stream event
 timestamp is the heartbeat time persisted by the panel. Host telemetry is
-fetched separately from the node `GetSystemStatus` RPC and proxied by the panel through
+fetched separately from the node `HealthService.GetSystemStatus` RPC and proxied by the panel through
 `/api/nodes/{id}/system/status`.
 Remote node and xray-core versions are not persisted on `NodeEntity`; they are
 runtime telemetry values and are repopulated after panel restart when node
 streams reconnect.
 
 Remote node logs are runtime-only and limited to xray-core output. The
-standalone node exposes recent xray-core logs through `GetLogs` and
-`StreamLogs`, and the panel's `IRemoteNodeConnectionManager` ingests
-batched `core_log` events from the existing `Connect` gRPC stream. `INodeLogStore`
+standalone node exposes recent xray-core logs through `LogService.GetLogs` and
+`LogService.StreamLogs`, and the panel's `IRemoteNodeConnectionManager` ingests
+batched `core_log` events from the existing `HealthService.Connect` gRPC stream. `INodeLogStore`
 keeps bounded in-memory ring buffers keyed by node id. The panel exposes
 dashboard reads through
 `GET /api/nodes/{id}/logs` and live updates through

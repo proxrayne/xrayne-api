@@ -10,7 +10,7 @@ public interface IRemoteNodeApiClient
     /// <summary>
     /// Gets current remote node telemetry.
     /// </summary>
-    Task<NodePingResponse> PingAsync(CancellationToken cancellationToken = default);
+    Task<PingResponse> PingAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets recent remote node log entries.

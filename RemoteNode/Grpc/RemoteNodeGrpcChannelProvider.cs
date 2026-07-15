@@ -4,7 +4,6 @@ using Grpc.Net.Client;
 using Microsoft.Extensions.Options;
 using RemoteNode.Configurations;
 using RemoteNode.Models;
-using Proto = XRayne.ProtoTypes.RemoteNode.V1;
 
 namespace RemoteNode.Grpc;
 
@@ -18,10 +17,9 @@ public sealed class RemoteNodeGrpcChannelProvider(IOptions<RemoteNodeOptions> op
     private readonly ConcurrentDictionary<string, GrpcChannel> channels = new();
 
     /// <inheritdoc />
-    public Proto.RemoteNodeService.RemoteNodeServiceClient CreateClient(RemoteNodeEndpoint endpoint)
+    public GrpcChannel CreateChannel(RemoteNodeEndpoint endpoint)
     {
-        var channel = channels.GetOrAdd(BuildKey(endpoint), _ => CreateChannel(endpoint));
-        return new Proto.RemoteNodeService.RemoteNodeServiceClient(channel);
+        return channels.GetOrAdd(BuildKey(endpoint), _ => CreateGrpcChannel(endpoint));
     }
 
     /// <inheritdoc />
@@ -44,7 +42,7 @@ public sealed class RemoteNodeGrpcChannelProvider(IOptions<RemoteNodeOptions> op
         channels.Clear();
     }
 
-    private GrpcChannel CreateChannel(RemoteNodeEndpoint endpoint)
+    private GrpcChannel CreateGrpcChannel(RemoteNodeEndpoint endpoint)
     {
         var configured = options.Value;
         var handler = new SocketsHttpHandler

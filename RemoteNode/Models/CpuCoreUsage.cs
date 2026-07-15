@@ -3,6 +3,6 @@ namespace RemoteNode.Models;
 /// <summary>
 /// Describes one remote node CPU core usage value.
 /// </summary>
-public sealed record NodeCpuCoreUsage(
+public sealed record CpuCoreUsage(
     int Index,
     double? UsagePercent);

@@ -26,7 +26,13 @@ public abstract class RemoteNodeGrpcClientBase
     {
         Options = options.Value;
         Endpoint = endpoint;
-        Client = channelProvider.CreateClient(endpoint);
+        var channel = channelProvider.CreateChannel(endpoint);
+        HealthClient = new Proto.HealthService.HealthServiceClient(channel);
+        CoreClient = new Proto.CoreService.CoreServiceClient(channel);
+        RuntimeConfigClient = new Proto.RuntimeConfigService.RuntimeConfigServiceClient(channel);
+        LogClient = new Proto.LogService.LogServiceClient(channel);
+        GeoResourceClient = new Proto.GeoResourceService.GeoResourceServiceClient(channel);
+        CertificateClient = new Proto.CertificateService.CertificateServiceClient(channel);
     }
 
     /// <summary>
@@ -40,9 +46,34 @@ public abstract class RemoteNodeGrpcClientBase
     protected RemoteNodeOptions Options { get; }
 
     /// <summary>
-    /// Gets the generated gRPC client.
+    /// Gets the generated health gRPC client.
     /// </summary>
-    protected Proto.RemoteNodeService.RemoteNodeServiceClient Client { get; }
+    protected Proto.HealthService.HealthServiceClient HealthClient { get; }
+
+    /// <summary>
+    /// Gets the generated core gRPC client.
+    /// </summary>
+    protected Proto.CoreService.CoreServiceClient CoreClient { get; }
+
+    /// <summary>
+    /// Gets the generated runtime configuration gRPC client.
+    /// </summary>
+    protected Proto.RuntimeConfigService.RuntimeConfigServiceClient RuntimeConfigClient { get; }
+
+    /// <summary>
+    /// Gets the generated log gRPC client.
+    /// </summary>
+    protected Proto.LogService.LogServiceClient LogClient { get; }
+
+    /// <summary>
+    /// Gets the generated geo resource gRPC client.
+    /// </summary>
+    protected Proto.GeoResourceService.GeoResourceServiceClient GeoResourceClient { get; }
+
+    /// <summary>
+    /// Gets the generated certificate gRPC client.
+    /// </summary>
+    protected Proto.CertificateService.CertificateServiceClient CertificateClient { get; }
 
     /// <summary>
     /// Executes a unary gRPC call and maps transport failures.

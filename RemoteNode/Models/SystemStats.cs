@@ -3,7 +3,7 @@ namespace RemoteNode.Models;
 /// <summary>
 /// Describes basic remote node system statistics.
 /// </summary>
-public sealed record NodeSystemStats(
+public sealed record SystemStats(
     string MachineName,
     string OSDescription,
     int ProcessorCount,
@@ -14,8 +14,8 @@ public sealed record NodeSystemStats(
     DateTimeOffset StartedAt,
     DateTimeOffset Timestamp,
     TimeSpan Uptime,
-    NodeCpuStats Cpu,
-    NodeMemoryStats Memory,
-    NodeMemoryStats Swap,
-    IReadOnlyCollection<NodeVolumeStats> Volumes,
-    NodeNetworkStats Network);
+    CpuStats Cpu,
+    MemoryStats Memory,
+    MemoryStats Swap,
+    IReadOnlyCollection<VolumeStats> Volumes,
+    NetworkStats Network);

@@ -3,8 +3,8 @@ namespace RemoteNode.Models;
 /// <summary>
 /// Describes the current remote node telemetry returned to the panel.
 /// </summary>
-public sealed record NodePingResponse(
+public sealed record PingResponse(
     string NodeVersion,
     string Environment,
     TimeSpan Uptime,
-    NodeCoreStatus Core);
+    CoreSummary Core);
