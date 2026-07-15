@@ -1,7 +1,7 @@
 using Contracts.Configurations;
 using Infrastructure.Values;
 using Microsoft.Extensions.Options;
-using RemoteNode.Models;
+using Node.Models;
 
 namespace Infrastructure.Services;
 

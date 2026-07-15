@@ -3,8 +3,8 @@ using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;
@@ -16,8 +16,8 @@ public sealed class NodeOutboundService(
     INodeRepository nodes,
     IOutboundRepository outbounds,
     INodeSecretService secrets,
-    IRemoteNodeApiClientFactory apiClientFactory,
-    IRemoteNodeCoreStateStore coreStateStore) : INodeOutboundService
+    INodeRuntimeConfigClientFactory runtimeConfigClientFactory,
+    INodeCoreStateStore coreStateStore) : INodeOutboundService
 {
     /// <inheritdoc />
     public async Task<List<OutboundEntity>> GetByNodeIdAsync(
@@ -381,7 +381,7 @@ public sealed class NodeOutboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).AddOutboundAsync(
+        await CreateNodeClient(node).AddOutboundAsync(
             CreateSyncOutboundRequest(outbound),
             cancellationToken);
     }
@@ -405,7 +405,7 @@ public sealed class NodeOutboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).UpdateOutboundAsync(
+        await CreateNodeClient(node).UpdateOutboundAsync(
             oldTag,
             CreateSyncOutboundRequest(outbound),
             cancellationToken);
@@ -421,7 +421,7 @@ public sealed class NodeOutboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).DeleteOutboundAsync(tag, cancellationToken);
+        await CreateNodeClient(node).DeleteOutboundAsync(tag, cancellationToken);
     }
 
     private async Task SyncRemoteDeleteAsync(
@@ -434,7 +434,7 @@ public sealed class NodeOutboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).DeleteOutboundAsync(outbound.Tag!, cancellationToken);
+        await CreateNodeClient(node).DeleteOutboundAsync(outbound.Tag!, cancellationToken);
     }
 
     private static SyncOutboundRequest CreateSyncOutboundRequest(OutboundEntity outbound)
@@ -448,9 +448,9 @@ public sealed class NodeOutboundService(
     private bool IsRemoteCoreRunning(long nodeId)
         => coreStateStore.TryGet(nodeId, out var state) && state?.IsRunning == true;
 
-    private IRemoteNodeApiClient CreateRemoteNodeClient(NodeEntity node)
+    private INodeRuntimeConfigClient CreateNodeClient(NodeEntity node)
     {
-        return apiClientFactory.Create(new RemoteNodeEndpoint(
+        return runtimeConfigClientFactory.Create(new NodeEndpoint(
             node.Id,
             node.Address,
             node.ApiPort,

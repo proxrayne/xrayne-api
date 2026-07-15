@@ -14,8 +14,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Quartz;
-using RemoteNode;
-using RemoteNode.Configurations;
+using Node;
+using Node.Configurations;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -160,7 +160,7 @@ try
     });
 
     builder.Services.AddSingleton(settings);
-    builder.Services.AddRemoteNodes(new RemoteNodeOptions
+    builder.Services.AddNodes(new NodeOptions
     {
         PingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:PingTimeoutSeconds", 15),
         KeepAlivePingDelaySeconds = builder.Configuration.GetValue("NodeConnection:GrpcKeepAliveDelaySeconds", 60),

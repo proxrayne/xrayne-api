@@ -3,8 +3,8 @@ using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;
@@ -16,8 +16,8 @@ public sealed class NodeInboundService(
     INodeRepository nodes,
     IInboundRepository inbounds,
     INodeSecretService secrets,
-    IRemoteNodeApiClientFactory apiClientFactory,
-    IRemoteNodeCoreStateStore coreStateStore) : INodeInboundService
+    INodeRuntimeConfigClientFactory runtimeConfigClientFactory,
+    INodeCoreStateStore coreStateStore) : INodeInboundService
 {
     private const int ReservedXrayApiPort = 10086;
 
@@ -403,7 +403,7 @@ public sealed class NodeInboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).AddInboundAsync(
+        await CreateNodeClient(node).AddInboundAsync(
             CreateSyncInboundRequest(inbound),
             cancellationToken);
     }
@@ -427,7 +427,7 @@ public sealed class NodeInboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).UpdateInboundAsync(
+        await CreateNodeClient(node).UpdateInboundAsync(
             oldTag,
             CreateSyncInboundRequest(inbound),
             cancellationToken);
@@ -443,7 +443,7 @@ public sealed class NodeInboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).DeleteInboundAsync(tag, cancellationToken);
+        await CreateNodeClient(node).DeleteInboundAsync(tag, cancellationToken);
     }
 
     private async Task SyncRemoteDeleteAsync(
@@ -456,7 +456,7 @@ public sealed class NodeInboundService(
             return;
         }
 
-        await CreateRemoteNodeClient(node).DeleteInboundAsync(inbound.Tag, cancellationToken);
+        await CreateNodeClient(node).DeleteInboundAsync(inbound.Tag, cancellationToken);
     }
 
     private static SyncInboundRequest CreateSyncInboundRequest(InboundEntity inbound)
@@ -470,9 +470,9 @@ public sealed class NodeInboundService(
     private bool IsRemoteCoreRunning(long nodeId)
         => coreStateStore.TryGet(nodeId, out var state) && state?.IsRunning == true;
 
-    private IRemoteNodeApiClient CreateRemoteNodeClient(NodeEntity node)
+    private INodeRuntimeConfigClient CreateNodeClient(NodeEntity node)
     {
-        return apiClientFactory.Create(new RemoteNodeEndpoint(
+        return runtimeConfigClientFactory.Create(new NodeEndpoint(
             node.Id,
             node.Address,
             node.ApiPort,

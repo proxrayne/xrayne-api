@@ -5,8 +5,8 @@ using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Services;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Models;
 
 namespace Test.Infrastructure;
@@ -33,7 +33,7 @@ public sealed class NodeGeoResourceServiceTests
 
                 return Task.FromResult(saved);
             });
-        fixture.RemoteClient
+        fixture.NodeClient
             .GetGeoResourcesAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new List<GeoResourceDto>
             {
@@ -85,7 +85,7 @@ public sealed class NodeGeoResourceServiceTests
         updated!.LastError.Should().NotBeNullOrWhiteSpace();
         updated.LastErrorAt.Should().NotBeNull();
         updated.NextRunAt.Should().Be(nextRunAt);
-        await fixture.RemoteClient.DidNotReceiveWithAnyArgs()
+        await fixture.NodeClient.DidNotReceiveWithAnyArgs()
             .UploadGeoResourceAsync(default!, default!, default);
     }
 
@@ -114,7 +114,7 @@ public sealed class NodeGeoResourceServiceTests
         fixture.Repository
             .GetByFilenameAsync(fixture.AdminId, fixture.Node.Id, "custom.dat", Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<GeoResourceEntity?>(null));
-        fixture.RemoteClient
+        fixture.NodeClient
             .RenameGeoResourceAsync(
                 "geosite.dat",
                 Arg.Is<RenameGeoResourceRequest>(request => request.FileName == "custom.dat"),
@@ -139,7 +139,7 @@ public sealed class NodeGeoResourceServiceTests
         updated.Should().NotBeNull();
         updated!.Filename.Should().Be("custom.dat");
         updated.NextRunAt.Should().Be(nextRunAt);
-        await fixture.RemoteClient.DidNotReceiveWithAnyArgs()
+        await fixture.NodeClient.DidNotReceiveWithAnyArgs()
             .UploadGeoResourceAsync(default!, default!, default);
     }
 
@@ -149,13 +149,15 @@ public sealed class NodeGeoResourceServiceTests
             Guid adminId,
             NodeEntity node,
             IGeoResourceRepository repository,
-            IRemoteNodeApiClient remoteClient,
+            INodeGeoResourceClient nodeClient,
+            INodeCoreClient coreClient,
             NodeGeoResourceService service)
         {
             AdminId = adminId;
             Node = node;
             Repository = repository;
-            RemoteClient = remoteClient;
+            NodeClient = nodeClient;
+            CoreClient = coreClient;
             Service = service;
         }
 
@@ -165,7 +167,9 @@ public sealed class NodeGeoResourceServiceTests
 
         public IGeoResourceRepository Repository { get; }
 
-        public IRemoteNodeApiClient RemoteClient { get; }
+        public INodeGeoResourceClient NodeClient { get; }
+
+        public INodeCoreClient CoreClient { get; }
 
         public NodeGeoResourceService Service { get; }
 
@@ -193,13 +197,16 @@ public sealed class NodeGeoResourceServiceTests
                 Admin = admin
             };
             var repository = Substitute.For<IGeoResourceRepository>();
-            var remoteClient = Substitute.For<IRemoteNodeApiClient>();
-            var factory = Substitute.For<IRemoteNodeApiClientFactory>();
-            factory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(remoteClient);
+            var nodeClient = Substitute.For<INodeGeoResourceClient>();
+            var geoResourceClientFactory = Substitute.For<INodeGeoResourceClientFactory>();
+            geoResourceClientFactory.Create(Arg.Any<NodeEndpoint>()).Returns(nodeClient);
+            var coreClient = Substitute.For<INodeCoreClient>();
+            var coreClientFactory = Substitute.For<INodeCoreClientFactory>();
+            coreClientFactory.Create(Arg.Any<NodeEndpoint>()).Returns(coreClient);
 
             var secrets = Substitute.For<INodeSecretService>();
             secrets.UnprotectApiKey("protected").Returns("api-key");
-            var coreStates = Substitute.For<IRemoteNodeCoreStateStore>();
+            var coreStates = Substitute.For<INodeCoreStateStore>();
             var builder = Substitute.For<INodeCoreConfigBuilder>();
             builder.Build(node).Returns(new StartCoreRequest { Config = new XrayConfig() });
             var httpClientFactory = Substitute.For<IHttpClientFactory>();
@@ -208,12 +215,13 @@ public sealed class NodeGeoResourceServiceTests
             var service = new NodeGeoResourceService(
                 repository,
                 secrets,
-                factory,
+                geoResourceClientFactory,
+                coreClientFactory,
                 coreStates,
                 builder,
                 httpClientFactory);
 
-            return new NodeGeoResourceServiceFixture(adminId, node, repository, remoteClient, service);
+            return new NodeGeoResourceServiceFixture(adminId, node, repository, nodeClient, coreClient, service);
         }
     }
 

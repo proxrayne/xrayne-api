@@ -7,8 +7,8 @@ using Data.Implementations;
 using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.Extensions.Caching.Memory;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Models;
 
 namespace Test.Infrastructure;
@@ -20,9 +20,9 @@ public sealed class NodeRoutingRuleServiceTests
     private readonly INodeRepository nodes;
     private readonly IRoutingRuleRepository routingRules;
     private readonly INodeSecretService secrets;
-    private readonly IRemoteNodeApiClient remoteClient;
-    private readonly IRemoteNodeApiClientFactory apiClientFactory;
-    private readonly RemoteNodeCoreStateStore coreStateStore;
+    private readonly INodeRuntimeConfigClient nodeClient;
+    private readonly INodeRuntimeConfigClientFactory runtimeConfigClientFactory;
+    private readonly NodeCoreStateStore coreStateStore;
     private readonly NodeEntity node;
     private readonly NodeRoutingRuleService service;
 
@@ -31,14 +31,14 @@ public sealed class NodeRoutingRuleServiceTests
         nodes = Substitute.For<INodeRepository>();
         routingRules = Substitute.For<IRoutingRuleRepository>();
         secrets = Substitute.For<INodeSecretService>();
-        remoteClient = Substitute.For<IRemoteNodeApiClient>();
-        apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
-        coreStateStore = new RemoteNodeCoreStateStore(new MemoryCache(new MemoryCacheOptions()));
+        nodeClient = Substitute.For<INodeRuntimeConfigClient>();
+        runtimeConfigClientFactory = Substitute.For<INodeRuntimeConfigClientFactory>();
+        coreStateStore = new NodeCoreStateStore(new MemoryCache(new MemoryCacheOptions()));
         node = CreateNode();
 
         nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
         secrets.UnprotectApiKey(node.EncryptedApiKey).Returns("api-key");
-        apiClientFactory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(remoteClient);
+        runtimeConfigClientFactory.Create(Arg.Any<NodeEndpoint>()).Returns(nodeClient);
         routingRules.AddAsync(
                 Arg.Any<Guid>(),
                 Arg.Any<long>(),
@@ -57,7 +57,7 @@ public sealed class NodeRoutingRuleServiceTests
             nodes,
             routingRules,
             secrets,
-            apiClientFactory,
+            runtimeConfigClientFactory,
             coreStateStore);
     }
 
@@ -159,7 +159,7 @@ public sealed class NodeRoutingRuleServiceTests
             .Returns(rule);
         routingRules.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
             .Returns([rule]);
-        coreStateStore.Set(new RemoteNodeCoreState(
+        coreStateStore.Set(new NodeCoreState(
             node.Id,
             true,
             true,
@@ -171,7 +171,7 @@ public sealed class NodeRoutingRuleServiceTests
         var result = await service.UpdateEnabledAsync(node.Id, rule.Id, true, CancellationToken.None);
 
         result.Enabled.Should().BeTrue();
-        await remoteClient.Received(1).SyncRoutingRulesAsync(
+        await nodeClient.Received(1).SyncRoutingRulesAsync(
             Arg.Is<SyncRoutingRulesRequest>(request => request.RoutingRules.Any(rule => rule.OutboundTag == "direct")),
             Arg.Any<CancellationToken>());
     }
@@ -208,7 +208,7 @@ public sealed class NodeRoutingRuleServiceTests
 
                 return current.OrderBy(rule => rule.Position).ThenBy(rule => rule.Id).ToList();
             });
-        coreStateStore.Set(new RemoteNodeCoreState(
+        coreStateStore.Set(new NodeCoreState(
             node.Id,
             true,
             true,
@@ -259,7 +259,7 @@ public sealed class NodeRoutingRuleServiceTests
             Arg.Any<RoutingRuleEntity>(),
             Arg.Any<CancellationToken>());
         await routingRules.DidNotReceive().DeleteAsync(Arg.Any<long>(), Arg.Any<CancellationToken>());
-        await remoteClient.Received(1).SyncRoutingRulesAsync(
+        await nodeClient.Received(1).SyncRoutingRulesAsync(
             Arg.Is<SyncRoutingRulesRequest>(request =>
                 request.RoutingRules.Select(rule => rule.RuleTag).SequenceEqual(new[] { "renamed-rule" })),
             Arg.Any<CancellationToken>());

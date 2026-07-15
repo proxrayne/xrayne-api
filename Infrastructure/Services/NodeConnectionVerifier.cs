@@ -2,8 +2,8 @@ using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
 using Infrastructure.Dto;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Data.Entities;
 
 namespace Infrastructure.Services;
@@ -12,9 +12,9 @@ namespace Infrastructure.Services;
 /// Verifies a node connection by calling its authenticated ping endpoint.
 /// </summary>
 public sealed class NodeConnectionVerifier(
-    IRemoteNodeApiClientFactory apiClientFactory,
+    INodeHealthClientFactory healthClientFactory,
     INodeConnectionStateStore connectionStates,
-    IRemoteNodeCoreStateStore coreStates) : INodeConnectionVerifier
+    INodeCoreStateStore coreStates) : INodeConnectionVerifier
 {
     /// <inheritdoc />
     public async Task<NodeConnectionVerificationResult> VerifyAsync(
@@ -22,8 +22,8 @@ public sealed class NodeConnectionVerifier(
         string apiKey,
         CancellationToken cancellationToken)
     {
-        var endpoint = new RemoteNodeEndpoint(node.Id, node.Address, node.ApiPort, apiKey);
-        var ping = await apiClientFactory.Create(endpoint).PingAsync(cancellationToken);
+        var endpoint = new NodeEndpoint(node.Id, node.Address, node.ApiPort, apiKey);
+        var ping = await healthClientFactory.Create(endpoint).PingAsync(cancellationToken);
         var verifiedAt = DateTimeOffset.UtcNow;
 
         connectionStates.Set(new NodeConnectionState(
@@ -31,7 +31,7 @@ public sealed class NodeConnectionVerifier(
             NodeConnectionStatus.Connected,
             ping.NodeVersion,
             verifiedAt - ping.Uptime));
-        coreStates.Set(new RemoteNodeCoreState(
+        coreStates.Set(new NodeCoreState(
             node.Id,
             ping.Core.IsInstalled,
             ping.Core.IsRunning,

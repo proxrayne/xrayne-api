@@ -1,0 +1,12 @@
+namespace Node.Models;
+
+/// <summary>
+/// Describes a mounted volume on a remote node.
+/// </summary>
+public sealed record VolumeStats(
+    string Name,
+    string FileSystem,
+    long TotalBytes,
+    long FreeBytes,
+    long UsedBytes,
+    double UsedPercent);

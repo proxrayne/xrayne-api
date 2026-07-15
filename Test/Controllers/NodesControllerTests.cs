@@ -17,8 +17,8 @@ using Contracts.Models;
 using Contracts.Utilities;
 using Infrastructure.Services;
 using Infrastructure.States;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Data.Entities;
 using Data.Implementations;
 using Xray.Config.Models;
@@ -34,12 +34,14 @@ public sealed class NodesControllerTests
     private readonly INodeOutboundService _nodeOutbounds;
     private readonly INodeRoutingRuleService _nodeRoutingRules;
     private readonly INodeSecretService _secrets;
-    private readonly IRemoteNodeApiClient _remoteClient;
-    private readonly IRemoteNodeApiClientFactory _apiClientFactory;
+    private readonly INodeHealthClient _healthClient;
+    private readonly INodeHealthClientFactory _healthClientFactory;
+    private readonly INodeCoreClient _coreClient;
+    private readonly INodeCoreClientFactory _coreClientFactory;
     private readonly INodeCoreConfigBuilder _coreConfigBuilder;
-    private readonly IRemoteNodeConnectionManager _connectionManager;
+    private readonly INodeConnectionManager _connectionManager;
     private readonly INodeConnectionStateStore _connectionStateStore;
-    private readonly IRemoteNodeCoreStateStore _coreStateStore;
+    private readonly INodeCoreStateStore _coreStateStore;
     private readonly NodesController _controller;
 
     public NodesControllerTests()
@@ -49,17 +51,20 @@ public sealed class NodesControllerTests
         _nodeOutbounds = Substitute.For<INodeOutboundService>();
         _nodeRoutingRules = Substitute.For<INodeRoutingRuleService>();
         _secrets = Substitute.For<INodeSecretService>();
-        _remoteClient = Substitute.For<IRemoteNodeApiClient>();
-        _apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
+        _healthClient = Substitute.For<INodeHealthClient>();
+        _healthClientFactory = Substitute.For<INodeHealthClientFactory>();
+        _coreClient = Substitute.For<INodeCoreClient>();
+        _coreClientFactory = Substitute.For<INodeCoreClientFactory>();
         _coreConfigBuilder = Substitute.For<INodeCoreConfigBuilder>();
-        _connectionManager = Substitute.For<IRemoteNodeConnectionManager>();
+        _connectionManager = Substitute.For<INodeConnectionManager>();
         _connectionStateStore = new NodeConnectionStateStore(new MemoryCache(new MemoryCacheOptions()));
-        _coreStateStore = Substitute.For<IRemoteNodeCoreStateStore>();
+        _coreStateStore = Substitute.For<INodeCoreStateStore>();
         var mapper = new MapperConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
         var environment = Substitute.For<IHostEnvironment>();
         environment.EnvironmentName.Returns(Environments.Production);
         _secrets.UnprotectApiKey("encrypted").Returns("api-key");
-        _apiClientFactory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(_remoteClient);
+        _healthClientFactory.Create(Arg.Any<NodeEndpoint>()).Returns(_healthClient);
+        _coreClientFactory.Create(Arg.Any<NodeEndpoint>()).Returns(_coreClient);
         _coreConfigBuilder.Build(Arg.Any<NodeEntity>()).Returns(CreateStartRequest());
 
         _controller = new NodesController(
@@ -71,7 +76,8 @@ public sealed class NodesControllerTests
             _secrets,
             Substitute.For<INodeConnectionVerifier>(),
             _connectionManager,
-            _apiClientFactory,
+            _healthClientFactory,
+            _coreClientFactory,
             _coreConfigBuilder,
             _connectionStateStore,
             _coreStateStore,
@@ -308,52 +314,52 @@ public sealed class NodesControllerTests
     }
 
     [Fact]
-    public async Task StartCore_SendsBuiltConfigToRemoteNode()
+    public async Task StartCore_SendsBuiltConfigToNode()
     {
         var node = CreateNode();
         _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
-        _remoteClient.StartCoreAsync(Arg.Any<StartCoreRequest>(), Arg.Any<CancellationToken>())
+        _coreClient.StartCoreAsync(Arg.Any<StartCoreRequest>(), Arg.Any<CancellationToken>())
             .Returns(new OperationAcceptedResponse("start", "queued"));
 
         var result = await _controller.StartCore(node.Id, CancellationToken.None);
 
         result.Result.Should().BeOfType<AcceptedResult>();
-        await _remoteClient.Received(1).StartCoreAsync(
+        await _coreClient.Received(1).StartCoreAsync(
             Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task RestartCore_SendsBuiltConfigToRemoteNode()
+    public async Task RestartCore_SendsBuiltConfigToNode()
     {
         var node = CreateNode();
         _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
-        _remoteClient.RestartCoreAsync(Arg.Any<StartCoreRequest>(), Arg.Any<CancellationToken>())
+        _coreClient.RestartCoreAsync(Arg.Any<StartCoreRequest>(), Arg.Any<CancellationToken>())
             .Returns(new OperationAcceptedResponse("restart", "queued"));
 
         var result = await _controller.RestartCore(node.Id, CancellationToken.None);
 
         result.Result.Should().BeOfType<AcceptedResult>();
-        await _remoteClient.Received(1).RestartCoreAsync(
+        await _coreClient.Received(1).RestartCoreAsync(
             Arg.Is<StartCoreRequest>(request => ToJsonObject(request.Config)["log"]!["loglevel"]!.GetValue<string>() == "warning"),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Restart_RestartsRemoteNodeAndQueuesReconnect()
+    public async Task Restart_RestartsNodeAndQueuesReconnect()
     {
         var node = CreateNode();
         node.ReconnectAttemptCount = 2;
         _nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
         _nodes.UpdateAsync(Arg.Any<NodeEntity>(), Arg.Any<CancellationToken>())
             .Returns(call => call.Arg<NodeEntity>());
-        _remoteClient.RestartRuntimeAsync(Arg.Any<CancellationToken>())
+        _healthClient.RestartRuntimeAsync(Arg.Any<CancellationToken>())
             .Returns(new OperationAcceptedResponse("restart", "queued"));
 
         var result = await _controller.Restart(node.Id, CancellationToken.None);
 
         result.Should().BeOfType<AcceptedResult>();
-        await _remoteClient.Received(1).RestartRuntimeAsync(Arg.Any<CancellationToken>());
+        await _healthClient.Received(1).RestartRuntimeAsync(Arg.Any<CancellationToken>());
         await _connectionManager.Received(1).ReconnectAsync(node.Id, Arg.Any<CancellationToken>());
         node.ReconnectAttemptCount.Should().Be(0);
         node.Message.Should().Be("Remote node restart requested.");

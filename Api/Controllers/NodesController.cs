@@ -16,10 +16,10 @@ using Infrastructure.Values;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using RemoteNode.Enums;
-using RemoteNode.Exceptions;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Enums;
+using Node.Exceptions;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Models;
 
 namespace Api.Controllers;
@@ -38,11 +38,12 @@ public sealed class NodesController(
     INodeRoutingRuleService nodeRoutingRules,
     INodeSecretService secrets,
     INodeConnectionVerifier connectionVerifier,
-    IRemoteNodeConnectionManager connectionManager,
-    IRemoteNodeApiClientFactory apiClientFactory,
+    INodeConnectionManager connectionManager,
+    INodeHealthClientFactory healthClientFactory,
+    INodeCoreClientFactory coreClientFactory,
     INodeCoreConfigBuilder coreConfigBuilder,
     INodeConnectionStateStore connectionStateStore,
-    IRemoteNodeCoreStateStore coreStateStore,
+    INodeCoreStateStore coreStateStore,
     INodeLogStore nodeLogStore,
     IBackgroundTaskScheduler scheduler,
     INodeProvisionStateMachine provisionStates,
@@ -112,9 +113,9 @@ public sealed class NodesController(
 
         try
         {
-            return await CreateRemoteNodeClient(node).GetSystemStatusAsync(cancellationToken);
+            return await CreateHealthClient(node).GetSystemStatusAsync(cancellationToken);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -336,14 +337,14 @@ public sealed class NodesController(
         {
             try
             {
-                await CreateRemoteNodeClient(updated).UpdateCoreConfigTemplateAsync(
-                    new RemoteNode.Models.UpdateCoreConfigTemplateRequest
+                await CreateCoreClient(updated).UpdateCoreConfigTemplateAsync(
+                    new Node.Models.UpdateCoreConfigTemplateRequest
                     {
                         ConfigTemplate = updated.ConfigTemplate
                     },
                     cancellationToken);
             }
-            catch (RemoteNodeException exception)
+            catch (NodeException exception)
             {
                 throw ToApiException(exception);
             }
@@ -371,12 +372,12 @@ public sealed class NodesController(
 
         try
         {
-            var state = await CreateRemoteNodeClient(node).GetCoreStatusAsync(cancellationToken);
+            var state = await CreateCoreClient(node).GetCoreStatusAsync(cancellationToken);
             StoreCoreState(id, state);
 
             return state;
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -394,7 +395,7 @@ public sealed class NodesController(
     public async Task StreamCoreStatus(long id, CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
-        var subscription = eventStreams.Subscribe<CoreStatusResponse>(RemoteNodeStreamKeys.CoreStatus(id));
+        var subscription = eventStreams.Subscribe<CoreStatusResponse>(NodeStreamKeys.CoreStatus(id));
 
         SetupStreamHeaders();
 
@@ -402,7 +403,7 @@ public sealed class NodesController(
         {
             var initialState = coreStateStore.TryGet(id, out var cachedState) && cachedState is not null
                 ? ToCoreStatusResponse(cachedState)
-                : await CreateRemoteNodeClient(node).GetCoreStatusAsync(cancellationToken);
+                : await CreateCoreClient(node).GetCoreStatusAsync(cancellationToken);
 
             StoreCoreState(id, initialState);
 
@@ -416,7 +417,7 @@ public sealed class NodesController(
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             if (!Response.HasStarted)
             {
@@ -459,16 +460,16 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<InstallCoreResponse>> InstallCore(
         long id,
-        [FromBody] RemoteNode.Models.InstallCoreRequest request,
+        [FromBody] Node.Models.InstallCoreRequest request,
         CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
 
         try
         {
-            return Accepted(await CreateRemoteNodeClient(node).InstallCoreAsync(request, cancellationToken));
+            return Accepted(await CreateCoreClient(node).InstallCoreAsync(request, cancellationToken));
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -492,9 +493,9 @@ public sealed class NodesController(
 
         try
         {
-            return await CreateRemoteNodeClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
+            return await CreateCoreClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -516,13 +517,13 @@ public sealed class NodesController(
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
         var subscription = eventStreams.Subscribe<InstallCoreStatusResponse>(
-            RemoteNodeStreamKeys.CoreInstall(id, jobId));
+            NodeStreamKeys.CoreInstall(id, jobId));
 
         SetupStreamHeaders();
 
         try
         {
-            var initialState = await CreateRemoteNodeClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
+            var initialState = await CreateCoreClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
             await Response.StartAsync(cancellationToken);
             await WriteServerSentEventAsync(initialState, cancellationToken);
 
@@ -532,7 +533,7 @@ public sealed class NodesController(
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             if (!Response.HasStarted)
             {
@@ -666,9 +667,9 @@ public sealed class NodesController(
 
         try
         {
-            await CreateRemoteNodeClient(node).RestartRuntimeAsync(cancellationToken);
+            await CreateHealthClient(node).RestartRuntimeAsync(cancellationToken);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -868,15 +869,26 @@ public sealed class NodesController(
         return secrets.GenerateApiKey();
     }
 
-    private IRemoteNodeApiClient CreateRemoteNodeClient(NodeEntity node)
+    private INodeHealthClient CreateHealthClient(NodeEntity node)
     {
-        var endpoint = new RemoteNodeEndpoint(
+        var endpoint = new NodeEndpoint(
             node.Id,
             node.Address,
             node.ApiPort,
             secrets.UnprotectApiKey(node.EncryptedApiKey));
 
-        return apiClientFactory.Create(endpoint);
+        return healthClientFactory.Create(endpoint);
+    }
+
+    private INodeCoreClient CreateCoreClient(NodeEntity node)
+    {
+        var endpoint = new NodeEndpoint(
+            node.Id,
+            node.Address,
+            node.ApiPort,
+            secrets.UnprotectApiKey(node.EncryptedApiKey));
+
+        return coreClientFactory.Create(endpoint);
     }
 
     private static XrayConfig ParseConfigTemplate(string configTemplate)
@@ -965,7 +977,7 @@ public sealed class NodesController(
 
     private void StoreCoreState(long nodeId, CoreStatusResponse state)
     {
-        coreStateStore.Set(new RemoteNodeCoreState(
+        coreStateStore.Set(new NodeCoreState(
             nodeId,
             state.IsInstalled,
             state.Status is RemoteCoreStatus.Started,
@@ -978,7 +990,7 @@ public sealed class NodesController(
     private bool IsRemoteCoreRunning(long nodeId)
         => coreStateStore.TryGet(nodeId, out var state) && state?.IsRunning == true;
 
-    private static CoreStatusResponse ToCoreStatusResponse(RemoteNodeCoreState state)
+    private static CoreStatusResponse ToCoreStatusResponse(NodeCoreState state)
     {
         return new CoreStatusResponse(
             state.IsInstalled,
@@ -1005,16 +1017,16 @@ public sealed class NodesController(
 
     private async Task<ActionResult<OperationAcceptedResponse>> ScheduleCoreOperation(
         long id,
-        Func<NodeEntity, IRemoteNodeApiClient, Task<OperationAcceptedResponse>> operation,
+        Func<NodeEntity, INodeCoreClient, Task<OperationAcceptedResponse>> operation,
         CancellationToken cancellationToken)
     {
         var node = await GetAccessibleNodeAsync(id, cancellationToken);
 
         try
         {
-            return Accepted(await operation(node, CreateRemoteNodeClient(node)));
+            return Accepted(await operation(node, CreateCoreClient(node)));
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }

@@ -5,7 +5,7 @@ using Infrastructure.Services;
 using Infrastructure.Values;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RemoteNode.Models;
+using Node.Models;
 
 namespace Api.Controllers;
 

@@ -6,7 +6,7 @@ The backend is a .NET 9 solution with a layered architecture:
 
 - `Api`: panel REST API.
 - `Contracts`: shared contracts and configuration values.
-- `RemoteNode`: typed gRPC protocol client for standalone remote nodes.
+- `Node`: typed gRPC protocol client for standalone remote nodes.
 - `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
 - `Data`: EF Core persistence.
 - `Test`: test project.
@@ -34,14 +34,14 @@ Panel-owned node behavior includes:
 
 - HTTP endpoints in `Api`;
 - remote node gRPC protocol clients, DTOs, and typed protocol errors in
-  `RemoteNode`;
+  `Node`;
 - provisioning, reconnect, status streaming, and connection verification services
   in `Infrastructure`;
 - node entities, encrypted connection data, and repository access in
   `Data`;
 - shared node DTOs, enums, and configuration values in `Contracts`.
 
-`RemoteNode` must not depend on `Contracts`, `Infrastructure`, `Data`,
+`Node` must not depend on `Contracts`, `Infrastructure`, `Data`,
 or `Api`.
 It is the only panel project that should know the remote node API wire shape.
 It creates typed clients for the split `HealthService`, `CoreService`,
@@ -51,7 +51,7 @@ Do not add or reference a local standalone node-service project when
 implementing node management features in this repository.
 
 `Infrastructure` owns the live connection lifecycle through
-`IRemoteNodeConnectionManager`. The manager starts saved active node streams at
+`INodeConnectionManager`. The manager starts saved active node streams at
 panel startup, exposes immediate connect/reconnect/disconnect operations for
 controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every heartbeat to the database.
@@ -66,7 +66,7 @@ data-layer singleton stores. `NodeEntity` does not persist connection
 status; it persists `Enabled` only as the durable operator-controlled flag
 that allows or stops automatic reconnect attempts. `INodeConnectionStateStore`
 is the source of truth for the live connection status, remote node API version,
-and remote node uptime as a `DateTimeOffset` start time. `IRemoteNodeCoreStateStore`
+and remote node uptime as a `DateTimeOffset` start time. `INodeCoreStateStore`
 stores whether remote xray-core is installed and running, plus its version and
 enum status, started-at timestamp, and uptime when the remote core is started.
 The panel exposes connection state through
@@ -88,7 +88,7 @@ streams reconnect.
 
 Remote node logs are runtime-only and limited to xray-core output. The
 standalone node exposes recent xray-core logs through `LogService.GetLogs` and
-`LogService.StreamLogs`, and the panel's `IRemoteNodeConnectionManager` ingests
+`LogService.StreamLogs`, and the panel's `INodeConnectionManager` ingests
 batched `core_log` events from the existing `HealthService.Connect` gRPC stream. `INodeLogStore`
 keeps bounded in-memory ring buffers keyed by node id. The panel exposes
 dashboard reads through
@@ -97,7 +97,7 @@ dashboard reads through
 
 Remote node xray-core management is exposed through panel endpoints under
 `/api/nodes/{id}/core`. The panel resolves the encrypted node API key, calls the
-standalone node gRPC API through `RemoteNode`, and streams status/install events back
+standalone node gRPC API through `Node`, and streams status/install events back
 to the UI from panel-local event streams. Provisioning starts the node container, verifies the node API, then
 installs the latest XTLS `xray-core` as the final remote setup step.
 Node profile metadata is updated through `PUT /api/nodes/{id}`. Saved node

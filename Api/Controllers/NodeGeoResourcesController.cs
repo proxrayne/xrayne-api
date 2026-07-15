@@ -8,7 +8,7 @@ using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RemoteNode.Exceptions;
+using Node.Exceptions;
 
 namespace Api.Controllers;
 
@@ -42,7 +42,7 @@ public sealed class NodeGeoResourcesController(
 
             return mapper.Map<List<NodeGeoResourceDto>>(result);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -90,7 +90,7 @@ public sealed class NodeGeoResourcesController(
         {
             throw ToApiException(exception);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -137,7 +137,7 @@ public sealed class NodeGeoResourcesController(
         {
             throw ToApiException(exception);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -176,7 +176,7 @@ public sealed class NodeGeoResourcesController(
         {
             throw ToApiException(exception);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -221,7 +221,7 @@ public sealed class NodeGeoResourcesController(
         {
             throw ToApiException(exception);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -257,7 +257,7 @@ public sealed class NodeGeoResourcesController(
         {
             throw ToApiException(exception);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }

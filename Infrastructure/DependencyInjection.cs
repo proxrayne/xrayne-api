@@ -35,8 +35,8 @@ public static class DependencyInjection
         services.AddSingleton<INodeImageReleaseResolver, NodeImageReleaseResolver>();
         services.AddSingleton<INodeCoreConfigBuilder, NodeCoreConfigBuilder>();
         services.AddSingleton<INodeConnectionVerifier, NodeConnectionVerifier>();
-        services.AddSingleton<IRemoteNodeConnectionManager, RemoteNodeConnectionManager>();
-        services.AddSingleton<IRemoteNodeProvisioner, RemoteNodeProvisioner>();
+        services.AddSingleton<INodeConnectionManager, NodeConnectionManager>();
+        services.AddSingleton<INodeProvisioner, NodeProvisioner>();
         services.AddHostedService<NodeConnectionHostedService>();
         services.AddSingleton<ICoreService, CoreService>();
         services.AddSingleton<ICoreStateMachine, CoreStateMachine>();

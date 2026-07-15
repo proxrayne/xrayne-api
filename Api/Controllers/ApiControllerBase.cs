@@ -3,7 +3,7 @@ using Infrastructure.Dto;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using RemoteNode.Exceptions;
+using Node.Exceptions;
 
 namespace Api.Controllers;
 
@@ -78,11 +78,11 @@ public abstract class ApiControllerBase : ControllerBase
     /// <summary>
     /// Maps remote node client exceptions to API exceptions.
     /// </summary>
-    protected static ApiException ToApiException(RemoteNodeException exception)
+    protected static ApiException ToApiException(NodeException exception)
     {
         return exception switch
         {
-            RemoteNodeHttpException httpException when httpException.ResponseBody is not null
+            NodeHttpException httpException when httpException.ResponseBody is not null
                 => new BadRequestException($"{httpException.Message} {httpException.ResponseBody}"),
             _ => new BadRequestException(exception.Message)
         };

@@ -1,9 +1,9 @@
 using System.Net;
 using Data.Contracts;
 using Data.Entities;
-using RemoteNode.Exceptions;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Exceptions;
+using Node.Models;
+using Node.Services;
 
 namespace Infrastructure.Services;
 
@@ -13,7 +13,7 @@ namespace Infrastructure.Services;
 public sealed class NodeCertificateService(
     ICertificateRepository certificates,
     INodeSecretService secrets,
-    IRemoteNodeApiClientFactory apiClientFactory) : INodeCertificateService
+    INodeCertificateClientFactory certificateClientFactory) : INodeCertificateService
 {
     /// <inheritdoc />
     public async Task<List<CertificateEntity>> GetAllAsync(
@@ -77,7 +77,7 @@ public sealed class NodeCertificateService(
         {
             await CreateClient(node).DeleteCertificateAsync(normalizedDomain, cancellationToken);
         }
-        catch (RemoteNodeHttpException exception) when (exception.StatusCode is HttpStatusCode.NotFound)
+        catch (NodeHttpException exception) when (exception.StatusCode is HttpStatusCode.NotFound)
         {
         }
 
@@ -143,15 +143,15 @@ public sealed class NodeCertificateService(
             ?? certificate;
     }
 
-    private IRemoteNodeApiClient CreateClient(NodeEntity node)
+    private INodeCertificateClient CreateClient(NodeEntity node)
     {
-        var endpoint = new RemoteNodeEndpoint(
+        var endpoint = new NodeEndpoint(
             node.Id,
             node.Address,
             node.ApiPort,
             secrets.UnprotectApiKey(node.EncryptedApiKey));
 
-        return apiClientFactory.Create(endpoint);
+        return certificateClientFactory.Create(endpoint);
     }
 
     private static string NormalizeDomain(string domain)

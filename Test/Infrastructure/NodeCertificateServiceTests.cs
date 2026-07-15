@@ -2,9 +2,9 @@ using System.Net;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Services;
-using RemoteNode.Exceptions;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Exceptions;
+using Node.Models;
+using Node.Services;
 
 namespace Test.Infrastructure;
 
@@ -26,7 +26,7 @@ public sealed class NodeCertificateServiceTests
                 saved.Id = 10;
                 return Task.FromResult(saved);
             });
-        fixture.RemoteClient
+        fixture.NodeClient
             .IssueCertificateAsync(Arg.Any<IssueCertificateRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(CreateRemoteCertificate()));
 
@@ -50,9 +50,9 @@ public sealed class NodeCertificateServiceTests
     public async Task DeleteAsync_removes_local_metadata_when_remote_certificate_is_missing()
     {
         var fixture = NodeCertificateServiceFixture.Create();
-        fixture.RemoteClient
+        fixture.NodeClient
             .DeleteCertificateAsync("example.com", Arg.Any<CancellationToken>())
-            .Returns(Task.FromException(new RemoteNodeHttpException(
+            .Returns(Task.FromException(new NodeHttpException(
                 fixture.Node.Id,
                 "api/certificates/example.com",
                 HttpStatusCode.NotFound,
@@ -81,13 +81,13 @@ public sealed class NodeCertificateServiceTests
             Guid adminId,
             NodeEntity node,
             ICertificateRepository repository,
-            IRemoteNodeApiClient remoteClient,
+            INodeCertificateClient nodeClient,
             NodeCertificateService service)
         {
             AdminId = adminId;
             Node = node;
             Repository = repository;
-            RemoteClient = remoteClient;
+            NodeClient = nodeClient;
             Service = service;
         }
 
@@ -97,7 +97,7 @@ public sealed class NodeCertificateServiceTests
 
         public ICertificateRepository Repository { get; }
 
-        public IRemoteNodeApiClient RemoteClient { get; }
+        public INodeCertificateClient NodeClient { get; }
 
         public NodeCertificateService Service { get; }
 
@@ -124,13 +124,13 @@ public sealed class NodeCertificateServiceTests
             };
             var repository = Substitute.For<ICertificateRepository>();
             var secrets = Substitute.For<INodeSecretService>();
-            var factory = Substitute.For<IRemoteNodeApiClientFactory>();
-            var remoteClient = Substitute.For<IRemoteNodeApiClient>();
+            var factory = Substitute.For<INodeCertificateClientFactory>();
+            var nodeClient = Substitute.For<INodeCertificateClient>();
             secrets.UnprotectApiKey("encrypted").Returns("api-key");
-            factory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(remoteClient);
+            factory.Create(Arg.Any<NodeEndpoint>()).Returns(nodeClient);
             var service = new NodeCertificateService(repository, secrets, factory);
 
-            return new NodeCertificateServiceFixture(adminId, node, repository, remoteClient, service);
+            return new NodeCertificateServiceFixture(adminId, node, repository, nodeClient, service);
         }
     }
 }

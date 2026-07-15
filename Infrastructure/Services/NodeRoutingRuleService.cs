@@ -3,8 +3,8 @@ using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;
@@ -16,8 +16,8 @@ public sealed class NodeRoutingRuleService(
     INodeRepository nodes,
     IRoutingRuleRepository routingRules,
     INodeSecretService secrets,
-    IRemoteNodeApiClientFactory apiClientFactory,
-    IRemoteNodeCoreStateStore coreStateStore) : INodeRoutingRuleService
+    INodeRuntimeConfigClientFactory runtimeConfigClientFactory,
+    INodeCoreStateStore coreStateStore) : INodeRoutingRuleService
 {
     private const int PositionStep = 10;
     private const int GeneratedRuleTagLength = 8;
@@ -614,7 +614,7 @@ public sealed class NodeRoutingRuleService(
         IReadOnlyCollection<RoutingRule> enabledRules,
         CancellationToken cancellationToken)
     {
-        await CreateRemoteNodeClient(node).SyncRoutingRulesAsync(
+        await CreateNodeClient(node).SyncRoutingRulesAsync(
             new SyncRoutingRulesRequest { RoutingRules = [.. enabledRules] },
             cancellationToken);
     }
@@ -622,9 +622,9 @@ public sealed class NodeRoutingRuleService(
     private bool IsRemoteCoreRunning(long nodeId)
         => coreStateStore.TryGet(nodeId, out var state) && state?.IsRunning == true;
 
-    private IRemoteNodeApiClient CreateRemoteNodeClient(NodeEntity node)
+    private INodeRuntimeConfigClient CreateNodeClient(NodeEntity node)
     {
-        return apiClientFactory.Create(new RemoteNodeEndpoint(
+        return runtimeConfigClientFactory.Create(new NodeEndpoint(
             node.Id,
             node.Address,
             node.ApiPort,

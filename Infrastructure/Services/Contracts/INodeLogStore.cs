@@ -1,4 +1,4 @@
-using RemoteNode.Models;
+using Node.Models;
 
 namespace Infrastructure.Services;
 

@@ -1,6 +1,6 @@
 using Contracts.Utilities;
 using Data.Entities;
-using RemoteNode.Models;
+using Node.Models;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;

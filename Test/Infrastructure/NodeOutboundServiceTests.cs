@@ -6,8 +6,8 @@ using Data.Implementations;
 using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.Extensions.Caching.Memory;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Models;
 
 namespace Test.Infrastructure;
@@ -19,9 +19,9 @@ public sealed class NodeOutboundServiceTests
     private readonly INodeRepository nodes;
     private readonly IOutboundRepository outbounds;
     private readonly INodeSecretService secrets;
-    private readonly IRemoteNodeApiClient remoteClient;
-    private readonly IRemoteNodeApiClientFactory apiClientFactory;
-    private readonly RemoteNodeCoreStateStore coreStateStore;
+    private readonly INodeRuntimeConfigClient nodeClient;
+    private readonly INodeRuntimeConfigClientFactory runtimeConfigClientFactory;
+    private readonly NodeCoreStateStore coreStateStore;
     private readonly NodeEntity node;
     private readonly NodeOutboundService service;
 
@@ -30,14 +30,14 @@ public sealed class NodeOutboundServiceTests
         nodes = Substitute.For<INodeRepository>();
         outbounds = Substitute.For<IOutboundRepository>();
         secrets = Substitute.For<INodeSecretService>();
-        remoteClient = Substitute.For<IRemoteNodeApiClient>();
-        apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
-        coreStateStore = new RemoteNodeCoreStateStore(new MemoryCache(new MemoryCacheOptions()));
+        nodeClient = Substitute.For<INodeRuntimeConfigClient>();
+        runtimeConfigClientFactory = Substitute.For<INodeRuntimeConfigClientFactory>();
+        coreStateStore = new NodeCoreStateStore(new MemoryCache(new MemoryCacheOptions()));
         node = CreateNode();
 
         nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
         secrets.UnprotectApiKey(node.EncryptedApiKey).Returns("api-key");
-        apiClientFactory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(remoteClient);
+        runtimeConfigClientFactory.Create(Arg.Any<NodeEndpoint>()).Returns(nodeClient);
         outbounds.AddAsync(
                 Arg.Any<Guid>(),
                 Arg.Any<long>(),
@@ -56,7 +56,7 @@ public sealed class NodeOutboundServiceTests
             nodes,
             outbounds,
             secrets,
-            apiClientFactory,
+            runtimeConfigClientFactory,
             coreStateStore);
     }
 
@@ -102,7 +102,7 @@ public sealed class NodeOutboundServiceTests
             .Returns(outbound);
         outbounds.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
             .Returns([outbound]);
-        coreStateStore.Set(new RemoteNodeCoreState(
+        coreStateStore.Set(new NodeCoreState(
             node.Id,
             true,
             true,
@@ -119,7 +119,7 @@ public sealed class NodeOutboundServiceTests
             CancellationToken.None);
 
         result.Tag.Should().Be("proxy");
-        await remoteClient.Received(1).UpdateOutboundAsync(
+        await nodeClient.Received(1).UpdateOutboundAsync(
             "direct",
             Arg.Is<SyncOutboundRequest>(request => request.Outbound.Tag == "proxy"),
             Arg.Any<CancellationToken>());
@@ -133,7 +133,7 @@ public sealed class NodeOutboundServiceTests
             .Returns(outbound);
         outbounds.GetByNodeIdAsync(node.Id, Arg.Any<CancellationToken>())
             .Returns([outbound]);
-        coreStateStore.Set(new RemoteNodeCoreState(
+        coreStateStore.Set(new NodeCoreState(
             node.Id,
             true,
             true,
@@ -145,7 +145,7 @@ public sealed class NodeOutboundServiceTests
         var result = await service.UpdateEnabledAsync(node.Id, outbound.Id, true, CancellationToken.None);
 
         result.Enabled.Should().BeTrue();
-        await remoteClient.Received(1).AddOutboundAsync(
+        await nodeClient.Received(1).AddOutboundAsync(
             Arg.Is<SyncOutboundRequest>(request => request.Outbound.Tag == "direct"),
             Arg.Any<CancellationToken>());
     }
@@ -160,7 +160,7 @@ public sealed class NodeOutboundServiceTests
 
         await service.DeleteAsync(node.Id, outbound.Id, CancellationToken.None);
 
-        await remoteClient.DidNotReceive()
+        await nodeClient.DidNotReceive()
             .DeleteOutboundAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 

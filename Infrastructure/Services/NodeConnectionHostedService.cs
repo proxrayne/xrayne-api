@@ -9,7 +9,7 @@ namespace Infrastructure.Services;
 /// Starts and periodically reconciles live remote node connections.
 /// </summary>
 public sealed class NodeConnectionHostedService(
-    IRemoteNodeConnectionManager connectionManager,
+    INodeConnectionManager connectionManager,
     IOptions<NodeConnectionOptions> connectionOptions,
     ILogger<NodeConnectionHostedService> logger) : BackgroundService
 {

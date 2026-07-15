@@ -30,7 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
         services.AddScoped<IWarehouseRepository, WarehouseRepository>();
         services.AddSingleton<INodeConnectionStateStore, NodeConnectionStateStore>();
-        services.AddSingleton<IRemoteNodeCoreStateStore, RemoteNodeCoreStateStore>();
+        services.AddSingleton<INodeCoreStateStore, NodeCoreStateStore>();
 
         return services;
     }

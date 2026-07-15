@@ -5,9 +5,9 @@ using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
 using Quartz;
-using RemoteNode.Exceptions;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Exceptions;
+using Node.Models;
+using Node.Services;
 
 namespace Infrastructure.Services;
 
@@ -17,8 +17,9 @@ namespace Infrastructure.Services;
 public sealed class NodeGeoResourceService(
     IGeoResourceRepository geoResources,
     INodeSecretService secrets,
-    IRemoteNodeApiClientFactory apiClientFactory,
-    IRemoteNodeCoreStateStore coreStateStore,
+    INodeGeoResourceClientFactory geoResourceClientFactory,
+    INodeCoreClientFactory coreClientFactory,
+    INodeCoreStateStore coreStateStore,
     INodeCoreConfigBuilder coreConfigBuilder,
     IHttpClientFactory httpClientFactory) : INodeGeoResourceService
 {
@@ -190,7 +191,7 @@ public sealed class NodeGeoResourceService(
         {
             await CreateClient(node).DeleteGeoResourceAsync(resource.Filename, cancellationToken);
         }
-        catch (RemoteNodeHttpException exception) when (exception.StatusCode is HttpStatusCode.NotFound)
+        catch (NodeHttpException exception) when (exception.StatusCode is HttpStatusCode.NotFound)
         {
         }
 
@@ -345,14 +346,23 @@ public sealed class NodeGeoResourceService(
             return;
         }
 
-        await CreateClient(node).RestartCoreAsync(
+        await CreateCoreClient(node).RestartCoreAsync(
             coreConfigBuilder.Build(node),
             cancellationToken);
     }
 
-    private IRemoteNodeApiClient CreateClient(NodeEntity node)
+    private INodeGeoResourceClient CreateClient(NodeEntity node)
     {
-        return apiClientFactory.Create(new RemoteNodeEndpoint(
+        return geoResourceClientFactory.Create(new NodeEndpoint(
+            node.Id,
+            node.Address,
+            node.ApiPort,
+            secrets.UnprotectApiKey(node.EncryptedApiKey)));
+    }
+
+    private INodeCoreClient CreateCoreClient(NodeEntity node)
+    {
+        return coreClientFactory.Create(new NodeEndpoint(
             node.Id,
             node.Address,
             node.ApiPort,

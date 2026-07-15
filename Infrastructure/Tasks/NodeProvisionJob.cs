@@ -16,8 +16,8 @@ public sealed class NodeProvisionJob(
     INodeSecretService secretService,
     INodeProvisionStateMachine stateMachine,
     INodeConnectionStateStore connectionStates,
-    IRemoteNodeConnectionManager connectionManager,
-    IRemoteNodeProvisioner provisioner,
+    INodeConnectionManager connectionManager,
+    INodeProvisioner provisioner,
     ILogger<NodeProvisionJob> logger) : IJob
 {
     public const string NodeIdKey = "nodeId";

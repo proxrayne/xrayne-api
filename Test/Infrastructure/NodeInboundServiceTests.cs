@@ -6,8 +6,8 @@ using Data.Implementations;
 using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.Extensions.Caching.Memory;
-using RemoteNode.Models;
-using RemoteNode.Services;
+using Node.Models;
+using Node.Services;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 
@@ -20,9 +20,9 @@ public sealed class NodeInboundServiceTests
     private readonly INodeRepository nodes;
     private readonly IInboundRepository inbounds;
     private readonly INodeSecretService secrets;
-    private readonly IRemoteNodeApiClient remoteClient;
-    private readonly IRemoteNodeApiClientFactory apiClientFactory;
-    private readonly RemoteNodeCoreStateStore coreStateStore;
+    private readonly INodeRuntimeConfigClient nodeClient;
+    private readonly INodeRuntimeConfigClientFactory runtimeConfigClientFactory;
+    private readonly NodeCoreStateStore coreStateStore;
     private readonly NodeEntity node;
     private readonly NodeInboundService service;
 
@@ -31,14 +31,14 @@ public sealed class NodeInboundServiceTests
         nodes = Substitute.For<INodeRepository>();
         inbounds = Substitute.For<IInboundRepository>();
         secrets = Substitute.For<INodeSecretService>();
-        remoteClient = Substitute.For<IRemoteNodeApiClient>();
-        apiClientFactory = Substitute.For<IRemoteNodeApiClientFactory>();
-        coreStateStore = new RemoteNodeCoreStateStore(new MemoryCache(new MemoryCacheOptions()));
+        nodeClient = Substitute.For<INodeRuntimeConfigClient>();
+        runtimeConfigClientFactory = Substitute.For<INodeRuntimeConfigClientFactory>();
+        coreStateStore = new NodeCoreStateStore(new MemoryCache(new MemoryCacheOptions()));
         node = CreateNode();
 
         nodes.GetByIdAsync(node.Id, Arg.Any<CancellationToken>()).Returns(node);
         secrets.UnprotectApiKey(node.EncryptedApiKey).Returns("api-key");
-        apiClientFactory.Create(Arg.Any<RemoteNodeEndpoint>()).Returns(remoteClient);
+        runtimeConfigClientFactory.Create(Arg.Any<NodeEndpoint>()).Returns(nodeClient);
         inbounds.UpdateAsync(Arg.Any<InboundEntity>(), Arg.Any<CancellationToken>())
             .Returns(call => call.Arg<InboundEntity>());
 
@@ -46,7 +46,7 @@ public sealed class NodeInboundServiceTests
             nodes,
             inbounds,
             secrets,
-            apiClientFactory,
+            runtimeConfigClientFactory,
             coreStateStore);
     }
 
@@ -68,7 +68,7 @@ public sealed class NodeInboundServiceTests
             CancellationToken.None);
 
         result.Tag.Should().Be("socks-next");
-        await remoteClient.Received(1).UpdateInboundAsync(
+        await nodeClient.Received(1).UpdateInboundAsync(
             "socks-in",
             Arg.Is<SyncInboundRequest>(request => request.Inbound.Tag == "socks-next"),
             Arg.Any<CancellationToken>());
@@ -87,7 +87,7 @@ public sealed class NodeInboundServiceTests
         var result = await service.UpdateEnabledAsync(node.Id, inbound.Id, true, CancellationToken.None);
 
         result.Enabled.Should().BeTrue();
-        await remoteClient.Received(1).AddInboundAsync(
+        await nodeClient.Received(1).AddInboundAsync(
             Arg.Is<SyncInboundRequest>(request => request.Inbound.Tag == "socks-next"),
             Arg.Any<CancellationToken>());
     }
@@ -102,13 +102,13 @@ public sealed class NodeInboundServiceTests
 
         await service.DeleteAsync(node.Id, inbound.Id, CancellationToken.None);
 
-        await remoteClient.DidNotReceive()
+        await nodeClient.DidNotReceive()
             .DeleteInboundAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     private void SetCoreRunning()
     {
-        coreStateStore.Set(new RemoteNodeCoreState(
+        coreStateStore.Set(new NodeCoreState(
             node.Id,
             true,
             true,

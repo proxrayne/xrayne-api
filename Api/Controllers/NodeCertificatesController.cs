@@ -7,8 +7,8 @@ using Data.Entities;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RemoteNode.Exceptions;
-using RemoteNode.Models;
+using Node.Exceptions;
+using Node.Models;
 
 namespace Api.Controllers;
 
@@ -42,7 +42,7 @@ public sealed class NodeCertificatesController(
 
             return mapper.Map<List<NodeCertificateDto>>(result);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -79,7 +79,7 @@ public sealed class NodeCertificatesController(
 
             return mapper.Map<NodeCertificateDto>(result);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -122,7 +122,7 @@ public sealed class NodeCertificatesController(
 
             return mapper.Map<NodeCertificateDto>(result);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -154,7 +154,7 @@ public sealed class NodeCertificatesController(
 
             return mapper.Map<NodeCertificateDto>(result);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }
@@ -184,7 +184,7 @@ public sealed class NodeCertificatesController(
         {
             await certificates.DeleteAsync(AdminId, node, domain, cancellationToken);
         }
-        catch (RemoteNodeException exception)
+        catch (NodeException exception)
         {
             throw ToApiException(exception);
         }

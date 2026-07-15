@@ -103,7 +103,7 @@ Panel SSE endpoints should:
 - clean up subscriptions in `finally`;
 - accept cancellation tokens.
 - read remote node runtime updates from panel-local stores and event streams
-  when the data is already ingested by `IRemoteNodeConnectionManager`.
+  when the data is already ingested by `INodeConnectionManager`.
 
 Panel-to-node streaming uses gRPC server-streaming from `ProtoTypes/remote_node.proto`
 instead of node HTTP/SSE endpoints. Do not open one remote node gRPC stream per

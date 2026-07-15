@@ -4,7 +4,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Contracts/Contracts.csproj" />
-    <ProjectReference Include="../RemoteNode/RemoteNode.csproj" />
+    <ProjectReference Include="../Node/Node.csproj" />
     <ProjectReference Include="../Data/Data.csproj" />
   </ItemGroup>
   <ItemGroup>

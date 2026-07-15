@@ -1,5 +1,5 @@
 using Data.Entities;
-using RemoteNode.Models;
+using Node.Models;
 
 namespace Infrastructure.Services;
 

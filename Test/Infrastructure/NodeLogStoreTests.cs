@@ -2,7 +2,7 @@ using Contracts.Configurations;
 using Infrastructure.Services;
 using Infrastructure.Values;
 using Microsoft.Extensions.Options;
-using RemoteNode.Models;
+using Node.Models;
 
 namespace Test.Infrastructure;
 
