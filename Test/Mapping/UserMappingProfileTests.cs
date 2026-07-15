@@ -11,13 +11,13 @@ namespace Test.Mapping;
 /// </summary>
 public sealed class UserMappingProfileTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(
+    private readonly IMapper _mapper = MapperTestFactory.CreateConfiguration(
         cfg => cfg.AddProfile<UserMappingProfile>()).CreateMapper();
 
     [Fact]
     public void Configuration_IsValid()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<UserMappingProfile>());
+        var config = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<UserMappingProfile>());
 
         config.AssertConfigurationIsValid();
     }

@@ -8,12 +8,12 @@ namespace Test.Mapping;
 
 public sealed class PanelSettingsProfileTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<PanelSettingsProfile>()).CreateMapper();
+    private readonly IMapper _mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<PanelSettingsProfile>()).CreateMapper();
 
     [Fact]
     public void MapperConfiguration_IsValid()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<PanelSettingsProfile>());
+        var config = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<PanelSettingsProfile>());
         config.AssertConfigurationIsValid();
     }
 

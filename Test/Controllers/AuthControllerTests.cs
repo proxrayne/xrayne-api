@@ -18,7 +18,7 @@ public sealed class AuthControllerTests
 {
     private readonly IAdminAccountRepository _adminAccounts = Substitute.For<IAdminAccountRepository>();
     private readonly IJwtTokenService _jwtTokenService = Substitute.For<IJwtTokenService>();
-    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<AdminMappingProfile>()).CreateMapper();
+    private readonly IMapper _mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<AdminMappingProfile>()).CreateMapper();
 
     [Fact]
     public async Task Login_ThrowsBadRequest_WhenAdminIsDeleted()

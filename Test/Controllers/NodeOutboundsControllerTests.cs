@@ -19,7 +19,7 @@ public sealed class NodeOutboundsControllerTests
     public NodeOutboundsControllerTests()
     {
         outbounds = Substitute.For<INodeOutboundService>();
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
+        var mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
         controller = new NodeOutboundsController(outbounds, mapper);
     }
 

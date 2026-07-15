@@ -59,7 +59,7 @@ public sealed class NodesControllerTests
         _connectionManager = Substitute.For<INodeConnectionManager>();
         _connectionStateStore = new NodeConnectionStateStore(new MemoryCache(new MemoryCacheOptions()));
         _coreStateStore = Substitute.For<INodeCoreStateStore>();
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
+        var mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
         var environment = Substitute.For<IHostEnvironment>();
         environment.EnvironmentName.Returns(Environments.Production);
         _secrets.UnprotectApiKey("encrypted").Returns("api-key");

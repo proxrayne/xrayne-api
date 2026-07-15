@@ -41,7 +41,7 @@ public static class DependencyInjection
         services.AddSingleton<ICoreService, CoreService>();
         services.AddSingleton<ICoreStateMachine, CoreStateMachine>();
         services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
-        services.AddAutoMapper(typeof(DependencyInjection).Assembly);
+        services.AddAutoMapper(_ => { }, typeof(DependencyInjection).Assembly);
 
         services.AddTransient<InstallCoreJob>();
         services.AddTransient<CoreOperationJob>();

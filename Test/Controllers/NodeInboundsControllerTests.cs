@@ -21,7 +21,7 @@ public sealed class NodeInboundsControllerTests
     public NodeInboundsControllerTests()
     {
         inbounds = Substitute.For<INodeInboundService>();
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
+        var mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
         controller = new NodeInboundsController(inbounds, mapper);
     }
 

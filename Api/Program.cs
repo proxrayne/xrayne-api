@@ -60,7 +60,7 @@ try
         options.Filters.Add<ApiExceptionFilter>();
         options.ModelBinderProviders.Insert(0, new JsonStringEnumMemberNameModelBinderProvider());
     });
-    builder.Services.AddAutoMapper(typeof(Program).Assembly);
+    builder.Services.AddAutoMapper(_ => { }, typeof(Program).Assembly);
 
     var allowedOrigins = BuildAllowedOrigins(devSpaOrigins, settings.Domain);
 

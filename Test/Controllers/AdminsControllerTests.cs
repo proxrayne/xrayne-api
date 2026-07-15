@@ -20,7 +20,7 @@ public sealed class AdminsControllerTests
     private static readonly Guid CurrentAdminId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
     private readonly IAdminAccountRepository _adminAccounts = Substitute.For<IAdminAccountRepository>();
-    private readonly IMapper _mapper = new MapperConfiguration(cfg => cfg.AddProfile<AdminMappingProfile>()).CreateMapper();
+    private readonly IMapper _mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<AdminMappingProfile>()).CreateMapper();
 
     [Fact]
     public async Task Delete_ThrowsBadRequest_WhenDeletingCurrentAdmin()

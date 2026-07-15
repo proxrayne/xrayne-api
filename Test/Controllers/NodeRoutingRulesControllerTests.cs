@@ -25,7 +25,7 @@ public sealed class NodeRoutingRulesControllerTests
     public NodeRoutingRulesControllerTests()
     {
         routingRules = Substitute.For<INodeRoutingRuleService>();
-        var mapper = new MapperConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
+        var mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<NodeMappingProfile>()).CreateMapper();
         controller = new NodeRoutingRulesController(routingRules, mapper)
         {
             ControllerContext = new ControllerContext { HttpContext = CreateHttpContext() },

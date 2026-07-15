@@ -26,7 +26,7 @@ public sealed class SettingsControllerTests
         _appSettingsService = Substitute.For<IAppSettingsService>();
         _restartService = Substitute.For<IPanelRestartService>();
         _restartService.ScheduleRestart().Returns(true);
-        _mapper = new MapperConfiguration(cfg => cfg.AddProfile<SettingsMappingProfile>()).CreateMapper();
+        _mapper = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<SettingsMappingProfile>()).CreateMapper();
 
         _controller = new SettingsController(
             _appSettingsService,

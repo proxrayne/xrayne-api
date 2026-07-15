@@ -12,7 +12,7 @@ namespace Test.Infrastructure;
 
 public sealed class AppSettingsServiceTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(
+    private readonly IMapper _mapper = MapperTestFactory.CreateConfiguration(
         cfg => cfg.AddProfile<AppSettingsMappingProfile>()).CreateMapper();
 
     [Fact]
@@ -115,7 +115,7 @@ public sealed class AppSettingsServiceTests
     [Fact]
     public void MapperConfiguration_IsValid()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<AppSettingsMappingProfile>());
+        var config = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<AppSettingsMappingProfile>());
 
         config.AssertConfigurationIsValid();
     }

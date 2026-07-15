@@ -9,13 +9,13 @@ namespace Test.Mapping;
 
 public sealed class SettingsMappingProfileTests
 {
-    private readonly IMapper _mapper = new MapperConfiguration(
+    private readonly IMapper _mapper = MapperTestFactory.CreateConfiguration(
         cfg => cfg.AddProfile<SettingsMappingProfile>()).CreateMapper();
 
     [Fact]
     public void MapperConfiguration_IsValid()
     {
-        var config = new MapperConfiguration(cfg => cfg.AddProfile<SettingsMappingProfile>());
+        var config = MapperTestFactory.CreateConfiguration(cfg => cfg.AddProfile<SettingsMappingProfile>());
 
         config.AssertConfigurationIsValid();
     }
