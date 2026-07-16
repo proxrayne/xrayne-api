@@ -11,6 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="..\..\ProtoTypes\remote_node.proto" GrpcServices="Client" Link="ProtoTypes\remote_node.proto" />
+    <Protobuf Include="..\..\ProtoTypes\v1\*.proto" GrpcServices="Client" ProtoRoot="..\..\ProtoTypes" Link="ProtoTypes\v1\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

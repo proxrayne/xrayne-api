@@ -94,9 +94,9 @@ public sealed class AppDbContext : DbContext
             builder.HasIndex("NodeId", nameof(GeoResourceEntity.Filename))
                 .IsUnique();
 
-            builder.Property(x => x.SourceType)
-                .HasColumnType("geo_resource_source_type")
-                .HasDefaultValueSql("'static'::geo_resource_source_type");
+            builder.Property(x => x.Status)
+                .HasColumnType("geo_resource_status")
+                .HasDefaultValueSql("'success'::geo_resource_status");
         });
 
         modelBuilder.Entity<ApplicationEntity>(builder =>

@@ -42,16 +42,15 @@ public sealed class XrayConfigJsonMappingTests
     }
 
     [Fact]
-    public void Model_MapsPostgresEnumsForRuntimeQueries()
+    public void Model_UsesUrlPresenceForAutoUpdatedGeoResources()
     {
         using var context = CreateNpgsqlModelContext();
 
         var sql = context.GeoResources
-            .Where(resource => resource.SourceType == GeoResourceSourceType.AutoUpdate)
+            .Where(resource => resource.Url != null)
             .ToQueryString();
 
-        sql.Should().Contain("auto_update");
-        sql.Should().NotContain("= 1");
+        sql.Should().Contain(@"""Url"" IS NOT NULL");
     }
 
     [Fact]

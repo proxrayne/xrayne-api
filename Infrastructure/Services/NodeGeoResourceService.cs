@@ -1,9 +1,12 @@
 using System.Net;
 using Contracts.Enums;
 using Contracts.Utilities;
+using Contracts.Values;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
+using Infrastructure.States;
+using Microsoft.Extensions.Logging;
 using Quartz;
 using Node.Exceptions;
 using Node.Models;
@@ -21,7 +24,9 @@ public sealed class NodeGeoResourceService(
     INodeCoreClientFactory coreClientFactory,
     INodeCoreStateStore coreStateStore,
     INodeCoreConfigBuilder coreConfigBuilder,
-    IHttpClientFactory httpClientFactory) : INodeGeoResourceService
+    IHttpClientFactory httpClientFactory,
+    IBackgroundTaskScheduler scheduler,
+    ILogger<NodeGeoResourceService> logger) : INodeGeoResourceService
 {
     private const int MaxFilenameLength = 128;
     private const string GeoDownloadClientName = "geo-resources";
@@ -38,7 +43,11 @@ public sealed class NodeGeoResourceService(
             resource => NormalizeFileName(resource.FileName),
             StringComparer.OrdinalIgnoreCase);
 
-        foreach (var stale in existing.Where(resource => !remoteByName.ContainsKey(resource.Filename)).ToList())
+        foreach (var stale in existing
+            .Where(resource =>
+                resource.Status == GeoResourceStatus.Success &&
+                !remoteByName.ContainsKey(resource.Filename))
+            .ToList())
         {
             _ = await geoResources.DeleteAsync(adminId, stale.Id, cancellationToken);
         }
@@ -49,7 +58,6 @@ public sealed class NodeGeoResourceService(
                 adminId,
                 node,
                 remoteResource,
-                GeoResourceSourceType.Static,
                 null,
                 null,
                 null,
@@ -70,7 +78,7 @@ public sealed class NodeGeoResourceService(
     }
 
     /// <inheritdoc />
-    public async Task<GeoResourceEntity> CreateFileAsync(
+    public async Task<GeoResourceEntity>  CreateFileAsync(
         Guid adminId,
         NodeEntity node,
         string fileName,
@@ -80,18 +88,25 @@ public sealed class NodeGeoResourceService(
         var normalizedFileName = NormalizeFileName(fileName);
         await EnsureUniqueAsync(adminId, node.Id, normalizedFileName, null, cancellationToken);
 
-        var remote = await CreateClient(node).UploadGeoResourceAsync(normalizedFileName, content, cancellationToken);
-        var created = await UpsertFromRemoteAsync(
-            adminId,
-            node,
-            remote,
-            GeoResourceSourceType.Static,
+        var uploadFilePath = await SaveUploadAsync(content, cancellationToken);
+        var created = await geoResources.AddAsync(new GeoResourceEntity
+        {
+            Filename = normalizedFileName,
+            SizeBytes = 0,
+            LastModifiedAt = DateTimeOffset.UtcNow,
+            Status = GeoResourceStatus.Queued,
+            StatusMessage = "Queued uploaded file transfer.",
+            Node = node,
+            Admin = node.Admin
+        }, cancellationToken);
+
+        await ScheduleOperationOrFailAsync(
+            created,
+            created.Id,
+            GeoResourceOperation.UploadFile,
+            uploadFilePath,
             null,
-            null,
-            null,
-            preserveExistingMetadata: false,
-            cancellationToken: cancellationToken);
-        await RestartCoreIfRunningAsync(node, cancellationToken);
+            cancellationToken);
 
         return created;
     }
@@ -110,19 +125,26 @@ public sealed class NodeGeoResourceService(
         var normalizedCron = NormalizeCron(cronTemplate);
         await EnsureUniqueAsync(adminId, node.Id, normalizedFileName, null, cancellationToken);
 
-        await using var content = await DownloadAsync(normalizedUrl, cancellationToken);
-        var remote = await CreateClient(node).UploadGeoResourceAsync(normalizedFileName, content, cancellationToken);
-        var created = await UpsertFromRemoteAsync(
-            adminId,
-            node,
-            remote,
-            GeoResourceSourceType.AutoUpdate,
-            normalizedUrl,
-            normalizedCron,
-            GetNextRun(normalizedCron, DateTimeOffset.UtcNow),
-            preserveExistingMetadata: false,
-            cancellationToken: cancellationToken);
-        await RestartCoreIfRunningAsync(node, cancellationToken);
+        var created = await geoResources.AddAsync(new GeoResourceEntity
+        {
+            Filename = normalizedFileName,
+            SizeBytes = 0,
+            LastModifiedAt = DateTimeOffset.UtcNow,
+            Status = GeoResourceStatus.Queued,
+            StatusMessage = "Queued URL download.",
+            Url = normalizedUrl,
+            CronTemplate = normalizedCron,
+            Node = node,
+            Admin = node.Admin
+        }, cancellationToken);
+
+        await ScheduleOperationOrFailAsync(
+            created,
+            created.Id,
+            GeoResourceOperation.Refresh,
+            null,
+            null,
+            cancellationToken);
 
         return created;
     }
@@ -141,40 +163,35 @@ public sealed class NodeGeoResourceService(
         var nextFileName = NormalizeFileName(fileName);
         await EnsureUniqueAsync(adminId, node.Id, nextFileName, resource.Id, cancellationToken);
 
-        var isAutoUpdate = resource.SourceType == GeoResourceSourceType.AutoUpdate;
+        var isAutoUpdate = resource.IsAutoUpdate;
         var nextUrl = isAutoUpdate ? NormalizeUrl(url) : null;
         var nextCron = isAutoUpdate ? NormalizeCron(cronTemplate) : null;
         var fileNameChanged = !string.Equals(resource.Filename, nextFileName, StringComparison.Ordinal);
         var refreshRequired = isAutoUpdate
             && (!string.Equals(resource.Url, nextUrl, StringComparison.Ordinal)
                 || !string.Equals(resource.CronTemplate, nextCron, StringComparison.Ordinal));
-        var client = CreateClient(node);
-        var remote = fileNameChanged
-            ? await client.RenameGeoResourceAsync(resource.Filename, new RenameGeoResourceRequest(nextFileName), cancellationToken)
-            : new GeoResourceDto(resource.Filename, resource.SizeBytes, resource.LastModifiedAt);
+        var previousFileName = fileNameChanged ? resource.Filename : null;
 
-        if (refreshRequired)
-        {
-            await using var content = await DownloadAsync(nextUrl!, cancellationToken);
-            remote = await client.UploadGeoResourceAsync(nextFileName, content, cancellationToken);
-        }
-
-        resource.Filename = NormalizeFileName(remote.FileName);
-        resource.SizeBytes = remote.SizeBytes;
-        resource.LastModifiedAt = remote.LastModifiedAt;
+        resource.Filename = nextFileName;
         resource.Url = nextUrl;
         resource.CronTemplate = nextCron;
-        resource.NextRunAt = isAutoUpdate
-            ? refreshRequired && nextCron is not null
-                ? GetNextRun(nextCron, DateTimeOffset.UtcNow)
-                : resource.NextRunAt
-            : null;
-        resource.LastError = null;
+        resource.NextRunAt = isAutoUpdate ? resource.NextRunAt : null;
         resource.LastErrorAt = null;
+        resource.Status = GeoResourceStatus.Queued;
+        resource.StatusMessage = refreshRequired
+            ? "Queued geo resource refresh."
+            : "Queued geo resource metadata update.";
 
         var updated = await geoResources.UpdateAsync(adminId, resource, cancellationToken)
             ?? throw new NodeGeoResourceNotFoundException($"Geo resource '{id}' was not found.");
-        await RestartCoreIfRunningAsync(node, cancellationToken);
+
+        await ScheduleOperationOrFailAsync(
+            updated,
+            updated.Id,
+            GeoResourceOperation.Refresh,
+            null,
+            previousFileName,
+            cancellationToken);
 
         return updated;
     }
@@ -207,32 +224,94 @@ public sealed class NodeGeoResourceService(
         CancellationToken cancellationToken = default)
     {
         var resource = await GetResourceAsync(adminId, node.Id, id, cancellationToken);
+        EnsureAvailable(resource);
 
         return await CreateClient(node).DownloadGeoResourceAsync(resource.Filename, cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task RefreshDueAutoUpdatesAsync(CancellationToken cancellationToken = default)
+    public async Task ScheduleDueAutoUpdatesAsync(CancellationToken cancellationToken = default)
     {
         var due = await geoResources.GetDueAutoUpdateAsync(DateTimeOffset.UtcNow, cancellationToken);
         foreach (var resource in due)
         {
-            await RefreshAutoUpdateAsync(resource, cancellationToken);
+            resource.Status = GeoResourceStatus.Queued;
+            resource.StatusMessage = "Queued scheduled geo resource refresh.";
+            _ = await geoResources.UpdateAsync(resource, cancellationToken);
+
+            try
+            {
+                await scheduler.ScheduleGeoResourceOperation(
+                    resource.Id,
+                    GeoResourceOperation.Refresh,
+                    null,
+                    null,
+                    cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                await FailOperationAsync(resource, exception, cancellationToken);
+            }
         }
     }
 
-    private async Task RefreshAutoUpdateAsync(
+    /// <inheritdoc />
+    public async Task ExecuteQueuedOperationAsync(
+        long id,
+        GeoResourceOperation operation,
+        string? uploadFilePath,
+        string? previousFileName,
+        CancellationToken cancellationToken = default)
+    {
+        var resource = await geoResources.GetByIdAsync(id, cancellationToken)
+            ?? throw new NodeGeoResourceNotFoundException($"Geo resource '{id}' was not found.");
+
+        try
+        {
+            switch (operation)
+            {
+                case GeoResourceOperation.UploadFile:
+                    await ExecuteUploadFileAsync(resource, uploadFilePath, cancellationToken);
+                    break;
+
+                case GeoResourceOperation.Refresh:
+                    await ExecuteRefreshAsync(resource, previousFileName, cancellationToken);
+                    break;
+
+                default:
+                    throw new NodeGeoResourceValidationException("Geo resource operation is invalid.");
+            }
+        }
+        finally
+        {
+            DeleteTemporaryUpload(uploadFilePath);
+        }
+    }
+
+    private async Task ExecuteUploadFileAsync(
         GeoResourceEntity resource,
+        string? uploadFilePath,
         CancellationToken cancellationToken)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(resource.Url) || string.IsNullOrWhiteSpace(resource.CronTemplate))
+            if (string.IsNullOrWhiteSpace(uploadFilePath) || !File.Exists(uploadFilePath))
             {
-                throw new NodeGeoResourceValidationException("Auto-updated geo resource is missing URL or cron template.");
+                throw new NodeGeoResourceValidationException("Queued geo resource upload file is missing.");
             }
 
-            await using var content = await DownloadAsync(resource.Url, cancellationToken);
+            await SetProgressAsync(
+                resource,
+                GeoResourceStatus.Loading,
+                "Loaded uploaded file into the panel task.",
+                cancellationToken);
+
+            await using var content = File.OpenRead(uploadFilePath);
+            await SetProgressAsync(
+                resource,
+                GeoResourceStatus.Transferring,
+                "Transferring geo resource to the remote node.",
+                cancellationToken);
             var remote = await CreateClient(resource.Node).UploadGeoResourceAsync(
                 resource.Filename,
                 content,
@@ -240,17 +319,71 @@ public sealed class NodeGeoResourceService(
 
             resource.SizeBytes = remote.SizeBytes;
             resource.LastModifiedAt = remote.LastModifiedAt;
-            resource.NextRunAt = GetNextRun(resource.CronTemplate, DateTimeOffset.UtcNow);
-            resource.LastError = null;
-            resource.LastErrorAt = null;
-            _ = await geoResources.UpdateAsync(resource, cancellationToken);
-            await RestartCoreIfRunningAsync(resource.Node, cancellationToken);
+            await CompleteOperationAsync(resource, cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            resource.LastError = exception.Message;
-            resource.LastErrorAt = DateTimeOffset.UtcNow;
-            _ = await geoResources.UpdateAsync(resource, cancellationToken);
+            await FailOperationAsync(resource, exception, cancellationToken);
+        }
+    }
+
+    private async Task ExecuteRefreshAsync(
+        GeoResourceEntity resource,
+        string? previousFileName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var previousName = string.IsNullOrWhiteSpace(previousFileName)
+                ? null
+                : NormalizeFileName(previousFileName);
+            if (previousName is not null && !string.Equals(previousName, resource.Filename, StringComparison.Ordinal))
+            {
+                await SetProgressAsync(
+                    resource,
+                    GeoResourceStatus.Updating,
+                    $"Renaming remote geo resource from '{previousName}' to '{resource.Filename}'.",
+                    cancellationToken);
+                var renamed = await CreateClient(resource.Node).RenameGeoResourceAsync(
+                    previousName,
+                    new RenameGeoResourceRequest(resource.Filename),
+                    cancellationToken);
+                resource.SizeBytes = renamed.SizeBytes;
+                resource.LastModifiedAt = renamed.LastModifiedAt;
+            }
+
+            if (resource.IsAutoUpdate)
+            {
+                if (string.IsNullOrWhiteSpace(resource.Url) || string.IsNullOrWhiteSpace(resource.CronTemplate))
+                {
+                    throw new NodeGeoResourceValidationException("Auto-updated geo resource is missing URL or cron template.");
+                }
+
+                await SetProgressAsync(
+                    resource,
+                    GeoResourceStatus.Loading,
+                    "Downloading geo resource content from URL.",
+                    cancellationToken);
+                await using var content = await DownloadAsync(resource.Url, cancellationToken);
+                await SetProgressAsync(
+                    resource,
+                    GeoResourceStatus.Transferring,
+                    "Transferring geo resource to the remote node.",
+                    cancellationToken);
+                var remote = await CreateClient(resource.Node).UploadGeoResourceAsync(
+                    resource.Filename,
+                    content,
+                    cancellationToken);
+                resource.SizeBytes = remote.SizeBytes;
+                resource.LastModifiedAt = remote.LastModifiedAt;
+                resource.NextRunAt = GetNextRun(resource.CronTemplate, DateTimeOffset.UtcNow);
+            }
+
+            await CompleteOperationAsync(resource, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            await FailOperationAsync(resource, exception, cancellationToken);
         }
     }
 
@@ -258,7 +391,6 @@ public sealed class NodeGeoResourceService(
         Guid adminId,
         NodeEntity node,
         GeoResourceDto remoteResource,
-        GeoResourceSourceType sourceType,
         string? url,
         string? cronTemplate,
         DateTimeOffset? nextRunAt,
@@ -274,7 +406,7 @@ public sealed class NodeGeoResourceService(
                 Filename = fileName,
                 SizeBytes = remoteResource.SizeBytes,
                 LastModifiedAt = remoteResource.LastModifiedAt,
-                SourceType = sourceType,
+                Status = GeoResourceStatus.Success,
                 Url = url,
                 CronTemplate = cronTemplate,
                 NextRunAt = nextRunAt,
@@ -289,16 +421,92 @@ public sealed class NodeGeoResourceService(
         resource.LastModifiedAt = remoteResource.LastModifiedAt;
         if (!preserveExistingMetadata)
         {
-            resource.SourceType = sourceType;
             resource.Url = url;
             resource.CronTemplate = cronTemplate;
             resource.NextRunAt = nextRunAt;
-            resource.LastError = null;
             resource.LastErrorAt = null;
         }
+        resource.Status = GeoResourceStatus.Success;
+        resource.StatusMessage = null;
+        resource.LastErrorAt = null;
 
         return await geoResources.UpdateAsync(adminId, resource, cancellationToken)
             ?? resource;
+    }
+
+    private async Task SetProgressAsync(
+        GeoResourceEntity resource,
+        GeoResourceStatus status,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        resource.Status = status;
+        resource.StatusMessage = AppendStatusMessage(resource.StatusMessage, message);
+        _ = await geoResources.UpdateAsync(resource, cancellationToken);
+    }
+
+    private async Task CompleteOperationAsync(
+        GeoResourceEntity resource,
+        CancellationToken cancellationToken)
+    {
+        resource.Status = GeoResourceStatus.Success;
+        resource.StatusMessage = null;
+        resource.LastErrorAt = null;
+        _ = await geoResources.UpdateAsync(resource, cancellationToken);
+        await RestartCoreIfRunningAsync(resource.Node, cancellationToken);
+    }
+
+    private async Task FailOperationAsync(
+        GeoResourceEntity resource,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        resource.Status = GeoResourceStatus.Error;
+        resource.StatusMessage = AppendStatusMessage(resource.StatusMessage, $"Error: {exception.Message}");
+        resource.LastErrorAt = DateTimeOffset.UtcNow;
+        _ = await geoResources.UpdateAsync(resource, cancellationToken);
+    }
+
+    private async Task ScheduleOperationOrFailAsync(
+        GeoResourceEntity resource,
+        long geoResourceId,
+        GeoResourceOperation operation,
+        string? uploadFilePath,
+        string? previousFileName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await scheduler.ScheduleGeoResourceOperation(
+                geoResourceId,
+                operation,
+                uploadFilePath,
+                previousFileName,
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            DeleteTemporaryUpload(uploadFilePath);
+            await FailOperationAsync(resource, exception, cancellationToken);
+            throw;
+        }
+    }
+
+    private static void EnsureAvailable(GeoResourceEntity resource)
+    {
+        if (resource.Status != GeoResourceStatus.Success)
+        {
+            throw new NodeGeoResourceValidationException("Geo resource file is not available yet.");
+        }
+    }
+
+    private static string AppendStatusMessage(string? current, string message)
+    {
+        var timestampedMessage = $"[{DateTimeOffset.UtcNow:O}] {message}";
+
+        return string.IsNullOrWhiteSpace(current)
+            ? timestampedMessage
+            : $"{current}{Environment.NewLine}{timestampedMessage}";
     }
 
     private async Task<GeoResourceEntity> GetResourceAsync(
@@ -337,6 +545,42 @@ public sealed class NodeGeoResourceService(
         memory.Position = 0;
 
         return memory;
+    }
+
+    private static async Task<string> SaveUploadAsync(Stream content, CancellationToken cancellationToken)
+    {
+        var directory = Path.Combine(PathProvider.Paths.DownloadsDirectory, "geo-resources");
+        Directory.CreateDirectory(directory);
+
+        var path = Path.Combine(directory, $"{Guid.NewGuid():N}.upload");
+        await using var file = File.Create(path);
+        await content.CopyToAsync(file, cancellationToken);
+
+        return path;
+    }
+
+    private void DeleteTemporaryUpload(string? uploadFilePath)
+    {
+        if (string.IsNullOrWhiteSpace(uploadFilePath))
+        {
+            return;
+        }
+
+        try
+        {
+            if (File.Exists(uploadFilePath))
+            {
+                File.Delete(uploadFilePath);
+            }
+        }
+        catch (IOException)
+        {
+            logger.LogWarning("Failed to delete temporary geo resource upload {UploadFilePath}.", uploadFilePath);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            logger.LogWarning("Access denied while deleting temporary geo resource upload {UploadFilePath}.", uploadFilePath);
+        }
     }
 
     private async Task RestartCoreIfRunningAsync(NodeEntity node, CancellationToken cancellationToken)

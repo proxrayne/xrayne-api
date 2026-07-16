@@ -19,4 +19,9 @@ public sealed class NodeOptions
     /// Gets or sets the HTTP/2 keepalive ping timeout for active gRPC calls.
     /// </summary>
     public int KeepAlivePingTimeoutSeconds { get; set; } = 20;
+
+    /// <summary>
+    /// Gets or sets the maximum gRPC message size in bytes for node calls.
+    /// </summary>
+    public int MaxMessageSizeBytes { get; set; } = 128 * 1024 * 1024;
 }

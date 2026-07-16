@@ -3,6 +3,7 @@ using Quartz;
 using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
+using Data.Contracts;
 using Infrastructure.Services;
 using Infrastructure.States;
 
@@ -12,7 +13,7 @@ namespace Infrastructure.Tasks;
 /// Runs remote node provisioning in the background.
 /// </summary>
 public sealed class NodeProvisionJob(
-    INodeService nodeService,
+    INodeRepository nodes,
     INodeSecretService secretService,
     INodeProvisionStateMachine stateMachine,
     INodeConnectionStateStore connectionStates,
@@ -33,7 +34,7 @@ public sealed class NodeProvisionJob(
         var nodeId = context.MergedJobDataMap.GetLong(NodeIdKey);
         var jobId = context.MergedJobDataMap.GetString(IdentityKey) ?? context.FireInstanceId;
 
-        var node = await nodeService.GetByIdAsync(nodeId, ct);
+        var node = await nodes.GetByIdOrDefaultAsync(nodeId, ct);
         if (node is null)
         {
             stateMachine.Dispatch(jobId, NodeProvisionState.Failed(nodeId, jobId, "Node was not found."));
@@ -47,7 +48,7 @@ public sealed class NodeProvisionJob(
             node.Enabled = true;
             connectionStates.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
             node.LastStatusChange = DateTime.UtcNow;
-            await nodeService.UpdateAsync(node, ct);
+            await nodes.UpdateAsync(node, ct);
 
             var apiKey = secretService.UnprotectApiKey(node.EncryptedApiKey);
 
@@ -60,7 +61,7 @@ public sealed class NodeProvisionJob(
             node.InstallationMessage = "Remote node is connected.";
             node.Message = null;
             node.LastStatusChange = DateTime.UtcNow;
-            await nodeService.UpdateAsync(node, ct);
+            await nodes.UpdateAsync(node, ct);
 
             stateMachine.Dispatch(jobId, NodeProvisionState.Completed(nodeId, jobId));
             await connectionManager.EnsureConnectedAsync(nodeId, ct);
@@ -73,7 +74,7 @@ public sealed class NodeProvisionJob(
             node.Message = exception.Message;
             node.InstallationMessage = exception.Message;
             node.LastStatusChange = DateTime.UtcNow;
-            await nodeService.UpdateAsync(node, ct);
+            await nodes.UpdateAsync(node, ct);
 
             stateMachine.Dispatch(jobId, NodeProvisionState.Failed(nodeId, jobId, exception.Message));
         }

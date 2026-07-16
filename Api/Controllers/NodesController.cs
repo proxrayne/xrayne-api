@@ -9,6 +9,7 @@ using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
 using Contracts.Values;
+using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Services;
 using Infrastructure.States;
@@ -32,7 +33,7 @@ namespace Api.Controllers;
 [Route("api/nodes")]
 public sealed class NodesController(
     IMapper mapper,
-    INodeService nodes,
+    INodeRepository nodeRepository,
     INodeInboundService nodeInbounds,
     INodeOutboundService nodeOutbounds,
     INodeRoutingRuleService nodeRoutingRules,
@@ -62,7 +63,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(List<NodeDto>), StatusCodes.Status200OK)]
     public async Task<List<NodeDto>> GetAll(CancellationToken cancellationToken)
     {
-        var result = await nodes.GetAllAsync(cancellationToken);
+        var result = await nodeRepository.GetAllAsync(cancellationToken);
 
         return result.Select(ToNodeDto).ToList();
     }
@@ -77,7 +78,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeDto> GetById(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         return ToNodeDto(node);
     }
@@ -92,7 +93,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeConnectionSnapshotResponse> GetConnection(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         var snapshot = connectionStateStore.Get(id) ?? CreateFallbackConnectionState(node, nodeConnectionOptions.Value);
 
         return ToConnectionSnapshotResponse(snapshot, node);
@@ -109,7 +110,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<SystemStatusResponse> GetSystemStatus(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         try
         {
@@ -165,7 +166,8 @@ public sealed class NodesController(
             InstallationMessage = "Remote node provisioning is queued."
         };
 
-        await nodes.AddAsync(AdminId, node, cancellationToken);
+        await nodeRepository.AddAsync(AdminId, node, cancellationToken);
+
         connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
 
         if (environment.IsDevelopment())
@@ -197,13 +199,16 @@ public sealed class NodesController(
         [FromBody] UpdateNodeRequest request,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         node.Name = request.Name.Trim();
         node.Note = request.Note.Trim();
 
-        var updated = await nodes.UpdateAsync(node, cancellationToken)
-            ?? throw new NotFoundException($"Node '{id}' was not found.");
+        var updated = await nodeRepository.UpdateAsync(node, cancellationToken);
+        if (updated is null)
+        {
+            throw new NotFoundException($"Node '{id}' was not found.");
+        }
 
         return new NodeOperationResponse(ToNodeDto(updated), "updated");
     }
@@ -220,7 +225,7 @@ public sealed class NodesController(
         long id,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         return ToConnectionParametersResponse(node);
     }
@@ -239,7 +244,7 @@ public sealed class NodesController(
         [FromBody] UpdateNodeConnectionParametersRequest request,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         var address = NormalizeAddress(request.Address);
         var password = ResolvePassword(node, request);
         var sshKey = ResolveSSHKey(node, request);
@@ -268,8 +273,11 @@ public sealed class NodesController(
             MarkNodeConnecting(node, "Node connection parameters updated. Manual reconnect requested.");
         }
 
-        var updated = await nodes.UpdateAsync(node, cancellationToken)
-            ?? throw new NotFoundException($"Node '{id}' was not found.");
+        var updated = await nodeRepository.UpdateAsync(node, cancellationToken);
+        if (updated is null)
+        {
+            throw new NotFoundException($"Node '{id}' was not found.");
+        }
 
         if (requiresReconnect)
         {
@@ -293,7 +301,7 @@ public sealed class NodesController(
         long id,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         return new NodeConfigTemplateResponse(SerializeConfig(node.ConfigTemplate));
     }
@@ -317,7 +325,7 @@ public sealed class NodesController(
             throw new BadRequestException("Node config template is required.");
         }
 
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         var template = ParseConfigTemplate(request.ConfigTemplate);
 
 
@@ -327,7 +335,7 @@ public sealed class NodesController(
         await nodeOutbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
         await nodeRoutingRules.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
 
-        var updated = await nodes.UpdateAsync(node, cancellationToken);
+        var updated = await nodeRepository.UpdateAsync(node, cancellationToken);
         if (updated is null)
         {
             throw new NotFoundException($"Node '{id}' was not found.");
@@ -364,7 +372,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<CoreStatusResponse> GetCoreStatus(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         if (coreStateStore.TryGet(id, out var cachedState) && cachedState is not null)
         {
             return ToCoreStatusResponse(cachedState);
@@ -394,7 +402,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task StreamCoreStatus(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         var subscription = eventStreams.Subscribe<CoreStatusResponse>(NodeStreamKeys.CoreStatus(id));
 
         SetupStreamHeaders();
@@ -443,7 +451,12 @@ public sealed class NodesController(
         [FromQuery] CoreReleasesQuery query,
         CancellationToken cancellationToken)
     {
-        _ = await GetAccessibleNodeAsync(id, cancellationToken);
+        // TODO: need move to another controller
+        if (!await nodeRepository.ExistByIdAsync(id, cancellationToken))
+        {
+            throw new NotFoundException($"Node '{id}' was not found.");
+        }
+
         var releases = await xrayRepository.GetReleasesAsync(query.PerPage, query.Page, cancellationToken);
 
         return releases.Select(mapper.Map<GitHubReleaseDto>).ToList();
@@ -463,7 +476,7 @@ public sealed class NodesController(
         [FromBody] Node.Models.InstallCoreRequest request,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         try
         {
@@ -489,7 +502,7 @@ public sealed class NodesController(
         string jobId,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         try
         {
@@ -515,7 +528,7 @@ public sealed class NodesController(
         string jobId,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         var subscription = eventStreams.Subscribe<InstallCoreStatusResponse>(
             NodeStreamKeys.CoreInstall(id, jobId));
 
@@ -605,7 +618,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task StreamProvisionState(long id, string jobId, CancellationToken cancellationToken)
     {
-        _ = await GetAccessibleNodeAsync(id, cancellationToken);
+        _ = await nodeRepository.GetByIdAsync(id, cancellationToken);
         var currentState = provisionStates.GetState(jobId);
         if (currentState is null || currentState.NodeId != id)
         {
@@ -643,10 +656,10 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reconnect(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         MarkNodeConnecting(node, "Manual reconnect requested.");
 
-        await nodes.UpdateAsync(node, cancellationToken);
+        await nodeRepository.UpdateAsync(node, cancellationToken);
         await connectionManager.ReconnectAsync(node.Id, cancellationToken);
 
         return Accepted(new NodeOperationResponse(ToNodeDto(node), "reconnect_queued"));
@@ -663,7 +676,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Restart(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         try
         {
@@ -675,7 +688,7 @@ public sealed class NodesController(
         }
 
         MarkNodeConnecting(node, "Remote node restart requested.");
-        await nodes.UpdateAsync(node, cancellationToken);
+        await nodeRepository.UpdateAsync(node, cancellationToken);
         await connectionManager.ReconnectAsync(node.Id, cancellationToken);
 
         return Accepted(new NodeOperationResponse(ToNodeDto(node), "restart_queued"));
@@ -691,11 +704,11 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeOperationResponse> Disable(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         node.Enabled = false;
         node.Message = "Node disabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
-        await nodes.UpdateAsync(node, cancellationToken);
+        await nodeRepository.UpdateAsync(node, cancellationToken);
         await connectionManager.DisconnectAsync(node.Id, cancellationToken);
 
         return new NodeOperationResponse(ToNodeDto(node), "disabled");
@@ -711,12 +724,12 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeOperationResponse> Enable(long id, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         node.Enabled = true;
         node.Message = "Node enabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
         connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
-        await nodes.UpdateAsync(node, cancellationToken);
+        await nodeRepository.UpdateAsync(node, cancellationToken);
         await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
 
         return new NodeOperationResponse(ToNodeDto(node), "enabled");
@@ -732,7 +745,7 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(long id, CancellationToken cancellationToken)
     {
-        var deleted = await nodes.DeleteAsync(id, cancellationToken);
+        var deleted = await nodeRepository.DeleteAsync(id, cancellationToken);
         if (!deleted)
         {
             throw new NotFoundException($"Node '{id}' was not found.");
@@ -744,13 +757,6 @@ public sealed class NodesController(
         nodeLogStore.Remove(id);
 
         return NoContent();
-    }
-
-    private async Task<NodeEntity> GetAccessibleNodeAsync(long id, CancellationToken cancellationToken)
-    {
-        var node = await nodes.GetByIdAsync(id, cancellationToken);
-
-        return node ?? throw new NotFoundException($"Node '{id}' was not found.");
     }
 
     private static void ValidateCreateRequest(CreateNodeRequest request)
@@ -1020,7 +1026,7 @@ public sealed class NodesController(
         Func<NodeEntity, INodeCoreClient, Task<OperationAcceptedResponse>> operation,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         try
         {
@@ -1053,7 +1059,7 @@ public sealed class NodesController(
             node.Message = null;
             node.LastStatusChange = DateTime.UtcNow;
 
-            await nodes.UpdateAsync(node, cancellationToken);
+            await nodeRepository.UpdateAsync(node, cancellationToken);
             provisionStates.Dispatch(jobId, NodeProvisionState.Completed(node.Id, jobId));
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -1062,7 +1068,7 @@ public sealed class NodesController(
             node.InstallationMessage = exception.Message;
             node.LastStatusChange = DateTime.UtcNow;
 
-            await nodes.UpdateAsync(node, cancellationToken);
+            await nodeRepository.UpdateAsync(node, cancellationToken);
             provisionStates.Dispatch(jobId, NodeProvisionState.Failed(node.Id, jobId, exception.Message));
         }
     }

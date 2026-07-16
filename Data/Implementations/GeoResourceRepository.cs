@@ -40,9 +40,11 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
     {
         return GeoResourcesWithRelations
             .Where(geoResource =>
-                geoResource.SourceType == GeoResourceSourceType.AutoUpdate &&
+                geoResource.Url != null &&
                 geoResource.NextRunAt != null &&
-                geoResource.NextRunAt <= now)
+                geoResource.NextRunAt <= now &&
+                (geoResource.Status == GeoResourceStatus.Success ||
+                    geoResource.Status == GeoResourceStatus.Error))
             .OrderBy(geoResource => geoResource.NextRunAt)
             .ToListAsync(ct);
     }

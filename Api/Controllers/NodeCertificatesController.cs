@@ -3,7 +3,7 @@ using Api.Requests;
 using Api.Responses;
 using AutoMapper;
 using Contracts.Values;
-using Data.Entities;
+using Data.Contracts;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ namespace Api.Controllers;
 [Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
 [Route("api/nodes/{nodeId:long}/certificates")]
 public sealed class NodeCertificatesController(
-    INodeService nodes,
+    INodeRepository nodeRepository,
     INodeCertificateService certificates,
     IMapper mapper) : ApiControllerBase
 {
@@ -34,7 +34,7 @@ public sealed class NodeCertificatesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<List<NodeCertificateDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -67,7 +67,7 @@ public sealed class NodeCertificatesController(
             throw new BadRequestException("Certificate domain is required.");
         }
 
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -110,7 +110,7 @@ public sealed class NodeCertificatesController(
             throw new BadRequestException("Domain, certificate file path, and private key file path are required.");
         }
 
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -146,7 +146,7 @@ public sealed class NodeCertificatesController(
         string domain,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -178,7 +178,7 @@ public sealed class NodeCertificatesController(
         string domain,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -194,12 +194,5 @@ public sealed class NodeCertificatesController(
         }
 
         return NoContent();
-    }
-
-    private async Task<NodeEntity> GetAccessibleNodeAsync(long nodeId, CancellationToken cancellationToken)
-    {
-        var node = await nodes.GetByIdAsync(AdminId, nodeId, cancellationToken);
-
-        return node ?? throw new NotFoundException($"Node '{nodeId}' was not found.");
     }
 }

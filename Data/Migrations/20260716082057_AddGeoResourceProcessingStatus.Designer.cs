@@ -6,6 +6,7 @@ using Contracts.Models;
 using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Xray.Config.Enums;
@@ -16,9 +17,11 @@ using Xray.Config.Models;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260716082057_AddGeoResourceProcessingStatus")]
+    partial class AddGeoResourceProcessingStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -27,6 +30,7 @@ namespace Data.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "certificate_mode", new[] { "domain", "ip" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "encryption_method", new[] { "blake3aes128gcm", "blake3aes256gcm", "blake3chacha20poly1305", "aes256gcm", "aes128gcm", "chacha20poly1305", "x_chacha20poly1305", "none" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "geo_resource_source_type", new[] { "static", "auto_update" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "geo_resource_status", new[] { "queued", "updating", "loading", "transferring", "error", "success" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "limit_reset_strategy", new[] { "day", "week", "month", "year" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "ssh_auth_type", new[] { "password", "private_key" });
@@ -382,6 +386,9 @@ namespace Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("LastError")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("LastErrorAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -396,6 +403,11 @@ namespace Data.Migrations
 
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint");
+
+                    b.Property<GeoResourceSourceType>("SourceType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("geo_resource_source_type")
+                        .HasDefaultValueSql("'static'::geo_resource_source_type");
 
                     b.Property<GeoResourceStatus>("Status")
                         .ValueGeneratedOnAdd()

@@ -105,7 +105,7 @@ Panel SSE endpoints should:
 - read remote node runtime updates from panel-local stores and event streams
   when the data is already ingested by `INodeConnectionManager`.
 
-Panel-to-node streaming uses gRPC server-streaming from `ProtoTypes/remote_node.proto`
+Panel-to-node streaming uses gRPC server-streaming from `ProtoTypes/v1/health_service.proto`
 instead of node HTTP/SSE endpoints. Do not open one remote node gRPC stream per
 dashboard SSE client; keep one upstream `Connect` stream per active node and
 fan out locally.

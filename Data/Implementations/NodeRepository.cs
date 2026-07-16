@@ -1,12 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+using Contracts.Exceptions;
 using Data.Contracts;
 using Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data.Implementations;
 
-public sealed class NodeRepository(AppDbContext dbContext) : INodeRepository
+public sealed class NodeRepository(AppDbContext context) : INodeRepository
 {
-    private IQueryable<NodeEntity> NodesWithRelations => dbContext.Nodes
+    private IQueryable<NodeEntity> NodesWithRelations => context.Nodes
         .Include(node => node.Admin)
         .Include(node => node.Inbounds)
         .Include(node => node.Outbounds)
@@ -27,57 +28,76 @@ public sealed class NodeRepository(AppDbContext dbContext) : INodeRepository
             .ToListAsync(ct);
     }
 
-    public Task<NodeEntity?> GetByIdAsync(long id, CancellationToken ct = default)
+    public async Task<NodeEntity> GetByIdAsync(long id, CancellationToken ct = default)
+    {
+        var node = await GetByIdOrDefaultAsync(id, ct);
+
+        return Required(node, id);
+    }
+
+    public Task<bool> ExistByIdAsync(long id, CancellationToken ct = default)
+    {
+        return context.Nodes.AnyAsync(x => x.Id == id, ct);
+    }
+
+    public Task<NodeEntity?> GetByIdOrDefaultAsync(long id, CancellationToken ct = default)
     {
         return NodesWithRelations
             .SingleOrDefaultAsync(node => node.Id == id, ct);
     }
 
-    public Task<NodeEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    public async Task<NodeEntity> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    {
+        var node = await GetByIdOrDefaultAsync(adminId, id, ct);
+
+        return Required(node, id);
+    }
+
+    public Task<NodeEntity?> GetByIdOrDefaultAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         return NodesWithRelations
-            .SingleOrDefaultAsync(
-                node => node.Id == id && EF.Property<Guid>(node, "AdminId") == adminId,
-                ct);
+           .SingleOrDefaultAsync(
+               node => node.Id == id && EF.Property<Guid>(node, "AdminId") == adminId,
+               ct);
     }
 
     public async Task<NodeEntity> AddAsync(NodeEntity node, CancellationToken ct = default)
     {
-        await dbContext.Nodes.AddAsync(node, ct);
-        await dbContext.SaveChangesAsync(ct);
-        await dbContext.Entry(node).ReloadAsync(ct);
+        await context.Nodes.AddAsync(node, ct);
+        await context.SaveChangesAsync(ct);
+        await context.Entry(node).ReloadAsync(ct);
 
         return node;
     }
 
     public async Task<NodeEntity> AddAsync(Guid adminId, NodeEntity node, CancellationToken ct = default)
     {
-        await dbContext.Nodes.AddAsync(node, ct);
-        dbContext.Entry(node).Property("AdminId").CurrentValue = adminId;
-        await dbContext.SaveChangesAsync(ct);
-        await dbContext.Entry(node).ReloadAsync(ct);
+        await context.Nodes.AddAsync(node, ct);
+        context.Entry(node).Property("AdminId").CurrentValue = adminId;
+        await context.SaveChangesAsync(ct);
+        await context.Entry(node).ReloadAsync(ct);
 
         return node;
     }
 
     public async Task<NodeEntity?> UpdateAsync(NodeEntity node, CancellationToken ct = default)
     {
-        var exists = await dbContext.Nodes.AnyAsync(item => item.Id == node.Id, ct);
+        var exists = await context.Nodes.AnyAsync(item => item.Id == node.Id, ct);
         if (!exists)
         {
             return null;
         }
 
         node.UpdatedAt = DateTimeOffset.UtcNow;
-        dbContext.Nodes.Update(node);
-        await dbContext.SaveChangesAsync(ct);
+        context.Nodes.Update(node);
+        await context.SaveChangesAsync(ct);
 
         return node;
     }
 
     public async Task<NodeEntity?> UpdateAsync(Guid adminId, NodeEntity node, CancellationToken ct = default)
     {
-        var exists = await dbContext.Nodes.AnyAsync(
+        var exists = await context.Nodes.AnyAsync(
             item => item.Id == node.Id && EF.Property<Guid>(item, "AdminId") == adminId,
             ct);
         if (!exists)
@@ -86,8 +106,8 @@ public sealed class NodeRepository(AppDbContext dbContext) : INodeRepository
         }
 
         node.UpdatedAt = DateTimeOffset.UtcNow;
-        dbContext.Nodes.Update(node);
-        await dbContext.SaveChangesAsync(ct);
+        context.Nodes.Update(node);
+        await context.SaveChangesAsync(ct);
 
         return node;
     }
@@ -100,8 +120,8 @@ public sealed class NodeRepository(AppDbContext dbContext) : INodeRepository
             return false;
         }
 
-        dbContext.Nodes.Remove(node);
-        await dbContext.SaveChangesAsync(ct);
+        context.Nodes.Remove(node);
+        await context.SaveChangesAsync(ct);
 
         return true;
     }
@@ -114,9 +134,14 @@ public sealed class NodeRepository(AppDbContext dbContext) : INodeRepository
             return false;
         }
 
-        dbContext.Nodes.Remove(node);
-        await dbContext.SaveChangesAsync(ct);
+        context.Nodes.Remove(node);
+        await context.SaveChangesAsync(ct);
 
         return true;
+    }
+
+    private NodeEntity Required(NodeEntity? node, long id)
+    {
+        return node ?? throw new NotFoundException($"Node '{id}' was not found.");
     }
 }

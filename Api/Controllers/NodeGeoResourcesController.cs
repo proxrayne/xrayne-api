@@ -3,7 +3,7 @@ using Api.Requests;
 using Api.Responses;
 using AutoMapper;
 using Contracts.Values;
-using Data.Entities;
+using Data.Contracts;
 using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -19,8 +19,8 @@ namespace Api.Controllers;
 [Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
 [Route("api/nodes/{nodeId:long}/geo-resources")]
 public sealed class NodeGeoResourcesController(
-    INodeService nodes,
     INodeGeoResourceService geoResources,
+    INodeRepository nodeRepository,
     IMapper mapper) : ApiControllerBase
 {
     /// <summary>
@@ -34,7 +34,7 @@ public sealed class NodeGeoResourcesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<List<NodeGeoResourceDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -58,10 +58,14 @@ public sealed class NodeGeoResourcesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<List<string>> GetNames(long nodeId, CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
         var result = await geoResources.GetAllAsync(AdminId, node, cancellationToken);
 
-        return result.Select(resource => resource.Filename).Order(StringComparer.Ordinal).ToList();
+        return result
+            .Where(resource => resource.Status == Contracts.Enums.GeoResourceStatus.Success)
+            .Select(resource => resource.Filename)
+            .Order(StringComparer.Ordinal)
+            .ToList();
     }
 
     /// <summary>
@@ -78,7 +82,7 @@ public sealed class NodeGeoResourcesController(
         long geoResourceId,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -111,7 +115,7 @@ public sealed class NodeGeoResourcesController(
         [FromForm] CreateNodeGeoResourceFileRequest request,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
         if (request.File is null || request.File.Length == 0)
         {
             throw new BadRequestException("Geo resource file is required.");
@@ -158,7 +162,7 @@ public sealed class NodeGeoResourcesController(
         [FromBody] CreateNodeGeoResourceAutoUpdateRequest request,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -202,7 +206,7 @@ public sealed class NodeGeoResourcesController(
         [FromBody] UpdateNodeGeoResourceRequest request,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -245,7 +249,7 @@ public sealed class NodeGeoResourcesController(
         long geoResourceId,
         CancellationToken cancellationToken)
     {
-        var node = await GetAccessibleNodeAsync(nodeId, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
         try
         {
@@ -262,12 +266,4 @@ public sealed class NodeGeoResourcesController(
             throw ToApiException(exception);
         }
     }
-
-    private async Task<NodeEntity> GetAccessibleNodeAsync(long nodeId, CancellationToken cancellationToken)
-    {
-        var node = await nodes.GetByIdAsync(AdminId, nodeId, cancellationToken);
-
-        return node ?? throw new NotFoundException($"Node '{nodeId}' was not found.");
-    }
-
 }

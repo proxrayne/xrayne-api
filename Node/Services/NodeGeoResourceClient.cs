@@ -59,7 +59,7 @@ public sealed class NodeGeoResourceClient : NodeGrpcClientBase, INodeGeoResource
         await content.CopyToAsync(memory, cancellationToken);
 
         return await ExecuteUnaryAsync(
-            "UploadGeoResource",
+            "Upload",
             callOptions => client.UploadAsync(
                 new Proto.UploadGeoResourceRequest
                 {
@@ -78,7 +78,7 @@ public sealed class NodeGeoResourceClient : NodeGrpcClientBase, INodeGeoResource
         CancellationToken cancellationToken = default)
     {
         return ExecuteUnaryAsync(
-            "RenameGeoResource",
+            "Rename",
             callOptions => client.RenameAsync(
                 new Proto.RenameGeoResourceRequest
                 {
@@ -94,7 +94,7 @@ public sealed class NodeGeoResourceClient : NodeGrpcClientBase, INodeGeoResource
     public Task DeleteGeoResourceAsync(string fileName, CancellationToken cancellationToken = default)
     {
         return ExecuteEmptyUnaryAsync(
-            "DeleteGeoResource",
+            "Delete",
             callOptions => client.DeleteAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
             cancellationToken);
     }

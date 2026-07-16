@@ -1,17 +1,18 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Contracts.Configurations;
 using Contracts.Enums;
 using Contracts.Models;
 using Contracts.Utilities;
-using Node.Models;
-using Node.Services;
+using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Values;
-using Node.Grpc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Node.Enums;
+using Node.Grpc;
+using Node.Models;
+using Node.Services;
 
 namespace Infrastructure.Services;
 
@@ -43,7 +44,7 @@ public sealed class NodeConnectionManager(
     public async Task StartAllAsync(CancellationToken cancellationToken = default)
     {
         using var scope = scopeFactory.CreateScope();
-        var nodes = await scope.ServiceProvider.GetRequiredService<INodeService>().GetAllAsync(cancellationToken);
+        var nodes = await scope.ServiceProvider.GetRequiredService<INodeRepository>().GetAllAsync(cancellationToken);
         var runnableNodeIds = nodes
             .Where(CanRun)
             .Select(node => node.Id)
@@ -165,7 +166,7 @@ public sealed class NodeConnectionManager(
     private async Task<NodeEntity?> GetNodeAsync(long nodeId, CancellationToken cancellationToken)
     {
         using var scope = scopeFactory.CreateScope();
-        return await scope.ServiceProvider.GetRequiredService<INodeService>().GetByIdAsync(nodeId, cancellationToken);
+        return await scope.ServiceProvider.GetRequiredService<INodeRepository>().GetByIdOrDefaultAsync(nodeId, cancellationToken);
     }
 
     private bool CanRun(NodeEntity node)
@@ -359,7 +360,7 @@ public sealed class NodeConnectionManager(
             CancellationToken cancellationToken)
         {
             using var scope = scopeFactory.CreateScope();
-            return await scope.ServiceProvider.GetRequiredService<INodeService>().GetByIdAsync(nodeId, cancellationToken);
+            return await scope.ServiceProvider.GetRequiredService<INodeRepository>().GetByIdOrDefaultAsync(nodeId, cancellationToken);
         }
 
         private static async Task<NodeEndpoint> CreateEndpointAsync(
@@ -667,7 +668,7 @@ public sealed class NodeConnectionManager(
             CancellationToken cancellationToken)
         {
             using var scope = scopeFactory.CreateScope();
-            var nodes = scope.ServiceProvider.GetRequiredService<INodeService>();
+            var nodes = scope.ServiceProvider.GetRequiredService<INodeRepository>();
             var node = await nodes.GetByIdAsync(nodeId, cancellationToken);
             if (node is null || !node.Enabled)
             {
@@ -710,8 +711,8 @@ public sealed class NodeConnectionManager(
             CancellationToken cancellationToken)
         {
             using var scope = scopeFactory.CreateScope();
-            var nodes = scope.ServiceProvider.GetRequiredService<INodeService>();
-            var node = await nodes.GetByIdAsync(nodeId, cancellationToken);
+            var nodes = scope.ServiceProvider.GetRequiredService<INodeRepository>();
+            var node = await nodes.GetByIdOrDefaultAsync(nodeId, cancellationToken);
 
             return node?.ReconnectAttemptCount ?? 1;
         }

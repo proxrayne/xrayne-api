@@ -166,10 +166,10 @@ public sealed class AppSettingsRepositoryTests
             .GetColumnType()
             .Should()
             .Be("limit_reset_strategy");
-        geoResource!.FindProperty(nameof(GeoResourceEntity.SourceType))!
+        geoResource!.FindProperty(nameof(GeoResourceEntity.Status))!
             .GetColumnType()
             .Should()
-            .Be("geo_resource_source_type");
+            .Be("geo_resource_status");
         application!.FindProperty(nameof(ApplicationEntity.SubscriptionFormat))!
             .GetColumnType()
             .Should()

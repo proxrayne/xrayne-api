@@ -1,6 +1,7 @@
 using Api.Exceptions;
 using Api.Responses;
 using Contracts.Values;
+using Data.Contracts;
 using Infrastructure.Services;
 using Infrastructure.Values;
 using Microsoft.AspNetCore.Authorization;
@@ -15,7 +16,7 @@ namespace Api.Controllers;
 [Authorize(Policy = AdminPermissionNames.ViewLogs)]
 [Route("api/nodes/{id:long}/logs")]
 public sealed class NodeLogsController(
-    INodeService nodes,
+    INodeRepository nodeRepository,
     INodeLogStore nodeLogs,
     IEventStreamManager eventStreams) : ApiControllerBase
 {
@@ -80,9 +81,9 @@ public sealed class NodeLogsController(
         }
     }
 
-    private async Task EnsureNodeExistsAsync(long id, CancellationToken cancellationToken)
+    private async Task EnsureNodeExistsAsync(long id, CancellationToken ct)
     {
-        if (await nodes.GetByIdAsync(id, cancellationToken) is null)
+        if (!await nodeRepository.ExistByIdAsync(id, ct))
         {
             throw new NotFoundException($"Node '{id}' was not found.");
         }

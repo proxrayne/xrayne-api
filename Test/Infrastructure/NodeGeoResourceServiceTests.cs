@@ -5,6 +5,8 @@ using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Services;
+using Infrastructure.States;
+using Microsoft.Extensions.Logging;
 using Node.Models;
 using Node.Services;
 using Xray.Config.Models;
@@ -44,13 +46,13 @@ public sealed class NodeGeoResourceServiceTests
 
         saved.Should().NotBeNull();
         saved!.Filename.Should().Be("geoip.dat");
-        saved.SourceType.Should().Be(GeoResourceSourceType.Static);
+        saved.IsAutoUpdate.Should().BeFalse();
         saved.Node.Should().Be(fixture.Node);
         saved.Admin.Should().Be(fixture.Node.Admin);
     }
 
     [Fact]
-    public async Task RefreshDueAutoUpdatesAsync_keeps_next_run_when_download_fails()
+    public async Task ExecuteQueuedOperationAsync_keeps_next_run_when_download_fails()
     {
         var fixture = NodeGeoResourceServiceFixture.Create(HttpStatusCode.InternalServerError);
         var nextRunAt = DateTimeOffset.UtcNow.AddMinutes(-1);
@@ -60,7 +62,6 @@ public sealed class NodeGeoResourceServiceTests
             Filename = "geosite.dat",
             SizeBytes = 10,
             LastModifiedAt = DateTimeOffset.UtcNow.AddHours(-1),
-            SourceType = GeoResourceSourceType.AutoUpdate,
             Url = "https://example.com/geosite.dat",
             CronTemplate = "*/10 * * * *",
             NextRunAt = nextRunAt,
@@ -69,8 +70,8 @@ public sealed class NodeGeoResourceServiceTests
         };
         GeoResourceEntity? updated = null;
         fixture.Repository
-            .GetDueAutoUpdateAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new List<GeoResourceEntity> { resource }));
+            .GetByIdAsync(resource.Id, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<GeoResourceEntity?>(resource));
         fixture.Repository
             .UpdateAsync(Arg.Any<GeoResourceEntity>(), Arg.Any<CancellationToken>())
             .Returns(call =>
@@ -79,12 +80,13 @@ public sealed class NodeGeoResourceServiceTests
                 return Task.FromResult<GeoResourceEntity?>(updated);
             });
 
-        await fixture.Service.RefreshDueAutoUpdatesAsync();
+        await fixture.Service.ExecuteQueuedOperationAsync(resource.Id, GeoResourceOperation.Refresh, null, null);
 
         updated.Should().NotBeNull();
-        updated!.LastError.Should().NotBeNullOrWhiteSpace();
-        updated.LastErrorAt.Should().NotBeNull();
+        updated!.LastErrorAt.Should().NotBeNull();
         updated.NextRunAt.Should().Be(nextRunAt);
+        updated.Status.Should().Be(GeoResourceStatus.Error);
+        updated.StatusMessage.Should().Contain("Error:");
         await fixture.NodeClient.DidNotReceiveWithAnyArgs()
             .UploadGeoResourceAsync(default!, default!, default);
     }
@@ -100,7 +102,6 @@ public sealed class NodeGeoResourceServiceTests
             Filename = "geosite.dat",
             SizeBytes = 10,
             LastModifiedAt = DateTimeOffset.UtcNow.AddHours(-1),
-            SourceType = GeoResourceSourceType.AutoUpdate,
             Url = "https://example.com/geosite.dat",
             CronTemplate = "*/10 * * * *",
             NextRunAt = nextRunAt,
@@ -139,8 +140,51 @@ public sealed class NodeGeoResourceServiceTests
         updated.Should().NotBeNull();
         updated!.Filename.Should().Be("custom.dat");
         updated.NextRunAt.Should().Be(nextRunAt);
+        updated.Status.Should().Be(GeoResourceStatus.Queued);
         await fixture.NodeClient.DidNotReceiveWithAnyArgs()
             .UploadGeoResourceAsync(default!, default!, default);
+        await fixture.Scheduler.Received(1).ScheduleGeoResourceOperation(
+            resource.Id,
+            GeoResourceOperation.Refresh,
+            null,
+            "geosite.dat",
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ScheduleDueAutoUpdatesAsync_queues_due_url_resources()
+    {
+        var fixture = NodeGeoResourceServiceFixture.Create();
+        var resource = new GeoResourceEntity
+        {
+            Id = 10,
+            Filename = "geosite.dat",
+            SizeBytes = 10,
+            LastModifiedAt = DateTimeOffset.UtcNow.AddHours(-1),
+            Status = GeoResourceStatus.Success,
+            Url = "https://example.com/geosite.dat",
+            CronTemplate = "*/10 * * * *",
+            NextRunAt = DateTimeOffset.UtcNow.AddMinutes(-1),
+            Node = fixture.Node,
+            Admin = fixture.Node.Admin
+        };
+        fixture.Repository
+            .GetDueAutoUpdateAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new List<GeoResourceEntity> { resource }));
+        fixture.Repository
+            .UpdateAsync(Arg.Any<GeoResourceEntity>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult<GeoResourceEntity?>(call.Arg<GeoResourceEntity>()));
+
+        await fixture.Service.ScheduleDueAutoUpdatesAsync();
+
+        resource.Status.Should().Be(GeoResourceStatus.Queued);
+        resource.StatusMessage.Should().Be("Queued scheduled geo resource refresh.");
+        await fixture.Scheduler.Received(1).ScheduleGeoResourceOperation(
+            resource.Id,
+            GeoResourceOperation.Refresh,
+            null,
+            null,
+            Arg.Any<CancellationToken>());
     }
 
     private sealed class NodeGeoResourceServiceFixture
@@ -151,6 +195,7 @@ public sealed class NodeGeoResourceServiceTests
             IGeoResourceRepository repository,
             INodeGeoResourceClient nodeClient,
             INodeCoreClient coreClient,
+            IBackgroundTaskScheduler scheduler,
             NodeGeoResourceService service)
         {
             AdminId = adminId;
@@ -158,6 +203,7 @@ public sealed class NodeGeoResourceServiceTests
             Repository = repository;
             NodeClient = nodeClient;
             CoreClient = coreClient;
+            Scheduler = scheduler;
             Service = service;
         }
 
@@ -170,6 +216,8 @@ public sealed class NodeGeoResourceServiceTests
         public INodeGeoResourceClient NodeClient { get; }
 
         public INodeCoreClient CoreClient { get; }
+
+        public IBackgroundTaskScheduler Scheduler { get; }
 
         public NodeGeoResourceService Service { get; }
 
@@ -211,6 +259,8 @@ public sealed class NodeGeoResourceServiceTests
             builder.Build(node).Returns(new StartCoreRequest { Config = new XrayConfig() });
             var httpClientFactory = Substitute.For<IHttpClientFactory>();
             httpClientFactory.CreateClient(Arg.Any<string>()).Returns(new HttpClient(new StubHandler(downloadStatusCode)));
+            var scheduler = Substitute.For<IBackgroundTaskScheduler>();
+            var logger = Substitute.For<ILogger<NodeGeoResourceService>>();
 
             var service = new NodeGeoResourceService(
                 repository,
@@ -219,9 +269,18 @@ public sealed class NodeGeoResourceServiceTests
                 coreClientFactory,
                 coreStates,
                 builder,
-                httpClientFactory);
+                httpClientFactory,
+                scheduler,
+                logger);
 
-            return new NodeGeoResourceServiceFixture(adminId, node, repository, nodeClient, coreClient, service);
+            return new NodeGeoResourceServiceFixture(
+                adminId,
+                node,
+                repository,
+                nodeClient,
+                coreClient,
+                scheduler,
+                service);
         }
     }
 

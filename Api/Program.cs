@@ -164,7 +164,8 @@ try
     {
         PingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:PingTimeoutSeconds", 15),
         KeepAlivePingDelaySeconds = builder.Configuration.GetValue("NodeConnection:GrpcKeepAliveDelaySeconds", 60),
-        KeepAlivePingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:GrpcKeepAliveTimeoutSeconds", 20)
+        KeepAlivePingTimeoutSeconds = builder.Configuration.GetValue("NodeConnection:GrpcKeepAliveTimeoutSeconds", 20),
+        MaxMessageSizeBytes = builder.Configuration.GetValue("NodeConnection:GrpcMaxMessageSizeBytes", 128 * 1024 * 1024)
     });
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddData(builder.Configuration.GetConnectionString("Default"));

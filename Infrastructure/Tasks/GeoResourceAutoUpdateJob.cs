@@ -27,7 +27,7 @@ public sealed class GeoResourceAutoUpdateJob(
     {
         try
         {
-            await geoResources.RefreshDueAutoUpdatesAsync(context.CancellationToken);
+            await geoResources.ScheduleDueAutoUpdatesAsync(context.CancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {

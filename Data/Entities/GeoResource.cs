@@ -35,15 +35,26 @@ public class GeoResourceEntity : CreateUpdateEntity
     public DateTimeOffset LastModifiedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the source type, such as static or autoUpdate.
+    /// Gets or sets the latest processing status for upload or update work.
     /// </summary>
-    public GeoResourceSourceType SourceType { get; set; } = GeoResourceSourceType.Static;
+    public GeoResourceStatus Status { get; set; } = GeoResourceStatus.Success;
+
+    /// <summary>
+    /// Gets or sets the transient processing message buffer.
+    /// </summary>
+    public string? StatusMessage { get; set; }
 
     /// <summary>
     /// Gets or sets the URL used by auto-updated geo resources.
     /// </summary>
     [MaxLength(2048)]
     public string? Url { get; set; }
+
+    /// <summary>
+    /// Gets whether this geo resource is refreshed from a URL.
+    /// </summary>
+    [NotMapped]
+    public bool IsAutoUpdate => Url is not null;
 
     /// <summary>
     /// Gets or sets the Unix cron template used by auto-updated geo resources.
@@ -60,11 +71,6 @@ public class GeoResourceEntity : CreateUpdateEntity
     /// Gets or sets when the last auto-update failure happened.
     /// </summary>
     public DateTimeOffset? LastErrorAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets the last auto-update error message.
-    /// </summary>
-    public string? LastError { get; set; }
 
     /// <summary>
     /// Gets or sets the remote node that owns the geo resource.

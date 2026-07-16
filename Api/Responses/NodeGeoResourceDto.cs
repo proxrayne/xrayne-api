@@ -10,12 +10,12 @@ public sealed record NodeGeoResourceDto(
     string FileName,
     long SizeBytes,
     DateTimeOffset LastModifiedAt,
-    GeoResourceSourceType SourceType,
+    bool IsAutoUpdate,
+    GeoResourceStatus Status,
+    string? StatusMessage,
     string? Url,
     string? CronTemplate,
     DateTimeOffset? NextRunAt,
     DateTimeOffset? LastErrorAt,
-    string? LastError,
     DateTimeOffset CreatedAt,
     DateTimeOffset? UpdatedAt);
-

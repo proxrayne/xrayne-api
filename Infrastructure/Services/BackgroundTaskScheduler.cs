@@ -116,4 +116,51 @@ public sealed class BackgroundTaskScheduler(ISchedulerFactory schedulerFactory, 
             scheduleLock.Release();
         }
     }
+
+    public async Task ScheduleGeoResourceOperation(
+        long geoResourceId,
+        GeoResourceOperation operation,
+        string? uploadFilePath,
+        string? previousFileName,
+        CancellationToken ct)
+    {
+        await scheduleLock.WaitAsync(ct);
+        try
+        {
+            var scheduler = await schedulerFactory.GetScheduler(ct);
+            var identity = Guid.NewGuid().ToString("N");
+            var data = new JobDataMap
+            {
+                [GeoResourceOperationJob.GeoResourceIdKey] = geoResourceId,
+                [GeoResourceOperationJob.OperationKey] = operation.ToString(),
+            };
+
+            if (!string.IsNullOrWhiteSpace(uploadFilePath))
+            {
+                data[GeoResourceOperationJob.UploadFilePathKey] = uploadFilePath;
+            }
+
+            if (!string.IsNullOrWhiteSpace(previousFileName))
+            {
+                data[GeoResourceOperationJob.PreviousFileNameKey] = previousFileName;
+            }
+
+            var job = JobBuilder.Create<GeoResourceOperationJob>()
+                .WithIdentity(GeoResourceOperationJob.GetJobKey(identity))
+                .UsingJobData(data)
+                .Build();
+
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity(GeoResourceOperationJob.GetTriggerKey(identity))
+                .ForJob(job)
+                .StartNow()
+                .Build();
+
+            await scheduler.ScheduleJob(job, trigger, ct);
+        }
+        finally
+        {
+            scheduleLock.Release();
+        }
+    }
 }

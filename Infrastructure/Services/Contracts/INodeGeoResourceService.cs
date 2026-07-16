@@ -1,4 +1,5 @@
 using Data.Entities;
+using Infrastructure.States;
 using Node.Models;
 
 namespace Infrastructure.Services;
@@ -72,8 +73,17 @@ public interface INodeGeoResourceService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Refreshes due auto-updated geo resources.
+    /// Schedules due auto-updated geo resources.
     /// </summary>
-    Task RefreshDueAutoUpdatesAsync(CancellationToken cancellationToken = default);
-}
+    Task ScheduleDueAutoUpdatesAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executes a queued geo resource background operation.
+    /// </summary>
+    Task ExecuteQueuedOperationAsync(
+        long id,
+        GeoResourceOperation operation,
+        string? uploadFilePath,
+        string? previousFileName,
+        CancellationToken cancellationToken = default);
+}

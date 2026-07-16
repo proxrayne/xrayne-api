@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Net.Http;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Options;
 using Node.Configurations;
@@ -55,7 +54,9 @@ public sealed class NodeGrpcChannelProvider(IOptions<NodeOptions> options) :
 
         return GrpcChannel.ForAddress(BuildAddress(endpoint), new GrpcChannelOptions
         {
-            HttpHandler = handler
+            HttpHandler = handler,
+            MaxReceiveMessageSize = configured.MaxMessageSizeBytes,
+            MaxSendMessageSize = configured.MaxMessageSizeBytes
         });
     }
 

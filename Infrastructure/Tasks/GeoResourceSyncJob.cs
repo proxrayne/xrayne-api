@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Quartz;
+using Data.Contracts;
 using Infrastructure.Services;
 
 namespace Infrastructure.Tasks;
@@ -9,7 +10,7 @@ namespace Infrastructure.Tasks;
 /// </summary>
 [DisallowConcurrentExecution]
 public sealed class GeoResourceSyncJob(
-    INodeService nodes,
+    INodeRepository nodes,
     INodeGeoResourceService geoResources,
     ILogger<GeoResourceSyncJob> logger) : IJob
 {

@@ -19,6 +19,7 @@ using Infrastructure.Services;
 using Infrastructure.States;
 using Node.Models;
 using Node.Services;
+using Data.Contracts;
 using Data.Entities;
 using Data.Implementations;
 using Xray.Config.Models;
@@ -29,7 +30,7 @@ public sealed class NodesControllerTests
 {
     private static readonly Guid TestAdminId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
-    private readonly INodeService _nodes;
+    private readonly INodeRepository _nodes;
     private readonly INodeInboundService _nodeInbounds;
     private readonly INodeOutboundService _nodeOutbounds;
     private readonly INodeRoutingRuleService _nodeRoutingRules;
@@ -46,7 +47,7 @@ public sealed class NodesControllerTests
 
     public NodesControllerTests()
     {
-        _nodes = Substitute.For<INodeService>();
+        _nodes = Substitute.For<INodeRepository>();
         _nodeInbounds = Substitute.For<INodeInboundService>();
         _nodeOutbounds = Substitute.For<INodeOutboundService>();
         _nodeRoutingRules = Substitute.For<INodeRoutingRuleService>();
@@ -111,7 +112,8 @@ public sealed class NodesControllerTests
     [Fact]
     public async Task Update_ThrowsNotFound_WhenNodeIsMissing()
     {
-        _nodes.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns((NodeEntity?)null);
+        _nodes.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<NodeEntity>(new NotFoundException("Node '1' was not found.")));
 
         var act = () => _controller.Update(1, CreateUpdateRequest(), CancellationToken.None);
 
@@ -260,7 +262,8 @@ public sealed class NodesControllerTests
     [Fact]
     public async Task GetConnection_ThrowsNotFound_WhenNodeIsMissing()
     {
-        _nodes.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns((NodeEntity?)null);
+        _nodes.GetByIdAsync(1, Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<NodeEntity>(new NotFoundException("Node '1' was not found.")));
 
         var act = () => _controller.GetConnection(1, CancellationToken.None);
 

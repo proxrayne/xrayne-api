@@ -159,13 +159,20 @@ Node geo resources are managed through node-scoped endpoints under
 `/api/nodes/{id}/geo-resources`. The panel stores metadata only in
 `GeoResourceEntity`; remote files live on the standalone node in its managed
 assets directory. Static resources can be uploaded, renamed, downloaded, and
-deleted. Auto-update resources store a download URL and Unix 5-field cron
-template; the panel downloads the URL, uploads the bytes to the node, advances
-`NextRunAt` only after success, and retries on the next ten-minute job pass
-after failures. The panel syncs remote file metadata on first successful connect,
+deleted. Upload, URL refresh, and rename work is executed by one-off Quartz jobs
+after the API has created or updated the metadata row. `GeoResourceEntity.Status`
+and `StatusMessage` persist the current stage and transient process buffer; only
+`success` resources are exposed as routing-rule file-name suggestions or
+downloadable files. Auto-update resources store a download URL and Unix 5-field
+cron template; the panel downloads the URL, uploads the bytes to the node,
+advances `NextRunAt` only after success, and retries on the next ten-minute job
+pass after failures. The panel syncs remote file metadata on first successful connect,
 after successful core install events, and through the two-hour recurring sync
 job. Manual file changes restart remote xray-core through the existing restart
 flow when cached core state reports it is running.
+Geo resource content uses unary gRPC messages and is bounded by
+`NodeConnection:GrpcMaxMessageSizeBytes`; keep it aligned with the remote node
+`Node:GrpcMaxMessageSizeBytes` setting.
 
 Connection warehouses are managed through `/api/warehouses`. Warehouses group
 node inbounds for user connection distribution, expose list filtering by name,
