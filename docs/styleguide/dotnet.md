@@ -109,3 +109,14 @@ awkward, update the owning layer rather than bypassing it.
 - Mutate `.env` with `EnvConfig`.
 - Do not hand-edit JSON, env, or YAML with ad hoc string replacement when a
   structured utility exists.
+
+## Tests
+
+- Add tests for utilities, validators, static helpers, mappers, serializers,
+  configuration parsers, path/runtime helpers, and stable wire-format contracts.
+- Do not add tests that only verify controller delegation, mock service calls,
+  repository CRUD, EF metadata, DI registration, service activation, or
+  pass-through service wrappers.
+- Do not test passive entity/DTO auto-properties or thin wrappers without
+  independent parsing, validation, serialization, mapping, or deterministic
+  branching.

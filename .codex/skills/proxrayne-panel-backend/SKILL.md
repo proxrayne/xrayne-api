@@ -28,6 +28,8 @@ behavior or another Proxrayne repository.
 - Use EF Core async methods with cancellation tokens in repositories.
 - Add migrations through `add-migration.ps1` or equivalent `dotnet ef migrations add` command targeting `AppDbContext`.
 - Read configuration through standard `IConfiguration`; use `JsonConfig` only when mutating runtime `config.json`, and `EnvConfig` only when mutating `.env`.
+- Add tests only for deterministic utilities, validators, mappers, serializers, configuration parsers, path/runtime helpers, and stable wire contracts.
+- Do not add controller delegation, mock service call, repository CRUD, DI registration, service activation, or pass-through wrapper tests.
 - API/UI Docker image artifacts are produced by release GitHub Actions; backend code should keep the image build reproducible and avoid local-only assumptions.
 - Update `docs/` when API behavior, backend architecture, configuration, or packaging changes.
 

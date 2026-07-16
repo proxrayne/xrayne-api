@@ -9,7 +9,8 @@
 4. Add runtime/business services in `Infrastructure`.
 5. Add controller endpoints and request/response models in `Api`.
 6. Add AutoMapper profiles only when mapping is non-trivial or reused.
-7. Add focused tests for repository/service/API behavior.
+7. Add tests only for deterministic utilities, validators, mappers,
+   serializers, configuration parsers, and stable wire contracts.
 8. Update `/docs` and coordinate `xrayne-ui` frontend API types when the API
    changes.
 

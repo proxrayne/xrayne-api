@@ -67,3 +67,10 @@ Update `/docs` whenever:
 - release artifacts, Docker behavior, or configuration keys change;
 - a new public service, DTO, controller, endpoint, handler, or repository pattern
   is introduced.
+
+## Test Policy
+
+- Keep tests focused on deterministic helpers, validators, mappers,
+  serializers, configuration parsers, and stable wire contracts.
+- Do not add controller delegation, mock service call, repository CRUD, DI
+  registration, service activation, or pass-through wrapper tests.

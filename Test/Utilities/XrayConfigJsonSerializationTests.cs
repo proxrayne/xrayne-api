@@ -1,58 +1,15 @@
 using System.Text.Json.Nodes;
-using Contracts.Enums;
 using Contracts.Utilities;
-using Microsoft.EntityFrameworkCore;
-using Data;
-using Data.Entities;
 using Xray.Config.Enums;
 using Xray.Config.Models;
 
-namespace Test.Data;
+namespace Test.Utilities;
 
 /// <summary>
-/// Tests JSON persistence mapping for Xray configuration models.
+/// Tests stable Xray configuration JSON serialization contracts.
 /// </summary>
-public sealed class XrayConfigJsonMappingTests
+public sealed class XrayConfigJsonSerializationTests
 {
-    [Fact]
-    public void Model_KeepsXrayConfigColumnsAsJsonbWithoutValueConverters()
-    {
-        using var context = CreateNpgsqlModelContext();
-
-        context.Model.FindEntityType(typeof(InboundEntity))!
-            .FindProperty(nameof(InboundEntity.Config))!
-            .GetColumnType()
-            .Should()
-            .Be("jsonb");
-        context.Model.FindEntityType(typeof(InboundEntity))!
-            .FindProperty(nameof(InboundEntity.Config))!
-            .GetValueConverter()
-            .Should()
-            .BeNull();
-        context.Model.FindEntityType(typeof(NodeEntity))!
-            .FindProperty(nameof(NodeEntity.ConfigTemplate))!
-            .GetColumnType()
-            .Should()
-            .Be("jsonb");
-        context.Model.FindEntityType(typeof(NodeEntity))!
-            .FindProperty(nameof(NodeEntity.ConfigTemplate))!
-            .GetValueConverter()
-            .Should()
-            .BeNull();
-    }
-
-    [Fact]
-    public void Model_UsesUrlPresenceForAutoUpdatedGeoResources()
-    {
-        using var context = CreateNpgsqlModelContext();
-
-        var sql = context.GeoResources
-            .Where(resource => resource.Url != null)
-            .ToQueryString();
-
-        sql.Should().Contain(@"""Url"" IS NOT NULL");
-    }
-
     [Fact]
     public void JsonSerializer_RoundTripsProtocolSpecificInbound()
     {
@@ -117,14 +74,5 @@ public sealed class XrayConfigJsonMappingTests
 
         var restoredTemplate = XrayJsonSerializer.Deserialize<XrayConfig>(json)!;
         restoredTemplate.Inbounds.Should().ContainSingle(inbound => inbound.Tag == "template-in");
-    }
-
-    private static AppDbContext CreateNpgsqlModelContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseXRayneNpgsql("Host=localhost;Database=xrayne;Username=xrayne;Password=xrayne")
-            .Options;
-
-        return new AppDbContext(options);
     }
 }
