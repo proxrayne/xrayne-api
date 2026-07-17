@@ -1,11 +1,11 @@
 using System.Text.Json;
-using Api.Exceptions;
 using Api.Mapping;
 using Api.Requests;
 using Api.Responses;
 using AutoMapper;
 using Contracts.Configurations;
 using Contracts.Enums;
+using Contracts.Exceptions;
 using Contracts.Models;
 using Contracts.Utilities;
 using Contracts.Values;
@@ -18,7 +18,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Node.Enums;
-using Node.Exceptions;
 using Node.Models;
 using Node.Services;
 using Xray.Config.Models;
@@ -112,14 +111,7 @@ public sealed class NodesController(
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
-        try
-        {
-            return await CreateHealthClient(node).GetSystemStatusAsync(cancellationToken);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return await CreateHealthClient(node).GetSystemStatusAsync(cancellationToken);
     }
 
     /// <summary>
@@ -343,19 +335,12 @@ public sealed class NodesController(
 
         if (IsRemoteCoreRunning(updated.Id))
         {
-            try
-            {
-                await CreateCoreClient(updated).UpdateCoreConfigTemplateAsync(
-                    new Node.Models.UpdateCoreConfigTemplateRequest
-                    {
-                        ConfigTemplate = updated.ConfigTemplate
-                    },
-                    cancellationToken);
-            }
-            catch (NodeException exception)
-            {
-                throw ToApiException(exception);
-            }
+            await CreateCoreClient(updated).UpdateCoreConfigTemplateAsync(
+                new UpdateCoreConfigTemplateRequest
+                {
+                    ConfigTemplate = updated.ConfigTemplate
+                },
+                cancellationToken);
         }
 
         return new NodeConfigTemplateResponse(SerializeConfig(updated.ConfigTemplate));
@@ -378,17 +363,10 @@ public sealed class NodesController(
             return ToCoreStatusResponse(cachedState);
         }
 
-        try
-        {
-            var state = await CreateCoreClient(node).GetCoreStatusAsync(cancellationToken);
-            StoreCoreState(id, state);
+        var state = await CreateCoreClient(node).GetCoreStatusAsync(cancellationToken);
+        StoreCoreState(id, state);
 
-            return state;
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return state;
     }
 
     /// <summary>
@@ -425,13 +403,6 @@ public sealed class NodesController(
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
-        catch (NodeException exception)
-        {
-            if (!Response.HasStarted)
-            {
-                throw ToApiException(exception);
-            }
-        }
         finally
         {
             eventStreams.Unsubscribe(subscription.Id);
@@ -478,14 +449,7 @@ public sealed class NodesController(
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
-        try
-        {
-            return Accepted(await CreateCoreClient(node).InstallCoreAsync(request, cancellationToken));
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return Accepted(await CreateCoreClient(node).InstallCoreAsync(request, cancellationToken));
     }
 
     /// <summary>
@@ -504,14 +468,7 @@ public sealed class NodesController(
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
-        try
-        {
-            return await CreateCoreClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return await CreateCoreClient(node).GetInstallCoreStatusAsync(jobId, cancellationToken);
     }
 
     /// <summary>
@@ -546,13 +503,6 @@ public sealed class NodesController(
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
-        catch (NodeException exception)
-        {
-            if (!Response.HasStarted)
-            {
-                throw ToApiException(exception);
-            }
-        }
         finally
         {
             eventStreams.Unsubscribe(subscription.Id);
@@ -678,16 +628,11 @@ public sealed class NodesController(
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
-        try
-        {
-            await CreateHealthClient(node).RestartRuntimeAsync(cancellationToken);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+
+        await CreateHealthClient(node).RestartRuntimeAsync(cancellationToken);
 
         MarkNodeConnecting(node, "Remote node restart requested.");
+
         await nodeRepository.UpdateAsync(node, cancellationToken);
         await connectionManager.ReconnectAsync(node.Id, cancellationToken);
 
@@ -705,9 +650,11 @@ public sealed class NodesController(
     public async Task<NodeOperationResponse> Disable(long id, CancellationToken cancellationToken)
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
+
         node.Enabled = false;
         node.Message = "Node disabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
+
         await nodeRepository.UpdateAsync(node, cancellationToken);
         await connectionManager.DisconnectAsync(node.Id, cancellationToken);
 
@@ -725,10 +672,12 @@ public sealed class NodesController(
     public async Task<NodeOperationResponse> Enable(long id, CancellationToken cancellationToken)
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
+
         node.Enabled = true;
         node.Message = "Node enabled by user.";
         node.LastStatusChange = DateTime.UtcNow;
         connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
+
         await nodeRepository.UpdateAsync(node, cancellationToken);
         await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
 
@@ -1028,14 +977,7 @@ public sealed class NodesController(
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
-        try
-        {
-            return Accepted(await operation(node, CreateCoreClient(node)));
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return Accepted(await operation(node, CreateCoreClient(node)));
     }
 
     private async Task ConnectDevelopmentNodeAsync(

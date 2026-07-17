@@ -1,9 +1,6 @@
-using Api.Exceptions;
-using Infrastructure.Dto;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using Node.Exceptions;
 
 namespace Api.Controllers;
 
@@ -74,76 +71,4 @@ public abstract class ApiControllerBase : ControllerBase
         Response.Headers.Connection = "keep-alive";
         Response.Headers["X-Accel-Buffering"] = "no";
     }
-
-    /// <summary>
-    /// Maps remote node client exceptions to API exceptions.
-    /// </summary>
-    protected static ApiException ToApiException(NodeException exception)
-    {
-        return exception switch
-        {
-            NodeHttpException httpException when httpException.ResponseBody is not null
-                => new BadRequestException($"{httpException.Message} {httpException.ResponseBody}"),
-            _ => new BadRequestException(exception.Message)
-        };
-    }
-
-    /// <summary>
-    /// Maps node inbound service exceptions to API exceptions.
-    /// </summary>
-    protected static ApiException ToApiException(NodeInboundException exception)
-    {
-        return exception switch
-        {
-            NodeInboundNotFoundException => new NotFoundException(exception.Message),
-            NodeInboundConflictException => new ConflictException(exception.Message),
-            NodeInboundReadonlyException => new BadRequestException(exception.Message),
-            NodeInboundValidationException => new BadRequestException(exception.Message),
-            _ => new BadRequestException(exception.Message)
-        };
-    }
-
-    /// <summary>
-    /// Maps node outbound service exceptions to API exceptions.
-    /// </summary>
-    protected static ApiException ToApiException(NodeOutboundException exception)
-    {
-        return exception switch
-        {
-            NodeOutboundNotFoundException => new NotFoundException(exception.Message),
-            NodeOutboundConflictException => new ConflictException(exception.Message),
-            NodeOutboundReadonlyException => new BadRequestException(exception.Message),
-            NodeOutboundValidationException => new BadRequestException(exception.Message),
-            _ => new BadRequestException(exception.Message)
-        };
-    }
-
-    /// <summary>
-    /// Maps node routing rule service exceptions to API exceptions.
-    /// </summary>
-    protected static ApiException ToApiException(NodeRoutingRuleException exception)
-    {
-        return exception switch
-        {
-            NodeRoutingRuleNotFoundException => new NotFoundException(exception.Message),
-            NodeRoutingRuleReadonlyException => new BadRequestException(exception.Message),
-            NodeRoutingRuleValidationException => new BadRequestException(exception.Message),
-            _ => new BadRequestException(exception.Message)
-        };
-    }
-
-    /// <summary>
-    /// Maps node geo resource service exceptions to API exceptions.
-    /// </summary>
-    protected static ApiException ToApiException(NodeGeoResourceException exception)
-    {
-        return exception switch
-        {
-            NodeGeoResourceNotFoundException => new NotFoundException(exception.Message),
-            NodeGeoResourceConflictException => new ConflictException(exception.Message),
-            NodeGeoResourceValidationException => new BadRequestException(exception.Message),
-            _ => new BadRequestException(exception.Message)
-        };
-    }
-
 }

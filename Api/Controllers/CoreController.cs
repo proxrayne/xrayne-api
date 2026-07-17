@@ -1,7 +1,7 @@
-using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
 using AutoMapper;
+using Contracts.Exceptions;
 using Contracts.Utilities;
 using Contracts.Values;
 using Infrastructure.Services;

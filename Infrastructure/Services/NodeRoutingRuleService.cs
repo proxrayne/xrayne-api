@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Contracts.Exceptions;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
@@ -82,7 +83,7 @@ public sealed class NodeRoutingRuleService(
         var rule = await GetRoutingRuleAsync(nodeId, routingRuleId, cancellationToken);
         if (rule.ReadOnly)
         {
-            throw new NodeRoutingRuleReadonlyException("Readonly routing rules can only be enabled or disabled.");
+            throw new BadRequestException("Readonly routing rules can only be enabled or disabled.");
         }
 
         var ruleConfig = ParseRoutingRule(config);
@@ -95,7 +96,7 @@ public sealed class NodeRoutingRuleService(
         var updated = await routingRules.UpdateAsync(rule, cancellationToken);
         if (updated is null)
         {
-            throw new NodeRoutingRuleNotFoundException($"Routing rule '{routingRuleId}' was not found.");
+            throw new NotFoundException($"Routing rule '{routingRuleId}' was not found.");
         }
 
         await SyncRemoteRulesAsync(node, cancellationToken);
@@ -121,7 +122,7 @@ public sealed class NodeRoutingRuleService(
         var updated = await routingRules.UpdateAsync(rule, cancellationToken);
         if (updated is null)
         {
-            throw new NodeRoutingRuleNotFoundException($"Routing rule '{routingRuleId}' was not found.");
+            throw new NotFoundException($"Routing rule '{routingRuleId}' was not found.");
         }
 
         await SyncRemoteRulesAsync(node, cancellationToken);
@@ -222,7 +223,7 @@ public sealed class NodeRoutingRuleService(
             var updated = await routingRules.UpdateAsync(rule, cancellationToken);
             if (updated is null)
             {
-                throw new NodeRoutingRuleNotFoundException($"Routing rule '{rule.Id}' was not found.");
+                throw new NotFoundException($"Routing rule '{rule.Id}' was not found.");
             }
         }
 
@@ -241,13 +242,13 @@ public sealed class NodeRoutingRuleService(
         var rule = await GetRoutingRuleAsync(nodeId, routingRuleId, cancellationToken);
         if (rule.ReadOnly)
         {
-            throw new NodeRoutingRuleReadonlyException("Readonly routing rules are managed through the node config template.");
+            throw new BadRequestException("Readonly routing rules are managed through the node config template.");
         }
 
         var deleted = await routingRules.DeleteAsync(rule.Id, cancellationToken);
         if (!deleted)
         {
-            throw new NodeRoutingRuleNotFoundException($"Routing rule '{routingRuleId}' was not found.");
+            throw new NotFoundException($"Routing rule '{routingRuleId}' was not found.");
         }
 
         await ReindexAsync(node.Id, cancellationToken);
@@ -312,7 +313,7 @@ public sealed class NodeRoutingRuleService(
             var updated = await routingRules.UpdateAsync(existingReadonly, cancellationToken);
             if (updated is null)
             {
-                throw new NodeRoutingRuleNotFoundException($"Routing rule '{existingReadonly.Id}' was not found.");
+                throw new NotFoundException($"Routing rule '{existingReadonly.Id}' was not found.");
             }
         }
 
@@ -324,7 +325,7 @@ public sealed class NodeRoutingRuleService(
     {
         if (string.IsNullOrWhiteSpace(config))
         {
-            throw new NodeRoutingRuleValidationException("Routing rule configuration is required.");
+            throw new BadRequestException("Routing rule configuration is required.");
         }
 
         try
@@ -332,18 +333,18 @@ public sealed class NodeRoutingRuleService(
             var rule = XrayJsonSerializer.Deserialize<RoutingRule>(config);
             if (rule is null)
             {
-                throw new NodeRoutingRuleValidationException("Routing rule configuration is invalid.");
+                throw new BadRequestException("Routing rule configuration is invalid.");
             }
 
             return EnsureRuleTag(rule);
         }
         catch (JsonException exception)
         {
-            throw new NodeRoutingRuleValidationException($"Routing rule configuration is invalid. {exception.Message}");
+            throw new BadRequestException($"Routing rule configuration is invalid. {exception.Message}");
         }
-        catch (InvalidOperationException exception) when (exception is not NodeRoutingRuleValidationException)
+        catch (InvalidOperationException exception)
         {
-            throw new NodeRoutingRuleValidationException($"Routing rule configuration is invalid. {exception.Message}");
+            throw new BadRequestException($"Routing rule configuration is invalid. {exception.Message}");
         }
     }
 
@@ -368,7 +369,7 @@ public sealed class NodeRoutingRuleService(
     {
         if (!IsRuleTagAvailable(config, existing, currentId))
         {
-            throw new NodeRoutingRuleValidationException($"Routing rule tag '{config.RuleTag}' already exists on this node.");
+            throw new BadRequestException($"Routing rule tag '{config.RuleTag}' already exists on this node.");
         }
     }
 
@@ -396,13 +397,13 @@ public sealed class NodeRoutingRuleService(
         var requested = ruleIds.ToHashSet();
         if (requested.Count != ruleIds.Count)
         {
-            throw new NodeRoutingRuleValidationException("Routing rule order contains duplicate rule ids.");
+            throw new BadRequestException("Routing rule order contains duplicate rule ids.");
         }
 
         var existing = manualRules.Select(rule => rule.Id).ToHashSet();
         if (!requested.SetEquals(existing))
         {
-            throw new NodeRoutingRuleValidationException("Routing rule order must contain every manual routing rule id exactly once.");
+            throw new BadRequestException("Routing rule order must contain every manual routing rule id exactly once.");
         }
     }
 
@@ -415,20 +416,20 @@ public sealed class NodeRoutingRuleService(
         var requested = requestedIds.ToHashSet();
         if (requested.Count != requestedIds.Count)
         {
-            throw new NodeRoutingRuleValidationException("Readonly routing rule snapshot contains duplicate rule ids.");
+            throw new BadRequestException("Readonly routing rule snapshot contains duplicate rule ids.");
         }
 
         foreach (var id in requestedIds)
         {
             if (manualById.ContainsKey(id))
             {
-                throw new NodeRoutingRuleValidationException(
+                throw new BadRequestException(
                     $"Routing rule '{id}' is manually managed and cannot be saved as readonly.");
             }
 
             if (!readonlyById.ContainsKey(id))
             {
-                throw new NodeRoutingRuleNotFoundException($"Routing rule '{id}' was not found.");
+                throw new NotFoundException($"Routing rule '{id}' was not found.");
             }
         }
 
@@ -447,7 +448,7 @@ public sealed class NodeRoutingRuleService(
         var requested = requestedExistingIds.ToHashSet();
         if (requested.Count != requestedExistingIds.Count)
         {
-            throw new NodeRoutingRuleValidationException("Manual routing rule snapshot contains duplicate rule ids.");
+            throw new BadRequestException("Manual routing rule snapshot contains duplicate rule ids.");
         }
 
         var desired = new List<ManualSnapshotItem>();
@@ -457,13 +458,13 @@ public sealed class NodeRoutingRuleService(
             {
                 if (readonlyById.ContainsKey(rule.Id.Value))
                 {
-                    throw new NodeRoutingRuleReadonlyException(
+                    throw new BadRequestException(
                         $"Readonly routing rule '{rule.Id.Value}' cannot be saved as a manual rule.");
                 }
 
                 if (!manualById.ContainsKey(rule.Id.Value))
                 {
-                    throw new NodeRoutingRuleNotFoundException($"Routing rule '{rule.Id.Value}' was not found.");
+                    throw new NotFoundException($"Routing rule '{rule.Id.Value}' was not found.");
                 }
             }
 
@@ -494,7 +495,7 @@ public sealed class NodeRoutingRuleService(
             ?.Key;
         if (duplicate is not null)
         {
-            throw new NodeRoutingRuleValidationException($"Routing rule tag '{duplicate}' already exists on this node.");
+            throw new BadRequestException($"Routing rule tag '{duplicate}' already exists on this node.");
         }
     }
 
@@ -542,7 +543,7 @@ public sealed class NodeRoutingRuleService(
             var updated = await routingRules.UpdateAsync(rule, cancellationToken);
             if (updated is null)
             {
-                throw new NodeRoutingRuleNotFoundException($"Routing rule '{rule.Id}' was not found.");
+                throw new NotFoundException($"Routing rule '{rule.Id}' was not found.");
             }
         }
     }
@@ -552,7 +553,7 @@ public sealed class NodeRoutingRuleService(
         var node = await nodes.GetByIdAsync(nodeId, cancellationToken);
         if (node is null)
         {
-            throw new NodeRoutingRuleNotFoundException($"Node '{nodeId}' was not found.");
+            throw new NotFoundException($"Node '{nodeId}' was not found.");
         }
 
         return node;
@@ -566,7 +567,7 @@ public sealed class NodeRoutingRuleService(
         var rule = await routingRules.GetByNodeAndIdAsync(nodeId, routingRuleId, cancellationToken);
         if (rule is null)
         {
-            throw new NodeRoutingRuleNotFoundException($"Routing rule '{routingRuleId}' was not found.");
+            throw new NotFoundException($"Routing rule '{routingRuleId}' was not found.");
         }
 
         return rule;

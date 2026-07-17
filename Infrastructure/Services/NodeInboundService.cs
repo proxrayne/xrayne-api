@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Contracts.Exceptions;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
@@ -83,7 +84,7 @@ public sealed class NodeInboundService(
         var inbound = await GetInboundAsync(nodeId, inboundId, cancellationToken);
         if (inbound.ReadOnly)
         {
-            throw new NodeInboundReadonlyException("Readonly inbounds can only be enabled or disabled.");
+            throw new BadRequestException("Readonly inbounds can only be enabled or disabled.");
         }
 
         var oldTag = inbound.Tag;
@@ -98,7 +99,7 @@ public sealed class NodeInboundService(
         var updated = await inbounds.UpdateAsync(inbound, cancellationToken);
         if (updated is null)
         {
-            throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+            throw new NotFoundException($"Inbound '{inboundId}' was not found.");
         }
 
         if (updated.Enabled)
@@ -134,7 +135,7 @@ public sealed class NodeInboundService(
         var updated = await inbounds.UpdateAsync(inbound, cancellationToken);
         if (updated is null)
         {
-            throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+            throw new NotFoundException($"Inbound '{inboundId}' was not found.");
         }
 
         if (updated.Enabled)
@@ -156,7 +157,7 @@ public sealed class NodeInboundService(
         var inbound = await GetInboundAsync(nodeId, inboundId, cancellationToken);
         if (inbound.ReadOnly)
         {
-            throw new NodeInboundReadonlyException("Readonly inbounds are managed through the node config template.");
+            throw new BadRequestException("Readonly inbounds are managed through the node config template.");
         }
 
         var inboundTag = inbound.Tag;
@@ -164,7 +165,7 @@ public sealed class NodeInboundService(
         var deleted = await inbounds.DeleteAsync(inbound.Id, cancellationToken);
         if (!deleted)
         {
-            throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+            throw new NotFoundException($"Inbound '{inboundId}' was not found.");
         }
 
         if (wasEnabled)
@@ -247,7 +248,7 @@ public sealed class NodeInboundService(
             var updated = await inbounds.UpdateAsync(existingReadonly, cancellationToken);
             if (updated is null)
             {
-                throw new NodeInboundNotFoundException($"Inbound '{existingReadonly.Id}' was not found.");
+                throw new NotFoundException($"Inbound '{existingReadonly.Id}' was not found.");
             }
 
             if (updated.Enabled)
@@ -265,7 +266,7 @@ public sealed class NodeInboundService(
     {
         if (string.IsNullOrWhiteSpace(config))
         {
-            throw new NodeInboundValidationException("Inbound configuration is required.");
+            throw new BadRequestException("Inbound configuration is required.");
         }
 
         try
@@ -273,23 +274,23 @@ public sealed class NodeInboundService(
             var inbound = XrayJsonSerializer.Deserialize<Inbound>(config);
             if (inbound is null)
             {
-                throw new NodeInboundValidationException("Inbound configuration is invalid.");
+                throw new BadRequestException("Inbound configuration is invalid.");
             }
 
             if (string.IsNullOrWhiteSpace(inbound.Tag))
             {
-                throw new NodeInboundValidationException("Inbound tag is required.");
+                throw new BadRequestException("Inbound tag is required.");
             }
 
             return NormalizeInboundTag(inbound);
         }
         catch (JsonException exception)
         {
-            throw new NodeInboundValidationException($"Inbound configuration is invalid. {exception.Message}");
+            throw new BadRequestException($"Inbound configuration is invalid. {exception.Message}");
         }
-        catch (InvalidOperationException exception) when (exception is not NodeInboundValidationException)
+        catch (InvalidOperationException exception)
         {
-            throw new NodeInboundValidationException($"Inbound configuration is invalid. {exception.Message}");
+            throw new BadRequestException($"Inbound configuration is invalid. {exception.Message}");
         }
     }
 
@@ -302,14 +303,14 @@ public sealed class NodeInboundService(
     {
         if (IsReservedApiPort(config.Port))
         {
-            throw new NodeInboundConflictException($"Port '{ReservedXrayApiPort}' is reserved for the local xray API.");
+            throw new ConflictException($"Port '{ReservedXrayApiPort}' is reserved for the local xray API.");
         }
 
         foreach (var inbound in existing.Where(inbound => inbound.Id != currentId))
         {
             if (string.Equals(inbound.Tag, config.Tag, StringComparison.Ordinal))
             {
-                throw new NodeInboundConflictException($"Inbound tag '{config.Tag}' already exists on this node.");
+                throw new ConflictException($"Inbound tag '{config.Tag}' already exists on this node.");
             }
 
             var conflictsWithReadonly = inbound.ReadOnly && !inbound.Enabled;
@@ -320,7 +321,7 @@ public sealed class NodeInboundService(
 
             if (string.Equals(inbound.Port.ToString(), config.Port.ToString(), StringComparison.Ordinal))
             {
-                throw new NodeInboundConflictException($"Inbound port '{config.Port}' already exists on this node.");
+                throw new ConflictException($"Inbound port '{config.Port}' already exists on this node.");
             }
         }
     }
@@ -373,7 +374,7 @@ public sealed class NodeInboundService(
         var node = await nodes.GetByIdAsync(nodeId, cancellationToken);
         if (node is null)
         {
-            throw new NodeInboundNotFoundException($"Node '{nodeId}' was not found.");
+            throw new NotFoundException($"Node '{nodeId}' was not found.");
         }
 
         return node;
@@ -387,7 +388,7 @@ public sealed class NodeInboundService(
         var inbound = await inbounds.GetByNodeAndIdAsync(nodeId, inboundId, cancellationToken);
         if (inbound is null)
         {
-            throw new NodeInboundNotFoundException($"Inbound '{inboundId}' was not found.");
+            throw new NotFoundException($"Inbound '{inboundId}' was not found.");
         }
 
         return inbound;

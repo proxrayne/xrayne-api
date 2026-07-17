@@ -570,7 +570,6 @@ public sealed class NodeConnectionManager(
                 var geoResources = scope.ServiceProvider.GetRequiredService<INodeGeoResourceService>();
 
                 await geoResources.SynchronizeNodeAsync(
-                    node.Admin.Id,
                     node,
                     cancellationToken);
             }

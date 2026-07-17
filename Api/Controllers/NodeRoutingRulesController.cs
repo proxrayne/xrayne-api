@@ -27,16 +27,9 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<List<NodeRoutingRuleListItemDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await routingRules.GetByNodeIdAsync(nodeId, cancellationToken);
+        var result = await routingRules.GetByNodeIdAsync(nodeId, cancellationToken);
 
-            return mapper.Map<List<NodeRoutingRuleListItemDto>>(result);
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<List<NodeRoutingRuleListItemDto>>(result);
     }
 
     /// <summary>
@@ -52,16 +45,9 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         long id,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var routingRule = await routingRules.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
+        var routingRule = await routingRules.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
 
-            return mapper.Map<NodeRoutingRuleDto>(routingRule);
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeRoutingRuleDto>(routingRule);
     }
 
     /// <summary>
@@ -78,21 +64,14 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         [FromBody] CreateNodeRoutingRuleRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var created = await routingRules.CreateAsync(
-                AdminId,
-                nodeId,
-                request.Config,
-                request.Enabled,
-                cancellationToken);
+        var created = await routingRules.CreateAsync(
+            AdminId,
+            nodeId,
+            request.Config,
+            request.Enabled,
+            cancellationToken);
 
-            return Created($"/api/nodes/{nodeId}/routing-rules/{created.Id}", mapper.Map<NodeRoutingRuleDto>(created));
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return Created($"/api/nodes/{nodeId}/routing-rules/{created.Id}", mapper.Map<NodeRoutingRuleDto>(created));
     }
 
     /// <summary>
@@ -110,21 +89,14 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         [FromBody] UpdateNodeRoutingRuleRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await routingRules.UpdateAsync(
-                nodeId,
-                id,
-                request.Config,
-                request.Enabled,
-                cancellationToken);
+        var updated = await routingRules.UpdateAsync(
+            nodeId,
+            id,
+            request.Config,
+            request.Enabled,
+            cancellationToken);
 
-            return mapper.Map<NodeRoutingRuleDto>(updated);
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeRoutingRuleDto>(updated);
     }
 
     /// <summary>
@@ -142,20 +114,13 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         [FromBody] UpdateNodeRoutingRuleEnabledRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await routingRules.UpdateEnabledAsync(
-                nodeId,
-                id,
-                request.Enabled,
-                cancellationToken);
+        var updated = await routingRules.UpdateEnabledAsync(
+            nodeId,
+            id,
+            request.Enabled,
+            cancellationToken);
 
-            return mapper.Map<NodeRoutingRuleDto>(updated);
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeRoutingRuleDto>(updated);
     }
 
     /// <summary>
@@ -172,21 +137,14 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         [FromBody] SaveNodeRoutingRulesRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await routingRules.SaveAsync(
-                AdminId,
-                nodeId,
-                mapper.Map<List<NodeRoutingRuleManualSaveItem>>(request.ManualRules),
-                mapper.Map<List<NodeRoutingRuleReadonlySaveItem>>(request.ReadonlyRules),
-                cancellationToken);
+        var updated = await routingRules.SaveAsync(
+            AdminId,
+            nodeId,
+            mapper.Map<List<NodeRoutingRuleManualSaveItem>>(request.ManualRules),
+            mapper.Map<List<NodeRoutingRuleReadonlySaveItem>>(request.ReadonlyRules),
+            cancellationToken);
 
-            return mapper.Map<List<NodeRoutingRuleListItemDto>>(updated);
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<List<NodeRoutingRuleListItemDto>>(updated);
     }
 
     /// <summary>
@@ -203,19 +161,12 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
         [FromBody] UpdateNodeRoutingRuleOrderRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await routingRules.UpdateOrderAsync(
-                nodeId,
-                request.RuleIds,
-                cancellationToken);
+        var updated = await routingRules.UpdateOrderAsync(
+            nodeId,
+            request.RuleIds,
+            cancellationToken);
 
-            return mapper.Map<List<NodeRoutingRuleListItemDto>>(updated);
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<List<NodeRoutingRuleListItemDto>>(updated);
     }
 
     /// <summary>
@@ -229,15 +180,8 @@ public sealed class NodeRoutingRulesController(INodeRoutingRuleService routingRu
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(long nodeId, long id, CancellationToken cancellationToken)
     {
-        try
-        {
-            await routingRules.DeleteAsync(nodeId, id, cancellationToken);
+        await routingRules.DeleteAsync(nodeId, id, cancellationToken);
 
-            return NoContent();
-        }
-        catch (NodeRoutingRuleException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return NoContent();
     }
 }

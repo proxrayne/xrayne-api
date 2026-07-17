@@ -1,13 +1,13 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
 using Contracts.Values;
 using Infrastructure.Utilities;
 using Data.Contracts;
 using Data.Entities;
+using Contracts.Exceptions;
 
 namespace Api.Controllers;
 

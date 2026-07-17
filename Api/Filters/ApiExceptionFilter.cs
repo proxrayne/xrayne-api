@@ -1,7 +1,7 @@
+using Api.Responses;
+using Contracts.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Api.Exceptions;
-using Api.Responses;
 
 namespace Api.Filters;
 
@@ -22,6 +22,7 @@ public sealed class ApiExceptionFilter(ILogger<ApiExceptionFilter> logger) : IEx
         var response = context.Exception switch
         {
             ApiException ext => new ApiErrorResponse(ext.StatusCode, ext.Name, ext.Detail),
+            ArgumentException ext => new ApiErrorResponse(StatusCodes.Status400BadRequest, "Bad Request", ext.Message),
             _ => new ApiErrorResponse(
                 StatusCodes.Status500InternalServerError,
                 "Internal Server Error",

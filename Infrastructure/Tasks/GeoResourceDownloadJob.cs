@@ -1,6 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using Contracts.Enums;
 using Data.Contracts;
-using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using Quartz;
@@ -43,7 +43,7 @@ public sealed class GeoResourceDownloadJob(
         {
             if (string.IsNullOrWhiteSpace(resource.Url) || resource.UpdateInterval == null)
             {
-                throw new NodeGeoResourceValidationException("Auto-updated geo resource is missing URL or cron template.");
+                throw new ValidationException("Auto-updated geo resource is missing URL or cron template.");
             }
 
             await service.UpdateStatusAsync(resource, GeoResourceStatus.Loading, "Downloading geo resource content from URL.", ct);

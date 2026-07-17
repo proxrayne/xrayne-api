@@ -2,7 +2,6 @@ using Api.Requests;
 using Api.Responses;
 using AutoMapper;
 using Contracts.Values;
-using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,16 +26,9 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<List<NodeOutboundListItemDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await outbounds.GetByNodeIdAsync(nodeId, cancellationToken);
+        var result = await outbounds.GetByNodeIdAsync(nodeId, cancellationToken);
 
-            return mapper.Map<List<NodeOutboundListItemDto>>(result);
-        }
-        catch (NodeOutboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<List<NodeOutboundListItemDto>>(result);
     }
 
     /// <summary>
@@ -52,16 +44,9 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
         long id,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var outbound = await outbounds.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
+        var outbound = await outbounds.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
 
-            return mapper.Map<NodeOutboundDto>(outbound);
-        }
-        catch (NodeOutboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeOutboundDto>(outbound);
     }
 
     /// <summary>
@@ -79,21 +64,14 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
         [FromBody] CreateNodeOutboundRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var created = await outbounds.CreateAsync(
-                AdminId,
-                nodeId,
-                request.Config,
-                request.Enabled,
-                cancellationToken);
+        var created = await outbounds.CreateAsync(
+            AdminId,
+            nodeId,
+            request.Config,
+            request.Enabled,
+            cancellationToken);
 
-            return Created($"/api/nodes/{nodeId}/outbounds/{created.Id}", mapper.Map<NodeOutboundDto>(created));
-        }
-        catch (NodeOutboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return Created($"/api/nodes/{nodeId}/outbounds/{created.Id}", mapper.Map<NodeOutboundDto>(created));
     }
 
     /// <summary>
@@ -112,21 +90,14 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
         [FromBody] UpdateNodeOutboundRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await outbounds.UpdateAsync(
-                nodeId,
-                id,
-                request.Config,
-                request.Enabled,
-                cancellationToken);
+        var updated = await outbounds.UpdateAsync(
+            nodeId,
+            id,
+            request.Config,
+            request.Enabled,
+            cancellationToken);
 
-            return mapper.Map<NodeOutboundDto>(updated);
-        }
-        catch (NodeOutboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeOutboundDto>(updated);
     }
 
     /// <summary>
@@ -145,20 +116,13 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
         [FromBody] UpdateNodeOutboundEnabledRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await outbounds.UpdateEnabledAsync(
-                nodeId,
-                id,
-                request.Enabled,
-                cancellationToken);
+        var updated = await outbounds.UpdateEnabledAsync(
+            nodeId,
+            id,
+            request.Enabled,
+            cancellationToken);
 
-            return mapper.Map<NodeOutboundDto>(updated);
-        }
-        catch (NodeOutboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeOutboundDto>(updated);
     }
 
     /// <summary>
@@ -172,15 +136,8 @@ public sealed class NodeOutboundsController(INodeOutboundService outbounds, IMap
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(long nodeId, long id, CancellationToken cancellationToken)
     {
-        try
-        {
-            await outbounds.DeleteAsync(nodeId, id, cancellationToken);
+        await outbounds.DeleteAsync(nodeId, id, cancellationToken);
 
-            return NoContent();
-        }
-        catch (NodeOutboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return NoContent();
     }
 }

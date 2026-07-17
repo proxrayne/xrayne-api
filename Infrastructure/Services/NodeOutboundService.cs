@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Contracts.Exceptions;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
@@ -81,7 +82,7 @@ public sealed class NodeOutboundService(
         var outbound = await GetOutboundAsync(nodeId, outboundId, cancellationToken);
         if (outbound.ReadOnly)
         {
-            throw new NodeOutboundReadonlyException("Readonly outbounds can only be enabled or disabled.");
+            throw new BadRequestException("Readonly outbounds can only be enabled or disabled.");
         }
 
         var oldTag = outbound.Tag!;
@@ -96,7 +97,7 @@ public sealed class NodeOutboundService(
         var updated = await outbounds.UpdateAsync(outbound, cancellationToken);
         if (updated is null)
         {
-            throw new NodeOutboundNotFoundException($"Outbound '{outboundId}' was not found.");
+            throw new NotFoundException($"Outbound '{outboundId}' was not found.");
         }
 
         if (updated.Enabled)
@@ -132,7 +133,7 @@ public sealed class NodeOutboundService(
         var updated = await outbounds.UpdateAsync(outbound, cancellationToken);
         if (updated is null)
         {
-            throw new NodeOutboundNotFoundException($"Outbound '{outboundId}' was not found.");
+            throw new NotFoundException($"Outbound '{outboundId}' was not found.");
         }
 
         if (updated.Enabled)
@@ -154,7 +155,7 @@ public sealed class NodeOutboundService(
         var outbound = await GetOutboundAsync(nodeId, outboundId, cancellationToken);
         if (outbound.ReadOnly)
         {
-            throw new NodeOutboundReadonlyException("Readonly outbounds are managed through the node config template.");
+            throw new BadRequestException("Readonly outbounds are managed through the node config template.");
         }
 
         var outboundTag = outbound.Tag!;
@@ -162,7 +163,7 @@ public sealed class NodeOutboundService(
         var deleted = await outbounds.DeleteAsync(outbound.Id, cancellationToken);
         if (!deleted)
         {
-            throw new NodeOutboundNotFoundException($"Outbound '{outboundId}' was not found.");
+            throw new NotFoundException($"Outbound '{outboundId}' was not found.");
         }
 
         if (wasEnabled)
@@ -245,7 +246,7 @@ public sealed class NodeOutboundService(
             var updated = await outbounds.UpdateAsync(existingReadonly, cancellationToken);
             if (updated is null)
             {
-                throw new NodeOutboundNotFoundException($"Outbound '{existingReadonly.Id}' was not found.");
+                throw new NotFoundException($"Outbound '{existingReadonly.Id}' was not found.");
             }
 
             if (updated.Enabled)
@@ -263,7 +264,7 @@ public sealed class NodeOutboundService(
     {
         if (string.IsNullOrWhiteSpace(config))
         {
-            throw new NodeOutboundValidationException("Outbound configuration is required.");
+            throw new BadRequestException("Outbound configuration is required.");
         }
 
         try
@@ -271,23 +272,23 @@ public sealed class NodeOutboundService(
             var outbound = XrayJsonSerializer.Deserialize<Outbound>(config);
             if (outbound is null)
             {
-                throw new NodeOutboundValidationException("Outbound configuration is invalid.");
+                throw new BadRequestException("Outbound configuration is invalid.");
             }
 
             if (string.IsNullOrWhiteSpace(outbound.Tag))
             {
-                throw new NodeOutboundValidationException("Outbound tag is required.");
+                throw new BadRequestException("Outbound tag is required.");
             }
 
             return NormalizeOutboundTag(outbound);
         }
         catch (JsonException exception)
         {
-            throw new NodeOutboundValidationException($"Outbound configuration is invalid. {exception.Message}");
+            throw new BadRequestException($"Outbound configuration is invalid. {exception.Message}");
         }
-        catch (InvalidOperationException exception) when (exception is not NodeOutboundValidationException)
+        catch (InvalidOperationException exception)
         {
-            throw new NodeOutboundValidationException($"Outbound configuration is invalid. {exception.Message}");
+            throw new BadRequestException($"Outbound configuration is invalid. {exception.Message}");
         }
     }
 
@@ -300,14 +301,14 @@ public sealed class NodeOutboundService(
     {
         if (string.IsNullOrWhiteSpace(config.Tag))
         {
-            throw new NodeOutboundValidationException("Outbound tag is required.");
+            throw new BadRequestException("Outbound tag is required.");
         }
 
         foreach (var outbound in existing.Where(outbound => outbound.Id != currentId))
         {
             if (string.Equals(outbound.Tag, config.Tag, StringComparison.Ordinal))
             {
-                throw new NodeOutboundConflictException($"Outbound tag '{config.Tag}' already exists on this node.");
+                throw new ConflictException($"Outbound tag '{config.Tag}' already exists on this node.");
             }
 
             var conflictsWithReadonly = outbound.ReadOnly && !outbound.Enabled;
@@ -351,7 +352,7 @@ public sealed class NodeOutboundService(
         var node = await nodes.GetByIdAsync(nodeId, cancellationToken);
         if (node is null)
         {
-            throw new NodeOutboundNotFoundException($"Node '{nodeId}' was not found.");
+            throw new NotFoundException($"Node '{nodeId}' was not found.");
         }
 
         return node;
@@ -365,7 +366,7 @@ public sealed class NodeOutboundService(
         var outbound = await outbounds.GetByNodeAndIdAsync(nodeId, outboundId, cancellationToken);
         if (outbound is null)
         {
-            throw new NodeOutboundNotFoundException($"Outbound '{outboundId}' was not found.");
+            throw new NotFoundException($"Outbound '{outboundId}' was not found.");
         }
 
         return outbound;

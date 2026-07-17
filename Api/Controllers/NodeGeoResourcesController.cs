@@ -1,15 +1,13 @@
-using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
 using AutoMapper;
 using Contracts.Enums;
+using Contracts.Exceptions;
 using Contracts.Values;
 using Data.Contracts;
-using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Node.Exceptions;
 
 namespace Api.Controllers;
 
@@ -75,21 +73,9 @@ public sealed class NodeGeoResourcesController(
         CancellationToken cancellationToken)
     {
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
+        var content = await geoResourcesService.DownloadResourceAsync(node, geoResourceId, cancellationToken);
 
-        try
-        {
-            var content = await geoResourcesService.DownloadResourceAsync(node, geoResourceId, cancellationToken);
-
-            return File(content.Content, "application/octet-stream", content.FileName);
-        }
-        catch (NodeGeoResourceException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return File(content.Content, "application/octet-stream", content.FileName);
     }
 
     /// <summary>
@@ -117,26 +103,15 @@ public sealed class NodeGeoResourcesController(
             ? request.File.FileName
             : request.FileName;
 
-        try
-        {
-            await using var stream = request.File.OpenReadStream();
-            var created = await geoResourcesService.CreateFileAsync(
-                AdminId,
-                node,
-                fileName,
-                stream,
-                cancellationToken);
+        await using var stream = request.File.OpenReadStream();
+        var created = await geoResourcesService.CreateFileAsync(
+            AdminId,
+            node,
+            fileName,
+            stream,
+            cancellationToken);
 
-            return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", mapper.Map<NodeGeoResourceDto>(created));
-        }
-        catch (NodeGeoResourceException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", mapper.Map<NodeGeoResourceDto>(created));
     }
 
     /// <summary>
@@ -155,31 +130,15 @@ public sealed class NodeGeoResourcesController(
         CancellationToken cancellationToken)
     {
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
+        var created = await geoResourcesService.CreateAutoUpdateAsync(
+            AdminId,
+            node,
+            request.FileName,
+            request.Url,
+            request.UpdateInterval,
+            cancellationToken);
 
-        try
-        {
-            var created = await geoResourcesService.CreateAutoUpdateAsync(
-                AdminId,
-                node,
-                request.FileName,
-                request.Url,
-                request.UpdateInterval,
-                cancellationToken);
-
-            return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", mapper.Map<NodeGeoResourceDto>(created));
-        }
-        catch (NodeGeoResourceException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (HttpRequestException exception)
-        {
-            throw new BadRequestException(exception.Message);
-        }
+        return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", mapper.Map<NodeGeoResourceDto>(created));
     }
 
     /// <summary>
@@ -199,31 +158,15 @@ public sealed class NodeGeoResourcesController(
         CancellationToken cancellationToken)
     {
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
+        var updated = await geoResourcesService.UpdateAsync(
+            node,
+            geoResourceId,
+            request.FileName,
+            request.Url,
+            request.UpdateInterval,
+            cancellationToken);
 
-        try
-        {
-            var updated = await geoResourcesService.UpdateAsync(
-                node,
-                geoResourceId,
-                request.FileName,
-                request.Url,
-                request.UpdateInterval,
-                cancellationToken);
-
-            return mapper.Map<NodeGeoResourceDto>(updated);
-        }
-        catch (NodeGeoResourceException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (HttpRequestException exception)
-        {
-            throw new BadRequestException(exception.Message);
-        }
+        return mapper.Map<NodeGeoResourceDto>(updated);
     }
 
     /// <summary>
@@ -242,19 +185,8 @@ public sealed class NodeGeoResourcesController(
     {
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
-        try
-        {
-            await geoResourcesService.DeleteAsync(node, geoResourceId, cancellationToken);
+        await geoResourcesService.DeleteAsync(node, geoResourceId, cancellationToken);
 
-            return NoContent();
-        }
-        catch (NodeGeoResourceException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return NoContent();
     }
 }

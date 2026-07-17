@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Contracts.Enums;
+using Contracts.Exceptions;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
+using Infrastructure.Utilities;
 using Node.Exceptions;
 using Node.Models;
 using Node.Services;
@@ -32,7 +35,7 @@ public sealed class NodeGeoResourceService(
         var remote = await CreateClient(node).GetGeoResourcesAsync(ct);
         var existing = await geoResources.GetAllAsync(node.Admin.Id, node.Id, ct);
         var remoteByName = remote.ToDictionary(
-            resource => NormalizeFileName(resource.FileName),
+            resource => StringNormalizer.NormalizeFileName(resource.FileName, MaxFilenameLength),
             StringComparer.OrdinalIgnoreCase);
 
         foreach (var stale in existing.Where(resource => resource.Status == GeoResourceStatus.Success && !remoteByName.ContainsKey(resource.Filename)))
@@ -54,7 +57,7 @@ public sealed class NodeGeoResourceService(
         Stream content,
         CancellationToken ct = default)
     {
-        var normalizedFileName = NormalizeFileName(fileName);
+        var normalizedFileName = StringNormalizer.NormalizeFileName(fileName, MaxFilenameLength);
 
         await EnsureUniqueAsync(node.Id, normalizedFileName, null, ct);
 
@@ -84,11 +87,11 @@ public sealed class NodeGeoResourceService(
         int updateInterval,
         CancellationToken ct = default)
     {
-        var normalizedFileName = NormalizeFileName(fileName);
+        var normalizedFileName = StringNormalizer.NormalizeFileName(fileName, MaxFilenameLength);
 
         await EnsureUniqueAsync(node.Id, normalizedFileName, null, ct);
 
-        var normalizedUrl = NormalizeUrl(url);
+        var normalizedUrl = StringNormalizer.NormalizeUrl(url);
 
         var created = await geoResources.AddAsync(new GeoResourceEntity
         {
@@ -118,7 +121,7 @@ public sealed class NodeGeoResourceService(
         CancellationToken ct = default)
     {
         var resource = await geoResources.GetByIdAsync(node.Id, id, ct);
-        var nextFileName = NormalizeFileName(fileName);
+        var nextFileName = StringNormalizer.NormalizeFileName(fileName, MaxFilenameLength);
 
         await EnsureUniqueAsync(node.Id, nextFileName, resource.Id, ct);
 
@@ -127,7 +130,7 @@ public sealed class NodeGeoResourceService(
         {
             if (!string.IsNullOrWhiteSpace(url))
             {
-                var normalizeUrl = NormalizeUrl(url);
+                var normalizeUrl = StringNormalizer.NormalizeUrl(url);
 
                 isRefreshRequired = !string.Equals(resource.Url, normalizeUrl, StringComparison.Ordinal);
 
@@ -151,7 +154,7 @@ public sealed class NodeGeoResourceService(
         resource.StatusMessage = isRefreshRequired ? "Queued geo resource refresh." : null;
         resource.Filename = nextFileName;
 
-        var updated = await geoResources.UpdateAsync(resource, ct) ?? throw new NodeGeoResourceNotFoundException($"Geo resource '{id}' was not found.");
+        var updated = await geoResources.UpdateAsync(resource, ct) ?? throw new NotFoundException($"Geo resource '{id}' was not found.");
 
         if (isRefreshRequired || resource.NextRunAt < DateTimeOffset.UtcNow)
         {
@@ -191,7 +194,7 @@ public sealed class NodeGeoResourceService(
         var resource = await geoResources.GetByIdAsync(node.Id, id, cancellationToken);
         if (resource.Status != GeoResourceStatus.Success)
         {
-            throw new NodeGeoResourceValidationException("Geo resource file is not available yet.");
+            throw new ValidationException("Geo resource file is not available yet.");
         }
 
         return await CreateClient(node).DownloadGeoResourceAsync(resource.Filename, cancellationToken);
@@ -221,7 +224,7 @@ public sealed class NodeGeoResourceService(
         GeoResourceDto remoteResource,
         CancellationToken cancellationToken)
     {
-        var fileName = NormalizeFileName(remoteResource.FileName);
+        var fileName = StringNormalizer.NormalizeFileName(remoteResource.FileName, MaxFilenameLength);
         var resource = await geoResources.GetByFilenameAsync(node.Admin.Id, node.Id, fileName, cancellationToken);
         if (resource is null)
         {
@@ -298,16 +301,6 @@ public sealed class NodeGeoResourceService(
             await UpdateStatusAsync(entity, GeoResourceStatus.Error, $"Error: {ex.Message}", ct);
         }
     }
-
-    private static string AppendStatusMessage(string? current, string message)
-    {
-        var timestampedMessage = $"[{DateTimeOffset.UtcNow:O}] {message}";
-
-        return string.IsNullOrWhiteSpace(current)
-            ? timestampedMessage
-            : $"{current}{Environment.NewLine}{timestampedMessage}";
-    }
-
     private async Task EnsureUniqueAsync(
         long nodeId,
         string fileName,
@@ -317,7 +310,7 @@ public sealed class NodeGeoResourceService(
         var existing = await geoResources.GetByFilenameAsync(nodeId, fileName, cancellationToken);
         if (existing is not null && existing.Id != currentId)
         {
-            throw new NodeGeoResourceConflictException($"Geo resource file '{fileName}' already exists.");
+            throw new ConflictException($"Geo resource file '{fileName}' already exists.");
         }
     }
 
@@ -335,53 +328,19 @@ public sealed class NodeGeoResourceService(
         return memory;
     }
 
-    private INodeGeoResourceClient CreateClient(NodeEntity node)
-    {
-        return geoResourceClientFactory.Create(new NodeEndpoint(
+    private INodeGeoResourceClient CreateClient(NodeEntity node) => geoResourceClientFactory.Create(new NodeEndpoint(
             node.Id,
             node.Address,
             node.ApiPort,
             secrets.UnprotectApiKey(node.EncryptedApiKey)));
-    }
 
-    private static string NormalizeFileName(string fileName)
+    private static string AppendStatusMessage(string? current, string message)
     {
-        if (string.IsNullOrWhiteSpace(fileName))
-        {
-            throw new NodeGeoResourceValidationException("Geo resource file name is required.");
-        }
+        var timestampedMessage = $"[{DateTimeOffset.UtcNow:O}] {message}";
 
-        var normalized = fileName.Trim();
-        if (normalized.Length > MaxFilenameLength)
-        {
-            throw new NodeGeoResourceValidationException($"Geo resource file name must be {MaxFilenameLength} characters or fewer.");
-        }
-
-        if (!string.Equals(Path.GetFileName(normalized), normalized, StringComparison.Ordinal)
-            || normalized.Contains('/', StringComparison.Ordinal)
-            || normalized.Contains('\\', StringComparison.Ordinal)
-            || normalized.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-        {
-            throw new NodeGeoResourceValidationException("Geo resource file name is invalid.");
-        }
-
-        return normalized;
+        return string.IsNullOrWhiteSpace(current)
+            ? timestampedMessage
+            : $"{current}{Environment.NewLine}{timestampedMessage}";
     }
 
-    private static string NormalizeUrl(string? url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            throw new NodeGeoResourceValidationException("Geo resource URL is required.");
-        }
-
-        var normalized = url.Trim();
-        if (!Uri.TryCreate(normalized, UriKind.Absolute, out var uri)
-            || uri.Scheme is not ("http" or "https"))
-        {
-            throw new NodeGeoResourceValidationException("Geo resource URL must be an absolute HTTP or HTTPS URL.");
-        }
-
-        return normalized;
-    }
 }

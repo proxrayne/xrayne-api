@@ -1,13 +1,12 @@
-using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
 using AutoMapper;
+using Contracts.Exceptions;
 using Contracts.Values;
 using Data.Contracts;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Node.Exceptions;
 using Node.Models;
 
 namespace Api.Controllers;
@@ -35,17 +34,9 @@ public sealed class NodeCertificatesController(
     public async Task<List<NodeCertificateDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
+        var result = await certificates.GetAllAsync(AdminId, node, cancellationToken);
 
-        try
-        {
-            var result = await certificates.GetAllAsync(AdminId, node, cancellationToken);
-
-            return mapper.Map<List<NodeCertificateDto>>(result);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<List<NodeCertificateDto>>(result);
     }
 
     /// <summary>
@@ -69,24 +60,14 @@ public sealed class NodeCertificatesController(
 
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
-        try
-        {
-            var result = await certificates.IssueAsync(
-                AdminId,
-                node,
-                new IssueCertificateRequest(request.Domain),
-                cancellationToken);
 
-            return mapper.Map<NodeCertificateDto>(result);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (ArgumentException exception)
-        {
-            throw new BadRequestException(exception.Message);
-        }
+        var result = await certificates.IssueAsync(
+            AdminId,
+            node,
+            new IssueCertificateRequest(request.Domain),
+            cancellationToken);
+
+        return mapper.Map<NodeCertificateDto>(result);
     }
 
     /// <summary>
@@ -103,33 +84,14 @@ public sealed class NodeCertificatesController(
         [FromBody] UploadNodeCertificateRequest request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Domain)
-            || string.IsNullOrWhiteSpace(request.CertificateFile)
-            || string.IsNullOrWhiteSpace(request.PrivateKeyFile))
-        {
-            throw new BadRequestException("Domain, certificate file path, and private key file path are required.");
-        }
-
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
+        var result = await certificates.UploadAsync(
+            AdminId,
+            node,
+            new UploadCertificateRequest(request.Domain, request.CertificateFile, request.PrivateKeyFile),
+            cancellationToken);
 
-        try
-        {
-            var result = await certificates.UploadAsync(
-                AdminId,
-                node,
-                new UploadCertificateRequest(request.Domain, request.CertificateFile, request.PrivateKeyFile),
-                cancellationToken);
-
-            return mapper.Map<NodeCertificateDto>(result);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (ArgumentException exception)
-        {
-            throw new BadRequestException(exception.Message);
-        }
+        return mapper.Map<NodeCertificateDto>(result);
     }
 
     /// <summary>
@@ -147,21 +109,9 @@ public sealed class NodeCertificatesController(
         CancellationToken cancellationToken)
     {
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
+        var result = await certificates.RenewAsync(AdminId, node, domain, cancellationToken);
 
-        try
-        {
-            var result = await certificates.RenewAsync(AdminId, node, domain, cancellationToken);
-
-            return mapper.Map<NodeCertificateDto>(result);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (ArgumentException exception)
-        {
-            throw new BadRequestException(exception.Message);
-        }
+        return mapper.Map<NodeCertificateDto>(result);
     }
 
     /// <summary>
@@ -180,18 +130,7 @@ public sealed class NodeCertificatesController(
     {
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
 
-        try
-        {
-            await certificates.DeleteAsync(AdminId, node, domain, cancellationToken);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
-        catch (ArgumentException exception)
-        {
-            throw new BadRequestException(exception.Message);
-        }
+        await certificates.DeleteAsync(AdminId, node, domain, cancellationToken);
 
         return NoContent();
     }

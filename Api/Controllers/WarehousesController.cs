@@ -1,6 +1,6 @@
-using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
+using Contracts.Exceptions;
 using Contracts.Models;
 using Contracts.Values;
 using Data.Contracts;
@@ -137,9 +137,12 @@ public sealed class WarehousesController(IWarehouseRepository warehouses) : ApiC
             inbounds,
             cancellationToken);
 
-        return updated is null
-            ? throw new NotFoundException($"Warehouse '{id}' was not found.")
-            : ToDto(updated);
+        if (updated is null)
+        {
+            throw new NotFoundException($"Warehouse '{id}' was not found.");
+        }
+
+        return ToDto(updated);
     }
 
     /// <summary>

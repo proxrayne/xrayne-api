@@ -2,7 +2,6 @@ using Api.Requests;
 using Api.Responses;
 using AutoMapper;
 using Contracts.Values;
-using Infrastructure.Dto;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,16 +26,9 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<List<NodeInboundListItemDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await inbounds.GetByNodeIdAsync(nodeId, cancellationToken);
+        var result = await inbounds.GetByNodeIdAsync(nodeId, cancellationToken);
 
-            return mapper.Map<List<NodeInboundListItemDto>>(result);
-        }
-        catch (NodeInboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<List<NodeInboundListItemDto>>(result);
     }
 
     /// <summary>
@@ -52,16 +44,9 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
         long id,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var inbound = await inbounds.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
+        var inbound = await inbounds.GetByNodeAndIdAsync(nodeId, id, cancellationToken);
 
-            return mapper.Map<NodeInboundDto>(inbound);
-        }
-        catch (NodeInboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeInboundDto>(inbound);
     }
 
     /// <summary>
@@ -79,21 +64,14 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
         [FromBody] CreateNodeInboundRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var created = await inbounds.CreateAsync(
-                AdminId,
-                nodeId,
-                request.Config,
-                request.Enabled,
-                cancellationToken);
+        var created = await inbounds.CreateAsync(
+            AdminId,
+            nodeId,
+            request.Config,
+            request.Enabled,
+            cancellationToken);
 
-            return Created($"/api/nodes/{nodeId}/inbounds/{created.Id}", mapper.Map<NodeInboundDto>(created));
-        }
-        catch (NodeInboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return Created($"/api/nodes/{nodeId}/inbounds/{created.Id}", mapper.Map<NodeInboundDto>(created));
     }
 
     /// <summary>
@@ -112,21 +90,14 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
         [FromBody] UpdateNodeInboundRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await inbounds.UpdateAsync(
-                nodeId,
-                id,
-                request.Config,
-                request.Enabled,
-                cancellationToken);
+        var updated = await inbounds.UpdateAsync(
+            nodeId,
+            id,
+            request.Config,
+            request.Enabled,
+            cancellationToken);
 
-            return mapper.Map<NodeInboundDto>(updated);
-        }
-        catch (NodeInboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeInboundDto>(updated);
     }
 
     /// <summary>
@@ -145,20 +116,13 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
         [FromBody] UpdateNodeInboundEnabledRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await inbounds.UpdateEnabledAsync(
-                nodeId,
-                id,
-                request.Enabled,
-                cancellationToken);
+        var updated = await inbounds.UpdateEnabledAsync(
+            nodeId,
+            id,
+            request.Enabled,
+            cancellationToken);
 
-            return mapper.Map<NodeInboundDto>(updated);
-        }
-        catch (NodeInboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<NodeInboundDto>(updated);
     }
 
     /// <summary>
@@ -172,16 +136,9 @@ public sealed class NodeInboundsController(INodeInboundService inbounds, IMapper
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(long nodeId, long id, CancellationToken cancellationToken)
     {
-        try
-        {
-            await inbounds.DeleteAsync(nodeId, id, cancellationToken);
 
-            return NoContent();
-        }
-        catch (NodeInboundException exception)
-        {
-            throw ToApiException(exception);
-        }
+        await inbounds.DeleteAsync(nodeId, id, cancellationToken);
+
+        return NoContent();
     }
-
 }
