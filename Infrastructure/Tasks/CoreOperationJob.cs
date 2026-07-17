@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging;
-using Quartz;
 using Infrastructure.Services;
 using Infrastructure.States;
+using Microsoft.Extensions.Logging;
+using Quartz;
 
 namespace Infrastructure.Tasks;
 

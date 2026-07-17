@@ -59,8 +59,7 @@ public class GeoResourceEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the Unix cron template used by auto-updated geo resources.
     /// </summary>
-    [MaxLength(32)]
-    public string? CronTemplate { get; set; }
+    public int? UpdateInterval { get; set; }
 
     /// <summary>
     /// Gets or sets when the auto-updated geo resource should refresh next.

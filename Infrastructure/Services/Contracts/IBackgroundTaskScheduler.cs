@@ -23,12 +23,12 @@ public interface IBackgroundTaskScheduler
     Task ScheduleCoreOperation(CoreOperation operation, CancellationToken ct);
 
     /// <summary>
-    /// Schedules a geo resource operation.
+    /// Schedules a geo resource download & upload file.
     /// </summary>
-    Task ScheduleGeoResourceOperation(
-        long geoResourceId,
-        GeoResourceOperation operation,
-        string? uploadFilePath,
-        string? previousFileName,
-        CancellationToken ct);
+    Task ScheduleGeoResourceDownload(long geoResourceId, CancellationToken ct);
+
+    /// <summary>
+    /// Schedules a geo resource download & upload file.
+    /// </summary>
+    Task ScheduleGeoResourceUpload(long geoResourceId, string filepath, CancellationToken ct);
 }

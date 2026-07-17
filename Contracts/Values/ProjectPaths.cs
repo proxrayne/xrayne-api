@@ -7,6 +7,7 @@ public sealed class ProjectPaths
     public string LogsDirectory { get; }
     public string PostgresDirectory { get; }
     public string DownloadsDirectory { get; }
+    public string Temp { get; }
     public string CertificatesDirectory { get; }
     public string LetsEncryptDirectory { get; }
     public string GeoResourcesDirectory { get; }
@@ -21,6 +22,7 @@ public sealed class ProjectPaths
         XrayDirectory = Path.Combine(rootPath, "xray");
         LogsDirectory = Path.Combine(rootPath, "logs");
         PostgresDirectory = Path.Combine(rootPath, "postgres");
+        Temp = Path.Combine(rootPath, "temp");
         DownloadsDirectory = Path.Combine(rootPath, "downloads");
         CertificatesDirectory = Path.Combine(rootPath, "certificates");
         LetsEncryptDirectory = Path.Combine(CertificatesDirectory, "letsencrypt");

@@ -14,7 +14,7 @@ public sealed record NodeGeoResourceDto(
     GeoResourceStatus Status,
     string? StatusMessage,
     string? Url,
-    string? CronTemplate,
+    int? UpdateInterval,
     DateTimeOffset? NextRunAt,
     DateTimeOffset? LastErrorAt,
     DateTimeOffset CreatedAt,

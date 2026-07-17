@@ -21,9 +21,9 @@ public sealed class UpdateNodeGeoResourceRequest
     public string? Url { get; init; }
 
     /// <summary>
-    /// Gets the five-field Unix cron template used by auto-updated geo resources.
+    /// Gets the update interval used by auto-updated geo resources.
     /// </summary>
-    [MaxLength(32)]
-    public string? CronTemplate { get; init; }
+    [Range(1, 720)]
+    public int? UpdateInterval { get; init; }
 }
 

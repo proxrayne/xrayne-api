@@ -191,10 +191,10 @@ try
                 .WithInterval(TimeSpan.FromHours(2))
                 .RepeatForever()));
 
-        options.AddJob<GeoResourceAutoUpdateJob>(job => job.WithIdentity(GeoResourceAutoUpdateJob.JobKey));
+        options.AddJob<UpdateGeoResourcesJob>(job => job.WithIdentity(UpdateGeoResourcesJob.JobKey));
         options.AddTrigger(trigger => trigger
-            .WithIdentity(GeoResourceAutoUpdateJob.TriggerKey)
-            .ForJob(GeoResourceAutoUpdateJob.JobKey)
+            .WithIdentity(UpdateGeoResourcesJob.TriggerKey)
+            .ForJob(UpdateGeoResourcesJob.JobKey)
             .StartNow()
             .WithSimpleSchedule(schedule => schedule
                 .WithInterval(TimeSpan.FromMinutes(10))

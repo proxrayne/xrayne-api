@@ -2,6 +2,7 @@ using Api.Exceptions;
 using Api.Requests;
 using Api.Responses;
 using AutoMapper;
+using Contracts.Enums;
 using Contracts.Values;
 using Data.Contracts;
 using Infrastructure.Dto;
@@ -19,7 +20,8 @@ namespace Api.Controllers;
 [Authorize(Policy = AdminPermissionNames.ChangeXraySettings)]
 [Route("api/nodes/{nodeId:long}/geo-resources")]
 public sealed class NodeGeoResourcesController(
-    INodeGeoResourceService geoResources,
+    INodeGeoResourceService geoResourcesService,
+    IGeoResourceRepository geoResources,
     INodeRepository nodeRepository,
     IMapper mapper) : ApiControllerBase
 {
@@ -34,18 +36,9 @@ public sealed class NodeGeoResourcesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<List<NodeGeoResourceDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
-        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
+        var result = await geoResources.GetAllAsync(nodeId, cancellationToken);
 
-        try
-        {
-            var result = await geoResources.SynchronizeNodeAsync(AdminId, node, cancellationToken);
-
-            return mapper.Map<List<NodeGeoResourceDto>>(result);
-        }
-        catch (NodeException exception)
-        {
-            throw ToApiException(exception);
-        }
+        return mapper.Map<List<NodeGeoResourceDto>>(result);
     }
 
     /// <summary>
@@ -58,11 +51,10 @@ public sealed class NodeGeoResourcesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<List<string>> GetNames(long nodeId, CancellationToken cancellationToken)
     {
-        var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
-        var result = await geoResources.GetAllAsync(AdminId, node, cancellationToken);
+        var result = await geoResources.GetAllAsync(AdminId, nodeId, cancellationToken);
 
         return result
-            .Where(resource => resource.Status == Contracts.Enums.GeoResourceStatus.Success)
+            .Where(resource => resource.Status == GeoResourceStatus.Success)
             .Select(resource => resource.Filename)
             .Order(StringComparer.Ordinal)
             .ToList();
@@ -86,7 +78,7 @@ public sealed class NodeGeoResourcesController(
 
         try
         {
-            var content = await geoResources.DownloadAsync(AdminId, node, geoResourceId, cancellationToken);
+            var content = await geoResourcesService.DownloadResourceAsync(node, geoResourceId, cancellationToken);
 
             return File(content.Content, "application/octet-stream", content.FileName);
         }
@@ -128,7 +120,7 @@ public sealed class NodeGeoResourcesController(
         try
         {
             await using var stream = request.File.OpenReadStream();
-            var created = await geoResources.CreateFileAsync(
+            var created = await geoResourcesService.CreateFileAsync(
                 AdminId,
                 node,
                 fileName,
@@ -166,12 +158,12 @@ public sealed class NodeGeoResourcesController(
 
         try
         {
-            var created = await geoResources.CreateAutoUpdateAsync(
+            var created = await geoResourcesService.CreateAutoUpdateAsync(
                 AdminId,
                 node,
                 request.FileName,
                 request.Url,
-                request.CronTemplate,
+                request.UpdateInterval,
                 cancellationToken);
 
             return Created($"/api/nodes/{nodeId}/geo-resources/{created.Id}", mapper.Map<NodeGeoResourceDto>(created));
@@ -210,13 +202,12 @@ public sealed class NodeGeoResourcesController(
 
         try
         {
-            var updated = await geoResources.UpdateAsync(
-                AdminId,
+            var updated = await geoResourcesService.UpdateAsync(
                 node,
                 geoResourceId,
                 request.FileName,
                 request.Url,
-                request.CronTemplate,
+                request.UpdateInterval,
                 cancellationToken);
 
             return mapper.Map<NodeGeoResourceDto>(updated);
@@ -253,7 +244,7 @@ public sealed class NodeGeoResourcesController(
 
         try
         {
-            await geoResources.DeleteAsync(AdminId, node, geoResourceId, cancellationToken);
+            await geoResourcesService.DeleteAsync(node, geoResourceId, cancellationToken);
 
             return NoContent();
         }

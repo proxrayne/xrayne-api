@@ -22,10 +22,9 @@ public sealed class CreateNodeGeoResourceAutoUpdateRequest
     public required string Url { get; init; }
 
     /// <summary>
-    /// Gets the five-field Unix cron template.
+    /// Gets the update interval (hours).
     /// </summary>
-    [Required]
-    [MaxLength(32)]
-    public required string CronTemplate { get; init; }
+    [Range(1, 720)]
+    public int UpdateInterval { get; init; } = 24;
 }
 

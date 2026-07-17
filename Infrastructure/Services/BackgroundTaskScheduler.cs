@@ -1,10 +1,12 @@
-using Quartz;
 using Infrastructure.States;
 using Infrastructure.Tasks;
+using Quartz;
 
 namespace Infrastructure.Services;
 
-public sealed class BackgroundTaskScheduler(ISchedulerFactory schedulerFactory, ICoreStateMachine coreState) : IBackgroundTaskScheduler
+public sealed class BackgroundTaskScheduler(
+    ISchedulerFactory schedulerFactory,
+    ICoreStateMachine coreState) : IBackgroundTaskScheduler
 {
     private readonly SemaphoreSlim scheduleLock = new(1, 1);
 
@@ -117,50 +119,60 @@ public sealed class BackgroundTaskScheduler(ISchedulerFactory schedulerFactory, 
         }
     }
 
-    public async Task ScheduleGeoResourceOperation(
-        long geoResourceId,
-        GeoResourceOperation operation,
-        string? uploadFilePath,
-        string? previousFileName,
-        CancellationToken ct)
+    public async Task ScheduleGeoResourceDownload(long geoResourceId, CancellationToken ct)
     {
-        await scheduleLock.WaitAsync(ct);
-        try
+        var scheduler = await schedulerFactory.GetScheduler(ct);
+        var jobKey = GeoResourceDownloadJob.GetJobKey(geoResourceId);
+        if (await scheduler.CheckExists(jobKey, ct))
         {
-            var scheduler = await schedulerFactory.GetScheduler(ct);
-            var identity = Guid.NewGuid().ToString("N");
-            var data = new JobDataMap
-            {
-                [GeoResourceOperationJob.GeoResourceIdKey] = geoResourceId,
-                [GeoResourceOperationJob.OperationKey] = operation.ToString(),
-            };
-
-            if (!string.IsNullOrWhiteSpace(uploadFilePath))
-            {
-                data[GeoResourceOperationJob.UploadFilePathKey] = uploadFilePath;
-            }
-
-            if (!string.IsNullOrWhiteSpace(previousFileName))
-            {
-                data[GeoResourceOperationJob.PreviousFileNameKey] = previousFileName;
-            }
-
-            var job = JobBuilder.Create<GeoResourceOperationJob>()
-                .WithIdentity(GeoResourceOperationJob.GetJobKey(identity))
-                .UsingJobData(data)
-                .Build();
-
-            var trigger = TriggerBuilder.Create()
-                .WithIdentity(GeoResourceOperationJob.GetTriggerKey(identity))
-                .ForJob(job)
-                .StartNow()
-                .Build();
-
-            await scheduler.ScheduleJob(job, trigger, ct);
+            throw new InvalidOperationException("Update current resource is already scheduled or in progress.");
         }
-        finally
+
+        var data = new JobDataMap
         {
-            scheduleLock.Release();
+            [GeoResourceDownloadJob.GeoResourceIdKey] = geoResourceId
+        };
+
+        var job = JobBuilder.Create<GeoResourceDownloadJob>()
+            .WithIdentity(jobKey)
+            .UsingJobData(data)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity(GeoResourceDownloadJob.GetTriggerKey(geoResourceId))
+            .ForJob(job)
+            .StartNow()
+            .Build();
+
+        await scheduler.ScheduleJob(job, trigger, ct);
+    }
+
+    public async Task ScheduleGeoResourceUpload(long geoResourceId, string filepath, CancellationToken ct)
+    {
+        var scheduler = await schedulerFactory.GetScheduler(ct);
+        var jobKey = GeoResourceUploadJob.GetJobKey(geoResourceId);
+        if (await scheduler.CheckExists(jobKey, ct))
+        {
+            throw new InvalidOperationException("Upload current resource is already scheduled or in progress.");
         }
+
+        var data = new JobDataMap
+        {
+            [GeoResourceUploadJob.GeoResourceIdKey] = geoResourceId,
+            [GeoResourceUploadJob.TempFilepath] = filepath
+        };
+
+        var job = JobBuilder.Create<GeoResourceUploadJob>()
+            .WithIdentity(jobKey)
+            .UsingJobData(data)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity(GeoResourceUploadJob.GetTriggerKey(geoResourceId))
+            .ForJob(job)
+            .StartNow()
+            .Build();
+
+        await scheduler.ScheduleJob(job, trigger, ct);
     }
 }

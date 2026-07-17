@@ -1,5 +1,5 @@
+using Contracts.Enums;
 using Data.Entities;
-using Infrastructure.States;
 using Node.Models;
 
 namespace Infrastructure.Services;
@@ -13,14 +13,6 @@ public interface INodeGeoResourceService
     /// Synchronizes panel geo resource metadata from a remote node.
     /// </summary>
     Task<List<GeoResourceEntity>> SynchronizeNodeAsync(
-        Guid adminId,
-        NodeEntity node,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets geo resources assigned to a node.
-    /// </summary>
-    Task<List<GeoResourceEntity>> GetAllAsync(
         Guid adminId,
         NodeEntity node,
         CancellationToken cancellationToken = default);
@@ -43,47 +35,63 @@ public interface INodeGeoResourceService
         NodeEntity node,
         string fileName,
         string url,
-        string cronTemplate,
+        int updateInterval,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update geo resource status.
+    /// </summary>
+    Task UpdateStatusAsync(
+        GeoResourceEntity resource,
+        GeoResourceStatus status,
+        string message,
+        CancellationToken ct);
+
+    /// <summary>
+    /// Update geo resource status.
+    /// </summary>
+    Task UpdateStatusAsync(
+        GeoResourceEntity resource,
+        GeoResourceStatus status,
+        CancellationToken ct);
 
     /// <summary>
     /// Updates a geo resource.
     /// </summary>
     Task<GeoResourceEntity> UpdateAsync(
-        Guid adminId,
         NodeEntity node,
         long id,
         string fileName,
         string? url,
-        string? cronTemplate,
+        int? updateInterval,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a geo resource.
     /// </summary>
-    Task DeleteAsync(Guid adminId, NodeEntity node, long id, CancellationToken cancellationToken = default);
+    Task DeleteAsync(NodeEntity node, long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Downloads geo resource content from a remote node.
     /// </summary>
-    Task<GeoResourceContent> DownloadAsync(
-        Guid adminId,
+    Task<GeoResourceContent> DownloadResourceAsync(
         NodeEntity node,
         long id,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Schedules due auto-updated geo resources.
+    /// Download file by URL.
     /// </summary>
-    Task ScheduleDueAutoUpdatesAsync(CancellationToken cancellationToken = default);
+    Task<MemoryStream> DownloadAsync(string url, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Executes a queued geo resource background operation.
+    /// Upload file to remote node.
     /// </summary>
-    Task ExecuteQueuedOperationAsync(
-        long id,
-        GeoResourceOperation operation,
-        string? uploadFilePath,
-        string? previousFileName,
-        CancellationToken cancellationToken = default);
+    Task<GeoResourceEntity> UploadToNodeAsync(GeoResourceEntity entity, Stream content, CancellationToken cancellationToken = default);
+
+
+    /// <summary>
+    /// Schedules download or update auto-updated geo resources.
+    /// </summary>
+    Task ScheduleDownloadAutoUpdatesAsync(GeoResourceEntity entity, CancellationToken cancellationToken = default);
 }

@@ -1,7 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Contracts.Enums;
+using Contracts.Exceptions;
 using Data.Contracts;
 using Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data.Implementations;
 
@@ -36,9 +37,17 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
             .ToListAsync(ct);
     }
 
-    public Task<List<GeoResourceEntity>> GetDueAutoUpdateAsync(DateTimeOffset now, CancellationToken ct = default)
+    public Task<List<GeoResourceEntity>> GetAllAsync(long nodeId, CancellationToken ct = default)
     {
         return GeoResourcesWithRelations
+            .Where(geoResource => EF.Property<long>(geoResource, "NodeId") == nodeId)
+            .OrderBy(geoResource => geoResource.Filename)
+            .ToListAsync(ct);
+    }
+
+    public Task<List<GeoResourceEntity>> GetDueAutoUpdateIdsAsync(DateTimeOffset now, CancellationToken ct = default)
+    {
+        return dbContext.GeoResources
             .Where(geoResource =>
                 geoResource.Url != null &&
                 geoResource.NextRunAt != null &&
@@ -49,13 +58,21 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
             .ToListAsync(ct);
     }
 
-    public Task<GeoResourceEntity?> GetByIdAsync(long id, CancellationToken ct = default)
+    public Task<GeoResourceEntity?> GetByIdOrDefaultAsync(long id, CancellationToken ct = default)
     {
         return GeoResourcesWithRelations
             .SingleOrDefaultAsync(geoResource => geoResource.Id == id, ct);
     }
 
-    public Task<GeoResourceEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    public async Task<GeoResourceEntity> GetByIdAsync(long id, CancellationToken ct = default)
+    {
+        var resource = await GetByIdOrDefaultAsync(id, ct);
+
+        return RequireEntity(resource, id);
+    }
+
+
+    public Task<GeoResourceEntity?> GetByIdOrDefaultAsync(Guid adminId, long id, CancellationToken ct = default)
     {
         return GeoResourcesWithRelations
             .SingleOrDefaultAsync(
@@ -63,7 +80,14 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
                 ct);
     }
 
-    public Task<GeoResourceEntity?> GetByIdAsync(Guid adminId, long nodeId, long id, CancellationToken ct = default)
+    public async Task<GeoResourceEntity> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    {
+        var resource = await GetByIdOrDefaultAsync(adminId, id, ct);
+
+        return RequireEntity(resource, id);
+    }
+
+    public Task<GeoResourceEntity?> GetByIdOrDefaultAsync(Guid adminId, long nodeId, long id, CancellationToken ct = default)
     {
         return GeoResourcesWithRelations
             .SingleOrDefaultAsync(
@@ -72,6 +96,14 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
                     EF.Property<Guid>(geoResource, "AdminId") == adminId &&
                     EF.Property<long>(geoResource, "NodeId") == nodeId,
                 ct);
+    }
+
+    public async Task<GeoResourceEntity> GetByIdAsync(long nodeId, long id, CancellationToken ct = default)
+    {
+        var entity = await GeoResourcesWithRelations
+           .SingleOrDefaultAsync(x => x.Id == id && EF.Property<long>(x, "NodeId") == nodeId, ct);
+
+        return RequireEntity(entity, id);
     }
 
     public Task<GeoResourceEntity?> GetByFilenameAsync(
@@ -84,6 +116,19 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
             .SingleOrDefaultAsync(
                 geoResource =>
                     EF.Property<Guid>(geoResource, "AdminId") == adminId &&
+                    EF.Property<long>(geoResource, "NodeId") == nodeId &&
+                    geoResource.Filename.ToLower() == fileName.ToLower(),
+                ct);
+    }
+
+    public Task<GeoResourceEntity?> GetByFilenameAsync(
+        long nodeId,
+        string fileName,
+        CancellationToken ct = default)
+    {
+        return GeoResourcesWithRelations
+            .SingleOrDefaultAsync(
+                geoResource =>
                     EF.Property<long>(geoResource, "NodeId") == nodeId &&
                     geoResource.Filename.ToLower() == fileName.ToLower(),
                 ct);
@@ -132,7 +177,7 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
 
     public async Task<bool> DeleteAsync(long id, CancellationToken ct = default)
     {
-        var geoResource = await GetByIdAsync(id, ct);
+        var geoResource = await GetByIdOrDefaultAsync(id, ct);
         if (geoResource is null)
         {
             return false;
@@ -146,7 +191,7 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
 
     public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
     {
-        var geoResource = await GetByIdAsync(adminId, id, ct);
+        var geoResource = await GetByIdOrDefaultAsync(adminId, id, ct);
         if (geoResource is null)
         {
             return false;
@@ -156,5 +201,12 @@ public sealed class GeoResourceRepository(AppDbContext dbContext) : IGeoResource
         await dbContext.SaveChangesAsync(ct);
 
         return true;
+    }
+
+    // 
+
+    private GeoResourceEntity RequireEntity(GeoResourceEntity? entity, long id)
+    {
+        return entity ?? throw new NotFoundException($"Geo resource with Id = {id} not found.");
     }
 }
