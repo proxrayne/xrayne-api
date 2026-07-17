@@ -12,10 +12,7 @@ public interface INodeGeoResourceService
     /// <summary>
     /// Synchronizes panel geo resource metadata from a remote node.
     /// </summary>
-    Task<List<GeoResourceEntity>> SynchronizeNodeAsync(
-        Guid adminId,
-        NodeEntity node,
-        CancellationToken cancellationToken = default);
+    Task SynchronizeNodeAsync(NodeEntity node, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a static geo resource from uploaded file content.

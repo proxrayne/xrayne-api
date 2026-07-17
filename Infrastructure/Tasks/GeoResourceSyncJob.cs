@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Logging;
-using Quartz;
 using Data.Contracts;
 using Infrastructure.Services;
+using Microsoft.Extensions.Logging;
+using Quartz;
 
 namespace Infrastructure.Tasks;
 
@@ -32,10 +32,7 @@ public sealed class GeoResourceSyncJob(
         {
             try
             {
-                await geoResources.SynchronizeNodeAsync(
-                    node.Admin.Id,
-                    node,
-                    context.CancellationToken);
+                await geoResources.SynchronizeNodeAsync(node, context.CancellationToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {

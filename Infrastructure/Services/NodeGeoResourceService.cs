@@ -3,7 +3,6 @@ using Contracts.Enums;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Dto;
-using Infrastructure.Utilities;
 using Node.Exceptions;
 using Node.Models;
 using Node.Services;
@@ -26,40 +25,25 @@ public sealed class NodeGeoResourceService(
     private const string GeoDownloadClientName = "geo-resources";
 
     /// <inheritdoc />
-    public async Task<List<GeoResourceEntity>> SynchronizeNodeAsync(
-        Guid adminId,
+    public async Task SynchronizeNodeAsync(
         NodeEntity node,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        var remote = await CreateClient(node).GetGeoResourcesAsync(cancellationToken);
-        var existing = await geoResources.GetAllAsync(adminId, node.Id, cancellationToken);
+        var remote = await CreateClient(node).GetGeoResourcesAsync(ct);
+        var existing = await geoResources.GetAllAsync(node.Admin.Id, node.Id, ct);
         var remoteByName = remote.ToDictionary(
             resource => NormalizeFileName(resource.FileName),
             StringComparer.OrdinalIgnoreCase);
 
-        foreach (var stale in existing
-            .Where(resource =>
-                resource.Status == GeoResourceStatus.Success &&
-                !remoteByName.ContainsKey(resource.Filename))
-            .ToList())
+        foreach (var stale in existing.Where(resource => resource.Status == GeoResourceStatus.Success && !remoteByName.ContainsKey(resource.Filename)))
         {
-            _ = await geoResources.DeleteAsync(adminId, stale.Id, cancellationToken);
+            await geoResources.DeleteAsync(stale.Id, ct);
         }
 
         foreach (var remoteResource in remote)
         {
-            _ = await UpsertFromRemoteAsync(
-                adminId,
-                node,
-                remoteResource,
-                null,
-                null,
-                null,
-                preserveExistingMetadata: true,
-                cancellationToken: cancellationToken);
+            await UpsertFromRemoteAsync(node, remoteResource, ct);
         }
-
-        return await geoResources.GetAllAsync(adminId, node.Id, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -232,18 +216,13 @@ public sealed class NodeGeoResourceService(
         return await geoResources.UpdateAsync(resource, ct) ?? throw new Exception("Failure update geo resource");
     }
 
-    private async Task<GeoResourceEntity> UpsertFromRemoteAsync(
-        Guid adminId,
+    private async Task UpsertFromRemoteAsync(
         NodeEntity node,
         GeoResourceDto remoteResource,
-        string? url,
-        int? updateInterval,
-        DateTimeOffset? nextRunAt,
-        bool preserveExistingMetadata,
         CancellationToken cancellationToken)
     {
         var fileName = NormalizeFileName(remoteResource.FileName);
-        var resource = await geoResources.GetByFilenameAsync(adminId, node.Id, fileName, cancellationToken);
+        var resource = await geoResources.GetByFilenameAsync(node.Admin.Id, node.Id, fileName, cancellationToken);
         if (resource is null)
         {
             resource = new GeoResourceEntity
@@ -252,31 +231,23 @@ public sealed class NodeGeoResourceService(
                 SizeBytes = remoteResource.SizeBytes,
                 LastModifiedAt = remoteResource.LastModifiedAt,
                 Status = GeoResourceStatus.Success,
-                Url = url,
-                UpdateInterval = updateInterval,
-                NextRunAt = nextRunAt,
                 Node = node,
                 Admin = node.Admin
             };
 
-            return await geoResources.AddAsync(resource, cancellationToken);
+            await geoResources.AddAsync(resource, cancellationToken);
+
+            return;
         }
 
         resource.SizeBytes = remoteResource.SizeBytes;
         resource.LastModifiedAt = remoteResource.LastModifiedAt;
-        if (!preserveExistingMetadata)
-        {
-            resource.Url = url;
-            resource.UpdateInterval = updateInterval;
-            resource.NextRunAt = nextRunAt;
-            resource.LastErrorAt = null;
-        }
         resource.Status = GeoResourceStatus.Success;
         resource.StatusMessage = null;
         resource.LastErrorAt = null;
 
-        return await geoResources.UpdateAsync(adminId, resource, cancellationToken)
-            ?? resource;
+        await geoResources.UpdateAsync(node.Admin.Id, resource, cancellationToken);
+
     }
 
     /// <inheritdoc/>
