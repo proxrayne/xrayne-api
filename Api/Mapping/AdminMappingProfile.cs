@@ -16,7 +16,7 @@ public sealed class AdminMappingProfile : Profile
 
     private void MapAdmin()
     {
-        CreateMap<AdminAccount, AdminDto>()
+        CreateMap<AdminAccountEntity, AdminDto>()
             .ForCtorParam(
                 nameof(AdminDto.Permissions),
                 options => options.MapFrom(source => AdminPermissionNames.ToNames(source.Permissions)));

@@ -83,5 +83,5 @@ public sealed class UserEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the administrator that owns the user.
     /// </summary>
-    public AdminAccount Admin { get; set; } = null!;
+    public AdminAccountEntity Admin { get; set; } = null!;
 }

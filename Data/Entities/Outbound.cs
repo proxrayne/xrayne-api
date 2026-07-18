@@ -18,7 +18,7 @@ public sealed class OutboundEntity : CreateUpdateEntity
     [Column(TypeName = "jsonb")]
     public required Outbound Config { get; set; }
 
-    public AdminAccount Admin { get; set; } = null!;
+    public AdminAccountEntity Admin { get; set; } = null!;
 
     public NodeEntity Node { get; set; } = null!;
 

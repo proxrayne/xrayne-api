@@ -134,7 +134,7 @@ public class NodeEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the administrator that created the node.
     /// </summary>
-    public AdminAccount Admin { get; set; } = null!;
+    public AdminAccountEntity Admin { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets inbound configurations assigned to the node.

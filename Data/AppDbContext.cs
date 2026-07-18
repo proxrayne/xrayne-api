@@ -7,7 +7,7 @@ public sealed class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<AdminAccount> AdminAccounts { get; set; }
+    public DbSet<AdminAccountEntity> AdminAccounts { get; set; }
     public DbSet<InboundEntity> Inbounds { get; set; }
     public DbSet<OutboundEntity> Outbounds { get; set; }
     public DbSet<UserEntity> Users { get; set; }
@@ -169,7 +169,7 @@ public sealed class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<AdminAccount>(builder =>
+        modelBuilder.Entity<AdminAccountEntity>(builder =>
         {
             builder.Property(x => x.Permissions)
                 .HasColumnType("bigint");

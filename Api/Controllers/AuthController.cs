@@ -39,7 +39,7 @@ public sealed class AuthController(
             throw new UnauthorizedException("Invalid JWT access token.");
         }
 
-        var account = await adminAccounts.GetByIdAsync(adminId, ct);
+        var account = await adminAccounts.GetByIdOrDefaultAsync(adminId, ct);
         if (account is null)
         {
             throw new NotFoundException("Admin account not found.");

@@ -70,5 +70,5 @@ public sealed class ApplicationEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the administrator that owns the application profile.
     /// </summary>
-    public AdminAccount Admin { get; set; } = null!;
+    public AdminAccountEntity Admin { get; set; } = null!;
 }

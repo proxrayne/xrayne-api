@@ -19,8 +19,8 @@ public sealed class AdminJwtValidationTests
     {
         var adminId = Guid.NewGuid();
         var adminAccounts = Substitute.For<IAdminAccountRepository>();
-        adminAccounts.GetActiveByIdAsync(adminId, Arg.Any<CancellationToken>())
-            .Returns((AdminAccount?)null);
+        adminAccounts.GetActiveByIdOrDefaultAsync(adminId, Arg.Any<CancellationToken>())
+            .Returns((AdminAccountEntity?)null);
         var context = CreateContext(adminId, adminAccounts);
 
         await AdminJwtValidation.ValidateActiveAdminAsync(context);
@@ -33,8 +33,8 @@ public sealed class AdminJwtValidationTests
     {
         var adminId = Guid.NewGuid();
         var adminAccounts = Substitute.For<IAdminAccountRepository>();
-        adminAccounts.GetActiveByIdAsync(adminId, Arg.Any<CancellationToken>())
-            .Returns(new AdminAccount
+        adminAccounts.GetActiveByIdOrDefaultAsync(adminId, Arg.Any<CancellationToken>())
+            .Returns(new AdminAccountEntity
             {
                 Id = adminId,
                 Username = "admin",

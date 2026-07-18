@@ -51,5 +51,5 @@ public class CertificateEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the administrator that owns the certificate metadata.
     /// </summary>
-    public AdminAccount Admin { get; set; } = null!;
+    public AdminAccountEntity Admin { get; set; } = null!;
 }

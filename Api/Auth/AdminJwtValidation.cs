@@ -22,7 +22,7 @@ public static class AdminJwtValidation
         }
 
         var adminAccounts = context.HttpContext.RequestServices.GetRequiredService<IAdminAccountRepository>();
-        if (await adminAccounts.GetActiveByIdAsync(adminId, context.HttpContext.RequestAborted) is null)
+        if (await adminAccounts.GetActiveByIdOrDefaultAsync(adminId, context.HttpContext.RequestAborted) is null)
         {
             context.Fail("Administrator account is inactive or deleted.");
         }

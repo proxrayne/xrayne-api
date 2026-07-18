@@ -7,7 +7,7 @@ namespace Data.Entities;
 
 [Table("Admins")]
 [Index(nameof(Username), IsUnique = true)]
-public sealed class AdminAccount : CreateUpdateEntity
+public sealed class AdminAccountEntity : CreateUpdateEntity
 {
     /// <summary>
     /// Gets or sets the administrator account identifier.

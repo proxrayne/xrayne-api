@@ -79,5 +79,5 @@ public class GeoResourceEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the administrator that owns the geo resource.
     /// </summary>
-    public AdminAccount Admin { get; set; } = null!;
+    public AdminAccountEntity Admin { get; set; } = null!;
 }

@@ -1,13 +1,13 @@
-using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Api.Requests;
 using Api.Responses;
+using AutoMapper;
+using Contracts.Exceptions;
 using Contracts.Values;
-using Infrastructure.Utilities;
 using Data.Contracts;
 using Data.Entities;
-using Contracts.Exceptions;
+using Infrastructure.Utilities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
@@ -31,7 +31,7 @@ public sealed class AdminsController(
             throw new ConflictException($"Admin account '{request.Username}' already exists.");
         }
 
-        var account = new AdminAccount
+        var account = new AdminAccountEntity
         {
             Username = request.Username,
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
@@ -54,14 +54,10 @@ public sealed class AdminsController(
         [FromBody] ChangeAdminPasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var account = await adminAccounts.ChangePasswordAsync(
-            id,
-            IdentityPasswordHasher.HashPassword(request.Password),
-            cancellationToken);
-        if (account is null)
-        {
-            throw new NotFoundException("Admin account not found.");
-        }
+        await adminAccounts.ChangePasswordAsync(
+             id,
+             IdentityPasswordHasher.HashPassword(request.Password),
+             cancellationToken);
 
         return NoContent();
     }
@@ -80,10 +76,6 @@ public sealed class AdminsController(
             id,
             AdminPermissionNames.ParseMany(request.Permissions),
             cancellationToken);
-        if (account is null)
-        {
-            throw new NotFoundException("Admin account not found.");
-        }
 
         return Ok(mapper.Map<AdminDto>(account));
     }
@@ -102,11 +94,7 @@ public sealed class AdminsController(
             throw new BadRequestException("Cannot delete the current administrator account.");
         }
 
-        var deleted = await adminAccounts.DeleteAsync(id, cancellationToken);
-        if (!deleted)
-        {
-            throw new NotFoundException("Admin account not found.");
-        }
+        await adminAccounts.DeleteAsync(id, cancellationToken);
 
         return NoContent();
     }
