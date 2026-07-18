@@ -1,6 +1,5 @@
 using Contracts.Utilities;
 using Data.Entities;
-using Node.Models;
 using Xray.Config.Models;
 
 namespace Infrastructure.Services;
@@ -11,7 +10,7 @@ namespace Infrastructure.Services;
 public sealed class NodeCoreConfigBuilder : INodeCoreConfigBuilder
 {
     /// <inheritdoc />
-    public StartCoreRequest Build(NodeEntity node)
+    public XrayConfig Build(NodeEntity node)
     {
         var config = XrayJsonSerializer.Clone(node.ConfigTemplate, "Node config template cannot be empty.");
 
@@ -36,9 +35,6 @@ public sealed class NodeCoreConfigBuilder : INodeCoreConfigBuilder
             .Select(rule => rule.Config)
             .ToList();
 
-        return new StartCoreRequest
-        {
-            Config = config
-        };
+        return config;
     }
 }

@@ -310,24 +310,24 @@ public sealed class NodesController(
     public async Task<NodeConfigTemplateResponse> UpdateCoreConfigTemplate(
         long id,
         [FromBody] UpdateNodeConfigTemplateRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         if (request.ConfigTemplate is null)
         {
             throw new BadRequestException("Node config template is required.");
         }
 
-        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, ct);
         var template = ParseConfigTemplate(request.ConfigTemplate);
 
 
         node.ConfigTemplate = template;
 
-        await nodeInbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
-        await nodeOutbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
-        await nodeRoutingRules.SyncReadonlyFromTemplateAsync(AdminId, node, template, cancellationToken);
+        await nodeInbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, ct);
+        await nodeOutbounds.SyncReadonlyFromTemplateAsync(AdminId, node, template, ct);
+        await nodeRoutingRules.SyncReadonlyFromTemplateAsync(AdminId, node, template, ct);
 
-        var updated = await nodeRepository.UpdateAsync(node, cancellationToken);
+        var updated = await nodeRepository.UpdateAsync(node, ct);
         if (updated is null)
         {
             throw new NotFoundException($"Node '{id}' was not found.");
@@ -336,11 +336,8 @@ public sealed class NodesController(
         if (IsRemoteCoreRunning(updated.Id))
         {
             await CreateCoreClient(updated).UpdateCoreConfigTemplateAsync(
-                new UpdateCoreConfigTemplateRequest
-                {
-                    ConfigTemplate = updated.ConfigTemplate
-                },
-                cancellationToken);
+                updated.ConfigTemplate,
+                ct);
         }
 
         return new NodeConfigTemplateResponse(SerializeConfig(updated.ConfigTemplate));
@@ -355,15 +352,15 @@ public sealed class NodesController(
     [ProducesResponseType(typeof(CoreStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task<CoreStatusResponse> GetCoreStatus(long id, CancellationToken cancellationToken)
+    public async Task<CoreStatusResponse> GetCoreStatus(long id, CancellationToken ct)
     {
-        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, ct);
         if (coreStateStore.TryGet(id, out var cachedState) && cachedState is not null)
         {
             return ToCoreStatusResponse(cachedState);
         }
 
-        var state = await CreateCoreClient(node).GetCoreStatusAsync(cancellationToken);
+        var state = await CreateCoreClient(node).GetCoreStatusAsync(ct);
         StoreCoreState(id, state);
 
         return state;
@@ -378,9 +375,9 @@ public sealed class NodesController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-    public async Task StreamCoreStatus(long id, CancellationToken cancellationToken)
+    public async Task StreamCoreStatus(long id, CancellationToken ct)
     {
-        var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
+        var node = await nodeRepository.GetByIdAsync(id, ct);
         var subscription = eventStreams.Subscribe<CoreStatusResponse>(NodeStreamKeys.CoreStatus(id));
 
         SetupStreamHeaders();
@@ -389,20 +386,20 @@ public sealed class NodesController(
         {
             var initialState = coreStateStore.TryGet(id, out var cachedState) && cachedState is not null
                 ? ToCoreStatusResponse(cachedState)
-                : await CreateCoreClient(node).GetCoreStatusAsync(cancellationToken);
+                : await CreateCoreClient(node).GetCoreStatusAsync(ct);
 
             StoreCoreState(id, initialState);
 
-            await Response.StartAsync(cancellationToken);
-            await WriteServerSentEventAsync(initialState, cancellationToken);
+            await Response.StartAsync(ct);
+            await WriteServerSentEventAsync(initialState, ct);
 
-            await foreach (var state in subscription.Reader.ReadAllAsync(cancellationToken))
+            await foreach (var state in subscription.Reader.ReadAllAsync(ct))
             {
                 StoreCoreState(id, state);
-                await WriteServerSentEventAsync(state, cancellationToken);
+                await WriteServerSentEventAsync(state, ct);
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         finally
         {
             eventStreams.Unsubscribe(subscription.Id);
@@ -420,15 +417,15 @@ public sealed class NodesController(
     public async Task<List<GitHubReleaseDto>> GetCoreReleases(
         long id,
         [FromQuery] CoreReleasesQuery query,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         // TODO: need move to another controller
-        if (!await nodeRepository.ExistByIdAsync(id, cancellationToken))
+        if (!await nodeRepository.ExistByIdAsync(id, ct))
         {
             throw new NotFoundException($"Node '{id}' was not found.");
         }
 
-        var releases = await xrayRepository.GetReleasesAsync(query.PerPage, query.Page, cancellationToken);
+        var releases = await xrayRepository.GetReleasesAsync(query.PerPage, query.Page, ct);
 
         return releases.Select(mapper.Map<GitHubReleaseDto>).ToList();
     }

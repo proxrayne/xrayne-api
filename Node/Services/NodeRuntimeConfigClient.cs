@@ -1,8 +1,8 @@
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using Node.Configurations;
 using Node.Grpc;
 using Node.Models;
+using Xray.Config.Models;
 using Proto = XRayne.ProtoTypes.RemoteNode.V1;
 
 namespace Node.Services;
@@ -27,18 +27,21 @@ public sealed class NodeRuntimeConfigClient : NodeGrpcClientBase, INodeRuntimeCo
     }
 
     /// <inheritdoc />
-    public Task AddInboundAsync(SyncInboundRequest request, CancellationToken cancellationToken = default)
+    public Task AddInboundAsync(Inbound inbound, CancellationToken ct = default)
     {
         return ExecuteEmptyUnaryAsync(
             "AddInbound",
-            callOptions => client.AddInboundAsync(NodeGrpcMapper.ToProto(request), callOptions),
-            cancellationToken);
+            opt => client.AddInboundAsync(new Proto.SyncInboundRequest()
+            {
+                InboundJson = NodeGrpcMapper.SerializeXray(inbound)
+            }, opt),
+            ct);
     }
 
     /// <inheritdoc />
     public Task UpdateInboundAsync(
         string id,
-        SyncInboundRequest request,
+        Inbound inbound,
         CancellationToken cancellationToken = default)
     {
         return ExecuteEmptyUnaryAsync(
@@ -47,7 +50,7 @@ public sealed class NodeRuntimeConfigClient : NodeGrpcClientBase, INodeRuntimeCo
                 new Proto.UpdateInboundRequest
                 {
                     Id = id,
-                    Request = NodeGrpcMapper.ToProto(request)
+                    InboundJson = NodeGrpcMapper.SerializeXray(inbound)
                 },
                 callOptions),
             cancellationToken);
@@ -63,18 +66,21 @@ public sealed class NodeRuntimeConfigClient : NodeGrpcClientBase, INodeRuntimeCo
     }
 
     /// <inheritdoc />
-    public Task AddOutboundAsync(SyncOutboundRequest request, CancellationToken cancellationToken = default)
+    public Task AddOutboundAsync(Outbound outbound, CancellationToken ct = default)
     {
         return ExecuteEmptyUnaryAsync(
             "AddOutbound",
-            callOptions => client.AddOutboundAsync(NodeGrpcMapper.ToProto(request), callOptions),
-            cancellationToken);
+            opt => client.AddOutboundAsync(new Proto.SyncOutboundRequest()
+            {
+                OutboundJson = NodeGrpcMapper.SerializeXray(outbound)
+            }, opt),
+            ct);
     }
 
     /// <inheritdoc />
     public Task UpdateOutboundAsync(
         string id,
-        SyncOutboundRequest request,
+        Outbound outbound,
         CancellationToken cancellationToken = default)
     {
         return ExecuteEmptyUnaryAsync(
@@ -83,7 +89,7 @@ public sealed class NodeRuntimeConfigClient : NodeGrpcClientBase, INodeRuntimeCo
                 new Proto.UpdateOutboundRequest
                 {
                     Id = id,
-                    Request = NodeGrpcMapper.ToProto(request)
+                    OutboundJson = NodeGrpcMapper.SerializeXray(outbound)
                 },
                 callOptions),
             cancellationToken);
@@ -100,12 +106,16 @@ public sealed class NodeRuntimeConfigClient : NodeGrpcClientBase, INodeRuntimeCo
 
     /// <inheritdoc />
     public Task SyncRoutingRulesAsync(
-        SyncRoutingRulesRequest request,
-        CancellationToken cancellationToken = default)
+        IReadOnlyCollection<RoutingRule> routingRules,
+        CancellationToken ct = default)
     {
+        var request = new Proto.SyncRoutingRulesRequest();
+
+        request.RoutingRuleJson.AddRange(routingRules.Select(NodeGrpcMapper.SerializeXray));
+
         return ExecuteEmptyUnaryAsync(
             "SyncRoutingRules",
-            callOptions => client.SyncRoutingRulesAsync(NodeGrpcMapper.ToProto(request), callOptions),
-            cancellationToken);
+            opt => client.SyncRoutingRulesAsync(request, opt),
+            ct);
     }
 }

@@ -146,7 +146,7 @@ public sealed class NodeGeoResourceService(
 
         if (!string.Equals(resource.Filename, nextFileName, StringComparison.Ordinal))
         {
-            await CreateClient(resource.Node).RenameGeoResourceAsync(resource.Filename, new RenameGeoResourceRequest(nextFileName), ct);
+            await CreateClient(resource.Node).RenameGeoResourceAsync(resource.Filename, nextFileName, ct);
         }
 
         resource.LastErrorAt = null;

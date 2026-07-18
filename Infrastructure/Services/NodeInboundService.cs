@@ -397,16 +397,14 @@ public sealed class NodeInboundService(
     private async Task SyncRemoteAddAsync(
         NodeEntity node,
         InboundEntity inbound,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         if (!IsRemoteCoreRunning(node.Id))
         {
             return;
         }
 
-        await CreateNodeClient(node).AddInboundAsync(
-            CreateSyncInboundRequest(inbound),
-            cancellationToken);
+        await CreateNodeClient(node).AddInboundAsync(inbound.Config, ct);
     }
 
     private async Task SyncRemoteUpdateAsync(
@@ -430,7 +428,7 @@ public sealed class NodeInboundService(
 
         await CreateNodeClient(node).UpdateInboundAsync(
             oldTag,
-            CreateSyncInboundRequest(inbound),
+            inbound.Config,
             cancellationToken);
     }
 
@@ -458,14 +456,6 @@ public sealed class NodeInboundService(
         }
 
         await CreateNodeClient(node).DeleteInboundAsync(inbound.Tag, cancellationToken);
-    }
-
-    private static SyncInboundRequest CreateSyncInboundRequest(InboundEntity inbound)
-    {
-        return new SyncInboundRequest
-        {
-            Inbound = inbound.Config
-        };
     }
 
     private bool IsRemoteCoreRunning(long nodeId)

@@ -33,20 +33,6 @@ public sealed class NodeGrpcMapperTests
     }
 
     [Fact]
-    public void ToProto_UpdateCoreConfigTemplate_SerializesConfigAsJsonString()
-    {
-        var request = new UpdateCoreConfigTemplateRequest
-        {
-            ConfigTemplate = new XrayConfig()
-        };
-
-        var result = NodeGrpcMapper.ToProto(request);
-
-        result.ConfigTemplateJson.Should().NotBeNullOrWhiteSpace();
-        result.ConfigTemplateJson.Should().StartWith("{");
-    }
-
-    [Fact]
     public void ToDomain_LogStreamEvent_MapsSnapshotEntries()
     {
         var timestamp = DateTime.SpecifyKind(new DateTime(2026, 7, 10, 13, 30, 0), DateTimeKind.Utc);

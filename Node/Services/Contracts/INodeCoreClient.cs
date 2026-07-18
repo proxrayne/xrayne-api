@@ -1,4 +1,5 @@
 using Node.Models;
+using Xray.Config.Models;
 
 namespace Node.Services;
 
@@ -26,7 +27,7 @@ public interface INodeCoreClient
     /// Starts remote xray-core.
     /// </summary>
     Task<OperationAcceptedResponse> StartCoreAsync(
-        StartCoreRequest request,
+        XrayConfig config,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -38,13 +39,13 @@ public interface INodeCoreClient
     /// Restarts remote xray-core.
     /// </summary>
     Task<OperationAcceptedResponse> RestartCoreAsync(
-        StartCoreRequest request,
+        XrayConfig config,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates the remote node base xray-core configuration template.
     /// </summary>
     Task UpdateCoreConfigTemplateAsync(
-        UpdateCoreConfigTemplateRequest request,
+        XrayConfig config,
         CancellationToken cancellationToken = default);
 }

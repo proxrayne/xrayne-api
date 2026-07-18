@@ -74,7 +74,7 @@ public sealed class NodeGeoResourceClient : NodeGrpcClientBase, INodeGeoResource
     /// <inheritdoc />
     public Task<GeoResourceDto> RenameGeoResourceAsync(
         string fileName,
-        RenameGeoResourceRequest request,
+         string newFilename,
         CancellationToken cancellationToken = default)
     {
         return ExecuteUnaryAsync(
@@ -83,7 +83,7 @@ public sealed class NodeGeoResourceClient : NodeGrpcClientBase, INodeGeoResource
                 new Proto.RenameGeoResourceRequest
                 {
                     FileName = fileName,
-                    NewFileName = request.FileName
+                    NewFileName = newFilename
                 },
                 callOptions),
             NodeGrpcMapper.ToDomain,

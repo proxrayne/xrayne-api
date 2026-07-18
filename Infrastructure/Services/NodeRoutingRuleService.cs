@@ -613,11 +613,11 @@ public sealed class NodeRoutingRuleService(
     private async Task SyncRemoteRulesAsync(
         NodeEntity node,
         IReadOnlyCollection<RoutingRule> enabledRules,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         await CreateNodeClient(node).SyncRoutingRulesAsync(
-            new SyncRoutingRulesRequest { RoutingRules = [.. enabledRules] },
-            cancellationToken);
+            enabledRules,
+            ct);
     }
 
     private bool IsRemoteCoreRunning(long nodeId)

@@ -69,6 +69,28 @@ public abstract class NodeGrpcClientBase
     }
 
     /// <summary>
+    /// Executes a unary gRPC call and maps transport failures.
+    /// </summary>
+    protected async Task<TResponse> ExecuteUnaryAsync<TResponse>(
+        string operation,
+        Func<CallOptions, AsyncUnaryCall<TResponse>> callFactory,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await callFactory(CreateUnaryCallOptions(cancellationToken));
+        }
+        catch (RpcException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw MapRpcException(operation, exception);
+        }
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new NodeTimeoutException(Endpoint.NodeId, operation, exception);
+        }
+    }
+
+    /// <summary>
     /// Executes a unary gRPC call that returns no domain payload.
     /// </summary>
     protected async Task ExecuteEmptyUnaryAsync(

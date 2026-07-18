@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Node.Enums;
 using Node.Exceptions;
@@ -129,58 +128,11 @@ public static class NodeGrpcMapper
     }
 
     /// <summary>
-    /// Converts a start request to the gRPC contract.
+    /// Converts generated ML-KEM-768 key material from the gRPC contract.
     /// </summary>
-    public static Proto.StartCoreRequest ToProto(StartCoreRequest value)
+    public static Mlkem768Response ToDomain(Proto.GetMLKEM768Response value)
     {
-        return new Proto.StartCoreRequest
-        {
-            ConfigJson = SerializeXray(value.Config)
-        };
-    }
-
-    /// <summary>
-    /// Converts a config template request to the gRPC contract.
-    /// </summary>
-    public static Proto.UpdateCoreConfigTemplateRequest ToProto(UpdateCoreConfigTemplateRequest value)
-    {
-        return new Proto.UpdateCoreConfigTemplateRequest
-        {
-            ConfigTemplateJson = SerializeXray(value.ConfigTemplate)
-        };
-    }
-
-    /// <summary>
-    /// Converts an inbound sync request to the gRPC contract.
-    /// </summary>
-    public static Proto.SyncInboundRequest ToProto(SyncInboundRequest value)
-    {
-        return new Proto.SyncInboundRequest
-        {
-            InboundJson = SerializeXray(value.Inbound)
-        };
-    }
-
-    /// <summary>
-    /// Converts an outbound sync request to the gRPC contract.
-    /// </summary>
-    public static Proto.SyncOutboundRequest ToProto(SyncOutboundRequest value)
-    {
-        return new Proto.SyncOutboundRequest
-        {
-            OutboundJson = SerializeXray(value.Outbound)
-        };
-    }
-
-    /// <summary>
-    /// Converts routing rule sync request to the gRPC contract.
-    /// </summary>
-    public static Proto.SyncRoutingRulesRequest ToProto(SyncRoutingRulesRequest value)
-    {
-        var request = new Proto.SyncRoutingRulesRequest();
-        request.RoutingRuleJson.AddRange(value.RoutingRules.Select(SerializeXray));
-
-        return request;
+        return new Mlkem768Response(value.Seed, value.Client, value.Hash);
     }
 
     private static CoreSummary ToDomain(Proto.CoreSummary value)
@@ -244,6 +196,11 @@ public static class NodeGrpcMapper
     private static NetworkStats ToDomain(Proto.NetworkStats value)
     {
         return new NetworkStats(value.Ipv4Addresses, value.Ipv6Addresses);
+    }
+
+    private static VlessAuthPair ToDomain(Proto.VlessAuthPair value)
+    {
+        return new VlessAuthPair(value.Decryption, value.Encryption);
     }
 
     /// <summary>
@@ -316,7 +273,7 @@ public static class NodeGrpcMapper
         return TimeSpan.FromSeconds(Math.Max(0, seconds));
     }
 
-    private static string SerializeXray<T>(T value)
+    public static string SerializeXray<T>(T value)
     {
         return JsonSerializer.Serialize(value, XrayConfig.JsonSerializationOptions);
     }

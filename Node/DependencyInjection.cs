@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<INodeGrpcChannelProvider, NodeGrpcChannelProvider>();
         services.AddSingleton<INodeHealthClientFactory, NodeHealthClientFactory>();
         services.AddSingleton<INodeCoreClientFactory, NodeCoreClientFactory>();
+        services.AddSingleton<INodeCoreInfrastructureClientFactory, NodeCoreInfrastructureClientFactory>();
         services.AddSingleton<INodeRuntimeConfigClientFactory, NodeRuntimeConfigClientFactory>();
         services.AddSingleton<INodeLogClientFactory, NodeLogClientFactory>();
         services.AddSingleton<INodeGeoResourceClientFactory, NodeGeoResourceClientFactory>();

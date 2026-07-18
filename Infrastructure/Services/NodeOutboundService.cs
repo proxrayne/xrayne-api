@@ -3,7 +3,6 @@ using Contracts.Exceptions;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
-using Infrastructure.Dto;
 using Node.Models;
 using Node.Services;
 using Xray.Config.Models;
@@ -383,7 +382,7 @@ public sealed class NodeOutboundService(
         }
 
         await CreateNodeClient(node).AddOutboundAsync(
-            CreateSyncOutboundRequest(outbound),
+            outbound.Config,
             cancellationToken);
     }
 
@@ -408,7 +407,7 @@ public sealed class NodeOutboundService(
 
         await CreateNodeClient(node).UpdateOutboundAsync(
             oldTag,
-            CreateSyncOutboundRequest(outbound),
+            outbound.Config,
             cancellationToken);
     }
 
@@ -436,14 +435,6 @@ public sealed class NodeOutboundService(
         }
 
         await CreateNodeClient(node).DeleteOutboundAsync(outbound.Tag!, cancellationToken);
-    }
-
-    private static SyncOutboundRequest CreateSyncOutboundRequest(OutboundEntity outbound)
-    {
-        return new SyncOutboundRequest
-        {
-            Outbound = outbound.Config
-        };
     }
 
     private bool IsRemoteCoreRunning(long nodeId)

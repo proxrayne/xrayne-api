@@ -30,7 +30,7 @@ public interface INodeGeoResourceClient
     /// </summary>
     Task<GeoResourceDto> RenameGeoResourceAsync(
         string fileName,
-        RenameGeoResourceRequest request,
+        string newFilename,
         CancellationToken cancellationToken = default);
 
     /// <summary>

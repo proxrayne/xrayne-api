@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Node.Configurations;
 using Node.Grpc;
 using Node.Models;
+using Xray.Config.Models;
 using Proto = XRayne.ProtoTypes.RemoteNode.V1;
 
 namespace Node.Services;
@@ -62,12 +63,16 @@ public sealed class NodeCoreClient : NodeGrpcClientBase, INodeCoreClient
 
     /// <inheritdoc />
     public Task<OperationAcceptedResponse> StartCoreAsync(
-        StartCoreRequest request,
+        XrayConfig config,
         CancellationToken cancellationToken = default)
     {
         return ExecuteUnaryAsync(
             "StartCore",
-            callOptions => client.StartAsync(NodeGrpcMapper.ToProto(request), callOptions),
+            opt => client.StartAsync(
+                new Proto.StartCoreRequest()
+                {
+                    ConfigJson = NodeGrpcMapper.SerializeXray(config)
+                }, opt),
             NodeGrpcMapper.ToDomain,
             cancellationToken);
     }
@@ -84,25 +89,31 @@ public sealed class NodeCoreClient : NodeGrpcClientBase, INodeCoreClient
 
     /// <inheritdoc />
     public Task<OperationAcceptedResponse> RestartCoreAsync(
-        StartCoreRequest request,
-        CancellationToken cancellationToken = default)
+        XrayConfig config,
+        CancellationToken ct = default)
     {
         return ExecuteUnaryAsync(
             "RestartCore",
-            callOptions => client.RestartAsync(NodeGrpcMapper.ToProto(request), callOptions),
+            callOptions => client.RestartAsync(new Proto.StartCoreRequest()
+            {
+                ConfigJson = NodeGrpcMapper.SerializeXray(config)
+            }, callOptions),
             NodeGrpcMapper.ToDomain,
-            cancellationToken);
+            ct);
     }
 
     /// <inheritdoc />
     public Task UpdateCoreConfigTemplateAsync(
-        UpdateCoreConfigTemplateRequest request,
-        CancellationToken cancellationToken = default)
+        XrayConfig config,
+        CancellationToken ct = default)
     {
         return ExecuteEmptyUnaryAsync(
             "UpdateCoreConfigTemplate",
-            callOptions => client.UpdateConfigTemplateAsync(NodeGrpcMapper.ToProto(request), callOptions),
-            cancellationToken);
+            opt => client.UpdateConfigTemplateAsync(new Proto.UpdateCoreConfigTemplateRequest()
+            {
+                ConfigTemplateJson = NodeGrpcMapper.SerializeXray(config)
+            }, opt),
+            ct);
     }
 
     private static Proto.InstallCoreRequest ToProto(InstallCoreRequest request)
