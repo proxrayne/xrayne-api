@@ -15,7 +15,8 @@ public interface IInboundRepository
 
     Task<CursorPage<InboundEntity>> SearchAsync(Guid adminId, InboundFilter filter, CancellationToken cancellationToken = default);
 
-    Task<InboundEntity?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
+    Task<InboundEntity?> GetByIdOrDefaultAsync(long id, CancellationToken cancellationToken = default);
+    Task<InboundEntity> GetByIdAsync(long id, CancellationToken cancellationToken = default);
 
     Task<InboundEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
 
@@ -32,6 +33,4 @@ public interface IInboundRepository
     Task<InboundEntity?> UpdateAsync(Guid adminId, InboundEntity inbound, CancellationToken cancellationToken = default);
 
     Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default);
-
-    Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
 }

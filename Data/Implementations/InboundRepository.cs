@@ -1,4 +1,5 @@
 using Contracts.Enums;
+using Contracts.Exceptions;
 using Contracts.Models;
 using Contracts.Utilities;
 using Data.Contracts;
@@ -7,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data.Implementations;
 
-public sealed class InboundRepository(AppDbContext dbContext) : IInboundRepository
+public sealed class InboundRepository(AppDbContext context) : IInboundRepository
 {
-    private IQueryable<InboundEntity> _inboundsWithRelations => dbContext.Inbounds
+    private IQueryable<InboundEntity> _inboundsWithRelations => context.Inbounds
         .Include(inbound => inbound.Admin)
         .Include(inbound => inbound.Node);
 
@@ -53,10 +54,17 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
         return SearchCoreAsync(query, filter, ct);
     }
 
-    public Task<InboundEntity?> GetByIdAsync(long id, CancellationToken ct = default)
+    public Task<InboundEntity?> GetByIdOrDefaultAsync(long id, CancellationToken ct = default)
     {
         return _inboundsWithRelations
             .SingleOrDefaultAsync(inbound => inbound.Id == id, ct);
+    }
+
+    public async Task<InboundEntity> GetByIdAsync(long id, CancellationToken ct = default)
+    {
+        var inbound = await GetByIdOrDefaultAsync(id, ct);
+
+        return RequireEntity(inbound, id);
     }
 
     public Task<InboundEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
@@ -86,9 +94,9 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
 
     public async Task<InboundEntity> AddAsync(InboundEntity inbound, CancellationToken ct = default)
     {
-        await dbContext.Inbounds.AddAsync(inbound, ct);
-        await dbContext.SaveChangesAsync(ct);
-        await dbContext.Entry(inbound).ReloadAsync(ct);
+        await context.Inbounds.AddAsync(inbound, ct);
+        await context.SaveChangesAsync(ct);
+        await context.Entry(inbound).ReloadAsync(ct);
 
         return inbound;
     }
@@ -99,33 +107,33 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
         InboundEntity inbound,
         CancellationToken ct = default)
     {
-        await dbContext.Inbounds.AddAsync(inbound, ct);
-        dbContext.Entry(inbound).Property("AdminId").CurrentValue = adminId;
-        dbContext.Entry(inbound).Property("NodeId").CurrentValue = nodeId;
-        await dbContext.SaveChangesAsync(ct);
-        await dbContext.Entry(inbound).ReloadAsync(ct);
+        await context.Inbounds.AddAsync(inbound, ct);
+        context.Entry(inbound).Property("AdminId").CurrentValue = adminId;
+        context.Entry(inbound).Property("NodeId").CurrentValue = nodeId;
+        await context.SaveChangesAsync(ct);
+        await context.Entry(inbound).ReloadAsync(ct);
 
         return inbound;
     }
 
     public async Task<InboundEntity?> UpdateAsync(InboundEntity inbound, CancellationToken ct = default)
     {
-        var exists = await dbContext.Inbounds.AnyAsync(item => item.Id == inbound.Id, ct);
+        var exists = await context.Inbounds.AnyAsync(item => item.Id == inbound.Id, ct);
         if (!exists)
         {
             return null;
         }
 
         inbound.UpdatedAt = DateTimeOffset.UtcNow;
-        dbContext.Inbounds.Update(inbound);
-        await dbContext.SaveChangesAsync(ct);
+        context.Inbounds.Update(inbound);
+        await context.SaveChangesAsync(ct);
 
         return inbound;
     }
 
     public async Task<InboundEntity?> UpdateAsync(Guid adminId, InboundEntity inbound, CancellationToken ct = default)
     {
-        var exists = await dbContext.Inbounds.AnyAsync(
+        var exists = await context.Inbounds.AnyAsync(
             item => item.Id == inbound.Id && EF.Property<Guid>(item, "AdminId") == adminId,
             ct);
         if (!exists)
@@ -134,41 +142,25 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
         }
 
         inbound.UpdatedAt = DateTimeOffset.UtcNow;
-        dbContext.Inbounds.Update(inbound);
-        await dbContext.SaveChangesAsync(ct);
+        context.Inbounds.Update(inbound);
+        await context.SaveChangesAsync(ct);
 
         return inbound;
     }
 
     public async Task<bool> DeleteAsync(long id, CancellationToken ct = default)
     {
-        var inbound = await GetByIdAsync(id, ct);
+        var inbound = await GetByIdOrDefaultAsync(id, ct);
         if (inbound is null)
         {
             return false;
         }
 
-        dbContext.Inbounds.Remove(inbound);
-        await dbContext.SaveChangesAsync(ct);
+        context.Inbounds.Remove(inbound);
+        await context.SaveChangesAsync(ct);
 
         return true;
     }
-
-    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
-    {
-        var inbound = await GetByIdAsync(adminId, id, ct);
-        if (inbound is null)
-        {
-            return false;
-        }
-
-        dbContext.Inbounds.Remove(inbound);
-        await dbContext.SaveChangesAsync(ct);
-
-        return true;
-    }
-
-
 
     private static async Task<CursorPage<InboundEntity>> SearchCoreAsync(IQueryable<InboundEntity> query, InboundFilter filter, CancellationToken ct)
     {
@@ -249,4 +241,11 @@ public sealed class InboundRepository(AppDbContext dbContext) : IInboundReposito
             ? query.OrderByDescending(inbound => inbound.CreatedAt).ThenByDescending(inbound => inbound.Id)
             : query.OrderBy(inbound => inbound.CreatedAt).ThenBy(inbound => inbound.Id);
     }
+
+    //
+    private InboundEntity RequireEntity(InboundEntity? entity, long id)
+    {
+        return entity ?? throw new NotFoundException($"Inbound '{id}' not found.");
+    }
+
 }
