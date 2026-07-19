@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data;
 
@@ -20,6 +20,8 @@ public sealed class AppDbContext : DbContext
     public DbSet<ApplicationEntity> Applications { get; set; }
     public DbSet<ConnectionEntity> Connections { get; set; }
     public DbSet<WarehouseEntity> Warehouses { get; set; }
+    public DbSet<ImageEntity> Images { get; set; }
+    public DbSet<OperationSystemEntity> OperationSystems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -106,10 +108,6 @@ public sealed class AppDbContext : DbContext
 
             builder.Property(x => x.SubscriptionFormat)
                 .HasColumnType("subscription_format");
-
-            builder.HasOne(x => x.Admin)
-                .WithMany()
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ConnectionEntity>(builder =>
@@ -141,6 +139,17 @@ public sealed class AppDbContext : DbContext
             builder.HasMany(x => x.Inbounds)
                 .WithMany()
                 .UsingEntity("WarehouseInbounds");
+        });
+
+        modelBuilder.Entity<OperationSystemEntity>(builder =>
+        {
+            builder.Property(x => x.Enabled)
+                .HasColumnName("Enabled")
+                .HasDefaultValue(true);
+
+            builder.Property(x => x.Note)
+                .HasColumnName("Note")
+                .HasDefaultValue("");
         });
 
         modelBuilder.Entity<UserEntity>(builder =>

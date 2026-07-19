@@ -29,12 +29,6 @@ public sealed class ApplicationEntity : CreateUpdateEntity
     public string? WebsiteUrl { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional icon reference.
-    /// </summary>
-    [MaxLength(256)]
-    public string? Icon { get; set; }
-
-    /// <summary>
     /// Gets or sets the optional protocol label used for detection.
     /// </summary>
     [MaxLength(24)]
@@ -67,8 +61,7 @@ public sealed class ApplicationEntity : CreateUpdateEntity
     /// </summary>
     public List<ConnectionEntity> Connections { get; set; } = [];
 
-    /// <summary>
-    /// Gets or sets the administrator that owns the application profile.
-    /// </summary>
-    public AdminAccountEntity Admin { get; set; } = null!;
+    public ImageEntity Image { get; set; } = null!;
+
+    public OperationSystemEntity OperationSystem { get; set; } = null!;
 }
