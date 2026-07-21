@@ -7,7 +7,7 @@ The backend is a .NET 9 solution with a layered architecture:
 - `Api`: panel REST API.
 - `Contracts`: shared contracts and configuration values.
 - `Node`: typed gRPC protocol client for standalone remote nodes.
-- `Infrastructure`: runtime services, xray-core lifecycle, jobs, and state.
+- `Infrastructure`: runtime services, remote-node orchestration, jobs, and state.
 - `Data`: EF Core persistence.
 - `Test`: test project.
 
@@ -57,8 +57,8 @@ controllers and services, keeps one worker per node, and persists heartbeat data
 on a throttled interval instead of writing every heartbeat to the database.
 Each worker is the only persistent upstream gRPC `HealthService.Connect`
 subscriber for its node. It updates panel-local stores and dispatches local
-event-bus updates for dashboard SSE clients, so dashboard tabs do not create
-additional remote node streams. The worker treats stream idleness as a failed connection after
+event-bus updates for panel SSE clients, so UI tabs do not create additional
+remote node streams. The worker treats stream idleness as a failed connection after
 `NodeConnection:StreamIdleTimeoutSeconds`, or `3 * StreamHeartbeatSeconds + 5`
 seconds when unset, and then uses the normal reconnect policy.
 Live node and remote xray-core state is kept in process memory through
@@ -205,7 +205,7 @@ is configured.
 
 `Contracts` owns shared types used across backend projects:
 
-- configuration options such as `JwtOptions`, `PanelSettings`, and `XrayOptions`;
+- configuration options such as `JwtOptions`, `PanelSettings`, and node connection options;
 - enums such as admin permissions, user status, certificate modes, and update
   target;
 - query/filter models such as cursor pagination and entity filters;
@@ -219,9 +219,9 @@ infrastructure.
 
 `Infrastructure` owns runtime behavior:
 
-- `CoreService`, `CoreStateMachine`, `BackgroundTaskScheduler`;
-- Quartz jobs for installing and operating xray-core;
-- Octokit-backed GitHub release lookup and release asset download helpers;
+- `BackgroundTaskScheduler`, node provisioning, reconnect, and runtime stores;
+- Quartz jobs for remote-node provisioning and geo-resource processing;
+- Octokit-backed GitHub release lookup helpers for remote node xray-core installs;
 - JWT token creation, settings application, restart scheduling;
 - certificate, geo resource, routing rule, and node services;
 - `Hardware.Info`-backed host system information through `ISystemInfoService`.

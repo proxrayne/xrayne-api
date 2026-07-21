@@ -38,13 +38,9 @@ public static class DependencyInjection
         services.AddSingleton<INodeConnectionManager, NodeConnectionManager>();
         services.AddSingleton<INodeProvisioner, NodeProvisioner>();
         services.AddHostedService<NodeConnectionHostedService>();
-        services.AddSingleton<ICoreService, CoreService>();
-        services.AddSingleton<ICoreStateMachine, CoreStateMachine>();
         services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
         services.AddAutoMapper(_ => { }, typeof(DependencyInjection).Assembly);
 
-        services.AddTransient<InstallCoreJob>();
-        services.AddTransient<CoreOperationJob>();
         services.AddTransient<NodeProvisionJob>();
         services.AddTransient<GeoResourceSyncJob>();
         services.AddTransient<UpdateGeoResourcesJob>();

@@ -18,7 +18,7 @@ Use this skill when working on `Api`, `Contracts`,
   reconnect, status, and verification behavior in `Infrastructure`.
 - Put shared options, enums, permission names, pagination/filter models, and
   path values in `Contracts`.
-- Put xray-core lifecycle, background jobs, state machines, JWT,
+- Put remote-node xray-core lifecycle, background jobs, state machines, JWT,
   certificate, settings, and runtime services in `Infrastructure`.
 - Put reusable host system information DTOs in `Contracts` and runtime
   collection services in `Infrastructure`.

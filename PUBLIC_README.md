@@ -204,7 +204,7 @@ The project path is derived from the installed CLI directory. For the default `/
 
 The web panel is served by the UI container. By default it is available at `http://0.0.0.0:8080`, and it proxies `/api` to the API container listening on `http://0.0.0.0:5000/api`.
 
-The API container runs with Docker host networking so it can work with host-level Xray core networking. `PORT` is the actual port the API listens on; Docker does not publish a separate API container port mapping.
+The API container runs with Docker host networking. `PORT` is the actual port the API listens on; Docker does not publish a separate API container port mapping.
 
 ## API Service Commands
 

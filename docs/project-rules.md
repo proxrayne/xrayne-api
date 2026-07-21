@@ -2,10 +2,10 @@
 
 ## Product Boundaries
 
-XRayne Panel is an admin panel for managing `xray-core` and remote nodes. The
-`xrayne-panel` repository contains the panel API and backend services. The
-standalone CLI source lives in `xrayne-cli`, and the standalone frontend source
-lives in `xrayne-ui`.
+XRayne Panel is an admin panel for managing remote nodes and their remote
+`xray-core` runtimes. The `xrayne-panel` repository contains the panel API and
+backend services. The standalone CLI source lives in `xrayne-cli`, and the
+standalone frontend source lives in `xrayne-ui`.
 
 - `Api`: ASP.NET Core REST API.
 
@@ -16,8 +16,8 @@ longer contains a standalone node-service project or node-service source code.
 ## Repository Layout
 
 - `Contracts`: shared options, enums, DTO-like models, values, and utilities.
-- `Infrastructure`: xray-core runtime services, jobs, state machines, and
-  cross-cutting infrastructure services.
+- `Infrastructure`: managed-node orchestration, background jobs, runtime state
+  stores, and cross-cutting infrastructure services.
 - `Data`: EF Core DbContext, entities, migrations, repository
   interfaces/implementations, config-file utilities, and external release clients.
 - `Api`: HTTP controllers, auth, API filters, AutoMapper profiles, and
@@ -30,7 +30,7 @@ longer contains a standalone node-service project or node-service source code.
 - Keep shared contracts free of API/EF dependencies.
 - Keep HTTP behavior in `Api`; delegate work to repositories/services.
 - Keep EF persistence in `Data`.
-- Keep xray-core lifecycle and runtime behavior in `Infrastructure`.
+- Keep remote-node xray-core lifecycle and runtime behavior in `Infrastructure`.
 - Keep managed-node provisioning, reconnect, and status orchestration in
   panel-owned services; do not plan work in a local standalone node-service
   project.

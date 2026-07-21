@@ -51,8 +51,6 @@ public sealed class NodesController(
     IHostEnvironment environment,
     IOptions<NodeConnectionOptions> nodeConnectionOptions) : ApiControllerBase
 {
-    private readonly GitHubReleaseClient xrayRepository = new(CoreDefaults.XrayRepositoryUrl);
-
     /// <summary>
     /// Gets all remote nodes available to administrators with node permissions.
     /// </summary>
@@ -404,30 +402,6 @@ public sealed class NodesController(
         {
             eventStreams.Unsubscribe(subscription.Id);
         }
-    }
-
-    /// <summary>
-    /// Gets available xray-core releases for remote node installation.
-    /// </summary>
-    [HttpGet("{id:long}/core/releases")]
-    [EndpointSummary("Remote node Xray releases")]
-    [EndpointDescription("Get available xray-core releases for remote node installation.")]
-    [ProducesResponseType(typeof(List<GitHubReleaseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<List<GitHubReleaseDto>> GetCoreReleases(
-        long id,
-        [FromQuery] CoreReleasesQuery query,
-        CancellationToken ct)
-    {
-        // TODO: need move to another controller
-        if (!await nodeRepository.ExistByIdAsync(id, ct))
-        {
-            throw new NotFoundException($"Node '{id}' was not found.");
-        }
-
-        var releases = await xrayRepository.GetReleasesAsync(query.PerPage, query.Page, ct);
-
-        return releases.Select(mapper.Map<GitHubReleaseDto>).ToList();
     }
 
     /// <summary>
