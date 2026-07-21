@@ -21,7 +21,9 @@ public static class NpgsqlOptionsBuilderExtensions
         CreateEnumMapping<GeoResourceStatus>("geo_resource_status"),
         CreateEnumMapping<XtlsFlow>("xtls_flow"),
         CreateEnumMapping<EncryptionMethod>("encryption_method"),
-        CreateEnumMapping<SubscriptionFormat>("subscription_format")
+        CreateEnumMapping<SubscriptionFormat>("subscription_format"),
+        CreateEnumMapping<Fingerprint>("fingerprint"),
+        CreateEnumMapping<HostSecurity>("host_security"),
     ];
 
     /// <summary>

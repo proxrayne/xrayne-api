@@ -22,6 +22,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<WarehouseEntity> Warehouses { get; set; }
     public DbSet<ImageEntity> Images { get; set; }
     public DbSet<OperationSystemEntity> OperationSystems { get; set; }
+    public DbSet<HostEntity> Hosts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,35 @@ public sealed class AppDbContext : DbContext
         {
             builder.Property(x => x.Enabled)
                 .HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<HostEntity>(builder =>
+        {
+            builder.Property(x => x.Enabled)
+                .HasDefaultValue(true);
+
+            builder.Property(x => x.IsMuxEnabled)
+                .HasDefaultValue(false);
+
+            builder.Property(x => x.IsUseServerNameAsHost)
+                .HasDefaultValue(false);
+
+            builder.Property(x => x.IsRandomUseragent)
+                .HasDefaultValue(false);
+
+            builder.Property(x => x.AllowIncrease)
+                .HasDefaultValue(false);
+
+            builder.Property(x => x.Security)
+                .HasDefaultValueSql("'inbound_default'::host_security");
+
+            builder.HasOne(x => x.Admin)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.Inbound)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<OutboundEntity>(builder =>
