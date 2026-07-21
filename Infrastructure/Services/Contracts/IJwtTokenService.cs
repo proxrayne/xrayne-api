@@ -5,7 +5,7 @@ namespace Infrastructure.Services;
 public interface IJwtTokenService
 {
     string CreateAccessToken(
-        Guid adminId,
+        long adminId,
         string username,
         AdminPermission permissions,
         int? lifetimeMinutes = null);

@@ -40,21 +40,21 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
     }
 
     /// <inheritdoc />
-    public Task<AdminAccountEntity?> GetByIdOrDefaultAsync(Guid id, CancellationToken ct = default)
+    public Task<AdminAccountEntity?> GetByIdOrDefaultAsync(long id, CancellationToken ct = default)
     {
         return context.AdminAccounts
             .SingleOrDefaultAsync(account => account.Id == id, ct);
     }
 
     /// <inheritdoc />
-    public Task<AdminAccountEntity?> GetActiveByIdOrDefaultAsync(Guid id, CancellationToken ct = default)
+    public Task<AdminAccountEntity?> GetActiveByIdOrDefaultAsync(long id, CancellationToken ct = default)
     {
         return context.AdminAccounts
             .SingleOrDefaultAsync(account => account.Id == id && !account.IsDeleted, ct);
     }
 
     /// <inheritdoc />
-    public async Task<AdminAccountEntity> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<AdminAccountEntity> GetByIdAsync(long id, CancellationToken ct = default)
     {
         var admin = await GetByIdOrDefaultAsync(id, ct);
 
@@ -69,7 +69,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
     }
 
     /// <inheritdoc />
-    public async Task<AdminAccountEntity> GetActiveByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<AdminAccountEntity> GetActiveByIdAsync(long id, CancellationToken ct = default)
     {
         var admin = await GetActiveByIdOrDefaultAsync(id, ct);
 
@@ -100,7 +100,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
     }
 
     /// <inheritdoc />
-    public Task<bool> ExistsAsync(string username, Guid exceptId, CancellationToken ct = default)
+    public Task<bool> ExistsAsync(string username, long exceptId, CancellationToken ct = default)
     {
         return context.AdminAccounts
             .AnyAsync(account => account.Id != exceptId && account.Username == username, ct);
@@ -114,7 +114,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
     }
 
     /// <inheritdoc />
-    public Task<bool> EmailExistsAsync(string email, Guid exceptId, CancellationToken ct = default)
+    public Task<bool> EmailExistsAsync(string email, long exceptId, CancellationToken ct = default)
     {
         return context.AdminAccounts
             .AnyAsync(account => account.Id != exceptId && account.Email == email, ct);
@@ -132,7 +132,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
 
     /// <inheritdoc />
     public async Task<AdminAccountEntity?> SetLastLoginAsync(
-        Guid id,
+        long id,
         DateTimeOffset lastLoginAt,
         CancellationToken ct = default)
     {
@@ -151,7 +151,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
 
     /// <inheritdoc />
     public async Task<AdminAccountEntity> ChangePasswordAsync(
-        Guid id,
+        long id,
         string passwordHash,
         CancellationToken ct = default)
     {
@@ -165,7 +165,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
 
     /// <inheritdoc />
     public async Task<AdminAccountEntity> UpdateAsync(
-        Guid id,
+        long id,
         AdminAccountPatch account,
         CancellationToken ct = default)
     {
@@ -205,7 +205,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
 
     /// <inheritdoc />
     public async Task<AdminAccountEntity> ChangePermissionsAsync(
-        Guid id,
+        long id,
         AdminPermission permissions,
         CancellationToken ct = default)
     {
@@ -219,7 +219,7 @@ public sealed class AdminAccountRepository(AppDbContext context) : IAdminAccount
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    public async Task DeleteAsync(long id, CancellationToken ct = default)
     {
         var account = await GetActiveByIdAsync(id, ct);
 

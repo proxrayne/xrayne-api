@@ -28,12 +28,14 @@ public sealed class AppWebhookEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the webhook target URL.
     /// </summary>
+    [Required]
     [MaxLength(2048)]
     public required string Url { get; set; }
 
     /// <summary>
     /// Gets or sets the enabled event bit mask.
     /// </summary>
+    [Column(TypeName = "numeric(20,0)")]
     public ulong Events { get; set; }
 
     /// <summary>

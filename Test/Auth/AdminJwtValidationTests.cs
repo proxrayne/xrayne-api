@@ -17,7 +17,7 @@ public sealed class AdminJwtValidationTests
     [Fact]
     public async Task ValidateActiveAdminAsync_Fails_WhenAdminIsDeleted()
     {
-        var adminId = Guid.NewGuid();
+        const long adminId = 1L;
         var adminAccounts = Substitute.For<IAdminAccountRepository>();
         adminAccounts.GetActiveByIdOrDefaultAsync(adminId, Arg.Any<CancellationToken>())
             .Returns((AdminAccountEntity?)null);
@@ -31,7 +31,7 @@ public sealed class AdminJwtValidationTests
     [Fact]
     public async Task ValidateActiveAdminAsync_Succeeds_WhenAdminIsActive()
     {
-        var adminId = Guid.NewGuid();
+        const long adminId = 1L;
         var adminAccounts = Substitute.For<IAdminAccountRepository>();
         adminAccounts.GetActiveByIdOrDefaultAsync(adminId, Arg.Any<CancellationToken>())
             .Returns(new AdminAccountEntity
@@ -48,7 +48,7 @@ public sealed class AdminJwtValidationTests
     }
 
     private static TokenValidatedContext CreateContext(
-        Guid adminId,
+        long adminId,
         IAdminAccountRepository adminAccounts)
     {
         var services = new ServiceCollection()

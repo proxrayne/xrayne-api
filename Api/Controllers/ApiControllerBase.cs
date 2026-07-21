@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -16,12 +17,12 @@ public abstract class ApiControllerBase : ControllerBase
 
     protected string? Username => User.Identity?.Name;
 
-    protected Guid AdminId
+    protected long AdminId
     {
         get
         {
             var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (value is null || !Guid.TryParse(value, out var adminId))
+            if (value is null || !long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var adminId))
             {
                 throw new UnauthorizedAccessException("Administrator id is missing from the access token.");
             }
@@ -30,20 +31,19 @@ public abstract class ApiControllerBase : ControllerBase
         }
     }
 
-    protected Guid? AdminIdOrNull
+    protected long? AdminIdOrNull
     {
         get
         {
             var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            return Guid.TryParse(value, out var adminId)
+            return long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var adminId)
                 ? adminId
                 : null;
         }
     }
 
-
-    protected bool TryGetAdminId(out Guid adminId)
+    protected bool TryGetAdminId(out long adminId)
     {
         var value = AdminIdOrNull;
         if (value.HasValue)
@@ -52,7 +52,7 @@ public abstract class ApiControllerBase : ControllerBase
             return true;
         }
 
-        adminId = Guid.Empty;
+        adminId = 0L;
         return false;
     }
 

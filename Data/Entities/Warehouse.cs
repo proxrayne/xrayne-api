@@ -43,6 +43,11 @@ public sealed class WarehouseEntity : CreateUpdateEntity
     public List<UserEntity> Users { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the administrator identifier that owns the warehouse.
+    /// </summary>
+    public long AdminId { get; set; }
+
+    /// <summary>
     /// Gets or sets the administrator that owns the warehouse.
     /// </summary>
     public AdminAccountEntity Admin { get; set; } = null!;

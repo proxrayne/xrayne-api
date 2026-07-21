@@ -12,7 +12,7 @@ public interface IWarehouseRepository
     /// Searches warehouses owned by an administrator.
     /// </summary>
     Task<OffsetPage<WarehouseEntity>> SearchAsync(
-        Guid adminId,
+        long adminId,
         WarehouseFilter filter,
         CancellationToken cancellationToken = default);
 
@@ -20,7 +20,7 @@ public interface IWarehouseRepository
     /// Gets a warehouse by owner and identifier.
     /// </summary>
     Task<WarehouseEntity?> GetByIdAsync(
-        Guid adminId,
+        long adminId,
         long id,
         CancellationToken cancellationToken = default);
 
@@ -28,7 +28,7 @@ public interface IWarehouseRepository
     /// Gets inbound options available to warehouses.
     /// </summary>
     Task<List<InboundEntity>> GetInboundOptionsAsync(
-        Guid adminId,
+        long adminId,
         string? search,
         CancellationToken cancellationToken = default);
 
@@ -36,7 +36,7 @@ public interface IWarehouseRepository
     /// Gets inbounds by owner and identifiers.
     /// </summary>
     Task<List<InboundEntity>> GetInboundsByIdsAsync(
-        Guid adminId,
+        long adminId,
         IReadOnlyCollection<long> inboundIds,
         CancellationToken cancellationToken = default);
 
@@ -44,7 +44,7 @@ public interface IWarehouseRepository
     /// Adds a warehouse for an administrator.
     /// </summary>
     Task<WarehouseEntity> AddAsync(
-        Guid adminId,
+        long adminId,
         WarehouseEntity warehouse,
         IReadOnlyCollection<InboundEntity> inbounds,
         CancellationToken cancellationToken = default);
@@ -53,7 +53,7 @@ public interface IWarehouseRepository
     /// Updates a warehouse owned by an administrator.
     /// </summary>
     Task<WarehouseEntity?> UpdateAsync(
-        Guid adminId,
+        long adminId,
         long id,
         WarehouseEntity warehouse,
         IReadOnlyCollection<InboundEntity> inbounds,
@@ -62,10 +62,10 @@ public interface IWarehouseRepository
     /// <summary>
     /// Deletes a warehouse owned by an administrator.
     /// </summary>
-    Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(long adminId, long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks whether a warehouse has assigned users.
     /// </summary>
-    Task<bool> HasUsersAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
+    Task<bool> HasUsersAsync(long adminId, long id, CancellationToken cancellationToken = default);
 }

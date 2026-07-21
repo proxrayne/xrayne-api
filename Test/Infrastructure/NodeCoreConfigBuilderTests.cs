@@ -115,16 +115,16 @@ public sealed class NodeCoreConfigBuilderTests
         };
         var builder = new NodeCoreConfigBuilder();
 
-        var request = builder.Build(node);
-        var config = ToJsonObject(request.Config);
+        var result = builder.Build(node);
+        var config = ToJsonObject(result);
 
         config["stats"].Should().NotBeNull();
-        request.Config.Inbounds.Should().ContainSingle(inbound => inbound.Tag == "socks-in");
-        request.Config.Outbounds.Should().HaveCount(3);
-        request.Config.Outbounds.Select(outbound => outbound.Tag)
+        result.Inbounds.Should().ContainSingle(inbound => inbound.Tag == "socks-in");
+        result.Outbounds.Should().HaveCount(3);
+        result.Outbounds.Select(outbound => outbound.Tag)
             .Should()
             .Equal("first", "second", "readonly");
-        request.Config.Routing!.Rules.Should().ContainSingle(rule => rule.RuleTag == "enabled-rule");
+        result.Routing!.Rules.Should().ContainSingle(rule => rule.RuleTag == "enabled-rule");
     }
 
     [Fact]
@@ -161,15 +161,15 @@ public sealed class NodeCoreConfigBuilderTests
         };
         var builder = new NodeCoreConfigBuilder();
 
-        var request = builder.Build(node);
-        var config = ToJsonObject(request.Config);
+        var result = builder.Build(node);
+        var config = ToJsonObject(result);
 
         config.ContainsKey("inbounds").Should().BeTrue();
         config.ContainsKey("outbounds").Should().BeTrue();
         config["routing"]!.AsObject().ContainsKey("rules").Should().BeTrue();
-        request.Config.Inbounds.Should().BeEmpty();
-        request.Config.Outbounds.Should().BeEmpty();
-        request.Config.Routing!.Rules.Should().BeEmpty();
+        result.Inbounds.Should().BeEmpty();
+        result.Outbounds.Should().BeEmpty();
+        result.Routing!.Rules.Should().BeEmpty();
     }
 
     private static XrayConfig DeserializeConfig(string json)

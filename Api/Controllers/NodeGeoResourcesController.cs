@@ -34,7 +34,7 @@ public sealed class NodeGeoResourcesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<List<NodeGeoResourceDto>> GetAll(long nodeId, CancellationToken cancellationToken)
     {
-        var result = await geoResources.GetAllAsync(nodeId, cancellationToken);
+        var result = await geoResources.GetAllByNodeIdAsync(nodeId, cancellationToken);
 
         return mapper.Map<List<NodeGeoResourceDto>>(result);
     }

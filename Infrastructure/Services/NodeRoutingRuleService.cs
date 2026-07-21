@@ -46,7 +46,7 @@ public sealed class NodeRoutingRuleService(
 
     /// <inheritdoc />
     public async Task<RoutingRuleEntity> CreateAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         string config,
         bool enabled,
@@ -132,7 +132,7 @@ public sealed class NodeRoutingRuleService(
 
     /// <inheritdoc />
     public async Task<List<RoutingRuleEntity>> SaveAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         IReadOnlyCollection<NodeRoutingRuleManualSaveItem> manualRules,
         IReadOnlyCollection<NodeRoutingRuleReadonlySaveItem> readonlyRules,
@@ -257,7 +257,7 @@ public sealed class NodeRoutingRuleService(
 
     /// <inheritdoc />
     public async Task SyncReadonlyFromTemplateAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         XrayConfig template,
         CancellationToken cancellationToken = default)

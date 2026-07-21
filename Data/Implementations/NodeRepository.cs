@@ -20,10 +20,10 @@ public sealed class NodeRepository(AppDbContext context) : INodeRepository
             .ToListAsync(ct);
     }
 
-    public Task<List<NodeEntity>> GetAllAsync(Guid adminId, CancellationToken ct = default)
+    public Task<List<NodeEntity>> GetAllAsync(long adminId, CancellationToken ct = default)
     {
         return NodesWithRelations
-            .Where(node => EF.Property<Guid>(node, "AdminId") == adminId)
+            .Where(node => node.AdminId == adminId)
             .OrderBy(node => node.Name)
             .ToListAsync(ct);
     }
@@ -46,18 +46,18 @@ public sealed class NodeRepository(AppDbContext context) : INodeRepository
             .SingleOrDefaultAsync(node => node.Id == id, ct);
     }
 
-    public async Task<NodeEntity> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    public async Task<NodeEntity> GetByIdAsync(long adminId, long id, CancellationToken ct = default)
     {
         var node = await GetByIdOrDefaultAsync(adminId, id, ct);
 
         return Required(node, id);
     }
 
-    public Task<NodeEntity?> GetByIdOrDefaultAsync(Guid adminId, long id, CancellationToken ct = default)
+    public Task<NodeEntity?> GetByIdOrDefaultAsync(long adminId, long id, CancellationToken ct = default)
     {
         return NodesWithRelations
            .SingleOrDefaultAsync(
-               node => node.Id == id && EF.Property<Guid>(node, "AdminId") == adminId,
+               node => node.Id == id && node.AdminId == adminId,
                ct);
     }
 
@@ -70,10 +70,10 @@ public sealed class NodeRepository(AppDbContext context) : INodeRepository
         return node;
     }
 
-    public async Task<NodeEntity> AddAsync(Guid adminId, NodeEntity node, CancellationToken ct = default)
+    public async Task<NodeEntity> AddAsync(long adminId, NodeEntity node, CancellationToken ct = default)
     {
         await context.Nodes.AddAsync(node, ct);
-        context.Entry(node).Property("AdminId").CurrentValue = adminId;
+        node.AdminId = adminId;
         await context.SaveChangesAsync(ct);
         await context.Entry(node).ReloadAsync(ct);
 
@@ -95,10 +95,10 @@ public sealed class NodeRepository(AppDbContext context) : INodeRepository
         return node;
     }
 
-    public async Task<NodeEntity?> UpdateAsync(Guid adminId, NodeEntity node, CancellationToken ct = default)
+    public async Task<NodeEntity?> UpdateAsync(long adminId, NodeEntity node, CancellationToken ct = default)
     {
         var exists = await context.Nodes.AnyAsync(
-            item => item.Id == node.Id && EF.Property<Guid>(item, "AdminId") == adminId,
+            item => item.Id == node.Id && item.AdminId == adminId,
             ct);
         if (!exists)
         {
@@ -126,7 +126,7 @@ public sealed class NodeRepository(AppDbContext context) : INodeRepository
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(long adminId, long id, CancellationToken ct = default)
     {
         var node = await GetByIdAsync(adminId, id, ct);
         if (node is null)

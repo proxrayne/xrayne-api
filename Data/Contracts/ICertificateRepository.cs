@@ -12,13 +12,13 @@ public interface ICertificateRepository
     /// <summary>
     /// Gets all certificate metadata records owned by an administrator.
     /// </summary>
-    Task<List<CertificateEntity>> GetAllAsync(Guid adminId, CancellationToken cancellationToken = default);
+    Task<List<CertificateEntity>> GetAllAsync(long adminId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets certificate metadata records for one administrator and node.
     /// </summary>
     Task<List<CertificateEntity>> GetAllAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         CancellationToken cancellationToken = default);
 
@@ -26,7 +26,7 @@ public interface ICertificateRepository
     /// Gets one certificate metadata record by administrator, node, and normalized domain.
     /// </summary>
     Task<CertificateEntity?> GetByDomainAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         string domain,
         CancellationToken cancellationToken = default);
@@ -39,7 +39,7 @@ public interface ICertificateRepository
     /// <summary>
     /// Gets one certificate metadata record by administrator and id.
     /// </summary>
-    Task<CertificateEntity?> GetByIdAsync(Guid adminId, int id, CancellationToken cancellationToken = default);
+    Task<CertificateEntity?> GetByIdAsync(long adminId, int id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a certificate metadata record.
@@ -54,7 +54,7 @@ public interface ICertificateRepository
     /// <summary>
     /// Updates a certificate metadata record owned by an administrator.
     /// </summary>
-    Task<CertificateEntity?> UpdateAsync(Guid adminId, CertificateEntity certificate, CancellationToken cancellationToken = default);
+    Task<CertificateEntity?> UpdateAsync(long adminId, CertificateEntity certificate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a certificate metadata record by id.
@@ -64,13 +64,13 @@ public interface ICertificateRepository
     /// <summary>
     /// Deletes a certificate metadata record by administrator and id.
     /// </summary>
-    Task<bool> DeleteAsync(Guid adminId, int id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(long adminId, int id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes one certificate metadata record by administrator, node, and normalized domain.
     /// </summary>
     Task<bool> DeleteByDomainAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         string domain,
         CancellationToken cancellationToken = default);

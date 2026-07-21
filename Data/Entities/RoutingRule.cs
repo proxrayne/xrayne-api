@@ -20,7 +20,11 @@ public class RoutingRuleEntity : CreateUpdateEntity
     public required RoutingRule Config { get; set; }
 
     // relation tables
+    public long AdminId { get; set; }
+
     public AdminAccountEntity Admin { get; set; } = null!;
+
+    public long NodeId { get; set; }
 
     public NodeEntity Node { get; set; } = null!;
 

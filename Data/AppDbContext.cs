@@ -41,14 +41,12 @@ public sealed class AppDbContext : DbContext
         modelBuilder.Entity<InboundEntity>(builder =>
         {
             builder.Property(x => x.Enabled)
-                .HasColumnName("Enabled")
                 .HasDefaultValue(true);
         });
 
         modelBuilder.Entity<OutboundEntity>(builder =>
         {
             builder.Property(x => x.Enabled)
-                .HasColumnName("Enabled")
                 .HasDefaultValue(true);
         });
 
@@ -67,23 +65,16 @@ public sealed class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(x => x.CertificateMode)
-                .HasColumnType("certificate_mode")
                 .HasDefaultValueSql("'domain'::certificate_mode");
 
             builder.Property(x => x.Enabled)
                 .HasDefaultValue(true);
-
-            builder.Property(x => x.AuthType)
-                .HasColumnType("ssh_auth_type");
-
-            builder.Property(x => x.ConfigTemplate)
-                .HasColumnType("jsonb");
         });
 
         modelBuilder.Entity<CertificateEntity>(builder =>
         {
             builder.HasOne(x => x.Node)
-                .WithMany()
+                .WithMany(x => x.Certificates)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -93,22 +84,12 @@ public sealed class AppDbContext : DbContext
                 .WithMany(x => x.GeoResources)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasIndex("NodeId", nameof(GeoResourceEntity.Filename))
-                .IsUnique();
-
             builder.Property(x => x.Status)
-                .HasColumnType("geo_resource_status")
                 .HasDefaultValueSql("'success'::geo_resource_status");
         });
 
         modelBuilder.Entity<ApplicationEntity>(builder =>
         {
-            builder.Property(x => x.Assets)
-                .HasColumnType("jsonb");
-
-            builder.Property(x => x.SubscriptionFormat)
-                .HasColumnType("subscription_format");
-
             builder.HasOne(x => x.Image)
                 .WithMany()
                 .HasForeignKey(x => x.ImageId)
@@ -127,26 +108,12 @@ public sealed class AppDbContext : DbContext
                 table.HasCheckConstraint("CK_Images_ContentType_Allowed", "\"ContentType\" IN ('image/png', 'image/jpeg', 'image/webp', 'image/gif')");
             });
 
-            builder.Property(x => x.Key)
-                .HasMaxLength(128)
-                .IsRequired();
-
-            builder.Property(x => x.ContentType)
-                .HasMaxLength(32)
-                .IsRequired();
-
             builder.Property(x => x.Version)
                 .HasDefaultValue(1L);
         });
 
         modelBuilder.Entity<ConnectionEntity>(builder =>
         {
-            builder.Property(x => x.Flow)
-                .HasColumnType("xtls_flow");
-
-            builder.Property(x => x.Method)
-                .HasColumnType("encryption_method");
-
             builder.HasOne(x => x.User)
                 .WithMany(x => x.Connections)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -173,11 +140,9 @@ public sealed class AppDbContext : DbContext
         modelBuilder.Entity<OperationSystemEntity>(builder =>
         {
             builder.Property(x => x.Enabled)
-                .HasColumnName("Enabled")
                 .HasDefaultValue(true);
 
             builder.Property(x => x.Note)
-                .HasColumnName("Note")
                 .HasDefaultValue("");
 
             builder.HasOne(x => x.Image)
@@ -188,14 +153,7 @@ public sealed class AppDbContext : DbContext
 
         modelBuilder.Entity<UserEntity>(builder =>
         {
-            builder.Property(x => x.Status)
-                .HasColumnType("user_status");
-
-            builder.Property(x => x.LimitResetStrategy)
-                .HasColumnType("limit_reset_strategy");
-
             builder.Property(x => x.DataLimit)
-                .HasColumnType("numeric(20,0)")
                 .HasConversion(
                     value => (decimal)value,
                     value => (ulong)value);
@@ -214,37 +172,17 @@ public sealed class AppDbContext : DbContext
 
         modelBuilder.Entity<AdminAccountEntity>(builder =>
         {
-            builder.Property(x => x.Permissions)
-                .HasColumnType("bigint");
-
             builder.Property(x => x.IsDeleted)
                 .HasDefaultValue(false);
         });
 
         modelBuilder.Entity<AppSettingsEntity>(builder =>
         {
-            builder.HasKey(x => x.Id);
-
-            builder.Property(x => x.Id)
-                .ValueGeneratedNever();
-
             builder.Property(x => x.SubscriptionProfileTitle)
-                .IsRequired()
-                .HasMaxLength(256)
                 .HasDefaultValue("XRayne");
 
-            builder.Property(x => x.SubscriptionSupportUrl)
-                .HasMaxLength(2048);
-
-            builder.Property(x => x.SubscriptionWebsiteUrl)
-                .HasMaxLength(2048);
-
             builder.Property(x => x.SubscriptionUpdateIntervalHours)
-                .IsRequired()
                 .HasDefaultValue(24);
-
-            builder.Property(x => x.Announce)
-                .HasColumnType("jsonb");
 
             builder.HasMany(x => x.Webhooks)
                 .WithOne(x => x.AppSettings)
@@ -254,34 +192,16 @@ public sealed class AppDbContext : DbContext
 
         modelBuilder.Entity<AppWebhookEntity>(builder =>
         {
-            builder.HasKey(x => x.Id);
-
-            builder.Property(x => x.Url)
-                .IsRequired()
-                .HasMaxLength(2048);
-
             builder.Property(x => x.Events)
-                .HasColumnType("numeric(20,0)")
                 .HasConversion(
                     value => (decimal)value,
                     value => (ulong)value);
 
-            builder.Property(x => x.Secret)
-                .HasMaxLength(1024);
-
             builder.Property(x => x.RetryAttempts)
-                .IsRequired()
                 .HasDefaultValue(3);
 
             builder.Property(x => x.RetryIntervalSeconds)
-                .IsRequired()
                 .HasDefaultValue(60);
-
-            builder.Property(x => x.SubscriptionExpirationThresholdHours)
-                .HasColumnType("jsonb");
-
-            builder.Property(x => x.TrafficThresholdPercents)
-                .HasColumnType("jsonb");
         });
     }
 

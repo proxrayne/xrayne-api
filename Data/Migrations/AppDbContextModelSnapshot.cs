@@ -52,9 +52,11 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.AdminAccountEntity", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -260,8 +262,8 @@ namespace Data.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("CertificateFile")
                         .IsRequired()
@@ -281,9 +283,6 @@ namespace Data.Migrations
                     b.Property<DateTime>("ExpireAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("NodeEntityId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("NodeId")
                         .HasColumnType("bigint");
 
@@ -298,8 +297,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AdminId");
-
-                    b.HasIndex("NodeEntityId");
 
                     b.HasIndex("NodeId");
 
@@ -379,8 +376,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -497,8 +494,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<Inbound>("Config")
                         .IsRequired()
@@ -512,8 +509,7 @@ namespace Data.Migrations
                     b.Property<bool>("Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("Enabled");
+                        .HasDefaultValue(true);
 
                     b.Property<DateTimeOffset?>("LastTrafficReset")
                         .HasColumnType("timestamp with time zone");
@@ -549,8 +545,8 @@ namespace Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("ApiKeyFingerprint")
                         .IsRequired()
@@ -662,8 +658,7 @@ namespace Data.Migrations
                     b.Property<bool>("Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("Enabled");
+                        .HasDefaultValue(true);
 
                     b.Property<long>("ImageId")
                         .HasColumnType("bigint");
@@ -678,8 +673,7 @@ namespace Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
-                        .HasDefaultValue("")
-                        .HasColumnName("Note");
+                        .HasDefaultValue("");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -699,8 +693,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<Outbound>("Config")
                         .IsRequired()
@@ -714,8 +708,7 @@ namespace Data.Migrations
                     b.Property<bool>("Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("Enabled");
+                        .HasDefaultValue(true);
 
                     b.Property<long>("NodeId")
                         .HasColumnType("bigint");
@@ -743,8 +736,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<RoutingRule>("Config")
                         .IsRequired()
@@ -787,8 +780,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("ConnectionLimit")
                         .ValueGeneratedOnAdd()
@@ -857,8 +850,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -950,12 +943,8 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data.Entities.NodeEntity", null)
-                        .WithMany("Certificates")
-                        .HasForeignKey("NodeEntityId");
-
                     b.HasOne("Data.Entities.NodeEntity", "Node")
-                        .WithMany()
+                        .WithMany("Certificates")
                         .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

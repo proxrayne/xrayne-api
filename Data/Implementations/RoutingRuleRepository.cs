@@ -17,10 +17,10 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
             .ToListAsync(ct);
     }
 
-    public Task<List<RoutingRuleEntity>> GetAllAsync(Guid adminId, CancellationToken ct = default)
+    public Task<List<RoutingRuleEntity>> GetAllAsync(long adminId, CancellationToken ct = default)
     {
         return RoutingRulesWithRelations
-            .Where(routingRule => EF.Property<Guid>(routingRule, "AdminId") == adminId)
+            .Where(routingRule => routingRule.AdminId == adminId)
             .OrderBy(routingRule => routingRule.Position)
             .ThenBy(routingRule => routingRule.Id)
             .ToListAsync(ct);
@@ -29,7 +29,7 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
     public Task<List<RoutingRuleEntity>> GetByNodeIdAsync(long nodeId, CancellationToken ct = default)
     {
         return RoutingRulesWithRelations
-            .Where(routingRule => EF.Property<long>(routingRule, "NodeId") == nodeId)
+            .Where(routingRule => routingRule.NodeId == nodeId)
             .OrderBy(routingRule => routingRule.Position)
             .ThenBy(routingRule => routingRule.Id)
             .ToListAsync(ct);
@@ -41,11 +41,11 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
             .SingleOrDefaultAsync(routingRule => routingRule.Id == id, ct);
     }
 
-    public Task<RoutingRuleEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    public Task<RoutingRuleEntity?> GetByIdAsync(long adminId, long id, CancellationToken ct = default)
     {
         return RoutingRulesWithRelations
             .SingleOrDefaultAsync(
-                routingRule => routingRule.Id == id && EF.Property<Guid>(routingRule, "AdminId") == adminId,
+                routingRule => routingRule.Id == id && routingRule.AdminId == adminId,
                 ct);
     }
 
@@ -53,7 +53,7 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
     {
         return RoutingRulesWithRelations
             .SingleOrDefaultAsync(
-                routingRule => routingRule.Id == id && EF.Property<long>(routingRule, "NodeId") == nodeId,
+                routingRule => routingRule.Id == id && routingRule.NodeId == nodeId,
                 ct);
     }
 
@@ -63,7 +63,7 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
         CancellationToken ct = default)
     {
         var items = await RoutingRulesWithRelations
-            .Where(routingRule => EF.Property<long>(routingRule, "NodeId") == nodeId)
+            .Where(routingRule => routingRule.NodeId == nodeId)
             .ToListAsync(ct);
 
         return items.SingleOrDefault(rule => string.Equals(rule.RuleTag, ruleTag, StringComparison.Ordinal));
@@ -79,14 +79,14 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
     }
 
     public async Task<RoutingRuleEntity> AddAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         RoutingRuleEntity routingRule,
         CancellationToken ct = default)
     {
         await dbContext.RoutingRules.AddAsync(routingRule, ct);
-        dbContext.Entry(routingRule).Property("AdminId").CurrentValue = adminId;
-        dbContext.Entry(routingRule).Property("NodeId").CurrentValue = nodeId;
+        routingRule.AdminId = adminId;
+        routingRule.NodeId = nodeId;
         await dbContext.SaveChangesAsync(ct);
         await dbContext.Entry(routingRule).ReloadAsync(ct);
 
@@ -108,10 +108,10 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
         return routingRule;
     }
 
-    public async Task<RoutingRuleEntity?> UpdateAsync(Guid adminId, RoutingRuleEntity routingRule, CancellationToken ct = default)
+    public async Task<RoutingRuleEntity?> UpdateAsync(long adminId, RoutingRuleEntity routingRule, CancellationToken ct = default)
     {
         var exists = await dbContext.RoutingRules.AnyAsync(
-            item => item.Id == routingRule.Id && EF.Property<Guid>(item, "AdminId") == adminId,
+            item => item.Id == routingRule.Id && item.AdminId == adminId,
             ct);
         if (!exists)
         {
@@ -126,7 +126,7 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
     }
 
     public async Task<List<RoutingRuleEntity>> SaveChangesAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         IReadOnlyCollection<RoutingRuleEntity> rulesToCreate,
         IReadOnlyCollection<RoutingRuleEntity> rulesToUpdate,
@@ -146,8 +146,8 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
 
         foreach (var rule in rulesToCreate)
         {
-            dbContext.Entry(rule).Property("AdminId").CurrentValue = adminId;
-            dbContext.Entry(rule).Property("NodeId").CurrentValue = nodeId;
+            rule.AdminId = adminId;
+            rule.NodeId = nodeId;
         }
 
         await dbContext.SaveChangesAsync(ct);
@@ -169,7 +169,7 @@ public sealed class RoutingRuleRepository(AppDbContext dbContext) : IRoutingRule
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(long adminId, long id, CancellationToken ct = default)
     {
         var routingRule = await GetByIdAsync(adminId, id, ct);
         if (routingRule is null)

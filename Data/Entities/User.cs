@@ -33,6 +33,7 @@ public sealed class UserEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the traffic limit in bytes.
     /// </summary>
+    [Column(TypeName = "numeric(20,0)")]
     public ulong DataLimit { get; set; }
 
     /// <summary>
@@ -48,11 +49,13 @@ public sealed class UserEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the current user status.
     /// </summary>
+    [Column(TypeName = "user_status")]
     public required UserStatus Status { get; set; }
 
     /// <summary>
     /// Gets or sets the traffic limit reset strategy.
     /// </summary>
+    [Column(TypeName = "limit_reset_strategy")]
     public LimitResetStrategy? LimitResetStrategy { get; set; }
 
     /// <summary>
@@ -76,9 +79,19 @@ public sealed class UserEntity : CreateUpdateEntity
     public List<ConnectionEntity> Connections { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the warehouse identifier that defines this user's available inbounds.
+    /// </summary>
+    public long WarehouseId { get; set; }
+
+    /// <summary>
     /// Gets or sets the warehouse that defines this user's available inbounds.
     /// </summary>
     public WarehouseEntity Warehouse { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the administrator identifier that owns the user.
+    /// </summary>
+    public long AdminId { get; set; }
 
     /// <summary>
     /// Gets or sets the administrator that owns the user.

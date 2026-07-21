@@ -51,7 +51,7 @@ public sealed class NodeGeoResourceService(
 
     /// <inheritdoc />
     public async Task<GeoResourceEntity> CreateFileAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string fileName,
         Stream content,
@@ -69,7 +69,9 @@ public sealed class NodeGeoResourceService(
             LastModifiedAt = DateTimeOffset.UtcNow,
             Status = GeoResourceStatus.Queued,
             StatusMessage = "Queued uploaded file transfer.",
+            NodeId = node.Id,
             Node = node,
+            AdminId = adminId,
             Admin = node.Admin
         }, ct);
 
@@ -80,7 +82,7 @@ public sealed class NodeGeoResourceService(
 
     /// <inheritdoc />
     public async Task<GeoResourceEntity> CreateAutoUpdateAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string fileName,
         string url,
@@ -102,7 +104,9 @@ public sealed class NodeGeoResourceService(
             StatusMessage = "Queued URL download.",
             Url = normalizedUrl,
             UpdateInterval = updateInterval,
+            NodeId = node.Id,
             Node = node,
+            AdminId = adminId,
             Admin = node.Admin
         }, ct);
 
@@ -120,7 +124,7 @@ public sealed class NodeGeoResourceService(
         int? updateInterval,
         CancellationToken ct = default)
     {
-        var resource = await geoResources.GetByIdAsync(node.Id, id, ct);
+        var resource = await geoResources.GetByNodeIdAsync(node.Id, id, ct);
         var nextFileName = StringNormalizer.NormalizeFileName(fileName, MaxFilenameLength);
 
         await EnsureUniqueAsync(node.Id, nextFileName, resource.Id, ct);
@@ -170,7 +174,7 @@ public sealed class NodeGeoResourceService(
         long id,
         CancellationToken cancellationToken = default)
     {
-        var resource = await geoResources.GetByIdAsync(node.Id, id, cancellationToken);
+        var resource = await geoResources.GetByNodeIdAsync(node.Id, id, cancellationToken);
         try
         {
             await CreateClient(node).DeleteGeoResourceAsync(resource.Filename, cancellationToken);
@@ -191,7 +195,7 @@ public sealed class NodeGeoResourceService(
         long id,
         CancellationToken cancellationToken = default)
     {
-        var resource = await geoResources.GetByIdAsync(node.Id, id, cancellationToken);
+        var resource = await geoResources.GetByNodeIdAsync(node.Id, id, cancellationToken);
         if (resource.Status != GeoResourceStatus.Success)
         {
             throw new ValidationException("Geo resource file is not available yet.");
@@ -234,7 +238,9 @@ public sealed class NodeGeoResourceService(
                 SizeBytes = remoteResource.SizeBytes,
                 LastModifiedAt = remoteResource.LastModifiedAt,
                 Status = GeoResourceStatus.Success,
+                NodeId = node.Id,
                 Node = node,
+                AdminId = node.Admin.Id,
                 Admin = node.Admin
             };
 

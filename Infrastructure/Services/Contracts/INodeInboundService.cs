@@ -25,7 +25,7 @@ public interface INodeInboundService
     /// Creates a manually managed inbound for a remote node.
     /// </summary>
     Task<InboundEntity> CreateAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         string config,
         bool enabled,
@@ -59,7 +59,7 @@ public interface INodeInboundService
     /// Synchronizes readonly inbounds from a node config template.
     /// </summary>
     Task SyncReadonlyFromTemplateAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         XrayConfig template,
         CancellationToken cancellationToken = default);

@@ -15,7 +15,7 @@ public interface IRoutingRuleRepository
     /// <summary>
     /// Gets all routing rules owned by an administrator.
     /// </summary>
-    Task<List<RoutingRuleEntity>> GetAllAsync(Guid adminId, CancellationToken cancellationToken = default);
+    Task<List<RoutingRuleEntity>> GetAllAsync(long adminId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets routing rules assigned to a remote node.
@@ -30,7 +30,7 @@ public interface IRoutingRuleRepository
     /// <summary>
     /// Gets an administrator-owned routing rule by id.
     /// </summary>
-    Task<RoutingRuleEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
+    Task<RoutingRuleEntity?> GetByIdAsync(long adminId, long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets one routing rule assigned to a remote node.
@@ -54,7 +54,7 @@ public interface IRoutingRuleRepository
     /// Adds a routing rule assigned to an administrator and remote node.
     /// </summary>
     Task<RoutingRuleEntity> AddAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         RoutingRuleEntity routingRule,
         CancellationToken cancellationToken = default);
@@ -67,13 +67,13 @@ public interface IRoutingRuleRepository
     /// <summary>
     /// Updates an administrator-owned routing rule.
     /// </summary>
-    Task<RoutingRuleEntity?> UpdateAsync(Guid adminId, RoutingRuleEntity routingRule, CancellationToken cancellationToken = default);
+    Task<RoutingRuleEntity?> UpdateAsync(long adminId, RoutingRuleEntity routingRule, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Saves routing rule creations, updates, and deletions in one database operation.
     /// </summary>
     Task<List<RoutingRuleEntity>> SaveChangesAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         IReadOnlyCollection<RoutingRuleEntity> rulesToCreate,
         IReadOnlyCollection<RoutingRuleEntity> rulesToUpdate,
@@ -88,5 +88,5 @@ public interface IRoutingRuleRepository
     /// <summary>
     /// Deletes an administrator-owned routing rule by id.
     /// </summary>
-    Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(long adminId, long id, CancellationToken cancellationToken = default);
 }

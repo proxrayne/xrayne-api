@@ -27,7 +27,7 @@ public sealed class AdminMappingProfileTests
     {
         var admin = new AdminAccountEntity
         {
-            Id = Guid.NewGuid(),
+            Id = 1L,
             Username = "manager",
             Email = "manager@example.com",
             PasswordHash = "hash",

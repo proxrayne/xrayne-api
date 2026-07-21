@@ -17,8 +17,8 @@ using Xray.Config.Models;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260716082057_AddGeoResourceProcessingStatus")]
-    partial class AddGeoResourceProcessingStatus
+    [Migration("20260721181712_SeedOperationSystemsAndApplications")]
+    partial class SeedOperationSystemsAndApplications
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,7 +30,6 @@ namespace Data.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "certificate_mode", new[] { "domain", "ip" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "encryption_method", new[] { "blake3aes128gcm", "blake3aes256gcm", "blake3chacha20poly1305", "aes256gcm", "aes128gcm", "chacha20poly1305", "x_chacha20poly1305", "none" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "geo_resource_source_type", new[] { "static", "auto_update" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "geo_resource_status", new[] { "queued", "updating", "loading", "transferring", "error", "success" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "limit_reset_strategy", new[] { "day", "week", "month", "year" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "ssh_auth_type", new[] { "password", "private_key" });
@@ -39,11 +38,28 @@ namespace Data.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "xtls_flow", new[] { "none", "xtls_rprx_vision", "xtls_rprx_vision_udp443" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Data.Entities.AdminAccount", b =>
+            modelBuilder.Entity("ApplicationOperationSystems", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("ApplicationsId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OperationSystemsId")
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("ApplicationsId", "OperationSystemsId");
+
+                    b.HasIndex("OperationSystemsId");
+
+                    b.ToTable("ApplicationOperationSystems");
+                });
+
+            modelBuilder.Entity("Data.Entities.AdminAccountEntity", b =>
+                {
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -79,6 +95,9 @@ namespace Data.Migrations
                         .HasColumnType("character varying(128)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -189,9 +208,6 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
-
                     b.Property<List<string>>("Assets")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -209,9 +225,8 @@ namespace Data.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Icon")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                    b.Property<long>("ImageId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -234,7 +249,7 @@ namespace Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AdminId");
+                    b.HasIndex("ImageId");
 
                     b.ToTable("Applications");
                 });
@@ -250,8 +265,8 @@ namespace Data.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("CertificateFile")
                         .IsRequired()
@@ -271,9 +286,6 @@ namespace Data.Migrations
                     b.Property<DateTime>("ExpireAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("NodeEntityId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("NodeId")
                         .HasColumnType("bigint");
 
@@ -288,8 +300,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AdminId");
-
-                    b.HasIndex("NodeEntityId");
 
                     b.HasIndex("NodeId");
 
@@ -369,25 +379,18 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<string>("CronTemplate")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
                     b.Property<string>("Filename")
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
-
-                    b.Property<string>("LastError")
-                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("LastErrorAt")
                         .HasColumnType("timestamp with time zone");
@@ -404,11 +407,6 @@ namespace Data.Migrations
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint");
 
-                    b.Property<GeoResourceSourceType>("SourceType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("geo_resource_source_type")
-                        .HasDefaultValueSql("'static'::geo_resource_source_type");
-
                     b.Property<GeoResourceStatus>("Status")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("geo_resource_status")
@@ -416,6 +414,9 @@ namespace Data.Migrations
 
                     b.Property<string>("StatusMessage")
                         .HasColumnType("text");
+
+                    b.Property<int?>("UpdateInterval")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -436,6 +437,58 @@ namespace Data.Migrations
                     b.ToTable("GeoResources");
                 });
 
+            modelBuilder.Entity("Data.Entities.ImageEntity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Alt")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Images", t =>
+                        {
+                            t.HasCheckConstraint("CK_Images_ContentType_Allowed", "\"ContentType\" IN ('image/png', 'image/jpeg', 'image/webp', 'image/gif')");
+
+                            t.HasCheckConstraint("CK_Images_Version_Min", "\"Version\" >= 1");
+                        });
+                });
+
             modelBuilder.Entity("Data.Entities.InboundEntity", b =>
                 {
                     b.Property<long>("Id")
@@ -444,8 +497,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<Inbound>("Config")
                         .IsRequired()
@@ -459,8 +512,7 @@ namespace Data.Migrations
                     b.Property<bool>("Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("Enabled");
+                        .HasDefaultValue(true);
 
                     b.Property<DateTimeOffset?>("LastTrafficReset")
                         .HasColumnType("timestamp with time zone");
@@ -496,8 +548,8 @@ namespace Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("ApiKeyFingerprint")
                         .IsRequired()
@@ -595,6 +647,47 @@ namespace Data.Migrations
                     b.ToTable("Nodes");
                 });
 
+            modelBuilder.Entity("Data.Entities.OperationSystemEntity", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<long>("ImageId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasDefaultValue("");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImageId");
+
+                    b.ToTable("OperationSystems");
+                });
+
             modelBuilder.Entity("Data.Entities.OutboundEntity", b =>
                 {
                     b.Property<long>("Id")
@@ -603,8 +696,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<Outbound>("Config")
                         .IsRequired()
@@ -618,8 +711,7 @@ namespace Data.Migrations
                     b.Property<bool>("Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("Enabled");
+                        .HasDefaultValue(true);
 
                     b.Property<long>("NodeId")
                         .HasColumnType("bigint");
@@ -647,8 +739,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<RoutingRule>("Config")
                         .IsRequired()
@@ -691,8 +783,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("ConnectionLimit")
                         .ValueGeneratedOnAdd()
@@ -761,8 +853,8 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -809,6 +901,21 @@ namespace Data.Migrations
                     b.ToTable("WarehouseInbounds");
                 });
 
+            modelBuilder.Entity("ApplicationOperationSystems", b =>
+                {
+                    b.HasOne("Data.Entities.ApplicationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Data.Entities.OperationSystemEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OperationSystemsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Data.Entities.AppWebhookEntity", b =>
                 {
                     b.HasOne("Data.Entities.AppSettingsEntity", "AppSettings")
@@ -822,29 +929,25 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.ApplicationEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.ImageEntity", "Image")
                         .WithMany()
-                        .HasForeignKey("AdminId")
+                        .HasForeignKey("ImageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Admin");
+                    b.Navigation("Image");
                 });
 
             modelBuilder.Entity("Data.Entities.CertificateEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data.Entities.NodeEntity", null)
-                        .WithMany("Certificates")
-                        .HasForeignKey("NodeEntityId");
-
                     b.HasOne("Data.Entities.NodeEntity", "Node")
-                        .WithMany()
+                        .WithMany("Certificates")
                         .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -874,7 +977,7 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.GeoResourceEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -893,7 +996,7 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.InboundEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -912,7 +1015,7 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.NodeEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -921,9 +1024,20 @@ namespace Data.Migrations
                     b.Navigation("Admin");
                 });
 
+            modelBuilder.Entity("Data.Entities.OperationSystemEntity", b =>
+                {
+                    b.HasOne("Data.Entities.ImageEntity", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Image");
+                });
+
             modelBuilder.Entity("Data.Entities.OutboundEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -942,7 +1056,7 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.RoutingRuleEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -961,7 +1075,7 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.UserEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -980,7 +1094,7 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.WarehouseEntity", b =>
                 {
-                    b.HasOne("Data.Entities.AdminAccount", "Admin")
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
                         .WithMany()
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Cascade)

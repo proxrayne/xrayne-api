@@ -26,7 +26,7 @@ public interface INodeRoutingRuleService
     /// Creates a manually managed routing rule for a remote node.
     /// </summary>
     Task<RoutingRuleEntity> CreateAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         string config,
         bool enabled,
@@ -55,7 +55,7 @@ public interface INodeRoutingRuleService
     /// Saves a full routing rule draft snapshot for a remote node.
     /// </summary>
     Task<List<RoutingRuleEntity>> SaveAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         IReadOnlyCollection<NodeRoutingRuleManualSaveItem> manualRules,
         IReadOnlyCollection<NodeRoutingRuleReadonlySaveItem> readonlyRules,
@@ -78,7 +78,7 @@ public interface INodeRoutingRuleService
     /// Synchronizes readonly routing rules from a node config template.
     /// </summary>
     Task SyncReadonlyFromTemplateAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         XrayConfig template,
         CancellationToken cancellationToken = default);

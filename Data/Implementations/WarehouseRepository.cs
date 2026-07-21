@@ -18,12 +18,12 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
 
     /// <inheritdoc />
     public async Task<OffsetPage<WarehouseEntity>> SearchAsync(
-        Guid adminId,
+        long adminId,
         WarehouseFilter filter,
         CancellationToken cancellationToken = default)
     {
         var query = WarehousesWithRelations
-            .Where(warehouse => EF.Property<Guid>(warehouse, "AdminId") == adminId);
+            .Where(warehouse => warehouse.AdminId == adminId);
 
         query = ApplyFilter(query, filter);
 
@@ -45,25 +45,25 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
 
     /// <inheritdoc />
     public Task<WarehouseEntity?> GetByIdAsync(
-        Guid adminId,
+        long adminId,
         long id,
         CancellationToken cancellationToken = default)
     {
         return WarehousesWithRelations
             .SingleOrDefaultAsync(
-                warehouse => warehouse.Id == id && EF.Property<Guid>(warehouse, "AdminId") == adminId,
+                warehouse => warehouse.Id == id && warehouse.AdminId == adminId,
                 cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<List<InboundEntity>> GetInboundOptionsAsync(
-        Guid adminId,
+        long adminId,
         string? search,
         CancellationToken cancellationToken = default)
     {
         var inbounds = await dbContext.Inbounds
             .Include(inbound => inbound.Node)
-            .Where(inbound => EF.Property<Guid>(inbound, "AdminId") == adminId)
+            .Where(inbound => inbound.AdminId == adminId)
             .ToListAsync(cancellationToken);
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -85,7 +85,7 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
 
     /// <inheritdoc />
     public Task<List<InboundEntity>> GetInboundsByIdsAsync(
-        Guid adminId,
+        long adminId,
         IReadOnlyCollection<long> inboundIds,
         CancellationToken cancellationToken = default)
     {
@@ -98,20 +98,20 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
             .Include(inbound => inbound.Node)
             .Where(inbound =>
                 inboundIds.Contains(inbound.Id)
-                && EF.Property<Guid>(inbound, "AdminId") == adminId)
+                && inbound.AdminId == adminId)
             .ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<WarehouseEntity> AddAsync(
-        Guid adminId,
+        long adminId,
         WarehouseEntity warehouse,
         IReadOnlyCollection<InboundEntity> inbounds,
         CancellationToken cancellationToken = default)
     {
         warehouse.Inbounds = inbounds.ToList();
         await dbContext.Warehouses.AddAsync(warehouse, cancellationToken);
-        dbContext.Entry(warehouse).Property("AdminId").CurrentValue = adminId;
+        warehouse.AdminId = adminId;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return await GetByIdAsync(adminId, warehouse.Id, cancellationToken) ?? warehouse;
@@ -119,7 +119,7 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
 
     /// <inheritdoc />
     public async Task<WarehouseEntity?> UpdateAsync(
-        Guid adminId,
+        long adminId,
         long id,
         WarehouseEntity warehouse,
         IReadOnlyCollection<InboundEntity> inbounds,
@@ -144,7 +144,7 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
     }
 
     /// <inheritdoc />
-    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(long adminId, long id, CancellationToken cancellationToken = default)
     {
         var warehouse = await GetByIdAsync(adminId, id, cancellationToken);
         if (warehouse is null)
@@ -159,12 +159,12 @@ public sealed class WarehouseRepository(AppDbContext dbContext) : IWarehouseRepo
     }
 
     /// <inheritdoc />
-    public Task<bool> HasUsersAsync(Guid adminId, long id, CancellationToken cancellationToken = default)
+    public Task<bool> HasUsersAsync(long adminId, long id, CancellationToken cancellationToken = default)
     {
         return dbContext.Warehouses.AnyAsync(
             warehouse =>
                 warehouse.Id == id
-                && EF.Property<Guid>(warehouse, "AdminId") == adminId
+                && warehouse.AdminId == adminId
                 && warehouse.Users.Any(),
             cancellationToken);
     }

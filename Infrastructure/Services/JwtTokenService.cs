@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Globalization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Contracts.Configurations;
@@ -15,7 +16,7 @@ namespace Infrastructure.Services;
 public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
 {
     public string CreateAccessToken(
-        Guid adminId,
+        long adminId,
         string username,
         AdminPermission permissions,
         int? lifetimeMinutes = null)
@@ -28,9 +29,9 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, adminId.ToString()),
+            new(JwtRegisteredClaimNames.Sub, adminId.ToString(CultureInfo.InvariantCulture)),
             new(JwtRegisteredClaimNames.UniqueName, username),
-            new(ClaimTypes.NameIdentifier, adminId.ToString()),
+            new(ClaimTypes.NameIdentifier, adminId.ToString(CultureInfo.InvariantCulture)),
             new(ClaimTypes.Name, username)
         };
 

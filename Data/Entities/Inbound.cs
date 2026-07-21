@@ -20,7 +20,11 @@ public sealed class InboundEntity : CreateUpdateEntity
     [Column(TypeName = "jsonb")]
     public required Inbound Config { get; set; }
 
+    public long AdminId { get; set; }
+
     public AdminAccountEntity Admin { get; set; } = null!;
+
+    public long NodeId { get; set; }
 
     public NodeEntity Node { get; set; } = null!;
 

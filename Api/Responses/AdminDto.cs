@@ -4,7 +4,7 @@ namespace Api.Responses;
 /// Represents an administrator account.
 /// </summary>
 public sealed record AdminDto(
-    Guid Id,
+    long Id,
     string Username,
     string? Email,
     IReadOnlyCollection<string> Permissions,

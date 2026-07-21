@@ -60,17 +60,29 @@ public sealed class ConnectionEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the XTLS flow for this connection.
     /// </summary>
+    [Column(TypeName = "xtls_flow")]
     public XtlsFlow Flow { get; set; } = XtlsFlow.None;
 
     /// <summary>
     /// Gets or sets the encryption method for this connection.
     /// </summary>
+    [Column(TypeName = "encryption_method")]
     public EncryptionMethod Method { get; set; } = EncryptionMethod.None;
+
+    /// <summary>
+    /// Gets or sets the user identifier that owns this connection.
+    /// </summary>
+    public long UserId { get; set; }
 
     /// <summary>
     /// Gets or sets the user that owns this connection.
     /// </summary>
     public UserEntity User { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the optional application profile identifier.
+    /// </summary>
+    public int? ApplicationId { get; set; }
 
     /// <summary>
     /// Gets or sets the optional application profile associated with this connection.

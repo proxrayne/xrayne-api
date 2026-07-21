@@ -17,7 +17,7 @@ public sealed class NodeCertificateService(
 {
     /// <inheritdoc />
     public async Task<List<CertificateEntity>> GetAllAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         CancellationToken cancellationToken = default)
     {
@@ -28,7 +28,7 @@ public sealed class NodeCertificateService(
 
     /// <inheritdoc />
     public async Task<CertificateEntity> IssueAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         IssueCertificateRequest request,
         CancellationToken cancellationToken = default)
@@ -40,7 +40,7 @@ public sealed class NodeCertificateService(
 
     /// <inheritdoc />
     public async Task<CertificateEntity> UploadAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         UploadCertificateRequest request,
         CancellationToken cancellationToken = default)
@@ -52,7 +52,7 @@ public sealed class NodeCertificateService(
 
     /// <inheritdoc />
     public async Task<CertificateEntity> RenewAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string domain,
         CancellationToken cancellationToken = default)
@@ -66,7 +66,7 @@ public sealed class NodeCertificateService(
 
     /// <inheritdoc />
     public async Task DeleteAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string domain,
         CancellationToken cancellationToken = default)
@@ -85,7 +85,7 @@ public sealed class NodeCertificateService(
     }
 
     private async Task<List<CertificateEntity>> SynchronizeAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         List<CertificateDto> remoteCertificates,
         CancellationToken cancellationToken)
@@ -109,7 +109,7 @@ public sealed class NodeCertificateService(
     }
 
     private async Task<CertificateEntity> UpsertAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         CertificateDto remoteCertificate,
         CancellationToken cancellationToken)
@@ -126,7 +126,9 @@ public sealed class NodeCertificateService(
                 ExpireAt = remoteCertificate.ExpireAt.UtcDateTime,
                 CertificateFile = remoteCertificate.CertificateFile,
                 PrivateKeyFile = remoteCertificate.PrivateKeyFile,
+                NodeId = node.Id,
                 Node = node,
+                AdminId = adminId,
                 Admin = node.Admin
             };
 

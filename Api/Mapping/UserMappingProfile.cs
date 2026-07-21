@@ -26,7 +26,7 @@ public sealed class UserMappingProfile : Profile
                 options => options.MapFrom(user => user.DataLimit))
             .ForCtorParam(
                 nameof(UserListItemDto.WarehouseId),
-                options => options.MapFrom(user => user.Warehouse.Id))
+                options => options.MapFrom(user => user.WarehouseId))
             .ForCtorParam(
                 nameof(UserListItemDto.WarehouseName),
                 options => options.MapFrom(user => user.Warehouse.Name));
@@ -43,7 +43,7 @@ public sealed class UserMappingProfile : Profile
                 options => options.MapFrom(user => user.DataLimit))
             .ForCtorParam(
                 nameof(UserDto.WarehouseId),
-                options => options.MapFrom(user => user.Warehouse.Id))
+                options => options.MapFrom(user => user.WarehouseId))
             .ForCtorParam(
                 nameof(UserDto.WarehouseName),
                 options => options.MapFrom(user => user.Warehouse.Name));

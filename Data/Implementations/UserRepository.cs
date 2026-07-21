@@ -25,10 +25,10 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public Task<List<UserEntity>> GetAllAsync(Guid adminId, CancellationToken ct = default)
+    public Task<List<UserEntity>> GetAllAsync(long adminId, CancellationToken ct = default)
     {
         return UsersWithRelations
-            .Where(user => EF.Property<Guid>(user, "AdminId") == adminId)
+            .Where(user => user.AdminId == adminId)
             .OrderBy(user => user.Username)
             .ToListAsync(ct);
     }
@@ -40,10 +40,10 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public Task<OffsetPage<UserEntity>> SearchAsync(Guid adminId, UserFilter filter, CancellationToken ct = default)
+    public Task<OffsetPage<UserEntity>> SearchAsync(long adminId, UserFilter filter, CancellationToken ct = default)
     {
         var query = UsersWithRelations
-            .Where(user => EF.Property<Guid>(user, "AdminId") == adminId);
+            .Where(user => user.AdminId == adminId);
 
         return SearchCoreAsync(query, filter, ct);
     }
@@ -56,11 +56,11 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public Task<UserEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    public Task<UserEntity?> GetByIdAsync(long adminId, long id, CancellationToken ct = default)
     {
         return UsersWithRelations
             .SingleOrDefaultAsync(
-                user => user.Id == id && EF.Property<Guid>(user, "AdminId") == adminId,
+                user => user.Id == id && user.AdminId == adminId,
                 ct);
     }
 
@@ -72,11 +72,11 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public Task<UserEntity?> GetByUsernameAsync(Guid adminId, string username, CancellationToken ct = default)
+    public Task<UserEntity?> GetByUsernameAsync(long adminId, string username, CancellationToken ct = default)
     {
         return UsersWithRelations
             .SingleOrDefaultAsync(
-                user => user.Username == username && EF.Property<Guid>(user, "AdminId") == adminId,
+                user => user.Username == username && user.AdminId == adminId,
                 ct);
     }
 
@@ -87,11 +87,11 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public Task<bool> ExistsAsync(Guid adminId, string username, CancellationToken ct = default)
+    public Task<bool> ExistsAsync(long adminId, string username, CancellationToken ct = default)
     {
         return dbContext.Users
             .AnyAsync(
-                user => user.Username == username && EF.Property<Guid>(user, "AdminId") == adminId,
+                user => user.Username == username && user.AdminId == adminId,
                 ct);
     }
 
@@ -107,14 +107,15 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
 
     /// <inheritdoc />
     public async Task<UserEntity> AddAsync(
-        Guid adminId,
+        long adminId,
         UserEntity user,
         WarehouseEntity warehouse,
         CancellationToken cancellationToken = default)
     {
         user.Warehouse = warehouse;
+        user.WarehouseId = warehouse.Id;
         await dbContext.Users.AddAsync(user, cancellationToken);
-        dbContext.Entry(user).Property("AdminId").CurrentValue = adminId;
+        user.AdminId = adminId;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return await GetByIdAsync(adminId, user.Id, cancellationToken) ?? user;
@@ -137,10 +138,10 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public async Task<UserEntity?> UpdateAsync(Guid adminId, UserEntity user, CancellationToken ct = default)
+    public async Task<UserEntity?> UpdateAsync(long adminId, UserEntity user, CancellationToken ct = default)
     {
         var exists = await dbContext.Users.AnyAsync(
-            item => item.Id == user.Id && EF.Property<Guid>(item, "AdminId") == adminId,
+            item => item.Id == user.Id && item.AdminId == adminId,
             ct);
         if (!exists)
         {
@@ -156,7 +157,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
 
     /// <inheritdoc />
     public async Task<UserEntity?> UpdateAsync(
-        Guid adminId,
+        long adminId,
         long id,
         UserEntity user,
         WarehouseEntity warehouse,
@@ -176,6 +177,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         existing.ExpireAt = user.ExpireAt;
         existing.OnHoldExpire = user.OnHoldExpire;
         existing.Warehouse = warehouse;
+        existing.WarehouseId = warehouse.Id;
         existing.UpdatedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -199,7 +201,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(long adminId, long id, CancellationToken ct = default)
     {
         var user = await GetByIdAsync(adminId, id, ct);
         if (user is null)

@@ -43,6 +43,7 @@ public sealed class ApplicationEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the subscription format produced for this application.
     /// </summary>
+    [Column(TypeName = "subscription_format")]
     public SubscriptionFormat SubscriptionFormat { get; set; }
 
     /// <summary>

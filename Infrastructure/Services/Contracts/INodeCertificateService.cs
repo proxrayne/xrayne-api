@@ -12,7 +12,7 @@ public interface INodeCertificateService
     /// Lists remote node certificates and synchronizes panel metadata.
     /// </summary>
     Task<List<CertificateEntity>> GetAllAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         CancellationToken cancellationToken = default);
 
@@ -20,7 +20,7 @@ public interface INodeCertificateService
     /// Issues a certificate on the remote node and stores metadata.
     /// </summary>
     Task<CertificateEntity> IssueAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         IssueCertificateRequest request,
         CancellationToken cancellationToken = default);
@@ -29,7 +29,7 @@ public interface INodeCertificateService
     /// Imports certificate files from remote node paths and stores metadata.
     /// </summary>
     Task<CertificateEntity> UploadAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         UploadCertificateRequest request,
         CancellationToken cancellationToken = default);
@@ -38,7 +38,7 @@ public interface INodeCertificateService
     /// Renews a remote certificate and updates metadata.
     /// </summary>
     Task<CertificateEntity> RenewAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string domain,
         CancellationToken cancellationToken = default);
@@ -47,7 +47,7 @@ public interface INodeCertificateService
     /// Deletes remote certificate files and local metadata.
     /// </summary>
     Task DeleteAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string domain,
         CancellationToken cancellationToken = default);

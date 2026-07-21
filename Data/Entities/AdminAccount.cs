@@ -14,7 +14,7 @@ public sealed class AdminAccountEntity : CreateUpdateEntity
     /// Gets or sets the administrator account identifier.
     /// </summary>
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public long Id { get; set; }
 
     /// <summary>
     /// Gets or sets the unique administrator username.
@@ -39,6 +39,7 @@ public sealed class AdminAccountEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the administrator permissions.
     /// </summary>
+    [Column(TypeName = "bigint")]
     public AdminPermission Permissions { get; set; }
 
     /// <summary>

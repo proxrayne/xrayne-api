@@ -33,6 +33,7 @@ public sealed class UserMappingProfileTests
             Status = UserStatus.Active,
             DataLimit = 1024,
             ConnectionLimit = 3,
+            WarehouseId = 7,
             Warehouse = new WarehouseEntity
             {
                 Id = 7,

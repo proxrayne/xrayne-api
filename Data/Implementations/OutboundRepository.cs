@@ -17,10 +17,10 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
             .ToListAsync(ct);
     }
 
-    public Task<List<OutboundEntity>> GetAllAsync(Guid adminId, CancellationToken ct = default)
+    public Task<List<OutboundEntity>> GetAllAsync(long adminId, CancellationToken ct = default)
     {
         return _outboundsWithRelations
-            .Where(outbound => EF.Property<Guid>(outbound, "AdminId") == adminId)
+            .Where(outbound => outbound.AdminId == adminId)
             .OrderBy(outbound => outbound.CreatedAt)
             .ToListAsync(ct);
     }
@@ -28,7 +28,7 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
     public async Task<List<OutboundEntity>> GetByNodeIdAsync(long nodeId, CancellationToken ct = default)
     {
         var items = await _outboundsWithRelations
-            .Where(outbound => EF.Property<long>(outbound, "NodeId") == nodeId)
+            .Where(outbound => outbound.NodeId == nodeId)
             .ToListAsync(ct);
 
         return items
@@ -43,11 +43,11 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
             .SingleOrDefaultAsync(outbound => outbound.Id == id, ct);
     }
 
-    public Task<OutboundEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    public Task<OutboundEntity?> GetByIdAsync(long adminId, long id, CancellationToken ct = default)
     {
         return _outboundsWithRelations
             .SingleOrDefaultAsync(
-                outbound => outbound.Id == id && EF.Property<Guid>(outbound, "AdminId") == adminId,
+                outbound => outbound.Id == id && outbound.AdminId == adminId,
                 ct);
     }
 
@@ -55,14 +55,14 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
     {
         return _outboundsWithRelations
             .SingleOrDefaultAsync(
-                outbound => outbound.Id == id && EF.Property<long>(outbound, "NodeId") == nodeId,
+                outbound => outbound.Id == id && outbound.NodeId == nodeId,
                 ct);
     }
 
     public async Task<OutboundEntity?> GetByNodeAndTagAsync(long nodeId, string tag, CancellationToken ct = default)
     {
         var items = await _outboundsWithRelations
-            .Where(outbound => EF.Property<long>(outbound, "NodeId") == nodeId)
+            .Where(outbound => outbound.NodeId == nodeId)
             .ToListAsync(ct);
 
         return items.SingleOrDefault(outbound => string.Equals(outbound.Tag, tag, StringComparison.Ordinal));
@@ -78,14 +78,14 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
     }
 
     public async Task<OutboundEntity> AddAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         OutboundEntity outbound,
         CancellationToken ct = default)
     {
         await dbContext.Outbounds.AddAsync(outbound, ct);
-        dbContext.Entry(outbound).Property("AdminId").CurrentValue = adminId;
-        dbContext.Entry(outbound).Property("NodeId").CurrentValue = nodeId;
+        outbound.AdminId = adminId;
+        outbound.NodeId = nodeId;
         await dbContext.SaveChangesAsync(ct);
         await dbContext.Entry(outbound).ReloadAsync(ct);
 
@@ -107,10 +107,10 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
         return outbound;
     }
 
-    public async Task<OutboundEntity?> UpdateAsync(Guid adminId, OutboundEntity outbound, CancellationToken ct = default)
+    public async Task<OutboundEntity?> UpdateAsync(long adminId, OutboundEntity outbound, CancellationToken ct = default)
     {
         var exists = await dbContext.Outbounds.AnyAsync(
-            item => item.Id == outbound.Id && EF.Property<Guid>(item, "AdminId") == adminId,
+            item => item.Id == outbound.Id && item.AdminId == adminId,
             ct);
         if (!exists)
         {
@@ -138,7 +138,7 @@ public sealed class OutboundRepository(AppDbContext dbContext) : IOutboundReposi
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid adminId, long id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(long adminId, long id, CancellationToken ct = default)
     {
         var outbound = await GetByIdAsync(adminId, id, ct);
         if (outbound is null)

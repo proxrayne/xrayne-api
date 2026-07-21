@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Globalization;
 using Data.Contracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
@@ -15,7 +16,7 @@ public static class AdminJwtValidation
     public static async Task ValidateActiveAdminAsync(TokenValidatedContext context)
     {
         var value = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (value is null || !Guid.TryParse(value, out var adminId))
+        if (value is null || !long.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var adminId))
         {
             context.Fail("Administrator id is missing from the access token.");
             return;

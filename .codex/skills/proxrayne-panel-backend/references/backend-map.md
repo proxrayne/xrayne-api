@@ -89,7 +89,7 @@ Common entity base classes live in `Data/Entities/BaseEntities.cs`:
 
 `AdminAccount` maps to `admin_accounts`, with:
 
-- `Id` as `Guid`
+- `Id` as database-generated `long`
 - unique `Username`, max length 128
 - `PasswordHash`, max length 512
 - `Permissions`
@@ -122,7 +122,7 @@ Repository pattern:
 - Define repository interfaces under `Data/Contracts`.
 - Implement repository classes under `Data/Implementations`.
 - Use `SingleOrDefaultAsync`, `AnyAsync`, `SaveChangesAsync`, and pass cancellation tokens.
-- Data for admin-owned entities filter by `AdminId`. Current entities expose `Admin` navigation but not explicit `AdminId`, so repository queries use `EF.Property<Guid>(entity, "AdminId")`.
+- Data for admin-owned entities filter by explicit `long AdminId` foreign-key properties.
 - Current repositories registered by `AddData`: `IAdminAccountRepository`, `IUserRepository`, `IInboundRepository`, `IOutboundRepository`, and node-related repositories.
 - `AddAsync` methods return the saved entity after `SaveChangesAsync` and `ReloadAsync`, so database-generated values are available to callers.
 - Shared query/pagination models live in `Contracts/Models`: `CursorQuery`, `CursorPage<T>`, `SortOrder`, plus one filter file per searchable entity such as `UserFilter` and `InboundFilter`. The static cursor helper lives in `Contracts/Utilities/CursorPagination`. Outbound repositories intentionally expose only direct list/CRUD methods, without filtering or cursor pagination.

@@ -21,6 +21,7 @@ public sealed class ImageEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the public image key.
     /// </summary>
+    [Required]
     [MaxLength(128)]
     public required string Key { get; set; }
 
@@ -33,12 +34,14 @@ public sealed class ImageEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the binary image payload.
     /// </summary>
+    [Required]
     [Column(TypeName = "bytea")]
     public required byte[] Content { get; set; }
 
     /// <summary>
     /// Gets or sets the image MIME type.
     /// </summary>
+    [Required]
     [MaxLength(32)]
     public required string ContentType { get; set; }
 

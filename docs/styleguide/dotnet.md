@@ -93,6 +93,11 @@ awkward, update the owning layer rather than bypassing it.
   internal services need unscoped access.
 - Use cursor pagination helpers from `Contracts.Utilities` for searchable
   lists.
+- EF entity classes are the source of truth for simple schema metadata:
+  `[Table]`, `[Key]`, `[Index]`, `[Required]`, `[MaxLength]`, `[Column]`, and
+  explicit foreign key properties. Keep `AppDbContext` Fluent API for defaults,
+  conversions, delete behavior, check constraints, PostgreSQL enum registration,
+  and many-to-many join table names.
 
 ## Errors
 

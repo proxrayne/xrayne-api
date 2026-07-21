@@ -42,7 +42,7 @@ public sealed class NodeOutboundService(
 
     /// <inheritdoc />
     public async Task<OutboundEntity> CreateAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         string config,
         bool enabled,
@@ -173,7 +173,7 @@ public sealed class NodeOutboundService(
 
     /// <inheritdoc />
     public async Task SyncReadonlyFromTemplateAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         XrayConfig template,
         CancellationToken cancellationToken = default)

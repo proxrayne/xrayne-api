@@ -21,10 +21,10 @@ public sealed class InboundRepository(AppDbContext context) : IInboundRepository
             .ToListAsync(ct);
     }
 
-    public Task<List<InboundEntity>> GetAllAsync(Guid adminId, CancellationToken ct = default)
+    public Task<List<InboundEntity>> GetAllAsync(long adminId, CancellationToken ct = default)
     {
         return _inboundsWithRelations
-            .Where(inbound => EF.Property<Guid>(inbound, "AdminId") == adminId)
+            .Where(inbound => inbound.AdminId == adminId)
             .OrderBy(inbound => inbound.CreatedAt)
             .ToListAsync(ct);
     }
@@ -32,7 +32,7 @@ public sealed class InboundRepository(AppDbContext context) : IInboundRepository
     public async Task<List<InboundEntity>> GetByNodeIdAsync(long nodeId, CancellationToken ct = default)
     {
         var items = await _inboundsWithRelations
-            .Where(inbound => EF.Property<long>(inbound, "NodeId") == nodeId)
+            .Where(inbound => inbound.NodeId == nodeId)
             .ToListAsync(ct);
 
         return items
@@ -46,10 +46,10 @@ public sealed class InboundRepository(AppDbContext context) : IInboundRepository
         return SearchCoreAsync(_inboundsWithRelations, filter, ct);
     }
 
-    public Task<CursorPage<InboundEntity>> SearchAsync(Guid adminId, InboundFilter filter, CancellationToken ct = default)
+    public Task<CursorPage<InboundEntity>> SearchAsync(long adminId, InboundFilter filter, CancellationToken ct = default)
     {
         var query = _inboundsWithRelations
-            .Where(inbound => EF.Property<Guid>(inbound, "AdminId") == adminId);
+            .Where(inbound => inbound.AdminId == adminId);
 
         return SearchCoreAsync(query, filter, ct);
     }
@@ -67,11 +67,11 @@ public sealed class InboundRepository(AppDbContext context) : IInboundRepository
         return RequireEntity(inbound, id);
     }
 
-    public Task<InboundEntity?> GetByIdAsync(Guid adminId, long id, CancellationToken ct = default)
+    public Task<InboundEntity?> GetByIdAsync(long adminId, long id, CancellationToken ct = default)
     {
         return _inboundsWithRelations
             .SingleOrDefaultAsync(
-                inbound => inbound.Id == id && EF.Property<Guid>(inbound, "AdminId") == adminId,
+                inbound => inbound.Id == id && inbound.AdminId == adminId,
                 ct);
     }
 
@@ -79,14 +79,14 @@ public sealed class InboundRepository(AppDbContext context) : IInboundRepository
     {
         return _inboundsWithRelations
             .SingleOrDefaultAsync(
-                inbound => inbound.Id == id && EF.Property<long>(inbound, "NodeId") == nodeId,
+                inbound => inbound.Id == id && inbound.NodeId == nodeId,
                 ct);
     }
 
     public async Task<InboundEntity?> GetByNodeAndTagAsync(long nodeId, string tag, CancellationToken ct = default)
     {
         var items = await _inboundsWithRelations
-            .Where(inbound => EF.Property<long>(inbound, "NodeId") == nodeId)
+            .Where(inbound => inbound.NodeId == nodeId)
             .ToListAsync(ct);
 
         return items.SingleOrDefault(inbound => string.Equals(inbound.Tag, tag, StringComparison.Ordinal));
@@ -102,14 +102,14 @@ public sealed class InboundRepository(AppDbContext context) : IInboundRepository
     }
 
     public async Task<InboundEntity> AddAsync(
-        Guid adminId,
+        long adminId,
         long nodeId,
         InboundEntity inbound,
         CancellationToken ct = default)
     {
         await context.Inbounds.AddAsync(inbound, ct);
-        context.Entry(inbound).Property("AdminId").CurrentValue = adminId;
-        context.Entry(inbound).Property("NodeId").CurrentValue = nodeId;
+        inbound.AdminId = adminId;
+        inbound.NodeId = nodeId;
         await context.SaveChangesAsync(ct);
         await context.Entry(inbound).ReloadAsync(ct);
 
@@ -131,10 +131,10 @@ public sealed class InboundRepository(AppDbContext context) : IInboundRepository
         return inbound;
     }
 
-    public async Task<InboundEntity?> UpdateAsync(Guid adminId, InboundEntity inbound, CancellationToken ct = default)
+    public async Task<InboundEntity?> UpdateAsync(long adminId, InboundEntity inbound, CancellationToken ct = default)
     {
         var exists = await context.Inbounds.AnyAsync(
-            item => item.Id == inbound.Id && EF.Property<Guid>(item, "AdminId") == adminId,
+            item => item.Id == inbound.Id && item.AdminId == adminId,
             ct);
         if (!exists)
         {

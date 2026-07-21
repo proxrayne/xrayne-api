@@ -10,6 +10,7 @@ namespace Data.Entities;
 /// </summary>
 [Table("GeoResources")]
 [Index(nameof(NextRunAt))]
+[Index(nameof(NodeId), nameof(Filename), IsUnique = true)]
 public class GeoResourceEntity : CreateUpdateEntity
 {
     /// <summary>
@@ -37,6 +38,7 @@ public class GeoResourceEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the latest processing status for upload or update work.
     /// </summary>
+    [Column(TypeName = "geo_resource_status")]
     public GeoResourceStatus Status { get; set; } = GeoResourceStatus.Success;
 
     /// <summary>
@@ -72,9 +74,19 @@ public class GeoResourceEntity : CreateUpdateEntity
     public DateTimeOffset? LastErrorAt { get; set; }
 
     /// <summary>
+    /// Gets or sets the remote node identifier that owns the geo resource.
+    /// </summary>
+    public long NodeId { get; set; }
+
+    /// <summary>
     /// Gets or sets the remote node that owns the geo resource.
     /// </summary>
     public NodeEntity Node { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the administrator identifier that owns the geo resource.
+    /// </summary>
+    public long AdminId { get; set; }
 
     /// <summary>
     /// Gets or sets the administrator that owns the geo resource.

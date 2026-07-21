@@ -56,13 +56,13 @@ public sealed class AdminsController(
     /// <summary>
     /// Gets one administrator account by id.
     /// </summary>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id:long}")]
     [EndpointSummary("Get administrator account")]
     [EndpointDescription("Get one active administrator account for editing.")]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<AdminDto> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<AdminDto> GetById(long id, CancellationToken cancellationToken)
     {
         var caller = await GetCurrentAdminAsync(cancellationToken);
         var account = await adminAccounts.GetActiveByIdAsync(id, cancellationToken);
@@ -119,7 +119,7 @@ public sealed class AdminsController(
     /// <summary>
     /// Partially updates an administrator account.
     /// </summary>
-    [HttpPatch("{id:guid}")]
+    [HttpPatch("{id:long}")]
     [EndpointSummary("Patch administrator account")]
     [EndpointDescription("Partially update an administrator account using only fields present in the request body.")]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
@@ -128,7 +128,7 @@ public sealed class AdminsController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<AdminDto> Patch(
-        [FromRoute] Guid id,
+        [FromRoute] long id,
         [FromBody] PatchAdminRequest request,
         CancellationToken cancellationToken)
     {
@@ -179,7 +179,7 @@ public sealed class AdminsController(
     /// <summary>
     /// Changes an administrator password.
     /// </summary>
-    [HttpPut("{id:guid}/password")]
+    [HttpPut("{id:long}/password")]
     [EndpointSummary("Change administrator password")]
     [EndpointDescription("Changes the password for an existing administrator account. Super administrators do not need old-password confirmation.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -187,7 +187,7 @@ public sealed class AdminsController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangePassword(
-        [FromRoute] Guid id,
+        [FromRoute] long id,
         [FromBody] ChangeAdminPasswordRequest request,
         CancellationToken cancellationToken)
     {
@@ -221,14 +221,14 @@ public sealed class AdminsController(
     /// <summary>
     /// Replaces administrator permissions.
     /// </summary>
-    [HttpPut("{id:guid}/permissions")]
+    [HttpPut("{id:long}/permissions")]
     [EndpointSummary("Change administrator permissions")]
     [EndpointDescription("Replaces the administrator permission set with a comma-separated permission list.")]
     [ProducesResponseType(typeof(AdminDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangePermissions(
-        [FromRoute] Guid id,
+        [FromRoute] long id,
         [FromBody] ChangeAdminPermissionsRequest request,
         CancellationToken cancellationToken)
     {
@@ -248,7 +248,7 @@ public sealed class AdminsController(
     /// <summary>
     /// Soft deletes an administrator account.
     /// </summary>
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id:long}")]
     [EndpointSummary("Delete administrator account")]
     [EndpointDescription("Soft deletes an administrator account.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -256,7 +256,7 @@ public sealed class AdminsController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
-        [FromRoute] Guid id,
+        [FromRoute] long id,
         CancellationToken cancellationToken)
     {
         if (id == AdminId)

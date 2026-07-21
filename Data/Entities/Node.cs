@@ -88,6 +88,7 @@ public class NodeEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the certificate mode, such as domain or IP.
     /// </summary>
+    [Column(TypeName = "certificate_mode")]
     public CertificateMode CertificateMode { get; set; } = CertificateMode.Domain;
 
     /// <summary>
@@ -118,6 +119,7 @@ public class NodeEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the SSH authentication method used for provisioning.
     /// </summary>
+    [Column(TypeName = "ssh_auth_type")]
     public SSHAuthType AuthType { get; set; } = SSHAuthType.Password;
 
     /// <summary>
@@ -130,6 +132,11 @@ public class NodeEntity : CreateUpdateEntity
     /// </summary>
     [MaxLength(1024)]
     public string InstallationMessage { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the administrator identifier that owns the node.
+    /// </summary>
+    public long AdminId { get; set; }
 
     /// <summary>
     /// Gets or sets the administrator that created the node.

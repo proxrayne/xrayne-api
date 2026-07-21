@@ -20,22 +20,22 @@ public interface IAdminAccountRepository
     /// <summary>
     /// Gets an administrator account by identifier, including soft-deleted accounts or null.
     /// </summary>
-    Task<AdminAccountEntity?> GetByIdOrDefaultAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<AdminAccountEntity?> GetByIdOrDefaultAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an administrator account by identifier, including soft-deleted accounts.
     /// </summary>
-    Task<AdminAccountEntity> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<AdminAccountEntity> GetByIdAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an active administrator account by identifier or null.
     /// </summary>
-    Task<AdminAccountEntity?> GetActiveByIdOrDefaultAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<AdminAccountEntity?> GetActiveByIdOrDefaultAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an active administrator account by identifier .
     /// </summary>
-    Task<AdminAccountEntity> GetActiveByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<AdminAccountEntity> GetActiveByIdAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an administrator account by username, including soft-deleted accounts.
@@ -62,7 +62,7 @@ public interface IAdminAccountRepository
     /// </summary>
     Task<bool> ExistsAsync(
         string username,
-        Guid exceptId,
+        long exceptId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -75,7 +75,7 @@ public interface IAdminAccountRepository
     /// </summary>
     Task<bool> EmailExistsAsync(
         string email,
-        Guid exceptId,
+        long exceptId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -86,28 +86,28 @@ public interface IAdminAccountRepository
     /// <summary>
     /// Updates the last successful login timestamp for an active administrator account.
     /// </summary>
-    Task<AdminAccountEntity?> SetLastLoginAsync(Guid id, DateTimeOffset lastLoginAt, CancellationToken cancellationToken = default);
+    Task<AdminAccountEntity?> SetLastLoginAsync(long id, DateTimeOffset lastLoginAt, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Changes the password hash for an active administrator account.
     /// </summary>
-    Task<AdminAccountEntity> ChangePasswordAsync(Guid id, string passwordHash, CancellationToken cancellationToken = default);
+    Task<AdminAccountEntity> ChangePasswordAsync(long id, string passwordHash, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Patch updates an active administrator account using only specified fields.
     /// </summary>
     Task<AdminAccountEntity> UpdateAsync(
-        Guid id,
+        long id,
         AdminAccountPatch account,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Changes the permissions for an active administrator account.
     /// </summary>
-    Task<AdminAccountEntity> ChangePermissionsAsync(Guid id, AdminPermission permissions, CancellationToken cancellationToken = default);
+    Task<AdminAccountEntity> ChangePermissionsAsync(long id, AdminPermission permissions, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Soft deletes an active administrator account.
     /// </summary>
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task DeleteAsync(long id, CancellationToken cancellationToken = default);
 }

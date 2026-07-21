@@ -18,7 +18,7 @@ public interface INodeGeoResourceService
     /// Creates a static geo resource from uploaded file content.
     /// </summary>
     Task<GeoResourceEntity> CreateFileAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string fileName,
         Stream content,
@@ -28,7 +28,7 @@ public interface INodeGeoResourceService
     /// Creates an auto-updated geo resource from a remote URL.
     /// </summary>
     Task<GeoResourceEntity> CreateAutoUpdateAsync(
-        Guid adminId,
+        long adminId,
         NodeEntity node,
         string fileName,
         string url,

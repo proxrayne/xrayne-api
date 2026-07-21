@@ -44,9 +44,19 @@ public class CertificateEntity : CreateUpdateEntity
     public DateTime ExpireAt { get; set; }
 
     /// <summary>
+    /// Gets or sets the remote node identifier that owns the certificate files.
+    /// </summary>
+    public long NodeId { get; set; }
+
+    /// <summary>
     /// Gets or sets the remote node that owns the certificate files.
     /// </summary>
     public NodeEntity Node { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the administrator identifier that owns the certificate metadata.
+    /// </summary>
+    public long AdminId { get; set; }
 
     /// <summary>
     /// Gets or sets the administrator that owns the certificate metadata.

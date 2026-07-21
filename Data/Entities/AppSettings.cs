@@ -19,11 +19,13 @@ public sealed class AppSettingsEntity : CreateUpdateEntity
     /// Gets or sets the fixed singleton row identifier.
     /// </summary>
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; } = SingletonId;
 
     /// <summary>
     /// Gets or sets the subscription profile title.
     /// </summary>
+    [Required]
     [MaxLength(256)]
     public string SubscriptionProfileTitle { get; set; } = "XRayne";
 
