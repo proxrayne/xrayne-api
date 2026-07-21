@@ -7,6 +7,7 @@ namespace Data.Entities;
 
 [Table("Admins")]
 [Index(nameof(Username), IsUnique = true)]
+[Index(nameof(Email), IsUnique = true)]
 public sealed class AdminAccountEntity : CreateUpdateEntity
 {
     /// <summary>

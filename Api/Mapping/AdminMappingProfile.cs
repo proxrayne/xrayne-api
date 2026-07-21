@@ -6,8 +6,14 @@ using Data.Entities;
 
 namespace Api.Mapping;
 
+/// <summary>
+/// Maps administrator and GitHub API models.
+/// </summary>
 public sealed class AdminMappingProfile : Profile
 {
+    /// <summary>
+    /// Creates administrator and GitHub mapping rules.
+    /// </summary>
     public AdminMappingProfile()
     {
         MapAdmin();

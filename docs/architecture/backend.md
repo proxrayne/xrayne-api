@@ -182,6 +182,13 @@ assigned inbounds. Deletion is blocked while users are assigned to the
 warehouse. The warehouse API requires the `manage_warehouses` administrator
 permission, which is also satisfied by `super_admin`.
 
+Administrator accounts are managed through `/api/admin`. Active administrator
+lists support username/email search and offset pagination with a default page
+size of ten. Create, patch, password-change, permissions, and delete operations
+require `manage_admins`, which is also satisfied by `super_admin`. Additional
+guards prevent non-super administrators from assigning, editing, changing
+passwords for, or deleting `super_admin` accounts.
+
 Subscription users are managed through `/api/users`. User lists support
 username search, multi-status filtering, offset pagination, newest-first default
 sorting by creation date, and explicit sorting by username, status, configured
