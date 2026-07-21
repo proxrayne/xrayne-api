@@ -182,6 +182,14 @@ assigned inbounds. Deletion is blocked while users are assigned to the
 warehouse. The warehouse API requires the `manage_warehouses` administrator
 permission, which is also satisfied by `super_admin`.
 
+Subscription hosts are managed through `/api/hosts`. Hosts belong to the current
+administrator, reference one managed inbound, and are returned as one complete
+ordered list for drag-and-drop position management. Partial updates use Optional
+fields through `PATCH /api/hosts/{id}`, including enabled-state toggles.
+Reordering uses `PUT /api/hosts/order` with the full host id order. Host
+management requires the `change_xray_settings` administrator permission, which
+is also satisfied by `super_admin`.
+
 Administrator accounts are managed through `/api/admin`. Active administrator
 lists support username/email search and offset pagination with a default page
 size of ten. Create, patch, password-change, permissions, and delete operations

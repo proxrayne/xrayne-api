@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IRoutingRuleRepository, RoutingRuleRepository>();
         services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
         services.AddScoped<IWarehouseRepository, WarehouseRepository>();
+        services.AddScoped<IHostRepository, HostRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
         services.AddScoped<IOperationSystemRepository, OperationSystemRepository>();
         services.AddScoped<IImageRepository, ImageRepository>();
