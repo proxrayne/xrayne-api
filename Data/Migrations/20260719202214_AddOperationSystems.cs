@@ -24,16 +24,11 @@ namespace Data.Migrations
                 name: "AdminId",
                 table: "Applications");
 
-            migrationBuilder.DropColumn(
-                name: "Icon",
-                table: "Applications");
-
             migrationBuilder.AddColumn<long>(
                 name: "ImageId",
                 table: "Applications",
                 type: "bigint",
-                nullable: false,
-                defaultValue: 0L);
+                nullable: true);
 
             migrationBuilder.AddColumn<string>(
                 name: "OperationSystemId",
@@ -57,6 +52,40 @@ namespace Data.Migrations
                     table.PrimaryKey("PK_Images", x => x.Id);
                 });
 
+            migrationBuilder.Sql("""
+                CREATE TEMP TABLE "__ApplicationImageBackfill" AS
+                SELECT
+                    app."Id" AS "ApplicationId",
+                    nextval(pg_get_serial_sequence('"Images"', 'Id'))::bigint AS "ImageId",
+                    left(app."Name", 64) AS "Alt",
+                    COALESCE(NULLIF(app."Icon", ''), '<image blob>') AS "Content"
+                FROM "Applications" AS app;
+
+                INSERT INTO "Images" ("Id", "Alt", "Content")
+                SELECT "ImageId", "Alt", "Content"
+                FROM "__ApplicationImageBackfill";
+
+                UPDATE "Applications" AS app
+                SET "ImageId" = image_backfill."ImageId"
+                FROM "__ApplicationImageBackfill" AS image_backfill
+                WHERE app."Id" = image_backfill."ApplicationId";
+
+                DROP TABLE "__ApplicationImageBackfill";
+                """);
+
+            migrationBuilder.DropColumn(
+                name: "Icon",
+                table: "Applications");
+
+            migrationBuilder.AlterColumn<long>(
+                name: "ImageId",
+                table: "Applications",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint",
+                oldNullable: true);
+
             migrationBuilder.CreateTable(
                 name: "OperationSystems",
                 columns: table => new
@@ -64,7 +93,6 @@ namespace Data.Migrations
                     Id = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     Name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Note = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false, defaultValue: ""),
-                    Icon = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     ImageId = table.Column<long>(type: "bigint", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
@@ -107,28 +135,28 @@ namespace Data.Migrations
                     VALUES ('Linux', 'data:image/png;base64,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')
                     RETURNING "Id"
                 )
-                INSERT INTO "OperationSystems" ("Id", "Name", "Note", "Icon", "Enabled", "ImageId")
-                SELECT 'android', 'Android', '', 'android', true, "Id"
+                INSERT INTO "OperationSystems" ("Id", "Name", "Note", "Enabled", "ImageId")
+                SELECT 'android', 'Android', '', true, "Id"
                 FROM android_image
 
                 UNION ALL
 
-                SELECT 'windows', 'Windows', '', 'windows', true, "Id"
+                SELECT 'windows', 'Windows', '', true, "Id"
                 FROM windows_image
 
                 UNION ALL
 
-                SELECT 'ios', 'iOS', '', 'ios', true, "Id"
+                SELECT 'ios', 'iOS', '', true, "Id"
                 FROM ios_image
 
                 UNION ALL
 
-                SELECT 'macos', 'macOS', '', 'macos', true, "Id"
+                SELECT 'macos', 'macOS', '', true, "Id"
                 FROM macos_image
 
                 UNION ALL
 
-                SELECT 'linux', 'Linux', '', 'linux', true, "Id"
+                SELECT 'linux', 'Linux', '', true, "Id"
                 FROM linux_image;
                 """);
 
@@ -177,6 +205,20 @@ namespace Data.Migrations
             migrationBuilder.DropTable(
                 name: "OperationSystems");
 
+            migrationBuilder.AddColumn<string>(
+                name: "Icon",
+                table: "Applications",
+                type: "character varying(256)",
+                maxLength: 256,
+                nullable: true);
+
+            migrationBuilder.Sql("""
+                UPDATE "Applications" AS app
+                SET "Icon" = images."Content"
+                FROM "Images" AS images
+                WHERE app."ImageId" = images."Id";
+                """);
+
             migrationBuilder.DropTable(
                 name: "Images");
 
@@ -202,13 +244,6 @@ namespace Data.Migrations
                 type: "uuid",
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
-
-            migrationBuilder.AddColumn<string>(
-                name: "Icon",
-                table: "Applications",
-                type: "character varying(256)",
-                maxLength: 256,
-                nullable: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Applications_AdminId",

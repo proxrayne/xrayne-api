@@ -14,6 +14,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.*" />
     <PackageReference Include="Octokit" Version="14.0.0" />
+    <PackageReference Include="OptionalValues" Version="0.10.1" />
+    <PackageReference Include="OptionalValues.DataAnnotations" Version="0.10.1" />
+    <PackageReference Include="OptionalValues.Mvc" Version="0.10.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>

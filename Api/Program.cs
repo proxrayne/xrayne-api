@@ -13,9 +13,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Quartz;
 using Node;
 using Node.Configurations;
+using OptionalValues;
+using OptionalValues.Mvc;
+using Quartz;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -59,6 +61,10 @@ try
     {
         options.Filters.Add<ApiExceptionFilter>();
         options.ModelBinderProviders.Insert(0, new JsonStringEnumMemberNameModelBinderProvider());
+        options.AddOptionalValueSupport();
+    }).AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.AddOptionalValueSupport();
     });
     builder.Services.AddAutoMapper(_ => { }, typeof(Program).Assembly);
 

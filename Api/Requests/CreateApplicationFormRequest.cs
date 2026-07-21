@@ -1,26 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Contracts.Enums;
 
-namespace Data.Entities;
+namespace Api.Requests;
 
 /// <summary>
-/// Stores a client application profile used by user connections.
+/// Defines multipart form data required to create a client application profile.
 /// </summary>
-[Table("Applications")]
-public sealed class ApplicationEntity : CreateUpdateEntity
+public sealed class CreateApplicationFormRequest
 {
-    /// <summary>
-    /// Gets or sets the application identifier.
-    /// </summary>
-    [Key]
-    public int Id { get; set; }
-
     /// <summary>
     /// Gets or sets the application display name.
     /// </summary>
+    [Required]
     [MaxLength(64)]
-    public required string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the optional application website URL.
@@ -37,8 +30,9 @@ public sealed class ApplicationEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the pattern used to detect this application.
     /// </summary>
+    [Required]
     [MaxLength(128)]
-    public required string DetectPattern { get; set; }
+    public string DetectPattern { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the subscription format produced for this application.
@@ -46,33 +40,29 @@ public sealed class ApplicationEntity : CreateUpdateEntity
     public SubscriptionFormat SubscriptionFormat { get; set; }
 
     /// <summary>
-    /// Gets or sets whether the application is available for use.
+    /// Gets or sets whether the application is enabled.
     /// </summary>
     public bool Enabled { get; set; } = true;
 
     /// <summary>
     /// Gets or sets application asset references.
     /// </summary>
-    [Column(TypeName = "jsonb")]
     public List<string> Assets { get; set; } = [];
 
     /// <summary>
-    /// Gets or sets connections that use this application profile.
+    /// Gets or sets linked operating system identifiers.
     /// </summary>
-    public List<ConnectionEntity> Connections { get; set; } = [];
+    public List<string> OperationSystemIds { get; set; } = [];
 
     /// <summary>
-    /// Gets or sets the linked image identifier.
+    /// Gets or sets optional image alternate text.
     /// </summary>
-    public long ImageId { get; set; }
+    [MaxLength(64)]
+    public string? ImageAlt { get; set; }
 
     /// <summary>
-    /// Gets or sets the linked image.
+    /// Gets or sets the uploaded image file.
     /// </summary>
-    public ImageEntity Image { get; set; } = null!;
-
-    /// <summary>
-    /// Gets or sets operating systems supported by this application.
-    /// </summary>
-    public ICollection<OperationSystemEntity> OperationSystems { get; set; } = [];
+    [Required]
+    public required IFormFile ImageFile { get; set; }
 }

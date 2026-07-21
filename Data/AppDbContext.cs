@@ -108,6 +108,35 @@ public sealed class AppDbContext : DbContext
 
             builder.Property(x => x.SubscriptionFormat)
                 .HasColumnType("subscription_format");
+
+            builder.HasOne(x => x.Image)
+                .WithMany()
+                .HasForeignKey(x => x.ImageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(x => x.OperationSystems)
+                .WithMany(x => x.Applications)
+                .UsingEntity("ApplicationOperationSystems");
+        });
+
+        modelBuilder.Entity<ImageEntity>(builder =>
+        {
+            builder.ToTable(table =>
+            {
+                table.HasCheckConstraint("CK_Images_Version_Min", "\"Version\" >= 1");
+                table.HasCheckConstraint("CK_Images_ContentType_Allowed", "\"ContentType\" IN ('image/png', 'image/jpeg', 'image/webp', 'image/gif')");
+            });
+
+            builder.Property(x => x.Key)
+                .HasMaxLength(128)
+                .IsRequired();
+
+            builder.Property(x => x.ContentType)
+                .HasMaxLength(32)
+                .IsRequired();
+
+            builder.Property(x => x.Version)
+                .HasDefaultValue(1L);
         });
 
         modelBuilder.Entity<ConnectionEntity>(builder =>
@@ -150,6 +179,11 @@ public sealed class AppDbContext : DbContext
             builder.Property(x => x.Note)
                 .HasColumnName("Note")
                 .HasDefaultValue("");
+
+            builder.HasOne(x => x.Image)
+                .WithMany()
+                .HasForeignKey(x => x.ImageId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<UserEntity>(builder =>

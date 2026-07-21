@@ -17,8 +17,8 @@ using Xray.Config.Models;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260719202214_AddOperationSystems")]
-    partial class AddOperationSystems
+    [Migration("20260720204440_AddVersionedImages")]
+    partial class AddVersionedImages
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,6 +37,21 @@ namespace Data.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_status", new[] { "active", "expired", "limited", "on_hold", "disabled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "xtls_flow", new[] { "none", "xtls_rprx_vision", "xtls_rprx_vision_udp443" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("ApplicationOperationSystems", b =>
+                {
+                    b.Property<int>("ApplicationsId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OperationSystemsId")
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("ApplicationsId", "OperationSystemsId");
+
+                    b.HasIndex("OperationSystemsId");
+
+                    b.ToTable("ApplicationOperationSystems");
+                });
 
             modelBuilder.Entity("Data.Entities.AdminAccountEntity", b =>
                 {
@@ -213,9 +228,6 @@ namespace Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("OperationSystemId")
-                        .HasColumnType("character varying(32)");
-
                     b.Property<string>("Protocol")
                         .HasMaxLength(24)
                         .HasColumnType("character varying(24)");
@@ -233,8 +245,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ImageId");
-
-                    b.HasIndex("OperationSystemId");
 
                     b.ToTable("Applications");
                 });
@@ -439,21 +449,45 @@ namespace Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("Content")
+                    b.Property<byte[]>("Content")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long>("Version")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
                     b.HasKey("Id");
 
-                    b.ToTable("Images");
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Images", t =>
+                        {
+                            t.HasCheckConstraint("CK_Images_ContentType_Allowed", "\"ContentType\" IN ('image/png', 'image/jpeg', 'image/webp', 'image/gif')");
+
+                            t.HasCheckConstraint("CK_Images_Version_Min", "\"Version\" >= 1");
+                        });
+
                 });
 
             modelBuilder.Entity("Data.Entities.InboundEntity", b =>
@@ -872,6 +906,21 @@ namespace Data.Migrations
                     b.ToTable("WarehouseInbounds");
                 });
 
+            modelBuilder.Entity("ApplicationOperationSystems", b =>
+                {
+                    b.HasOne("Data.Entities.ApplicationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Data.Entities.OperationSystemEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OperationSystemsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Data.Entities.AppWebhookEntity", b =>
                 {
                     b.HasOne("Data.Entities.AppSettingsEntity", "AppSettings")
@@ -891,13 +940,7 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data.Entities.OperationSystemEntity", "OperationSystem")
-                        .WithMany("Applications")
-                        .HasForeignKey("OperationSystemId");
-
                     b.Navigation("Image");
-
-                    b.Navigation("OperationSystem");
                 });
 
             modelBuilder.Entity("Data.Entities.CertificateEntity", b =>
@@ -1105,11 +1148,6 @@ namespace Data.Migrations
                     b.Navigation("Outbounds");
 
                     b.Navigation("RoutingRules");
-                });
-
-            modelBuilder.Entity("Data.Entities.OperationSystemEntity", b =>
-                {
-                    b.Navigation("Applications");
                 });
 
             modelBuilder.Entity("Data.Entities.UserEntity", b =>

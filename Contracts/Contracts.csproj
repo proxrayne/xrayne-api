@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="OptionalValues" Version="0.10.1" />
     <PackageReference Include="Xray.Sdk" Version="0.0.13-beta" />
   </ItemGroup>
 
