@@ -1,9 +1,12 @@
+using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using Microsoft.Extensions.Options;
 using Node.Configurations;
 using Node.Grpc;
 using Node.Models;
+using Node.Values;
 using Proto = XRayne.ProtoTypes.RemoteNode.V1;
 
 namespace Node.Services;
@@ -42,11 +45,23 @@ public sealed class NodeGeoResourceClient : NodeGrpcClientBase, INodeGeoResource
         string fileName,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteUnaryAsync(
-            "DownloadGeoResource",
-            callOptions => client.DownloadAsync(new Proto.GeoResourceNameRequest { FileName = fileName }, callOptions),
-            response => new GeoResourceContent(response.FileName, response.Content.ToByteArray()),
-            cancellationToken);
+        return Task.FromResult(new GeoResourceContent(
+            fileName,
+            ReadGeoResourceDownloadChunksAsync(fileName, cancellationToken)));
+    }
+
+    private async IAsyncEnumerable<byte[]> ReadGeoResourceDownloadChunksAsync(
+        string fileName,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        using var call = client.Download(
+            new Proto.GeoResourceNameRequest { FileName = fileName },
+            CreateStreamingCallOptions(cancellationToken));
+
+        while (await MoveNextStreamMessageAsync("DownloadGeoResource", call.ResponseStream, cancellationToken))
+        {
+            yield return call.ResponseStream.Current.Content.ToByteArray();
+        }
     }
 
     /// <inheritdoc />
@@ -55,20 +70,35 @@ public sealed class NodeGeoResourceClient : NodeGrpcClientBase, INodeGeoResource
         Stream content,
         CancellationToken cancellationToken = default)
     {
-        using var memory = new MemoryStream();
-        await content.CopyToAsync(memory, cancellationToken);
-
-        return await ExecuteUnaryAsync(
+        return await ExecuteClientStreamingAsync(
             "Upload",
-            callOptions => client.UploadAsync(
-                new Proto.UploadGeoResourceRequest
-                {
-                    FileName = fileName,
-                    Content = ByteString.CopyFrom(memory.ToArray())
-                },
-                callOptions),
+            callOptions => client.Upload(callOptions),
+            (stream, token) => WriteGeoResourceUploadChunksAsync(fileName, content, stream, token),
             NodeGrpcMapper.ToDomain,
             cancellationToken);
+    }
+
+    internal static async Task WriteGeoResourceUploadChunksAsync(
+        string fileName,
+        Stream content,
+        IClientStreamWriter<Proto.UploadGeoResourceChunk> stream,
+        CancellationToken cancellationToken)
+    {
+        var buffer = new byte[GeoResourceTransferDefaults.ChunkSizeBytes];
+        while (true)
+        {
+            var bytesRead = await content.ReadAsync(buffer, cancellationToken);
+            if (bytesRead == 0)
+            {
+                return;
+            }
+
+            await stream.WriteAsync(new Proto.UploadGeoResourceChunk
+            {
+                FileName = fileName,
+                Content = ByteString.CopyFrom(buffer, 0, bytesRead)
+            });
+        }
     }
 
     /// <inheritdoc />

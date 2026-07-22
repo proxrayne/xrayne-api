@@ -170,9 +170,9 @@ pass after failures. The panel syncs remote file metadata on first successful co
 after successful core install events, and through the two-hour recurring sync
 job. Manual file changes restart remote xray-core through the existing restart
 flow when cached core state reports it is running.
-Geo resource content uses unary gRPC messages and is bounded by
-`NodeConnection:GrpcMaxMessageSizeBytes`; keep it aligned with the remote node
-`Node:GrpcMaxMessageSizeBytes` setting.
+Geo resource upload and download use gRPC streaming chunks so large files are
+transferred without buffering one full protobuf message in the panel. Static
+geo resource file uploads through the panel REST API are limited to 128 MB.
 
 Connection warehouses are managed through `/api/warehouses`. Warehouses group
 node inbounds for user connection distribution, expose list filtering by name,

@@ -8,6 +8,7 @@ using Data.Contracts;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace Api.Controllers;
 
@@ -23,6 +24,9 @@ public sealed class NodeGeoResourcesController(
     INodeRepository nodeRepository,
     IMapper mapper) : ApiControllerBase
 {
+    private const long GeoResourceUploadMaxSizeBytes = 128L * 1024 * 1024;
+    private const string GeoResourceUploadMaxSizeLabel = "128 MB";
+
     /// <summary>
     /// Lists geo resources assigned to a remote node.
     /// </summary>
@@ -75,7 +79,18 @@ public sealed class NodeGeoResourcesController(
         var node = await nodeRepository.GetByIdAsync(nodeId, cancellationToken);
         var content = await geoResourcesService.DownloadResourceAsync(node, geoResourceId, cancellationToken);
 
-        return File(content.Content, "application/octet-stream", content.FileName);
+        Response.ContentType = "application/octet-stream";
+        Response.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+        {
+            FileNameStar = content.FileName
+        }.ToString();
+
+        await foreach (var chunk in content.Content.WithCancellation(cancellationToken))
+        {
+            await Response.Body.WriteAsync(chunk, cancellationToken);
+        }
+
+        return new EmptyResult();
     }
 
     /// <summary>
@@ -88,6 +103,9 @@ public sealed class NodeGeoResourcesController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status413PayloadTooLarge)]
+    [RequestSizeLimit(GeoResourceUploadMaxSizeBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = GeoResourceUploadMaxSizeBytes)]
     public async Task<IActionResult> CreateFile(
         long nodeId,
         [FromForm] CreateNodeGeoResourceFileRequest request,
@@ -97,6 +115,11 @@ public sealed class NodeGeoResourcesController(
         if (request.File is null || request.File.Length == 0)
         {
             throw new BadRequestException("Geo resource file is required.");
+        }
+
+        if (request.File.Length > GeoResourceUploadMaxSizeBytes)
+        {
+            throw new BadRequestException($"Geo resource file must be {GeoResourceUploadMaxSizeLabel} or smaller.");
         }
 
         var fileName = string.IsNullOrWhiteSpace(request.FileName)

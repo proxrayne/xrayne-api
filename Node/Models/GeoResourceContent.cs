@@ -5,5 +5,4 @@ namespace Node.Models;
 /// </summary>
 public sealed record GeoResourceContent(
     string FileName,
-    byte[] Content);
-
+    IAsyncEnumerable<byte[]> Content);

@@ -102,6 +102,34 @@ public abstract class NodeGrpcClientBase
     }
 
     /// <summary>
+    /// Executes a client-streaming gRPC call and maps transport failures.
+    /// </summary>
+    protected async Task<TResult> ExecuteClientStreamingAsync<TRequest, TResponse, TResult>(
+        string operation,
+        Func<CallOptions, AsyncClientStreamingCall<TRequest, TResponse>> callFactory,
+        Func<IClientStreamWriter<TRequest>, CancellationToken, Task> writeRequests,
+        Func<TResponse, TResult> map,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var call = callFactory(CreateStreamingCallOptions(cancellationToken));
+            await writeRequests(call.RequestStream, cancellationToken);
+            await call.RequestStream.CompleteAsync();
+
+            return map(await call.ResponseAsync);
+        }
+        catch (RpcException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw MapRpcException(operation, exception);
+        }
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new NodeTimeoutException(Endpoint.NodeId, operation, exception);
+        }
+    }
+
+    /// <summary>
     /// Advances a server stream and maps gRPC failures.
     /// </summary>
     protected async Task<bool> MoveNextStreamMessageAsync<T>(
