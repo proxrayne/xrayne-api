@@ -144,12 +144,23 @@ public sealed class AppDbContext : DbContext
 
         modelBuilder.Entity<ConnectionEntity>(builder =>
         {
+            builder.Property(x => x.DeviceVerificationMethod)
+                .HasDefaultValueSql("'none'::device_verification_method");
+
+            builder.Property(x => x.Revoked)
+                .HasDefaultValue(false);
+
             builder.HasOne(x => x.User)
                 .WithMany(x => x.Connections)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(x => x.Application)
                 .WithMany(x => x.Connections)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(x => x.OperatingSystem)
+                .WithMany()
+                .HasForeignKey(x => x.OperationSystemId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

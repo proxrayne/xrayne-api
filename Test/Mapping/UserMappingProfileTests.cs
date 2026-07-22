@@ -44,7 +44,8 @@ public sealed class UserMappingProfileTests
             Connections =
             [
                 new ConnectionEntity { Password = "password-1" },
-                new ConnectionEntity { Password = "password-2" }
+                new ConnectionEntity { Password = "password-2" },
+                new ConnectionEntity { Password = "password-3", Revoked = true }
             ]
         };
 

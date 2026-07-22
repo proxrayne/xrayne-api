@@ -11,6 +11,12 @@
   and `totalPages` for list endpoints that need page-number navigation.
 - Use plural resource names for user management endpoints, for example
   `api/users`.
+- Connection management uses the singular `api/connection` route because the
+  panel treats it as a user-scoped credential operation.
+- User connection lists are offset-paginated and support search by connection
+  name or User-Agent plus the `include_revoked` query flag.
+- User connections are revoked through `POST api/connection/{id}/revoke`; revoke
+  keeps the connection record and does not expose generated credentials.
 
 ## Controllers
 
@@ -21,6 +27,8 @@
   orchestration directly in controllers.
 - Use cancellation tokens on async actions.
 - Use request and response models for public payloads.
+- Connection responses must not expose generated credentials such as passwords
+  or UUID values.
 
 ## Validation
 

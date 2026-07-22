@@ -20,6 +20,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAdminAccountRepository, AdminAccountRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IConnectionRepository, ConnectionRepository>();
         services.AddScoped<IInboundRepository, InboundRepository>();
         services.AddScoped<IOutboundRepository, OutboundRepository>();
         services.AddScoped<INodeRepository, NodeRepository>();

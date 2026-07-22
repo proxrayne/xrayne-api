@@ -40,7 +40,7 @@ public sealed class HostRepository(AppDbContext dbContext) : IHostRepository
         long id,
         CancellationToken cancellationToken = default)
     {
-        var host = await GetByIdAsync(id, cancellationToken);
+        var host = await GetByIdOrDefaultAsync(id, cancellationToken);
 
         return Required(host, id);
     }

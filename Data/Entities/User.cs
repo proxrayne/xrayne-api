@@ -64,11 +64,6 @@ public sealed class UserEntity : CreateUpdateEntity
     public DateTimeOffset? LastTrafficReset { get; set; }
 
     /// <summary>
-    /// Gets or sets when the user was last observed online.
-    /// </summary>
-    public DateTimeOffset? OnlineAt { get; set; }
-
-    /// <summary>
     /// Gets or sets when the user expires.
     /// </summary>
     public DateTimeOffset? ExpireAt { get; set; }
@@ -89,12 +84,12 @@ public sealed class UserEntity : CreateUpdateEntity
     public WarehouseEntity Warehouse { get; set; } = null!;
 
     /// <summary>
-    /// Gets or sets the administrator identifier that owns the user.
+    /// Gets or sets the administrator identifier that created the user.
     /// </summary>
     public long AdminId { get; set; }
 
     /// <summary>
-    /// Gets or sets the administrator that owns the user.
+    /// Gets or sets the administrator that created the user.
     /// </summary>
     public AdminAccountEntity Admin { get; set; } = null!;
 }

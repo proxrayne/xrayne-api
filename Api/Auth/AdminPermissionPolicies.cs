@@ -3,12 +3,30 @@ using Contracts.Values;
 
 namespace Api.Auth;
 
+/// <summary>
+/// Registers authorization policies for administrator permissions.
+/// </summary>
 public static class AdminPermissionPolicies
 {
+    /// <summary>
+    /// Allows reading users when any user-management permission is granted.
+    /// </summary>
+    public const string ReadUsers = "read_users";
+
+    /// <summary>
+    /// Adds administrator permission policies.
+    /// </summary>
     public static void AddAdminPermissionPolicies(this AuthorizationOptions options)
     {
         options.AddPolicy(AdminPermissionNames.SuperAdmin, policy =>
             policy.RequireAssertion(context => HasPermission(context, AdminPermissionNames.SuperAdmin)));
+        options.AddPolicy(ReadUsers, policy =>
+            policy.RequireAssertion(context =>
+                HasPermission(context, AdminPermissionNames.SuperAdmin) ||
+                HasPermission(context, AdminPermissionNames.CreateUsers) ||
+                HasPermission(context, AdminPermissionNames.EditUsers) ||
+                HasPermission(context, AdminPermissionNames.DeleteUsers) ||
+                HasPermission(context, AdminPermissionNames.ResetTraffic)));
 
         AddPermissionPolicy(options, AdminPermissionNames.CreateUsers);
         AddPermissionPolicy(options, AdminPermissionNames.EditUsers);

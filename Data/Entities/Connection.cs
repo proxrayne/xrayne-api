@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Contracts.Enums;
+using Contracts.Utilities;
 using Xray.Config.Enums;
 
 namespace Data.Entities;
@@ -19,38 +21,26 @@ public sealed class ConnectionEntity : CreateUpdateEntity
     /// <summary>
     /// Gets or sets the optional connection display name.
     /// </summary>
-    [MaxLength(32)]
+    [MaxLength(64)]
     public string? Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional hardware identifier reported by the client.
+    /// Gets or sets the optional User-Agent value reported by the client.
     /// </summary>
-    [MaxLength(64)]
-    public string? HWID { get; set; }
-
-    /// <summary>
-    /// Gets or sets the optional operating system name reported by the client.
-    /// </summary>
-    [MaxLength(64)]
-    public string? OS { get; set; }
-
-    /// <summary>
-    /// Gets or sets the optional device model reported by the client.
-    /// </summary>
-    [MaxLength(64)]
-    public string? Model { get; set; }
-
-    /// <summary>
-    /// Gets or sets the optional application version reported by the client.
-    /// </summary>
-    [MaxLength(64)]
-    public string? AppVersion { get; set; }
+    [MaxLength(512)]
+    public string? UserAgent { get; set; }
 
     /// <summary>
     /// Gets or sets the connection password.
     /// </summary>
     [MaxLength(64)]
-    public required string Password { get; set; }
+    public string Password { get; set; } = XraySecretGenerator.GeneratePassword();
+
+    /// <summary>
+    /// Gets whether this connection currently has an observed client session.
+    /// </summary>
+    [NotMapped]
+    public bool IsConnected => ConnectedAt != null && !string.IsNullOrEmpty(UserAgent);
 
     /// <summary>
     /// Gets or sets the connection UUID.
@@ -70,6 +60,43 @@ public sealed class ConnectionEntity : CreateUpdateEntity
     public EncryptionMethod Method { get; set; } = EncryptionMethod.None;
 
     /// <summary>
+    /// Gets or sets optional device information reported by the client.
+    /// </summary>
+    [Column(TypeName = "jsonb")]
+    public DeviceInfo? DeviceInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets how the connection device should be verified.
+    /// </summary>
+    [Column(TypeName = "device_verification_method")]
+    public DeviceVerificationMethod DeviceVerificationMethod { get; set; } = DeviceVerificationMethod.None;
+
+    /// <summary>
+    /// Gets or sets when this connection was last observed online.
+    /// </summary>
+    public DateTimeOffset? OnlineAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets when this connection last established a client session.
+    /// </summary>
+    public DateTimeOffset? ConnectedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets when this connection last refreshed its subscription.
+    /// </summary>
+    public DateTimeOffset? SubscriptionUpdatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets when this connection was revoked.
+    /// </summary>
+    public DateTimeOffset? RevokedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether this connection has been revoked.
+    /// </summary>
+    public bool Revoked { get; set; }
+
+    /// <summary>
     /// Gets or sets the user identifier that owns this connection.
     /// </summary>
     public long UserId { get; set; }
@@ -78,6 +105,17 @@ public sealed class ConnectionEntity : CreateUpdateEntity
     /// Gets or sets the user that owns this connection.
     /// </summary>
     public UserEntity User { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the optional operating system identifier reported by the client.
+    /// </summary>
+    [MaxLength(32)]
+    public string? OperationSystemId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional operating system reported by the client.
+    /// </summary>
+    public OperationSystemEntity? OperatingSystem { get; set; }
 
     /// <summary>
     /// Gets or sets the optional application profile identifier.

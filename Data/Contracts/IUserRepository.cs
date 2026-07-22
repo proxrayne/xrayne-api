@@ -14,29 +14,19 @@ public interface IUserRepository
     Task<List<UserEntity>> GetAllAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all users owned by an administrator.
-    /// </summary>
-    Task<List<UserEntity>> GetAllAsync(long adminId, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Searches users.
     /// </summary>
     Task<OffsetPage<UserEntity>> SearchAsync(UserFilter filter, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Searches users owned by an administrator.
+    /// Gets a user by identifier, or null when it does not exist.
     /// </summary>
-    Task<OffsetPage<UserEntity>> SearchAsync(long adminId, UserFilter filter, CancellationToken cancellationToken = default);
+    Task<UserEntity?> GetByIdOrDefaultAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a user by identifier.
     /// </summary>
-    Task<UserEntity?> GetByIdAsync(long id, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets a user by owner and identifier.
-    /// </summary>
-    Task<UserEntity?> GetByIdAsync(long adminId, long id, CancellationToken cancellationToken = default);
+    Task<UserEntity> GetByIdAsync(long id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a user by username.
@@ -44,19 +34,9 @@ public interface IUserRepository
     Task<UserEntity?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a user by owner and username.
-    /// </summary>
-    Task<UserEntity?> GetByUsernameAsync(long adminId, string username, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Checks whether a username exists.
     /// </summary>
     Task<bool> ExistsAsync(string username, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Checks whether a username exists for an administrator.
-    /// </summary>
-    Task<bool> ExistsAsync(long adminId, string username, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a user.
@@ -64,29 +44,22 @@ public interface IUserRepository
     Task<UserEntity> AddAsync(UserEntity user, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a user owned by an administrator.
+    /// Adds a user created by an administrator.
     /// </summary>
     Task<UserEntity> AddAsync(
         long adminId,
         UserEntity user,
-        WarehouseEntity warehouse,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates a user.
+    /// Updates a user while preserving its creator.
     /// </summary>
     Task<UserEntity?> UpdateAsync(UserEntity user, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates a user owned by an administrator.
+    /// Updates a user and warehouse assignment while preserving its creator.
     /// </summary>
-    Task<UserEntity?> UpdateAsync(long adminId, UserEntity user, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Updates a user owned by an administrator.
-    /// </summary>
-    Task<UserEntity?> UpdateAsync(
-        long adminId,
+    Task<UserEntity> UpdateAsync(
         long id,
         UserEntity user,
         WarehouseEntity warehouse,
@@ -97,8 +70,4 @@ public interface IUserRepository
     /// </summary>
     Task<bool> DeleteAsync(long id, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Deletes a user by owner and identifier.
-    /// </summary>
-    Task<bool> DeleteAsync(long adminId, long id, CancellationToken cancellationToken = default);
 }

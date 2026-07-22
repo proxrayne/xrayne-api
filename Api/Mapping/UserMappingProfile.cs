@@ -17,7 +17,7 @@ public sealed class UserMappingProfile : Profile
         CreateMap<UserEntity, UserListItemDto>()
             .ForCtorParam(
                 nameof(UserListItemDto.ConnectionsCount),
-                options => options.MapFrom(user => user.Connections.Count))
+                options => options.MapFrom(user => user.Connections.Count(connection => !connection.Revoked)))
             .ForCtorParam(
                 nameof(UserListItemDto.TrafficUsedBytes),
                 options => options.MapFrom(_ => 0UL))
@@ -34,7 +34,7 @@ public sealed class UserMappingProfile : Profile
         CreateMap<UserEntity, UserDto>()
             .ForCtorParam(
                 nameof(UserDto.ConnectionsCount),
-                options => options.MapFrom(user => user.Connections.Count))
+                options => options.MapFrom(user => user.Connections.Count(connection => !connection.Revoked)))
             .ForCtorParam(
                 nameof(UserDto.TrafficUsedBytes),
                 options => options.MapFrom(_ => 0UL))

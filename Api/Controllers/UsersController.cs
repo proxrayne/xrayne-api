@@ -1,3 +1,4 @@
+using Api.Auth;
 using Api.Requests;
 using Api.Responses;
 using AutoMapper;
@@ -15,7 +16,7 @@ namespace Api.Controllers;
 /// <summary>
 /// Manages subscription users.
 /// </summary>
-[Authorize]
+[Authorize(Policy = AdminPermissionPolicies.ReadUsers)]
 [Route("api/users")]
 public sealed class UsersController(
     IUserRepository users,
@@ -23,7 +24,7 @@ public sealed class UsersController(
     IMapper mapper) : ApiControllerBase
 {
     /// <summary>
-    /// Gets users available to the current administrator.
+    /// Gets users available to administrators with user permissions.
     /// </summary>
     [HttpGet]
     [EndpointSummary("List users")]
@@ -42,7 +43,7 @@ public sealed class UsersController(
             Page = query.Page,
             Limit = query.Limit
         };
-        var page = await users.SearchAsync(AdminId, filter, cancellationToken);
+        var page = await users.SearchAsync(filter, cancellationToken);
 
         return new PageResponse<UserListItemDto>(
             mapper.Map<List<UserListItemDto>>(page.Items),
@@ -78,7 +79,7 @@ public sealed class UsersController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<UserDto> GetById(long id, CancellationToken cancellationToken)
     {
-        var user = await GetAccessibleUserAsync(id, cancellationToken);
+        var user = await users.GetByIdAsync(id, cancellationToken);
 
         return mapper.Map<UserDto>(user);
     }
@@ -127,10 +128,11 @@ public sealed class UsersController(
             Status = status,
             LimitResetStrategy = expireAt is not null ? request.LimitResetStrategy : null,
             ExpireAt = expireAt,
-            OnHoldExpire = onHoldExpire
+            OnHoldExpire = onHoldExpire,
+            Warehouse = warehouse
         };
 
-        var created = await users.AddAsync(AdminId, user, warehouse, cancellationToken);
+        var created = await users.AddAsync(AdminId, user, cancellationToken);
 
         return Created($"/api/users/{created.Id}", mapper.Map<UserDto>(created));
     }
@@ -150,12 +152,10 @@ public sealed class UsersController(
         [FromBody] UpdateUserRequest request,
         CancellationToken cancellationToken)
     {
-        _ = await GetAccessibleUserAsync(id, cancellationToken);
         ValidateConnectionLimit(request.ConnectionLimit);
 
         var warehouse = await ResolveWarehouseAsync(request.WarehouseId, cancellationToken);
         var updated = await users.UpdateAsync(
-            AdminId,
             id,
             new UserEntity
             {
@@ -171,9 +171,7 @@ public sealed class UsersController(
             warehouse,
             cancellationToken);
 
-        return updated is null
-            ? throw new NotFoundException($"User '{id}' was not found.")
-            : mapper.Map<UserDto>(updated);
+        return mapper.Map<UserDto>(updated);
     }
 
     /// <summary>
@@ -187,16 +185,13 @@ public sealed class UsersController(
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(long id, CancellationToken cancellationToken)
     {
-        _ = await GetAccessibleUserAsync(id, cancellationToken);
-        await users.DeleteAsync(AdminId, id, cancellationToken);
+        var deleted = await users.DeleteAsync(id, cancellationToken);
+        if (!deleted)
+        {
+            throw new NotFoundException($"User '{id}' was not found.");
+        }
 
         return NoContent();
-    }
-
-    private async Task<UserEntity> GetAccessibleUserAsync(long id, CancellationToken cancellationToken)
-    {
-        return await users.GetByIdAsync(AdminId, id, cancellationToken)
-            ?? throw new NotFoundException($"User '{id}' was not found.");
     }
 
     private async Task<WarehouseEntity> ResolveWarehouseAsync(

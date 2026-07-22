@@ -17,7 +17,7 @@ public enum HostSecurity
     /// <summary>
     /// Use the security mode configured by the inbound.
     /// </summary>
-    [JsonStringEnumMemberName("inbound-default")]
+    [JsonStringEnumMemberName("inbound_default")]
     InboundDefault,
 
     /// <summary>

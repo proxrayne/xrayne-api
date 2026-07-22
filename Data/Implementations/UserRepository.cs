@@ -1,18 +1,19 @@
-using Microsoft.EntityFrameworkCore;
 using Contracts.Enums;
+using Contracts.Exceptions;
 using Contracts.Models;
 using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Data.Implementations;
 
 /// <summary>
 /// Provides EF Core persistence operations for subscription users.
 /// </summary>
-public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
+public sealed class UserRepository(AppDbContext context) : IUserRepository
 {
-    private IQueryable<UserEntity> UsersWithRelations => dbContext.Users
+    private IQueryable<UserEntity> UsersWithRelations => context.Users
         .Include(user => user.Warehouse)
         .Include(user => user.Connections);
 
@@ -25,43 +26,24 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public Task<List<UserEntity>> GetAllAsync(long adminId, CancellationToken ct = default)
-    {
-        return UsersWithRelations
-            .Where(user => user.AdminId == adminId)
-            .OrderBy(user => user.Username)
-            .ToListAsync(ct);
-    }
-
-    /// <inheritdoc />
     public Task<OffsetPage<UserEntity>> SearchAsync(UserFilter filter, CancellationToken ct = default)
     {
         return SearchCoreAsync(UsersWithRelations, filter, ct);
     }
 
     /// <inheritdoc />
-    public Task<OffsetPage<UserEntity>> SearchAsync(long adminId, UserFilter filter, CancellationToken ct = default)
-    {
-        var query = UsersWithRelations
-            .Where(user => user.AdminId == adminId);
-
-        return SearchCoreAsync(query, filter, ct);
-    }
-
-    /// <inheritdoc />
-    public Task<UserEntity?> GetByIdAsync(long id, CancellationToken ct = default)
+    public Task<UserEntity?> GetByIdOrDefaultAsync(long id, CancellationToken ct = default)
     {
         return UsersWithRelations
             .SingleOrDefaultAsync(user => user.Id == id, ct);
     }
 
     /// <inheritdoc />
-    public Task<UserEntity?> GetByIdAsync(long adminId, long id, CancellationToken ct = default)
+    public async Task<UserEntity> GetByIdAsync(long id, CancellationToken ct = default)
     {
-        return UsersWithRelations
-            .SingleOrDefaultAsync(
-                user => user.Id == id && user.AdminId == adminId,
-                ct);
+        var user = await GetByIdOrDefaultAsync(id, ct);
+
+        return user ?? throw new NotFoundException($"User '{id}' was not found.");
     }
 
     /// <inheritdoc />
@@ -72,35 +54,17 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     }
 
     /// <inheritdoc />
-    public Task<UserEntity?> GetByUsernameAsync(long adminId, string username, CancellationToken ct = default)
-    {
-        return UsersWithRelations
-            .SingleOrDefaultAsync(
-                user => user.Username == username && user.AdminId == adminId,
-                ct);
-    }
-
-    /// <inheritdoc />
     public Task<bool> ExistsAsync(string username, CancellationToken ct = default)
     {
-        return dbContext.Users.AnyAsync(user => user.Username == username, ct);
-    }
-
-    /// <inheritdoc />
-    public Task<bool> ExistsAsync(long adminId, string username, CancellationToken ct = default)
-    {
-        return dbContext.Users
-            .AnyAsync(
-                user => user.Username == username && user.AdminId == adminId,
-                ct);
+        return context.Users.AnyAsync(user => user.Username == username, ct);
     }
 
     /// <inheritdoc />
     public async Task<UserEntity> AddAsync(UserEntity user, CancellationToken ct = default)
     {
-        await dbContext.Users.AddAsync(user, ct);
-        await dbContext.SaveChangesAsync(ct);
-        await dbContext.Entry(user).ReloadAsync(ct);
+        await context.Users.AddAsync(user, ct);
+        await context.SaveChangesAsync(ct);
+        await context.Entry(user).ReloadAsync(ct);
 
         return user;
     }
@@ -109,65 +73,55 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     public async Task<UserEntity> AddAsync(
         long adminId,
         UserEntity user,
-        WarehouseEntity warehouse,
         CancellationToken cancellationToken = default)
     {
-        user.Warehouse = warehouse;
-        user.WarehouseId = warehouse.Id;
-        await dbContext.Users.AddAsync(user, cancellationToken);
+        user.WarehouseId = user.Warehouse.Id;
         user.AdminId = adminId;
-        await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await GetByIdAsync(adminId, user.Id, cancellationToken) ?? user;
+        await context.Users.AddAsync(user, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+
+        return await GetByIdAsync(user.Id, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<UserEntity?> UpdateAsync(UserEntity user, CancellationToken ct = default)
     {
-        var exists = await dbContext.Users.AnyAsync(item => item.Id == user.Id, ct);
-        if (!exists)
+        var existing = await GetByIdOrDefaultAsync(user.Id, ct);
+        if (existing is null)
         {
             return null;
         }
 
-        user.UpdatedAt = DateTimeOffset.UtcNow;
-        dbContext.Users.Update(user);
-        await dbContext.SaveChangesAsync(ct);
-
-        return user;
-    }
-
-    /// <inheritdoc />
-    public async Task<UserEntity?> UpdateAsync(long adminId, UserEntity user, CancellationToken ct = default)
-    {
-        var exists = await dbContext.Users.AnyAsync(
-            item => item.Id == user.Id && item.AdminId == adminId,
-            ct);
-        if (!exists)
+        existing.Username = user.Username;
+        existing.Note = user.Note;
+        existing.DataLimit = user.DataLimit;
+        existing.ConnectionLimit = user.ConnectionLimit;
+        existing.Status = user.Status;
+        existing.LimitResetStrategy = user.LimitResetStrategy;
+        existing.LastTrafficReset = user.LastTrafficReset;
+        existing.ExpireAt = user.ExpireAt;
+        existing.OnHoldExpire = user.OnHoldExpire;
+        existing.WarehouseId = user.WarehouseId;
+        if (user.Warehouse is not null)
         {
-            return null;
+            existing.Warehouse = user.Warehouse;
         }
 
-        user.UpdatedAt = DateTimeOffset.UtcNow;
-        dbContext.Users.Update(user);
-        await dbContext.SaveChangesAsync(ct);
+        existing.UpdatedAt = DateTimeOffset.UtcNow;
+        await context.SaveChangesAsync(ct);
 
-        return user;
+        return existing;
     }
 
     /// <inheritdoc />
-    public async Task<UserEntity?> UpdateAsync(
-        long adminId,
+    public async Task<UserEntity> UpdateAsync(
         long id,
         UserEntity user,
         WarehouseEntity warehouse,
         CancellationToken cancellationToken = default)
     {
-        var existing = await GetByIdAsync(adminId, id, cancellationToken);
-        if (existing is null)
-        {
-            return null;
-        }
+        var existing = await GetByIdAsync(id, cancellationToken);
 
         existing.Note = user.Note;
         existing.DataLimit = user.DataLimit;
@@ -180,7 +134,7 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
         existing.WarehouseId = warehouse.Id;
         existing.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return existing;
     }
@@ -188,29 +142,14 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
     /// <inheritdoc />
     public async Task<bool> DeleteAsync(long id, CancellationToken ct = default)
     {
-        var user = await GetByIdAsync(id, ct);
+        var user = await GetByIdOrDefaultAsync(id, ct);
         if (user is null)
         {
             return false;
         }
 
-        dbContext.Users.Remove(user);
-        await dbContext.SaveChangesAsync(ct);
-
-        return true;
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> DeleteAsync(long adminId, long id, CancellationToken ct = default)
-    {
-        var user = await GetByIdAsync(adminId, id, ct);
-        if (user is null)
-        {
-            return false;
-        }
-
-        dbContext.Users.Remove(user);
-        await dbContext.SaveChangesAsync(ct);
+        context.Users.Remove(user);
+        await context.SaveChangesAsync(ct);
 
         return true;
     }
@@ -271,10 +210,10 @@ public sealed class UserRepository(AppDbContext dbContext) : IUserRepository
                 .OrderBy(user => user.DataLimit)
                 .ThenBy(user => user.Id),
             (UserSortBy.Connections, SortOrder.Desc) => query
-                .OrderByDescending(user => user.Connections.Count)
+                .OrderByDescending(user => user.Connections.Count(connection => !connection.Revoked))
                 .ThenBy(user => user.Id),
             (UserSortBy.Connections, _) => query
-                .OrderBy(user => user.Connections.Count)
+                .OrderBy(user => user.Connections.Count(connection => !connection.Revoked))
                 .ThenBy(user => user.Id),
             (UserSortBy.CreatedAt, SortOrder.Asc) => query
                 .OrderBy(user => user.CreatedAt)

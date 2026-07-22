@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddTransient<GeoResourceUploadJob>();
 
         services.AddScoped<IAppSettingsService, AppSettingsService>();
+        services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<INodeInboundService, NodeInboundService>();
         services.AddScoped<INodeOutboundService, NodeOutboundService>();
         services.AddScoped<INodeCertificateService, NodeCertificateService>();

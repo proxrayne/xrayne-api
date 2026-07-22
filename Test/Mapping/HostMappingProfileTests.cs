@@ -84,7 +84,7 @@ public sealed class HostMappingProfileTests
 
         dto.Id.Should().Be(11);
         dto.Name.Should().Be("Primary");
-        dto.Security.Should().Be("inbound-default");
+        dto.Security.Should().Be("inbound_default");
         dto.Path.Should().Be("/vless");
         dto.Alpn.Should().Equal("h2", "h3");
         dto.Fingerprint.Should().Be("chrome");

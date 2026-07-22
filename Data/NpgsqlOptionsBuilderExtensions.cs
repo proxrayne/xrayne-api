@@ -24,6 +24,7 @@ public static class NpgsqlOptionsBuilderExtensions
         CreateEnumMapping<SubscriptionFormat>("subscription_format"),
         CreateEnumMapping<Fingerprint>("fingerprint"),
         CreateEnumMapping<HostSecurity>("host_security"),
+        CreateEnumMapping<DeviceVerificationMethod>("device_verification_method"),
     ];
 
     /// <summary>
