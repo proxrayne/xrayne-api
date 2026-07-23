@@ -12,7 +12,6 @@ public sealed class AppDbContext : DbContext
     public DbSet<OutboundEntity> Outbounds { get; set; }
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<NodeEntity> Nodes { get; set; }
-    public DbSet<CertificateEntity> Certificates { get; set; }
     public DbSet<GeoResourceEntity> GeoResources { get; set; }
     public DbSet<RoutingRuleEntity> RoutingRules { get; set; }
     public DbSet<AppSettingsEntity> AppSettings { get; set; }
@@ -94,18 +93,8 @@ public sealed class AppDbContext : DbContext
                 .WithOne(x => x.Node)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Property(x => x.CertificateMode)
-                .HasDefaultValueSql("'domain'::certificate_mode");
-
             builder.Property(x => x.Enabled)
                 .HasDefaultValue(true);
-        });
-
-        modelBuilder.Entity<CertificateEntity>(builder =>
-        {
-            builder.HasOne(x => x.Node)
-                .WithMany(x => x.Certificates)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<GeoResourceEntity>(builder =>

@@ -672,7 +672,7 @@ namespace Data.Migrations
                     b.Property<SSHAuthType>("AuthType")
                         .HasColumnType("ssh_auth_type");
 
-                    b.Property<CertificateMode>("CertificateMode")
+                    b.Property<string>("CertificateMode")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("certificate_mode")
                         .HasDefaultValueSql("'domain'::certificate_mode");

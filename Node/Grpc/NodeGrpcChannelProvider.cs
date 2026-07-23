@@ -67,6 +67,6 @@ public sealed class NodeGrpcChannelProvider(IOptions<NodeOptions> options) :
 
     private static Uri BuildAddress(NodeEndpoint endpoint)
     {
-        return new UriBuilder("https", endpoint.Address, endpoint.ApiPort).Uri;
+        return new UriBuilder("http", endpoint.Address, endpoint.ApiPort).Uri;
     }
 }

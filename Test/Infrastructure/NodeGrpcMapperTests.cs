@@ -1,8 +1,6 @@
 using Google.Protobuf.WellKnownTypes;
 using Node.Enums;
 using Node.Grpc;
-using Node.Models;
-using Xray.Config.Models;
 using Proto = XRayne.ProtoTypes.RemoteNode.V1;
 
 namespace Test.Infrastructure;

@@ -46,7 +46,9 @@ or `Api`.
 It is the only panel project that should know the remote node API wire shape.
 It creates typed clients for the split `HealthService`, `CoreService`,
 `RuntimeConfigService`, `LogService`, `GeoResourceService`, and
-`CertificateService` gRPC services over one cached channel per remote node.
+other panel-to-node gRPC services over one cached HTTP/2 cleartext channel per
+remote node. XRayne does not issue or manage TLS certificates for the remote
+node API; operators can terminate TLS in their own infrastructure if needed.
 Do not add or reference a local standalone node-service project when
 implementing node management features in this repository.
 
@@ -214,7 +216,7 @@ is configured.
 `Contracts` owns shared types used across backend projects:
 
 - configuration options such as `JwtOptions`, `PanelSettings`, and node connection options;
-- enums such as admin permissions, user status, certificate modes, and update
+- enums such as admin permissions, user status, and update
   target;
 - query/filter models such as cursor pagination and entity filters;
 - shared values such as `PathProvider` and `AdminPermissionNames`;
@@ -231,7 +233,7 @@ infrastructure.
 - Quartz jobs for remote-node provisioning and geo-resource processing;
 - Octokit-backed GitHub release lookup helpers for remote node xray-core installs;
 - JWT token creation, settings application, restart scheduling;
-- certificate, geo resource, routing rule, and node services;
+- geo resource, routing rule, and node services;
 - `Hardware.Info`-backed host system information through `ISystemInfoService`.
 
 Service interfaces live near implementations under `Services/Contracts`. Register

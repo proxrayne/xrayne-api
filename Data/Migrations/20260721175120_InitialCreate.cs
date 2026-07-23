@@ -104,7 +104,7 @@ namespace Data.Migrations
                     WorkingDirectory = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Note = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     ConfigTemplate = table.Column<XrayConfig>(type: "jsonb", nullable: false),
-                    CertificateMode = table.Column<CertificateMode>(type: "certificate_mode", nullable: false, defaultValueSql: "'domain'::certificate_mode"),
+                    CertificateMode = table.Column<string>(type: "certificate_mode", nullable: false, defaultValueSql: "'domain'::certificate_mode"),
                     LastStatusChange = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastSeenAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ConnectedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),

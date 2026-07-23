@@ -14,7 +14,6 @@ public sealed record NodeDto(
     string SSHUsername,
     string WorkingDirectory,
     string Note,
-    CertificateMode CertificateMode,
     string ApiKeyFingerprint,
     DateTime LastStatusChange,
     DateTimeOffset? LastSeenAt,

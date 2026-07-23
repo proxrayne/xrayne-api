@@ -17,7 +17,6 @@ public static class NpgsqlOptionsBuilderExtensions
         CreateEnumMapping<UserStatus>("user_status"),
         CreateEnumMapping<LimitResetStrategy>("limit_reset_strategy"),
         CreateEnumMapping<SSHAuthType>("ssh_auth_type"),
-        CreateEnumMapping<CertificateMode>("certificate_mode"),
         CreateEnumMapping<GeoResourceStatus>("geo_resource_status"),
         CreateEnumMapping<XtlsFlow>("xtls_flow"),
         CreateEnumMapping<EncryptionMethod>("encryption_method"),

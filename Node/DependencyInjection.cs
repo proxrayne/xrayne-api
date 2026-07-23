@@ -24,7 +24,6 @@ public static class DependencyInjection
         services.AddSingleton<INodeRuntimeConfigClientFactory, NodeRuntimeConfigClientFactory>();
         services.AddSingleton<INodeLogClientFactory, NodeLogClientFactory>();
         services.AddSingleton<INodeGeoResourceClientFactory, NodeGeoResourceClientFactory>();
-        services.AddSingleton<INodeCertificateClientFactory, NodeCertificateClientFactory>();
         services.AddSingleton<INodeStreamClientFactory, NodeStreamClientFactory>();
 
         return services;

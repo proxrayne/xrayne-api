@@ -25,9 +25,6 @@ public sealed record NodeProvisionState(
     public static NodeProvisionState DownloadingImage(long nodeId, string jobId)
         => new(nodeId, jobId, NodeProvisionStep.DownloadingImage, "Downloading remote node image.", DateTimeOffset.UtcNow);
 
-    public static NodeProvisionState ConfiguringCertificate(long nodeId, string jobId)
-        => new(nodeId, jobId, NodeProvisionStep.ConfiguringCertificate, "Configuring remote node certificate.", DateTimeOffset.UtcNow);
-
     public static NodeProvisionState StartingContainer(long nodeId, string jobId)
         => new(nodeId, jobId, NodeProvisionStep.StartingContainer, "Starting remote node container.", DateTimeOffset.UtcNow);
 

@@ -92,8 +92,6 @@ public sealed class NodeMappingProfile : Profile
         CreateMap<SaveNodeRoutingRuleManualRequest, NodeRoutingRuleManualSaveItem>();
         CreateMap<SaveNodeRoutingRuleReadonlyRequest, NodeRoutingRuleReadonlySaveItem>();
 
-        CreateMap<CertificateEntity, NodeCertificateDto>();
-
         CreateMap<GeoResourceEntity, NodeGeoResourceDto>()
             .ForCtorParam(
                 nameof(NodeGeoResourceDto.FileName),

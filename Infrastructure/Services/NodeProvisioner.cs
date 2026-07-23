@@ -47,7 +47,6 @@ public sealed class NodeProvisioner(
 
         stateMachine.Dispatch(jobId, NodeProvisionState.InstallingDependencies(node.Id, jobId));
         stateMachine.Dispatch(jobId, NodeProvisionState.DownloadingImage(node.Id, jobId));
-        stateMachine.Dispatch(jobId, NodeProvisionState.ConfiguringCertificate(node.Id, jobId));
         stateMachine.Dispatch(jobId, NodeProvisionState.StartingContainer(node.Id, jobId));
 
         await RunAsync(
@@ -186,9 +185,6 @@ internal static class NodeInstallerScript
     {
         var values = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
-            ["CERTIFICATE_EMAIL"] = node.Admin.Email ?? string.Empty,
-            ["CERTIFICATE_IDENTIFIER"] = node.Address,
-            ["CERTIFICATE_MODE"] = node.CertificateMode == CertificateMode.Ip ? "ip" : "domain",
             ["NODE_API_KEY"] = apiKey,
             ["NODE_API_PORT"] = node.ApiPort.ToString(CultureInfo.InvariantCulture),
             ["NODE_IMAGE_DOWNLOAD_URL"] = image.DownloadUrl,
@@ -241,7 +237,7 @@ run() {
 }
 
 ensure_working_directory() {
-  run mkdir -p "$WORKING_DIRECTORY/downloads" "$WORKING_DIRECTORY/logs" "$WORKING_DIRECTORY/certificates" "$WORKING_DIRECTORY/xray"
+  run mkdir -p "$WORKING_DIRECTORY/downloads" "$WORKING_DIRECTORY/logs" "$WORKING_DIRECTORY/xray"
   run chown -R "$(id -u):$(id -g)" "$WORKING_DIRECTORY"
 }
 
@@ -295,46 +291,6 @@ download_file() {
   fi
 }
 
-ensure_acme() {
-  ACME_HOME="$WORKING_DIRECTORY/certificates/acme-sh"
-  ACME_SCRIPT="$ACME_HOME/acme.sh"
-  if [ ! -f "$ACME_SCRIPT" ]; then
-    run mkdir -p "$ACME_HOME"
-    TMP_ACME="/tmp/xrayne-acme.sh"
-    download_file "https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh" "$TMP_ACME"
-    run mv "$TMP_ACME" "$ACME_SCRIPT"
-    run chmod +x "$ACME_SCRIPT"
-  fi
-}
-
-issue_certificate() {
-  CERT_DIR="$WORKING_DIRECTORY/certificates/$CERTIFICATE_IDENTIFIER"
-  FULLCHAIN_PATH="$CERT_DIR/fullchain.pem"
-  PRIVATE_KEY_PATH="$CERT_DIR/privkey.pem"
-
-  run mkdir -p "$CERT_DIR"
-  ensure_acme
-
-  ACME_ARGS="--home $WORKING_DIRECTORY/certificates/acme-sh --config-home $WORKING_DIRECTORY/certificates/acme-config --cert-home $WORKING_DIRECTORY/certificates/acme-certs --server letsencrypt --issue -d $CERTIFICATE_IDENTIFIER --standalone --keylength ec-256"
-  if [ -n "$CERTIFICATE_EMAIL" ]; then
-    ACME_ARGS="$ACME_ARGS --accountemail $CERTIFICATE_EMAIL"
-  fi
-  if [ "$CERTIFICATE_MODE" = "ip" ]; then
-    ACME_ARGS="$ACME_ARGS --cert-profile shortlived --days 6"
-  fi
-
-  # shellcheck disable=SC2086
-  run sh "$WORKING_DIRECTORY/certificates/acme-sh/acme.sh" $ACME_ARGS
-  run sh "$WORKING_DIRECTORY/certificates/acme-sh/acme.sh" \
-    --home "$WORKING_DIRECTORY/certificates/acme-sh" \
-    --config-home "$WORKING_DIRECTORY/certificates/acme-config" \
-    --cert-home "$WORKING_DIRECTORY/certificates/acme-certs" \
-    --install-cert \
-    -d "$CERTIFICATE_IDENTIFIER" \
-    --key-file "$PRIVATE_KEY_PATH" \
-    --fullchain-file "$FULLCHAIN_PATH"
-}
-
 write_runtime_files() {
   ENV_PATH="$WORKING_DIRECTORY/.env"
   COMPOSE_PATH="$WORKING_DIRECTORY/docker-compose.yml"
@@ -348,8 +304,6 @@ NODE_API_PORT=$NODE_API_PORT
 NODE_IMAGE=xrayne-node:$NODE_IMAGE_TAG
 NODE_STREAM_HEARTBEAT_SECONDS=$NODE_STREAM_HEARTBEAT_SECONDS
 PROJECT_PATH=$WORKING_DIRECTORY
-CERT_FULLCHAIN_PATH=/app/shared/certificates/$CERTIFICATE_IDENTIFIER/fullchain.pem
-CERT_PRIVATE_KEY_PATH=/app/shared/certificates/$CERTIFICATE_IDENTIFIER/privkey.pem
 EOF_ENV
 
   cat > "$COMPOSE_PATH" <<'EOF_COMPOSE'
@@ -361,14 +315,11 @@ services:
     env_file:
       - .env
     environment:
-      ASPNETCORE_URLS: http://+:80;https://+:${NODE_API_PORT}
+      ASPNETCORE_URLS: http://+:${NODE_API_PORT}
       Node__ApiKey: ${NODE_API_KEY}
       Node__StreamHeartbeatSeconds: ${NODE_STREAM_HEARTBEAT_SECONDS}
       PROJECT_PATH: /app/shared
-      Kestrel__Certificates__Default__Path: ${CERT_FULLCHAIN_PATH}
-      Kestrel__Certificates__Default__KeyPath: ${CERT_PRIVATE_KEY_PATH}
     ports:
-      - "80:80"
       - "${NODE_API_PORT}:${NODE_API_PORT}"
     volumes:
       - .:/app/shared
@@ -386,7 +337,6 @@ IMAGE_ARCHIVE="$WORKING_DIRECTORY/downloads/xrayne-node-image-$NODE_IMAGE_TAG.ta
 download_file "$NODE_IMAGE_DOWNLOAD_URL" "$IMAGE_ARCHIVE"
 gzip -dc "$IMAGE_ARCHIVE" | run docker load
 
-issue_certificate
 write_runtime_files
 
 cd "$WORKING_DIRECTORY"

@@ -86,12 +86,6 @@ public class NodeEntity : CreateUpdateEntity
     public XrayConfig ConfigTemplate { get; set; } = NodeConfigTemplateDefaults.Create();
 
     /// <summary>
-    /// Gets or sets the certificate mode, such as domain or IP.
-    /// </summary>
-    [Column(TypeName = "certificate_mode")]
-    public CertificateMode CertificateMode { get; set; } = CertificateMode.Domain;
-
-    /// <summary>
     /// Gets or sets when the persisted node lifecycle message last changed.
     /// </summary>
     public DateTime LastStatusChange { get; set; }
@@ -157,11 +151,6 @@ public class NodeEntity : CreateUpdateEntity
     /// Gets or sets routing rules assigned to the node.
     /// </summary>
     public List<RoutingRuleEntity> RoutingRules { get; set; } = new();
-
-    /// <summary>
-    /// Gets or sets TLS certificates assigned to the node.
-    /// </summary>
-    public List<CertificateEntity> Certificates { get; set; } = new();
 
     /// <summary>
     /// Gets or sets geo resources assigned to the node.

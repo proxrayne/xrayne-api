@@ -23,9 +23,6 @@ public enum NodeProvisionStep
     [JsonStringEnumMemberName("downloading_image")]
     DownloadingImage,
 
-    [JsonStringEnumMemberName("configuring_certificate")]
-    ConfiguringCertificate,
-
     [JsonStringEnumMemberName("starting_container")]
     StartingContainer,
 

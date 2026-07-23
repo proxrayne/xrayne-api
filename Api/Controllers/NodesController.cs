@@ -131,9 +131,6 @@ public sealed class NodesController(
 
         var apiKey = GetCreateApiKey();
         var address = NormalizeAddress(request.Address);
-        var certificateMode = System.Net.IPAddress.TryParse(address, out _)
-            ? CertificateMode.Ip
-            : CertificateMode.Domain;
 
         var node = new NodeEntity
         {
@@ -150,7 +147,6 @@ public sealed class NodesController(
             ConfigTemplate = NodeConfigTemplateDefaults.Create(),
             EncryptedApiKey = secrets.ProtectApiKey(apiKey),
             ApiKeyFingerprint = secrets.GetFingerprint(apiKey),
-            CertificateMode = certificateMode,
             Enabled = true,
             LastStatusChange = DateTime.UtcNow,
             InstallationMessage = "Remote node provisioning is queued."
@@ -238,9 +234,6 @@ public sealed class NodesController(
         var address = NormalizeAddress(request.Address);
         var password = ResolvePassword(node, request);
         var sshKey = ResolveSSHKey(node, request);
-        var certificateMode = System.Net.IPAddress.TryParse(address, out _)
-            ? CertificateMode.Ip
-            : CertificateMode.Domain;
         var requiresReconnect = HasConnectionParametersChanged(
             node,
             address,
@@ -256,7 +249,6 @@ public sealed class NodesController(
         node.AuthType = request.AuthType;
         node.Password = password;
         node.SSHKey = sshKey;
-        node.CertificateMode = certificateMode;
 
         if (requiresReconnect)
         {

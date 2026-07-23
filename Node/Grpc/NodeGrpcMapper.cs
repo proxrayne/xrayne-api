@@ -115,19 +115,6 @@ public static class NodeGrpcMapper
     }
 
     /// <summary>
-    /// Converts certificate metadata from the gRPC contract.
-    /// </summary>
-    public static CertificateDto ToDomain(Proto.CertificateDto value)
-    {
-        return new CertificateDto(
-            value.Domain,
-            value.Active,
-            ToDateTimeOffset(value.ExpireAt),
-            value.CertificateFile,
-            value.PrivateKeyFile);
-    }
-
-    /// <summary>
     /// Converts generated ML-KEM-768 key material from the gRPC contract.
     /// </summary>
     public static Mlkem768Response ToDomain(Proto.GetMLKEM768Response value)

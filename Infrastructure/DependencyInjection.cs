@@ -51,7 +51,6 @@ public static class DependencyInjection
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<INodeInboundService, NodeInboundService>();
         services.AddScoped<INodeOutboundService, NodeOutboundService>();
-        services.AddScoped<INodeCertificateService, NodeCertificateService>();
         services.AddScoped<INodeGeoResourceService, NodeGeoResourceService>();
         services.AddScoped<INodeRoutingRuleService, NodeRoutingRuleService>();
         services.AddScoped<INodeCoreService, NodeCoreService>();

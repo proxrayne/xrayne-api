@@ -26,7 +26,6 @@ namespace Data.Migrations
                 .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "certificate_mode", new[] { "domain", "ip" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "device_verification_method", new[] { "none", "user_agent", "device_info", "combined" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "encryption_method", new[] { "blake3aes128gcm", "blake3aes256gcm", "blake3chacha20poly1305", "aes256gcm", "aes128gcm", "chacha20poly1305", "x_chacha20poly1305", "none" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fingerprint", new[] { "none", "chrome", "firefox", "safari", "i_os", "android", "edge", "e360", "qq", "unsafe", "random", "randomized" });
@@ -253,58 +252,6 @@ namespace Data.Migrations
                     b.HasIndex("ImageId");
 
                     b.ToTable("Applications");
-                });
-
-            modelBuilder.Entity("Data.Entities.CertificateEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("boolean");
-
-                    b.Property<long>("AdminId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("CertificateFile")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<DateTime>("ExpireAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("NodeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("PrivateKeyFile")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminId");
-
-                    b.HasIndex("NodeId");
-
-                    b.ToTable("Certificates");
                 });
 
             modelBuilder.Entity("Data.Entities.ConnectionEntity", b =>
@@ -690,11 +637,6 @@ namespace Data.Migrations
                     b.Property<SSHAuthType>("AuthType")
                         .HasColumnType("ssh_auth_type");
 
-                    b.Property<CertificateMode>("CertificateMode")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("certificate_mode")
-                        .HasDefaultValueSql("'domain'::certificate_mode");
-
                     b.Property<XrayConfig>("ConfigTemplate")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -1063,25 +1005,6 @@ namespace Data.Migrations
                     b.Navigation("Image");
                 });
 
-            modelBuilder.Entity("Data.Entities.CertificateEntity", b =>
-                {
-                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
-                        .WithMany()
-                        .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Data.Entities.NodeEntity", "Node")
-                        .WithMany("Certificates")
-                        .HasForeignKey("NodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Admin");
-
-                    b.Navigation("Node");
-                });
-
             modelBuilder.Entity("Data.Entities.ConnectionEntity", b =>
                 {
                     b.HasOne("Data.Entities.ApplicationEntity", "Application")
@@ -1281,8 +1204,6 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.NodeEntity", b =>
                 {
-                    b.Navigation("Certificates");
-
                     b.Navigation("GeoResources");
 
                     b.Navigation("Inbounds");

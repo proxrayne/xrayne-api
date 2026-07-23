@@ -24,7 +24,6 @@ public static class DependencyInjection
         services.AddScoped<IInboundRepository, InboundRepository>();
         services.AddScoped<IOutboundRepository, OutboundRepository>();
         services.AddScoped<INodeRepository, NodeRepository>();
-        services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<IGeoResourceRepository, GeoResourceRepository>();
         services.AddScoped<IRoutingRuleRepository, RoutingRuleRepository>();
         services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
