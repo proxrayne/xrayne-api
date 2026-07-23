@@ -48,17 +48,30 @@ public sealed class NodesController(
     IOptions<NodeConnectionOptions> nodeConnectionOptions) : ApiControllerBase
 {
     /// <summary>
-    /// Gets all remote nodes available to administrators with node permissions.
+    /// Searches remote nodes available to administrators with node permissions.
     /// </summary>
     [HttpGet]
     [EndpointSummary("List nodes")]
-    [EndpointDescription("Get all remote nodes available to administrators with node permissions.")]
-    [ProducesResponseType(typeof(List<NodeDto>), StatusCodes.Status200OK)]
-    public async Task<List<NodeDto>> GetAll(CancellationToken cancellationToken)
+    [EndpointDescription("Search remote nodes available to administrators with node permissions.")]
+    [ProducesResponseType(typeof(PageResponse<NodeListItemDto>), StatusCodes.Status200OK)]
+    public async Task<PageResponse<NodeListItemDto>> GetAll(
+        [FromQuery] NodeListQuery query,
+        CancellationToken cancellationToken)
     {
-        var result = await nodeRepository.GetAllAsync(cancellationToken);
+        var page = await nodeRepository.SearchAsync(
+            new NodeFilter
+            {
+                Search = query.Search,
+                Page = query.Page,
+                Limit = query.Limit
+            },
+            cancellationToken);
 
-        return result.Select(ToNodeDto).ToList();
+        return new PageResponse<NodeListItemDto>(
+            page.Items.Select(ToNodeListItemDto).ToList(),
+            page.TotalItems,
+            page.CurrentPage,
+            page.TotalPages);
     }
 
     /// <summary>
@@ -764,6 +777,20 @@ public sealed class NodesController(
         return mapper.Map<NodeDto>(
             node,
             options => options.Items[NodeMappingProfile.ConnectionStateItemKey] = state);
+    }
+
+    private NodeListItemDto ToNodeListItemDto(NodeEntity node)
+    {
+        var connectionState = connectionStateStore.Get(node.Id) ?? CreateFallbackConnectionState(node, nodeConnectionOptions.Value);
+        coreStateStore.TryGet(node.Id, out var coreState);
+
+        return mapper.Map<NodeListItemDto>(
+            node,
+            options =>
+            {
+                options.Items[NodeMappingProfile.ConnectionStateItemKey] = connectionState;
+                options.Items[NodeMappingProfile.CoreStateItemKey] = coreState;
+            });
     }
 
     private static NodeConnectionStatus ResolveFallbackConnectionStatus(

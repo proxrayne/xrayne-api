@@ -1,4 +1,5 @@
 using Data.Entities;
+using Contracts.Models;
 
 namespace Data.Contracts;
 
@@ -7,6 +8,11 @@ public interface INodeRepository
     Task<List<NodeEntity>> GetAllAsync(CancellationToken cancellationToken = default);
 
     Task<List<NodeEntity>> GetAllAsync(long adminId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Searches remote nodes with offset pagination.
+    /// </summary>
+    Task<OffsetPage<NodeEntity>> SearchAsync(NodeFilter filter, CancellationToken cancellationToken = default);
 
     Task<NodeEntity> GetByIdAsync(long id, CancellationToken cancellationToken = default);
 

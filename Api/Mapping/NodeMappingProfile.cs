@@ -19,6 +19,11 @@ public sealed class NodeMappingProfile : Profile
     public const string ConnectionStateItemKey = "NodeConnectionState";
 
     /// <summary>
+    /// Mapping context key that contains the current node xray-core state.
+    /// </summary>
+    public const string CoreStateItemKey = "NodeCoreState";
+
+    /// <summary>
     /// Creates remote node API mapping rules.
     /// </summary>
     public NodeMappingProfile()
@@ -28,6 +33,20 @@ public sealed class NodeMappingProfile : Profile
                 nameof(NodeDto.Status),
                 options => options.MapFrom((_, context) =>
                     ((NodeConnectionState)context.Items[ConnectionStateItemKey]).Status));
+
+        CreateMap<NodeEntity, NodeListItemDto>()
+            .ForCtorParam(
+                nameof(NodeListItemDto.Status),
+                options => options.MapFrom((_, context) =>
+                    ((NodeConnectionState)context.Items[ConnectionStateItemKey]).Status))
+            .ForCtorParam(
+                nameof(NodeListItemDto.NodeVersion),
+                options => options.MapFrom((_, context) =>
+                    ((NodeConnectionState)context.Items[ConnectionStateItemKey]).ApiVersion))
+            .ForCtorParam(
+                nameof(NodeListItemDto.Xray),
+                options => options.MapFrom((_, context) =>
+                    ToXrayDto((NodeCoreState?)context.Items[CoreStateItemKey])));
 
         CreateMap<InboundEntity, NodeInboundDto>()
             .ForCtorParam(
@@ -96,5 +115,16 @@ public sealed class NodeMappingProfile : Profile
             .ForCtorParam(
                 nameof(NodeGeoResourceDto.FileName),
                 options => options.MapFrom(resource => resource.Filename));
+    }
+
+    private static NodeListItemXrayDto ToXrayDto(NodeCoreState? state)
+    {
+        return state is null
+            ? new NodeListItemXrayDto(false, false, null, null)
+            : new NodeListItemXrayDto(
+                state.IsInstalled,
+                state.IsRunning,
+                state.Version,
+                state.Status);
     }
 }

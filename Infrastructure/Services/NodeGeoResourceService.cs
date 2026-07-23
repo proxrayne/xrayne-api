@@ -32,7 +32,7 @@ public sealed class NodeGeoResourceService(
         CancellationToken ct = default)
     {
         var remote = await CreateClient(node).GetGeoResourcesAsync(ct);
-        var existing = await geoResources.GetAllAsync(node.Admin.Id, node.Id, ct);
+        var existing = await geoResources.GetAllAsync(node.AdminId, node.Id, ct);
         var remoteByName = remote.ToDictionary(
             resource => StringNormalizer.NormalizeFileName(resource.FileName, MaxFilenameLength),
             StringComparer.OrdinalIgnoreCase);
@@ -69,9 +69,7 @@ public sealed class NodeGeoResourceService(
             Status = GeoResourceStatus.Queued,
             StatusMessage = "Queued uploaded file transfer.",
             NodeId = node.Id,
-            Node = node,
-            AdminId = adminId,
-            Admin = node.Admin
+            AdminId = adminId
         }, ct);
 
         await scheduler.ScheduleGeoResourceUpload(created.Id, filepath, ct);
@@ -104,9 +102,7 @@ public sealed class NodeGeoResourceService(
             Url = normalizedUrl,
             UpdateInterval = updateInterval,
             NodeId = node.Id,
-            Node = node,
-            AdminId = adminId,
-            Admin = node.Admin
+            AdminId = adminId
         }, ct);
 
         await ScheduleDownloadAutoUpdatesAsync(created, ct);
@@ -228,7 +224,7 @@ public sealed class NodeGeoResourceService(
         CancellationToken cancellationToken)
     {
         var fileName = StringNormalizer.NormalizeFileName(remoteResource.FileName, MaxFilenameLength);
-        var resource = await geoResources.GetByFilenameAsync(node.Admin.Id, node.Id, fileName, cancellationToken);
+        var resource = await geoResources.GetByFilenameAsync(node.AdminId, node.Id, fileName, cancellationToken);
         if (resource is null)
         {
             resource = new GeoResourceEntity
@@ -238,9 +234,7 @@ public sealed class NodeGeoResourceService(
                 LastModifiedAt = remoteResource.LastModifiedAt,
                 Status = GeoResourceStatus.Success,
                 NodeId = node.Id,
-                Node = node,
-                AdminId = node.Admin.Id,
-                Admin = node.Admin
+                AdminId = node.AdminId
             };
 
             await geoResources.AddAsync(resource, cancellationToken);
@@ -254,7 +248,7 @@ public sealed class NodeGeoResourceService(
         resource.StatusMessage = null;
         resource.LastErrorAt = null;
 
-        await geoResources.UpdateAsync(node.Admin.Id, resource, cancellationToken);
+        await geoResources.UpdateAsync(node.AdminId, resource, cancellationToken);
 
     }
 

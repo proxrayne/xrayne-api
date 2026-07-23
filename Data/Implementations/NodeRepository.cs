@@ -1,4 +1,6 @@
 using Contracts.Exceptions;
+using Contracts.Models;
+using Contracts.Utilities;
 using Data.Contracts;
 using Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +28,12 @@ public sealed class NodeRepository(AppDbContext context) : INodeRepository
             .Where(node => node.AdminId == adminId)
             .OrderBy(node => node.Name)
             .ToListAsync(ct);
+    }
+
+    /// <inheritdoc />
+    public Task<OffsetPage<NodeEntity>> SearchAsync(NodeFilter filter, CancellationToken ct = default)
+    {
+        return SearchCoreAsync(context.Nodes.AsNoTracking(), filter, ct);
     }
 
     public async Task<NodeEntity> GetByIdAsync(long id, CancellationToken ct = default)
@@ -143,5 +151,44 @@ public sealed class NodeRepository(AppDbContext context) : INodeRepository
     private NodeEntity Required(NodeEntity? node, long id)
     {
         return node ?? throw new NotFoundException($"Node '{id}' was not found.");
+    }
+
+    private static async Task<OffsetPage<NodeEntity>> SearchCoreAsync(
+        IQueryable<NodeEntity> query,
+        NodeFilter filter,
+        CancellationToken ct)
+    {
+        query = ApplyFilter(query, filter);
+        var totalItems = await query.CountAsync(ct);
+        var limit = OffsetPagination.NormalizeLimit(filter.Limit);
+        var page = OffsetPagination.NormalizePage(filter.Page);
+        var totalPages = OffsetPagination.CalculateTotalPages(totalItems, limit);
+        var skip = (page - 1) * limit;
+
+        var items = await query
+            .OrderBy(node => node.Name)
+            .ThenBy(node => node.Id)
+            .Skip(skip)
+            .Take(limit)
+            .ToListAsync(ct);
+
+        return new OffsetPage<NodeEntity>(items, totalItems, page, totalPages);
+    }
+
+    private static IQueryable<NodeEntity> ApplyFilter(IQueryable<NodeEntity> query, NodeFilter filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter.Search))
+        {
+            return query;
+        }
+
+        var search = filter.Search.Trim();
+        var pattern = $"%{search}%";
+        var hasPort = int.TryParse(search, out var port);
+
+        return query.Where(node =>
+            EF.Functions.ILike(node.Name, pattern)
+            || EF.Functions.ILike(node.Address, pattern)
+            || (hasPort && node.ApiPort == port));
     }
 }
