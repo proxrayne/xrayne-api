@@ -32,7 +32,7 @@ try
     builder.Configuration.AddJsonFile(PathProvider.Paths.JsonConfig, optional: true, reloadOnChange: true);
     builder.Configuration.AddEnvFile(PathProvider.Paths.EnvConfig, optional: true);
 
-    var IsDocsEnabled = builder.Configuration.GetValue("Docs", false);
+    var isDocsEnabled = builder.Configuration.GetValue("Docs", false);
     var devSpaOrigins = builder.Configuration.GetSection("Cors:SpaOrigins").Get<string[]>() ?? [];
 
     var settings = PanelSettings.Parse(BuildPanelBootstrapConfiguration());
@@ -92,7 +92,7 @@ try
 
     });
 
-    if (IsDocsEnabled)
+    if (isDocsEnabled)
     {
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddOpenApi(options =>
@@ -218,7 +218,7 @@ try
     app.UseSerilogRequestLogging();
     app.UseForwardedHeaders();
 
-    if (IsDocsEnabled)
+    if (isDocsEnabled)
     {
         app.MapOpenApi();
         app.MapScalarApiReference(options =>
