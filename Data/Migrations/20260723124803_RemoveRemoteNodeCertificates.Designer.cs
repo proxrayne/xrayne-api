@@ -637,7 +637,7 @@ namespace Data.Migrations
                     b.Property<int>("ApiPort")
                         .HasColumnType("integer");
 
-                    b.Property<SSHAuthType>("AuthType")
+                    b.Property<string>("AuthType")
                         .HasColumnType("ssh_auth_type");
 
                     b.Property<XrayConfig>("ConfigTemplate")

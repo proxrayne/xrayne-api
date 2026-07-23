@@ -110,7 +110,7 @@ namespace Data.Migrations
                     ConnectedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ReconnectAttemptCount = table.Column<int>(type: "integer", nullable: false),
                     Enabled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    AuthType = table.Column<SSHAuthType>(type: "ssh_auth_type", nullable: false),
+                    AuthType = table.Column<string>(type: "ssh_auth_type", nullable: false),
                     Message = table.Column<string>(type: "text", nullable: true),
                     InstallationMessage = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     AdminId = table.Column<long>(type: "bigint", nullable: false),

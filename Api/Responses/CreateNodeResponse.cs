@@ -1,6 +1,6 @@
 namespace Api.Responses;
 
 /// <summary>
-/// Response returned after scheduling remote node creation.
+/// Response returned after creating a remote node connection.
 /// </summary>
-public sealed record CreateNodeResponse(NodeDto Node, string JobId);
+public sealed record CreateNodeResponse(NodeDto Node);

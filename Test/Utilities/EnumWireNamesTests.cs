@@ -12,7 +12,6 @@ public sealed class EnumWireNamesTests
         EnumWireNames.GetName(SortOrder.Asc).Should().Be("asc");
         EnumWireNames.GetName(UserSortBy.CreatedAt).Should().Be("created_at");
         EnumWireNames.GetName(UserStatus.OnHold).Should().Be("on_hold");
-        EnumWireNames.GetName(SSHAuthType.PrivateKey).Should().Be("private_key");
         EnumWireNames.GetName(GeoResourceStatus.Transferring).Should().Be("transferring");
         EnumWireNames.GetName(WebhookEvent.UserStatusChanged).Should().Be("user_status_changed");
     }

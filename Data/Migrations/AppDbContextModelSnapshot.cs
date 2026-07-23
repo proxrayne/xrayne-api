@@ -32,7 +32,6 @@ namespace Data.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "geo_resource_status", new[] { "queued", "updating", "loading", "transferring", "error", "success" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "host_security", new[] { "none", "inbound_default", "tls" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "limit_reset_strategy", new[] { "day", "week", "month", "year" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "ssh_auth_type", new[] { "password", "private_key" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "subscription_format", new[] { "v2ray", "v2ray_json", "clash_meta", "sing_box" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_status", new[] { "active", "expired", "limited", "on_hold", "disabled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "xtls_flow", new[] { "none", "xtls_rprx_vision", "xtls_rprx_vision_udp443" });
@@ -634,9 +633,6 @@ namespace Data.Migrations
                     b.Property<int>("ApiPort")
                         .HasColumnType("integer");
 
-                    b.Property<SSHAuthType>("AuthType")
-                        .HasColumnType("ssh_auth_type");
-
                     b.Property<XrayConfig>("ConfigTemplate")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -683,32 +679,11 @@ namespace Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
-                    b.Property<string>("Password")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<int>("Port")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ReconnectAttemptCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SSHKey")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<string>("SSHUsername")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("WorkingDirectory")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 

@@ -30,18 +30,14 @@ public static class DependencyInjection
         services.AddSingleton<IEventStreamManager, EventStreamManager>();
         services.AddSingleton<INodeLogStore, NodeLogStore>();
         services.AddSingleton<INodeSecretService, NodeSecretService>();
-        services.AddSingleton<INodeProvisionStateMachine, NodeProvisionStateMachine>();
         services.AddSingleton<INodeReconnectPolicy, NodeReconnectPolicy>();
-        services.AddSingleton<INodeImageReleaseResolver, NodeImageReleaseResolver>();
         services.AddSingleton<INodeCoreConfigBuilder, NodeCoreConfigBuilder>();
         services.AddSingleton<INodeConnectionVerifier, NodeConnectionVerifier>();
         services.AddSingleton<INodeConnectionManager, NodeConnectionManager>();
-        services.AddSingleton<INodeProvisioner, NodeProvisioner>();
         services.AddHostedService<NodeConnectionHostedService>();
         services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
         services.AddAutoMapper(_ => { }, typeof(DependencyInjection).Assembly);
 
-        services.AddTransient<NodeProvisionJob>();
         services.AddTransient<GeoResourceSyncJob>();
         services.AddTransient<UpdateGeoResourcesJob>();
         services.AddTransient<GeoResourceDownloadJob>();

@@ -70,10 +70,7 @@ public sealed class HostMappingProfileTests
                     Id = 3,
                     Name = "Node",
                     Address = "node.example.com",
-                    Port = 22,
                     ApiPort = 8443,
-                    SSHUsername = "root",
-                    WorkingDirectory = "/opt/xrayne",
                     EncryptedApiKey = "encrypted",
                     ApiKeyFingerprint = "fingerprint"
                 }

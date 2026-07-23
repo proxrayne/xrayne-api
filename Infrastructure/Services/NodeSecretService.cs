@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace Infrastructure.Services;
 
@@ -10,13 +9,6 @@ namespace Infrastructure.Services;
 public sealed class NodeSecretService(IDataProtectionProvider dataProtectionProvider) : INodeSecretService
 {
     private readonly IDataProtector protector = dataProtectionProvider.CreateProtector("xrayne.remote-node-api-key.v1");
-
-    public string GenerateApiKey()
-    {
-        var bytes = RandomNumberGenerator.GetBytes(32);
-
-        return WebEncoders.Base64UrlEncode(bytes);
-    }
 
     public string ProtectApiKey(string apiKey)
     {

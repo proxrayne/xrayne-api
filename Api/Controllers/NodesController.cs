@@ -12,7 +12,6 @@ using Contracts.Values;
 using Data.Contracts;
 using Data.Entities;
 using Infrastructure.Services;
-using Infrastructure.States;
 using Infrastructure.Values;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,10 +44,7 @@ public sealed class NodesController(
     INodeConnectionStateStore connectionStateStore,
     INodeCoreStateStore coreStateStore,
     INodeLogStore nodeLogStore,
-    IBackgroundTaskScheduler scheduler,
-    INodeProvisionStateMachine provisionStates,
     IEventStreamManager eventStreams,
-    IHostEnvironment environment,
     IOptions<NodeConnectionOptions> nodeConnectionOptions) : ApiControllerBase
 {
     /// <summary>
@@ -113,62 +109,50 @@ public sealed class NodesController(
     }
 
     /// <summary>
-    /// Creates a remote node and schedules provisioning.
+    /// Creates a remote node connection.
     /// </summary>
     [HttpPost]
     [EndpointSummary("Create node")]
-    [EndpointDescription("Create a remote node record and schedule SSH provisioning.")]
+    [EndpointDescription("Create a remote node record after verifying direct node API access.")]
     [ProducesResponseType(typeof(CreateNodeResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
         [FromBody] CreateNodeRequest request,
         CancellationToken cancellationToken)
     {
-        if (!environment.IsDevelopment())
-        {
-            ValidateCreateRequest(request);
-        }
-
-        var apiKey = GetCreateApiKey();
+        var apiKey = NormalizeApiKey(request.ApiKey);
         var address = NormalizeAddress(request.Address);
+        var verification = await connectionVerifier.VerifyAsync(
+            CreateVerificationNode(address, request.ApiPort, apiKey),
+            apiKey,
+            cancellationToken);
 
         var node = new NodeEntity
         {
             Name = request.Name.Trim(),
             Address = address,
-            Port = request.Port,
             ApiPort = request.ApiPort,
-            SSHUsername = request.SSHUsername.Trim(),
-            AuthType = request.AuthType,
-            SSHKey = string.IsNullOrWhiteSpace(request.SSHKey) ? null : request.SSHKey,
-            Password = string.IsNullOrWhiteSpace(request.Password) ? null : request.Password,
-            WorkingDirectory = request.WorkingDirectory.Trim(),
             Note = request.Note.Trim(),
             ConfigTemplate = NodeConfigTemplateDefaults.Create(),
             EncryptedApiKey = secrets.ProtectApiKey(apiKey),
             ApiKeyFingerprint = secrets.GetFingerprint(apiKey),
             Enabled = true,
+            ConnectedAt = verification.VerifiedAt,
+            LastSeenAt = verification.VerifiedAt,
             LastStatusChange = DateTime.UtcNow,
-            InstallationMessage = "Remote node provisioning is queued."
+            InstallationMessage = "Remote node connection verified."
         };
 
         await nodeRepository.AddAsync(AdminId, node, cancellationToken);
+        connectionStateStore.Set(new NodeConnectionState(
+            node.Id,
+            NodeConnectionStatus.Connected,
+            null,
+            null));
 
-        connectionStateStore.Set(new NodeConnectionState(node.Id, NodeConnectionStatus.Connecting, null, null));
+        await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
 
-        if (environment.IsDevelopment())
-        {
-            var devJobId = $"dev-{Guid.NewGuid():N}";
-            await ConnectDevelopmentNodeAsync(node, apiKey, devJobId, cancellationToken);
-            await connectionManager.EnsureConnectedAsync(node.Id, cancellationToken);
-
-            return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(ToNodeDto(node), devJobId));
-        }
-
-        var jobId = await scheduler.ScheduleProvisionNode(node.Id, cancellationToken);
-        provisionStates.Dispatch(jobId, NodeProvisionState.Queued(node.Id, jobId));
-
-        return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(ToNodeDto(node), jobId));
+        return Created($"/api/nodes/{node.Id}", new CreateNodeResponse(ToNodeDto(node)));
     }
 
     /// <summary>
@@ -204,7 +188,7 @@ public sealed class NodesController(
     /// </summary>
     [HttpGet("{id:long}/connection-parameters")]
     [EndpointSummary("Get node connection parameters")]
-    [EndpointDescription("Get saved remote node connection parameters without returning SSH secrets.")]
+    [EndpointDescription("Get saved remote node connection parameters without returning the node API key.")]
     [ProducesResponseType(typeof(NodeConnectionParametersResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<NodeConnectionParametersResponse> GetConnectionParameters(
@@ -232,23 +216,25 @@ public sealed class NodesController(
     {
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
         var address = NormalizeAddress(request.Address);
-        var password = ResolvePassword(node, request);
-        var sshKey = ResolveSSHKey(node, request);
+        var apiKey = ResolveApiKey(node, request.ApiKey);
+        var verification = await connectionVerifier.VerifyAsync(
+            CreateVerificationNode(address, request.ApiPort, apiKey),
+            apiKey,
+            cancellationToken);
         var requiresReconnect = HasConnectionParametersChanged(
             node,
             address,
             request.ApiPort,
-            request.AuthType,
-            password,
-            sshKey);
+            apiKey);
 
         node.Address = address;
-        node.Port = request.Port;
         node.ApiPort = request.ApiPort;
-        node.SSHUsername = request.SSHUsername.Trim();
-        node.AuthType = request.AuthType;
-        node.Password = password;
-        node.SSHKey = sshKey;
+        node.EncryptedApiKey = secrets.ProtectApiKey(apiKey);
+        node.ApiKeyFingerprint = secrets.GetFingerprint(apiKey);
+        node.ConnectedAt = verification.VerifiedAt;
+        node.LastSeenAt = verification.VerifiedAt;
+        node.ReconnectAttemptCount = 0;
+        node.InstallationMessage = "Remote node connection verified.";
 
         if (requiresReconnect)
         {
@@ -522,44 +508,6 @@ public sealed class NodesController(
             cancellationToken);
 
     /// <summary>
-    /// Streams remote node provisioning state.
-    /// </summary>
-    [HttpGet("{id:long}/install/{jobId}/stream")]
-    [EndpointSummary("Node provisioning stream")]
-    [EndpointDescription("Subscribe to remote node provisioning state changes.")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task StreamProvisionState(long id, string jobId, CancellationToken cancellationToken)
-    {
-        _ = await nodeRepository.GetByIdAsync(id, cancellationToken);
-        var currentState = provisionStates.GetState(jobId);
-        if (currentState is null || currentState.NodeId != id)
-        {
-            throw new NotFoundException($"Provisioning job '{jobId}' was not found.");
-        }
-
-        var subscription = eventStreams.Subscribe<NodeProvisionState>(NodeProvisionStateMachine.GetStreamKey(jobId));
-
-        SetupStreamHeaders();
-
-        try
-        {
-            await Response.StartAsync(cancellationToken);
-            await WriteServerSentEventAsync(currentState, cancellationToken);
-
-            await foreach (var state in subscription.Reader.ReadAllAsync(cancellationToken))
-            {
-                await WriteServerSentEventAsync(state, cancellationToken);
-            }
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
-        finally
-        {
-            eventStreams.Unsubscribe(subscription.Id);
-        }
-    }
-
-    /// <summary>
     /// Manually resets reconnect attempts and schedules node reconnect.
     /// </summary>
     [HttpPost("{id:long}/reconnect")]
@@ -671,19 +619,6 @@ public sealed class NodesController(
         return NoContent();
     }
 
-    private static void ValidateCreateRequest(CreateNodeRequest request)
-    {
-        if (request.AuthType == SSHAuthType.Password && string.IsNullOrWhiteSpace(request.Password))
-        {
-            throw new BadRequestException("SSH password is required for password authentication.");
-        }
-
-        if (request.AuthType == SSHAuthType.PrivateKey && string.IsNullOrWhiteSpace(request.SSHKey))
-        {
-            throw new BadRequestException("SSH private key is required for private key authentication.");
-        }
-    }
-
     private static string NormalizeAddress(string value)
     {
         var address = value.Trim().TrimEnd('.').ToLowerInvariant();
@@ -695,48 +630,25 @@ public sealed class NodesController(
         return address;
     }
 
-    private static string? ResolvePassword(
-        NodeEntity node,
-        UpdateNodeConnectionParametersRequest request)
+    private static string NormalizeApiKey(string? value)
     {
-        if (request.AuthType is not SSHAuthType.Password)
+        var apiKey = value?.Trim();
+        if (string.IsNullOrWhiteSpace(apiKey))
         {
-            return null;
+            throw new BadRequestException("Node API key is required.");
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Password))
-        {
-            return request.Password.Trim();
-        }
-
-        if (node.AuthType is SSHAuthType.Password && !string.IsNullOrWhiteSpace(node.Password))
-        {
-            return node.Password;
-        }
-
-        throw new BadRequestException("SSH password is required for password authentication.");
+        return apiKey;
     }
 
-    private static string? ResolveSSHKey(
-        NodeEntity node,
-        UpdateNodeConnectionParametersRequest request)
+    private string ResolveApiKey(NodeEntity node, string? replacementApiKey)
     {
-        if (request.AuthType is not SSHAuthType.PrivateKey)
+        if (!string.IsNullOrWhiteSpace(replacementApiKey))
         {
-            return null;
+            return replacementApiKey.Trim();
         }
 
-        if (!string.IsNullOrWhiteSpace(request.SSHKey))
-        {
-            return request.SSHKey.Trim();
-        }
-
-        if (node.AuthType is SSHAuthType.PrivateKey && !string.IsNullOrWhiteSpace(node.SSHKey))
-        {
-            return node.SSHKey;
-        }
-
-        throw new BadRequestException("SSH private key is required for private key authentication.");
+        return secrets.UnprotectApiKey(node.EncryptedApiKey);
     }
 
     private void MarkNodeConnecting(NodeEntity node, string message)
@@ -752,39 +664,19 @@ public sealed class NodesController(
     {
         return new NodeConnectionParametersResponse(
             node.Address,
-            node.Port,
             node.ApiPort,
-            node.SSHUsername,
-            node.AuthType,
-            !string.IsNullOrWhiteSpace(node.Password),
-            !string.IsNullOrWhiteSpace(node.SSHKey),
-            node.WorkingDirectory);
+            node.ApiKeyFingerprint);
     }
 
-    private static bool HasConnectionParametersChanged(
+    private bool HasConnectionParametersChanged(
         NodeEntity node,
         string address,
         int apiPort,
-        SSHAuthType authType,
-        string? password,
-        string? sshKey)
+        string apiKey)
     {
         return !string.Equals(node.Address, address, StringComparison.Ordinal)
             || node.ApiPort != apiPort
-            || node.AuthType != authType
-            || !string.Equals(node.Password, password, StringComparison.Ordinal)
-            || !string.Equals(node.SSHKey, sshKey, StringComparison.Ordinal);
-    }
-
-    private string GetCreateApiKey()
-    {
-        if (environment.IsDevelopment()
-            && !string.IsNullOrWhiteSpace(nodeConnectionOptions.Value.DevelopmentApiKey))
-        {
-            return nodeConnectionOptions.Value.DevelopmentApiKey;
-        }
-
-        return secrets.GenerateApiKey();
+            || !string.Equals(node.ApiKeyFingerprint, secrets.GetFingerprint(apiKey), StringComparison.Ordinal);
     }
 
     private INodeHealthClient CreateHealthClient(NodeEntity node)
@@ -933,6 +825,20 @@ public sealed class NodesController(
             : Enum.Parse<RemoteCoreStatus>(status.Value.ToString());
     }
 
+    private NodeEntity CreateVerificationNode(string address, int apiPort, string apiKey)
+    {
+        return new NodeEntity
+        {
+            Name = "connection-check",
+            Address = address,
+            ApiPort = apiPort,
+            ConfigTemplate = NodeConfigTemplateDefaults.Create(),
+            EncryptedApiKey = secrets.ProtectApiKey(apiKey),
+            ApiKeyFingerprint = secrets.GetFingerprint(apiKey),
+            LastStatusChange = DateTime.UtcNow
+        };
+    }
+
     private async Task<ActionResult<OperationAcceptedResponse>> ScheduleCoreOperation(
         long id,
         Func<NodeEntity, INodeCoreClient, Task<OperationAcceptedResponse>> operation,
@@ -941,40 +847,5 @@ public sealed class NodesController(
         var node = await nodeRepository.GetByIdAsync(id, cancellationToken);
 
         return Accepted(await operation(node, CreateCoreClient(node)));
-    }
-
-    private async Task ConnectDevelopmentNodeAsync(
-        NodeEntity node,
-        string apiKey,
-        string jobId,
-        CancellationToken cancellationToken)
-    {
-        provisionStates.Dispatch(jobId, NodeProvisionState.Queued(node.Id, jobId));
-        provisionStates.Dispatch(jobId, NodeProvisionState.Preparing(node.Id, jobId));
-        provisionStates.Dispatch(jobId, NodeProvisionState.Verifying(node.Id, jobId));
-
-        try
-        {
-            var result = await connectionVerifier.VerifyAsync(node, apiKey, cancellationToken);
-
-            node.ConnectedAt = result.VerifiedAt;
-            node.LastSeenAt = result.VerifiedAt;
-            node.ReconnectAttemptCount = 0;
-            node.InstallationMessage = "Development SSH provisioning skipped. Local node is connected.";
-            node.Message = null;
-            node.LastStatusChange = DateTime.UtcNow;
-
-            await nodeRepository.UpdateAsync(node, cancellationToken);
-            provisionStates.Dispatch(jobId, NodeProvisionState.Completed(node.Id, jobId));
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            node.Message = exception.Message;
-            node.InstallationMessage = exception.Message;
-            node.LastStatusChange = DateTime.UtcNow;
-
-            await nodeRepository.UpdateAsync(node, cancellationToken);
-            provisionStates.Dispatch(jobId, NodeProvisionState.Failed(node.Id, jobId, exception.Message));
-        }
     }
 }

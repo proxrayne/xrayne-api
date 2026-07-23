@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Contracts.Enums;
 using Contracts.Models;
 using Data;
+using Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -17,8 +18,8 @@ using Xray.Config.Models;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260721175120_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260723132830_RemoveNodeSshProvisioning")]
+    partial class RemoveNodeSshProvisioning
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,11 +29,12 @@ namespace Data.Migrations
                 .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "certificate_mode", new[] { "domain", "ip" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "device_verification_method", new[] { "none", "user_agent", "device_info", "combined" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "encryption_method", new[] { "blake3aes128gcm", "blake3aes256gcm", "blake3chacha20poly1305", "aes256gcm", "aes128gcm", "chacha20poly1305", "x_chacha20poly1305", "none" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fingerprint", new[] { "none", "chrome", "firefox", "safari", "i_os", "android", "edge", "e360", "qq", "unsafe", "random", "randomized" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "geo_resource_status", new[] { "queued", "updating", "loading", "transferring", "error", "success" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "host_security", new[] { "none", "inbound_default", "tls" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "limit_reset_strategy", new[] { "day", "week", "month", "year" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "ssh_auth_type", new[] { "password", "private_key" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "subscription_format", new[] { "v2ray", "v2ray_json", "clash_meta", "sing_box" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_status", new[] { "active", "expired", "limited", "on_hold", "disabled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "xtls_flow", new[] { "none", "xtls_rprx_vision", "xtls_rprx_vision_udp443" });
@@ -254,58 +256,6 @@ namespace Data.Migrations
                     b.ToTable("Applications");
                 });
 
-            modelBuilder.Entity("Data.Entities.CertificateEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("boolean");
-
-                    b.Property<long>("AdminId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("CertificateFile")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<DateTime>("ExpireAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("NodeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("PrivateKeyFile")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminId");
-
-                    b.HasIndex("NodeId");
-
-                    b.ToTable("Certificates");
-                });
-
             modelBuilder.Entity("Data.Entities.ConnectionEntity", b =>
                 {
                     b.Property<long>("Id")
@@ -314,47 +264,64 @@ namespace Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("AppVersion")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
                     b.Property<int?>("ApplicationId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ConnectedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<DeviceInfo>("DeviceInfo")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DeviceVerificationMethod>("DeviceVerificationMethod")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("device_verification_method")
+                        .HasDefaultValueSql("'none'::device_verification_method");
+
                     b.Property<XtlsFlow>("Flow")
                         .HasColumnType("xtls_flow");
-
-                    b.Property<string>("HWID")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
 
                     b.Property<EncryptionMethod>("Method")
                         .HasColumnType("encryption_method");
 
-                    b.Property<string>("Model")
+                    b.Property<string>("Name")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<string>("Name")
+                    b.Property<DateTimeOffset?>("OnlineAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OperationSystemId")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
-
-                    b.Property<string>("OS")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<bool>("Revoked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("SubscriptionUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -365,6 +332,8 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationId");
+
+                    b.HasIndex("OperationSystemId");
 
                     b.HasIndex("UserId");
 
@@ -435,6 +404,114 @@ namespace Data.Migrations
                         .IsUnique();
 
                     b.ToTable("GeoResources");
+                });
+
+            modelBuilder.Entity("Data.Entities.HostEntity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("ALPN")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<long>("AdminId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("AllowIncrease")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("CountryAlpha2Code")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<Fingerprint>("Fingerprint")
+                        .HasColumnType("fingerprint");
+
+                    b.Property<string>("FragmentTemplate")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Host")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<long>("InboundId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsMuxEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsRandomUseragent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsUseServerNameAsHost")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("NoiseTemplate")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int?>("Port")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<HostSecurity>("Security")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("host_security")
+                        .HasDefaultValueSql("'inbound_default'::host_security");
+
+                    b.Property<string>("ServerName")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminId");
+
+                    b.HasIndex("InboundId");
+
+                    b.ToTable("Hosts");
                 });
 
             modelBuilder.Entity("Data.Entities.ImageEntity", b =>
@@ -559,14 +636,6 @@ namespace Data.Migrations
                     b.Property<int>("ApiPort")
                         .HasColumnType("integer");
 
-                    b.Property<string>("AuthType")
-                        .HasColumnType("ssh_auth_type");
-
-                    b.Property<string>("CertificateMode")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("certificate_mode")
-                        .HasDefaultValueSql("'domain'::certificate_mode");
-
                     b.Property<XrayConfig>("ConfigTemplate")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -613,32 +682,11 @@ namespace Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
-                    b.Property<string>("Password")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<int>("Port")
-                        .HasColumnType("integer");
-
                     b.Property<int>("ReconnectAttemptCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SSHKey")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<string>("SSHUsername")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("WorkingDirectory")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
@@ -816,9 +864,6 @@ namespace Data.Migrations
                     b.Property<DateTimeOffset?>("OnHoldExpire")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset?>("OnlineAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<UserStatus>("Status")
                         .HasColumnType("user_status");
 
@@ -938,30 +983,16 @@ namespace Data.Migrations
                     b.Navigation("Image");
                 });
 
-            modelBuilder.Entity("Data.Entities.CertificateEntity", b =>
-                {
-                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
-                        .WithMany()
-                        .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Data.Entities.NodeEntity", "Node")
-                        .WithMany("Certificates")
-                        .HasForeignKey("NodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Admin");
-
-                    b.Navigation("Node");
-                });
-
             modelBuilder.Entity("Data.Entities.ConnectionEntity", b =>
                 {
                     b.HasOne("Data.Entities.ApplicationEntity", "Application")
                         .WithMany("Connections")
                         .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Data.Entities.OperationSystemEntity", "OperatingSystem")
+                        .WithMany()
+                        .HasForeignKey("OperationSystemId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Data.Entities.UserEntity", "User")
@@ -971,6 +1002,8 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Application");
+
+                    b.Navigation("OperatingSystem");
 
                     b.Navigation("User");
                 });
@@ -992,6 +1025,25 @@ namespace Data.Migrations
                     b.Navigation("Admin");
 
                     b.Navigation("Node");
+                });
+
+            modelBuilder.Entity("Data.Entities.HostEntity", b =>
+                {
+                    b.HasOne("Data.Entities.AdminAccountEntity", "Admin")
+                        .WithMany()
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Data.Entities.InboundEntity", "Inbound")
+                        .WithMany()
+                        .HasForeignKey("InboundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Admin");
+
+                    b.Navigation("Inbound");
                 });
 
             modelBuilder.Entity("Data.Entities.InboundEntity", b =>
@@ -1130,8 +1182,6 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Entities.NodeEntity", b =>
                 {
-                    b.Navigation("Certificates");
-
                     b.Navigation("GeoResources");
 
                     b.Navigation("Inbounds");

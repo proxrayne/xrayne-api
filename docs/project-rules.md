@@ -31,7 +31,7 @@ longer contains a standalone node-service project or node-service source code.
 - Keep HTTP behavior in `Api`; delegate work to repositories/services.
 - Keep EF persistence in `Data`.
 - Keep remote-node xray-core lifecycle and runtime behavior in `Infrastructure`.
-- Keep managed-node provisioning, reconnect, and status orchestration in
+- Keep managed-node direct connection verification, reconnect, and status orchestration in
   panel-owned services; do not plan work in a local standalone node-service
   project.
 - Keep CLI orchestration in the `xrayne-cli` repository; do not move CLI install

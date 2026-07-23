@@ -26,19 +26,22 @@ public sealed class NodeConnectionVerifier(
         var ping = await healthClientFactory.Create(endpoint).PingAsync(cancellationToken);
         var verifiedAt = DateTimeOffset.UtcNow;
 
-        connectionStates.Set(new NodeConnectionState(
-            node.Id,
-            NodeConnectionStatus.Connected,
-            ping.NodeVersion,
-            verifiedAt - ping.Uptime));
-        coreStates.Set(new NodeCoreState(
-            node.Id,
-            ping.Core.IsInstalled,
-            ping.Core.IsRunning,
-            ping.Core.Version,
-            TryMapCoreStatus(ping.Core.Status),
-            null,
-            null));
+        if (node.Id > 0)
+        {
+            connectionStates.Set(new NodeConnectionState(
+                node.Id,
+                NodeConnectionStatus.Connected,
+                ping.NodeVersion,
+                verifiedAt - ping.Uptime));
+            coreStates.Set(new NodeCoreState(
+                node.Id,
+                ping.Core.IsInstalled,
+                ping.Core.IsRunning,
+                ping.Core.Version,
+                TryMapCoreStatus(ping.Core.Status),
+                null,
+                null));
+        }
 
         return new NodeConnectionVerificationResult(verifiedAt);
     }

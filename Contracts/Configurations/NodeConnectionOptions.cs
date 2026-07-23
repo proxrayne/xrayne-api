@@ -5,11 +5,6 @@ namespace Contracts.Configurations;
 /// </summary>
 public sealed class NodeConnectionOptions
 {
-    /// <summary>
-    /// Optional fixed node API key used only by the panel in Development when SSH provisioning is bypassed.
-    /// </summary>
-    public string? DevelopmentApiKey { get; set; }
-
     public int ReconnectAttempts { get; set; } = 3;
 
     public int InitialReconnectDelaySeconds { get; set; } = 1;

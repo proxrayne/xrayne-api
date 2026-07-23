@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Contracts.Enums;
 using Contracts.Values;
 using Xray.Config.Models;
 
@@ -28,18 +27,7 @@ public class NodeEntity : CreateUpdateEntity
     public required string Address { get; set; }
 
     /// <summary>
-    /// Gets or sets the SSH username used during remote provisioning.
-    /// </summary>
-    [MaxLength(64)]
-    public required string SSHUsername { get; set; }
-
-    /// <summary>
-    /// Gets or sets the SSH port used during remote provisioning.
-    /// </summary>
-    public int Port { get; set; }
-
-    /// <summary>
-    /// Gets or sets the HTTPS API port exposed by the remote node service.
+    /// Gets or sets the HTTP/2 API port exposed by the remote node service.
     /// </summary>
     public int ApiPort { get; set; }
 
@@ -54,24 +42,6 @@ public class NodeEntity : CreateUpdateEntity
     /// </summary>
     [MaxLength(64)]
     public required string ApiKeyFingerprint { get; set; }
-
-    /// <summary>
-    /// Gets or sets the SSH private key used for provisioning when key authentication is selected.
-    /// </summary>
-    [MaxLength(512)]
-    public string? SSHKey { get; set; }
-
-    /// <summary>
-    /// Gets or sets the SSH password used for provisioning when password authentication is selected.
-    /// </summary>
-    [MaxLength(256)]
-    public string? Password { get; set; }
-
-    /// <summary>
-    /// Gets or sets the remote working directory where XRayne node files are installed.
-    /// </summary>
-    [MaxLength(256)]
-    public required string WorkingDirectory { get; set; }
 
     /// <summary>
     /// Gets or sets an operator note for the node.
@@ -111,18 +81,12 @@ public class NodeEntity : CreateUpdateEntity
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets the SSH authentication method used for provisioning.
-    /// </summary>
-    [Column(TypeName = "ssh_auth_type")]
-    public SSHAuthType AuthType { get; set; } = SSHAuthType.Password;
-
-    /// <summary>
-    /// Gets or sets the latest connection or provisioning message.
+    /// Gets or sets the latest connection message.
     /// </summary>
     public string? Message { get; set; }
 
     /// <summary>
-    /// Gets or sets the latest remote provisioning progress or failure message.
+    /// Gets or sets the latest direct connection verification message.
     /// </summary>
     [MaxLength(1024)]
     public string InstallationMessage { get; set; } = string.Empty;

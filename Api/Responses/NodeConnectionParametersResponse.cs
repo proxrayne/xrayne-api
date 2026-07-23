@@ -1,5 +1,3 @@
-using Contracts.Enums;
-
 namespace Api.Responses;
 
 /// <summary>
@@ -7,10 +5,5 @@ namespace Api.Responses;
 /// </summary>
 public sealed record NodeConnectionParametersResponse(
     string Address,
-    int Port,
     int ApiPort,
-    string SSHUsername,
-    SSHAuthType AuthType,
-    bool HasPassword,
-    bool HasSSHKey,
-    string WorkingDirectory);
+    string ApiKeyFingerprint);

@@ -7,7 +7,7 @@ The backend is a .NET 9 solution with a layered architecture:
 - `Api`: panel REST API.
 - `Contracts`: shared contracts and configuration values.
 - `Node`: typed gRPC protocol client for standalone remote nodes.
-- `Infrastructure`: runtime services, remote-node orchestration, jobs, and state.
+- `Infrastructure`: runtime services, remote-node connection orchestration, jobs, and state.
 - `Data`: EF Core persistence.
 - `Test`: test project.
 
@@ -35,8 +35,8 @@ Panel-owned node behavior includes:
 - HTTP endpoints in `Api`;
 - remote node gRPC protocol clients, DTOs, and typed protocol errors in
   `Node`;
-- provisioning, reconnect, status streaming, and connection verification services
-  in `Infrastructure`;
+- direct connection verification, reconnect, and status streaming services in
+  `Infrastructure`;
 - node entities, encrypted connection data, and repository access in
   `Data`;
 - shared node DTOs, enums, and configuration values in `Contracts`.
@@ -100,13 +100,17 @@ dashboard reads through
 Remote node xray-core management is exposed through panel endpoints under
 `/api/nodes/{id}/core`. The panel resolves the encrypted node API key, calls the
 standalone node gRPC API through `Node`, and streams status/install events back
-to the UI from panel-local event streams. Provisioning starts the node container, verifies the node API, then
-installs the latest XTLS `xray-core` as the final remote setup step.
+to the UI from panel-local event streams.
+Operators deploy and start standalone remote nodes before adding them to the
+panel. `POST /api/nodes` verifies the provided address, API port, and node API
+key with a direct `Ping` before saving the record. No SSH credentials or node
+working directory are stored by the panel.
 Node profile metadata is updated through `PUT /api/nodes/{id}`. Saved node
 connection parameters are read through
 `GET /api/nodes/{id}/connection-parameters` and updated through
-`PUT /api/nodes/{id}/connection-parameters`; SSH secrets are write-only and are
-not returned by the read endpoint. Updates that change live connection
+`PUT /api/nodes/{id}/connection-parameters`; the saved API key is write-only
+and reads expose only its fingerprint. Updates are verified with a direct
+`Ping` before saving. Updates that change live connection
 parameters reset the node to `Connecting` and schedule a reconnect through the
 connection manager. The panel proxies remote node service restarts through
 `POST /api/nodes/{id}/restart`, which calls remote `RestartRuntime`
@@ -229,9 +233,8 @@ infrastructure.
 
 `Infrastructure` owns runtime behavior:
 
-- `BackgroundTaskScheduler`, node provisioning, reconnect, and runtime stores;
-- Quartz jobs for remote-node provisioning and geo-resource processing;
-- Octokit-backed GitHub release lookup helpers for remote node xray-core installs;
+- `BackgroundTaskScheduler`, reconnect, and runtime stores;
+- Quartz jobs for geo-resource processing;
 - JWT token creation, settings application, restart scheduling;
 - geo resource, routing rule, and node services;
 - `Hardware.Info`-backed host system information through `ISystemInfoService`.

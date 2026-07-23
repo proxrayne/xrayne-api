@@ -16,10 +16,7 @@ public sealed class NodeCoreConfigBuilderTests
         {
             Name = "Node",
             Address = "node.example.com",
-            Port = 22,
             ApiPort = 8443,
-            SSHUsername = "root",
-            WorkingDirectory = "/opt/xrayne",
             EncryptedApiKey = "encrypted",
             ApiKeyFingerprint = "fingerprint",
             ConfigTemplate = DeserializeConfig("""{"log":{"loglevel":"warning"},"stats":{}}"""),
@@ -134,10 +131,7 @@ public sealed class NodeCoreConfigBuilderTests
         {
             Name = "Node",
             Address = "node.example.com",
-            Port = 22,
             ApiPort = 8443,
-            SSHUsername = "root",
-            WorkingDirectory = "/opt/xrayne",
             EncryptedApiKey = "encrypted",
             ApiKeyFingerprint = "fingerprint",
             ConfigTemplate = new XrayConfig

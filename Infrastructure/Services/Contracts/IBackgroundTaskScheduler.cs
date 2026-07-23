@@ -6,11 +6,6 @@ namespace Infrastructure.Services;
 public interface IBackgroundTaskScheduler
 {
     /// <summary>
-    /// Schedules remote node provisioning.
-    /// </summary>
-    Task<string> ScheduleProvisionNode(long nodeId, CancellationToken ct);
-
-    /// <summary>
     /// Schedules a geo resource download & upload file.
     /// </summary>
     Task ScheduleGeoResourceDownload(long geoResourceId, CancellationToken ct);

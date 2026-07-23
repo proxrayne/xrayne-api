@@ -14,8 +14,8 @@ Use this skill when working on `Api`, `Contracts`,
 
 - Put API controllers, request/response models, filters, auth policies, and mapping
   profiles in `Api`.
-- Put managed-node API endpoints in `Api` and node provisioning,
-  reconnect, status, and verification behavior in `Infrastructure`.
+- Put managed-node API endpoints in `Api` and direct connection verification,
+  reconnect, and status behavior in `Infrastructure`.
 - Put shared options, enums, permission names, pagination/filter models, and
   path values in `Contracts`.
 - Put remote-node xray-core lifecycle, background jobs, state machines, JWT,
